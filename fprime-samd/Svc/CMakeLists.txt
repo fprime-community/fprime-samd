@@ -1,0 +1,5 @@
+add_fprime_subdirectory("${CMAKE_CURRENT_LIST_DIR}/FatalHandler/")
+add_fprime_subdirectory("${CMAKE_CURRENT_LIST_DIR}/Samd21Time/")
+add_fprime_subdirectory("${CMAKE_CURRENT_LIST_DIR}/PassiveDownlink/")
+add_fprime_subdirectory("${CMAKE_CURRENT_LIST_DIR}/Framer/")
+add_fprime_subdirectory("${CMAKE_CURRENT_LIST_DIR}/PassiveRateGroupDriver/")
