@@ -149,7 +149,7 @@ module Samd21 {
         @ This will trigger a suspendOut after the DMA channel has finished transfering it's current block
         sync input port suspendIn: [DMAC_CHANNEL_NUM] Fw.Signal
 
-        @ Signal back from the DMAC that the 
+        @ Signal back from the DMAC that the channel has been suspended
         output port suspendOutIsr: [DMAC_CHANNEL_NUM] Fw.Signal
 
         @ Signal back from the DMAC that the DMA transfer is complete
@@ -158,8 +158,7 @@ module Samd21 {
         # The port number determines which channel is being configured/started
 
         match finishedIsr with configure
-        match finishedIsr with start
-
+        match finishedIsr with addDescriptor
         match suspendOutIsr with suspendIn
     }
 }
