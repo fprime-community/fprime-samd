@@ -42,8 +42,8 @@ class DmaDriver final : public DmaDriverComponentBase {
     //! Handler implementation for readWritebackIn
     //!
     //! Read the writeback register on the active DMA transfer for this channel
-    Samd21::DmaWriteback readWritebackIn_handler(FwIndexType portNum  //!< The port number
-                                                 ) override;
+    Samd21::Dma::Writeback readWritebackIn_handler(FwIndexType portNum  //!< The port number
+                                                   ) override;
 
     //! Handler implementation for sendTransactionIn
     //!
@@ -51,22 +51,22 @@ class DmaDriver final : public DmaDriverComponentBase {
     //! If the channel is idle, the transaction starts immediately.
     //! If the channel is busy, the transaction is appended to the linked descriptor chain.
     void sendTransactionIn_handler(
-        FwIndexType portNum,                             //!< The port number
-        const Samd21::DmaDriver_TriggerSource& trigger,  //!< DMA controller trigger source
-        const Samd21::DmaDriver_TransactionType&
+        FwIndexType portNum,                        //!< The port number
+        const Samd21::Dma::TriggerSource& trigger,  //!< DMA controller trigger source
+        const Samd21::Dma::TransactionType&
             action,  //!< DMA controller behavior on this channel given memory and a trigger source
-        const Samd21::DmaDriver_Priority& priority,  //!< DMA transaction priority
-        U32 sourceAddr,                              //!< The source address to move data from
-        U32 destAddr,                                //!< The destination address to move data to
-        U32 len,                                     //!< Number of bytes to copy from source to destination
-        const Samd21::DmaDriver_BeatSize& beatSize,  //!< Size of each beat. Controls the width of each DMA action
+        const Samd21::Dma::Priority& priority,  //!< DMA transaction priority
+        U32 sourceAddr,                         //!< The source address to move data from
+        U32 destAddr,                           //!< The destination address to move data to
+        U32 len,                                //!< Number of bytes to copy from source to destination
+        const Samd21::Dma::BeatSize& beatSize,  //!< Size of each beat. Controls the width of each DMA action
         bool incrementSource,  //!< Whether the DMA controller should increment the source pointer after each action
                                //!< signal
         bool incrementDestination,  //!< Whether the DMA controller should increment the destination pointer after each
                                     //!< action signal
-        const Samd21::DmaDriver_AddressIncrementStepSize&
+        const Samd21::Dma::AddressIncrementStepSize&
             stepSize,  //!< Size to increment address (source/dest when enabled) on each beat
-        const Samd21::DmaDriver_StepSelection&
+        const Samd21::Dma::StepSelection&
             stepSelection  //!< Determines whether the step size setting is applied to the source or destination address
         ) override;
 

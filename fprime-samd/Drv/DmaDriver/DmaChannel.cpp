@@ -21,7 +21,7 @@ __attribute__((__aligned__(16))) DmacDescriptor dmac_writeback[DMAC_CH_NUM] SECT
 static Os::Mutex s_dmac_mutex;
 
 DmaChannel::DmaChannel(U8 channel_id)
-    : m_channel_id(channel_id), m_busy(false), m_descriptorUsed(0), m_currentBeatSize(DmaDriver_BeatSize::BYTE) {
+    : m_channel_id(channel_id), m_busy(false), m_descriptorUsed(0), m_currentBeatSize(Dma::BeatSize::BYTE) {
     // Clear descriptor pool - intentional discard, always succeeds
     static_cast<void>(memset(m_descriptorPool, 0, sizeof(m_descriptorPool)));
 }
@@ -53,11 +53,11 @@ void DmaChannel::setupDescriptor(DmacDescriptor* desc,
                                  U32 sourceAddr,
                                  U32 destAddr,
                                  U32 len,
-                                 const Samd21::DmaDriver_BeatSize& beatSize,
+                                 const Samd21::Dma::BeatSize& beatSize,
                                  bool incrementSource,
                                  bool incrementDestination,
-                                 const Samd21::DmaDriver_AddressIncrementStepSize& stepSize,
-                                 const Samd21::DmaDriver_StepSelection& stepSelection) {
+                                 const Samd21::Dma::AddressIncrementStepSize& stepSize,
+                                 const Samd21::Dma::StepSelection& stepSelection) {
     // Validate parameters
     FW_ASSERT(desc != nullptr, m_channel_id);
     FW_ASSERT(sourceAddr != 0, m_channel_id);
@@ -89,17 +89,17 @@ void DmaChannel::setupDescriptor(DmacDescriptor* desc,
     desc->DESCADDR.reg = 0;
 }
 
-void DmaChannel::startTransaction(const Samd21::DmaDriver_TriggerSource& trigger,
-                                  const Samd21::DmaDriver_TransactionType& action,
-                                  const Samd21::DmaDriver_Priority& priority,
+void DmaChannel::startTransaction(const Samd21::Dma::TriggerSource& trigger,
+                                  const Samd21::Dma::TransactionType& action,
+                                  const Samd21::Dma::Priority& priority,
                                   U32 sourceAddr,
                                   U32 destAddr,
                                   U32 len,
-                                  const Samd21::DmaDriver_BeatSize& beatSize,
+                                  const Samd21::Dma::BeatSize& beatSize,
                                   bool incrementSource,
                                   bool incrementDestination,
-                                  const Samd21::DmaDriver_AddressIncrementStepSize& stepSize,
-                                  const Samd21::DmaDriver_StepSelection& stepSelection) {
+                                  const Samd21::Dma::AddressIncrementStepSize& stepSize,
+                                  const Samd21::Dma::StepSelection& stepSelection) {
     FW_ASSERT(!m_busy, m_channel_id);
 
     Os::ScopeLock lock(s_dmac_mutex);
@@ -136,11 +136,11 @@ void DmaChannel::startTransaction(const Samd21::DmaDriver_TriggerSource& trigger
 void DmaChannel::appendToChain(U32 sourceAddr,
                                U32 destAddr,
                                U32 len,
-                               const Samd21::DmaDriver_BeatSize& beatSize,
+                               const Samd21::Dma::BeatSize& beatSize,
                                bool incrementSource,
                                bool incrementDestination,
-                               const Samd21::DmaDriver_AddressIncrementStepSize& stepSize,
-                               const Samd21::DmaDriver_StepSelection& stepSelection) {
+                               const Samd21::Dma::AddressIncrementStepSize& stepSize,
+                               const Samd21::Dma::StepSelection& stepSelection) {
     FW_ASSERT(m_busy, m_channel_id);
     FW_ASSERT(m_descriptorUsed < MAX_QUEUED_DESCRIPTORS, m_channel_id, m_descriptorUsed);
 
@@ -178,17 +178,17 @@ void DmaChannel::appendToChain(U32 sourceAddr,
     DMAC->CHCTRLB.reg |= DMAC_CHCTRLB_CMD_RESUME;
 }
 
-void DmaChannel::queueTransaction(const Samd21::DmaDriver_TriggerSource& trigger,
-                                  const Samd21::DmaDriver_TransactionType& action,
-                                  const Samd21::DmaDriver_Priority& priority,
+void DmaChannel::queueTransaction(const Samd21::Dma::TriggerSource& trigger,
+                                  const Samd21::Dma::TransactionType& action,
+                                  const Samd21::Dma::Priority& priority,
                                   U32 sourceAddr,
                                   U32 destAddr,
                                   U32 len,
-                                  const Samd21::DmaDriver_BeatSize& beatSize,
+                                  const Samd21::Dma::BeatSize& beatSize,
                                   bool incrementSource,
                                   bool incrementDestination,
-                                  const Samd21::DmaDriver_AddressIncrementStepSize& stepSize,
-                                  const Samd21::DmaDriver_StepSelection& stepSelection) {
+                                  const Samd21::Dma::AddressIncrementStepSize& stepSize,
+                                  const Samd21::Dma::StepSelection& stepSelection) {
     // Validate all enums
     FW_ASSERT(trigger.isValid(), m_channel_id, trigger.e);
     FW_ASSERT(action.isValid(), m_channel_id, action.e);

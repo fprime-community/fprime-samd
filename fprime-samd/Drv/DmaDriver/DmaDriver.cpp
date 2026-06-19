@@ -7,7 +7,6 @@
 #include "fprime-samd/Drv/DmaDriver/DmaDriver.hpp"
 #include <cstring>
 #include "Fw/Types/Assert.hpp"
-#include "Os/Mutex.hpp"
 #include "sam.h"
 
 namespace Samd21 {
@@ -108,8 +107,8 @@ void DmaDriver::handleInterrupt() {
             U32 beatSizeBytes = m_channels[id].getBeatSizeBytes();
             U32 remainingBytes = wb->BTCNT.reg * beatSizeBytes;
 
-            Samd21::DmaReply reply;
-            reply.set_status(Samd21::DmaStatus::BUS_ERROR);
+            Samd21::Dma::Reply reply;
+            reply.set_status(Samd21::Dma::Status::BUS_ERROR);
             reply.set_remainingBytes(remainingBytes);
 
             this->transactionIsrOut_out(id, reply);
@@ -129,8 +128,8 @@ void DmaDriver::handleInterrupt() {
             DmacDescriptor* wb = &dmac_writeback[id];
             if (wb->DESCADDR.reg == 0x00000000) {
                 // Normal end of linked list - treat as successful completion
-                Samd21::DmaReply reply;
-                reply.set_status(Samd21::DmaStatus::OK);
+                Samd21::Dma::Reply reply;
+                reply.set_status(Samd21::Dma::Status::OK);
                 reply.set_remainingBytes(0);
 
                 this->transactionIsrOut_out(id, reply);
@@ -150,8 +149,8 @@ void DmaDriver::handleInterrupt() {
 
     // Handle Transfer Complete
     if (flags & DMAC_CHINTFLAG_TCMPL) {
-        Samd21::DmaReply reply;
-        reply.set_status(Samd21::DmaStatus::OK);
+        Samd21::Dma::Reply reply;
+        reply.set_status(Samd21::Dma::Status::OK);
         reply.set_remainingBytes(0);
 
         this->transactionIsrOut_out(id, reply);
@@ -168,17 +167,17 @@ void DmaDriver::handleInterrupt() {
 // ----------------------------------------------------------------------
 
 void DmaDriver::sendTransactionIn_handler(FwIndexType portNum,
-                                          const Samd21::DmaDriver_TriggerSource& trigger,
-                                          const Samd21::DmaDriver_TransactionType& action,
-                                          const Samd21::DmaDriver_Priority& priority,
+                                          const Samd21::Dma::TriggerSource& trigger,
+                                          const Samd21::Dma::TransactionType& action,
+                                          const Samd21::Dma::Priority& priority,
                                           U32 sourceAddr,
                                           U32 destAddr,
                                           U32 len,
-                                          const Samd21::DmaDriver_BeatSize& beatSize,
+                                          const Samd21::Dma::BeatSize& beatSize,
                                           bool incrementSource,
                                           bool incrementDestination,
-                                          const Samd21::DmaDriver_AddressIncrementStepSize& stepSize,
-                                          const Samd21::DmaDriver_StepSelection& stepSelection) {
+                                          const Samd21::Dma::AddressIncrementStepSize& stepSize,
+                                          const Samd21::Dma::StepSelection& stepSelection) {
     FW_ASSERT(m_initialized);
     FW_ASSERT(portNum < NUM_SENDTRANSACTIONIN_INPUT_PORTS, portNum);
 
@@ -194,14 +193,14 @@ void DmaDriver::suspendIn_handler(FwIndexType portNum) {
     m_channels[portNum].suspend();
 }
 
-Samd21::DmaWriteback DmaDriver::readWritebackIn_handler(FwIndexType portNum) {
+Samd21::Dma::Writeback DmaDriver::readWritebackIn_handler(FwIndexType portNum) {
     FW_ASSERT(m_initialized);
     FW_ASSERT(portNum < NUM_READWRITEBACKIN_INPUT_PORTS, portNum);
 
     // Read writeback descriptor for this channel
     DmacDescriptor* wb = &dmac_writeback[portNum];
 
-    Samd21::DmaWriteback result;
+    Samd21::Dma::Writeback result;
     result.set_btctrl(wb->BTCTRL.reg);
     result.set_btcnt(wb->BTCNT.reg);
     result.set_srcaddr(wb->SRCADDR.reg);
