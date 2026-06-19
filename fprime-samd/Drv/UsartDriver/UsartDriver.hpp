@@ -7,7 +7,7 @@
 #ifndef Samd21_UsartDriver_HPP
 #define Samd21_UsartDriver_HPP
 
-#include "fprime-samd/Drv/Types/SercomEnumAc.hpp"
+#include "fprime-samd/Drv/Types/SercomKindEnumAc.hpp"
 #include "fprime-samd/Drv/UsartDriver/UsartDriverComponentAc.hpp"
 
 namespace Samd21 {
@@ -50,8 +50,8 @@ class UsartDriver final : public UsartDriverComponentBase {
     };
 
     enum class DataOrder : U8 {
-        MSB = 0x0,  //!< MSB is transmitted first
-        LSB = 0x1,  //!< LSB is transmitted first
+        MSB_FIRST = 0x0,  //!< MSB is transmitted first
+        LSB_FIRST = 0x1,  //!< LSB is transmitted first
     };
 
     enum class Parity : U8 {
@@ -84,7 +84,7 @@ class UsartDriver final : public UsartDriverComponentBase {
         BAUD_921600 = 921600,  //!< Very high-speed
     };
 
-    void configure(Sercom sercom,
+    void configure(SercomKind sercom,
                    RxPinOut rx,
                    TxPinOut tx,
                    ClockMode clock,
@@ -122,6 +122,26 @@ class UsartDriver final : public UsartDriverComponentBase {
     void send_handler(FwIndexType portNum,  //!< The port number
                       Fw::Buffer& fwBuffer  //!< The buffer
                       ) override;
+
+    // ----------------------------------------------------------------------
+    // Helper functions
+    // ----------------------------------------------------------------------
+
+    //! Calculate BAUD register value based on baud rate and mode
+    U16 calculateBaud(BaudRate baud_rate, CommunicationMode mode);
+
+    //! Get SERCOM TX DMA trigger source
+    Dma::TriggerSource getSercomTxTrigger(SercomKind sercom);
+
+    //! Get SERCOM RX DMA trigger source
+    Dma::TriggerSource getSercomRxTrigger(SercomKind sercom);
+
+    // ----------------------------------------------------------------------
+    // Member variables
+    // ----------------------------------------------------------------------
+
+    //! SERCOM peripheral this driver controls
+    SercomKind m_sercom;
 };
 
 }  // namespace Samd21
