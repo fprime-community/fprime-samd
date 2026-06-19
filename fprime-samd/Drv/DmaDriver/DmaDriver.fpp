@@ -1,17 +1,13 @@
 module Samd21 {
 
-    @ Port for configuring a DMA channel
-    port DmaRegister(
+    @ Port for adding a transaction descriptor to a DMA channel
+    port DmaTransaction(
         @ DMA controller trigger source
         trigger: DmaDriver.TriggerSource,
         @ DMA controller behavior on this channel given memory and a trigger source
         $action: DmaDriver.TransactionType,
         @ DMA transaction priority
         $priority: DmaDriver.Priority,
-    )
-
-    @ Port for adding a transaction descriptor to a DMA channel
-    port DmaAddDescriptor(
         @ The source address to move data from
         sourceAddr: U32, # FIXME(tumbar) Is there a alias type I should be using for pointers?
         @ The destination address to move data to
@@ -30,14 +26,35 @@ module Samd21 {
         stepSelection: DmaDriver.StepSelection,
     )
 
+    @ DMA transaction completion status
+    enum DmaStatus {
+        OK,         @< Transaction completed successfully
+        BUS_ERROR,  @< AHB bus error during transfer (hardware fault, invalid address, MPU violation)
+    }
+
+    @ DMA transaction completion reply from ISR
+    struct DmaReply {
+        $status: DmaStatus,          @< Whether transaction completed successfully or had an error
+        remainingBytes: U32,        @< Bytes NOT transferred (0 if OK, >0 if BUS_ERROR)
+    }
+
+    @ Reply port for DMA transaction completion
+    port DmaTransactionReply(
+        reply: DmaReply
+    )
+
     @ Used for accessing the writeback descriptor for peaking into DMA for Rx
     struct DmaWriteback {
-        
+        btctrl: U16,        @< Block Transfer Control (read-only copy)
+        btcnt: U16,         @< Remaining beat count
+        srcaddr: U32,       @< Current source address
+        dstaddr: U32,       @< Current destination address
+        descaddr: U32,      @< Next descriptor address
     }
 
     @ Read the writeback descriptor of a DMA channel.
     @ This is updated live during DMA transactions.
-    port DmaGetWriteback() -> DmaWriteback
+    port DmaReadWriteback() -> DmaWriteback
 
     @ A component for managing DMA channels on the SAMD21
     passive component DmaDriver {
@@ -52,7 +69,7 @@ module Samd21 {
             WORD  @< 32-bit
         }
 
-        @ 
+        @ Action the DMAC should perform on a single trigger on the channel
         enum TransactionType: U8 {
             BEAT,           @< One data transfer bus access per trigger
             BLOCK,          @< 1kB to 64kB per trigger
@@ -137,28 +154,28 @@ module Samd21 {
             PRIORITY_3, @< Highest priority
         }
 
-        @ Configure the DMA controller on a channel determined by the port number
-        @ If this channel was already configured, overwrite the previous configuration
-        sync input port configure: [DMAC_CHANNEL_NUM] DmaRegister
-
-        @ Start DMA on a configured channel
-        @ The channel must already be configured before this is done
-        sync input port addDescriptor: [DMAC_CHANNEL_NUM] DmaAddDescriptor
+        @ Queue a DMA transaction on a channel.
+        @ If the channel is idle, the transaction starts immediately.
+        @ If the channel is busy, the transaction is appended to the linked descriptor chain.
+        @ Invalid parameters (alignment, length, null addresses) trigger assertions.
+        sync input port sendTransactionIn: [DMAC_CHANNEL_NUM] DmaTransaction
 
         @ Suspend a DMA channel.
-        @ This will trigger a suspendOut after the DMA channel has finished transfering it's current block
+        @ This will trigger suspendIsrOut after the DMA channel has finished transferring its current block
         sync input port suspendIn: [DMAC_CHANNEL_NUM] Fw.Signal
 
-        @ Signal back from the DMAC that the channel has been suspended
-        output port suspendOutIsr: [DMAC_CHANNEL_NUM] Fw.Signal
+        @ Read the writeback register on the active DMA transfer for this channel
+        sync input port readWritebackIn: [DMAC_CHANNEL_NUM] DmaReadWriteback
 
-        @ Signal back from the DMAC that the DMA transfer is complete
-        output port finishedIsr: [DMAC_CHANNEL_NUM] Fw.Signal
+        @ Signal from ISR that a DMA channel has been suspended
+        output port suspendIsrOut: [DMAC_CHANNEL_NUM] Fw.Signal
+
+        @ Signal from ISR that a DMA transaction has completed (success or error)
+        output port transactionIsrOut: [DMAC_CHANNEL_NUM] DmaTransactionReply
 
         # The port number determines which channel is being configured/started
 
-        match finishedIsr with configure
-        match finishedIsr with addDescriptor
-        match suspendOutIsr with suspendIn
+        match transactionIsrOut with sendTransactionIn
+        match suspendIsrOut with suspendIn
     }
 }

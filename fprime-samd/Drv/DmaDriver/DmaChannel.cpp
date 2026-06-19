@@ -1,69 +1,195 @@
 // ======================================================================
 // \title  DmaChannel.cpp
 // \author tumbar
-// \brief  cpp fifile for DmaChannel helper class
+// \brief  cpp file for DmaChannel helper class
 // ======================================================================
 
-#include "Samd21/Drv/DmaDriver/DmaChannel.hpp"
+#include "fprime-samd/Drv/DmaDriver/DmaChannel.hpp"
 #include <cstring>
 #include "Fw/Types/Assert.hpp"
-#include "cmsis_gcc.h"
-
+#include "Os/Mutex.hpp"
 #include "sam.h"
 
 namespace Samd21 {
 
-__attribute__((__aligned__(16))) static DmacDescriptor    ///< 128 bit alignment
-    dmac_base[DMAC_CH_NUM] SECTION_DMAC_DESCRIPTOR,       ///< Descriptor table
-    dmac_writeback[DMAC_CH_NUM] SECTION_DMAC_DESCRIPTOR;  ///< Writeback table
+// Global descriptor memory - 16-byte aligned, placed in special section
+__attribute__((__aligned__(16))) DmacDescriptor dmac_base[DMAC_CH_NUM] SECTION_DMAC_DESCRIPTOR;
 
-// Adapted from ASF3 interrupt_sam_nvic.c:
+__attribute__((__aligned__(16))) DmacDescriptor dmac_writeback[DMAC_CH_NUM] SECTION_DMAC_DESCRIPTOR;
 
-static volatile unsigned long cpu_irq_critical_section_counter = 0;
-static volatile unsigned char cpu_irq_prev_interrupt_state = 0;
+// Global mutex for DMAC register access
+static Os::Mutex s_dmac_mutex;
 
-static void cpu_irq_enter_critical(void) {
-    if (!cpu_irq_critical_section_counter) {
-        if (__get_PRIMASK() == 0) {  // IRQ enabled?
-            __disable_irq();         // Disable it
-            __DMB();
-            cpu_irq_prev_interrupt_state = 1;
-        } else {
-            // Make sure the to save the prev state as false
-            cpu_irq_prev_interrupt_state = 0;
-        }
-    }
-
-    cpu_irq_critical_section_counter++;
+DmaChannel::DmaChannel(U8 channel_id)
+    : m_channel_id(channel_id), m_busy(false), m_descriptorUsed(0), m_currentBeatSize(DmaDriver_BeatSize::BYTE) {
+    // Clear descriptor pool - intentional discard, always succeeds
+    static_cast<void>(memset(m_descriptorPool, 0, sizeof(m_descriptorPool)));
 }
 
-static void cpu_irq_leave_critical(void) {
-    // Check if the user is trying to leave a critical section
-    // when not in a critical section
-    if (cpu_irq_critical_section_counter > 0) {
-        cpu_irq_critical_section_counter--;
+U8 DmaChannel::getBeatSizeBytes() const {
+    // Convert enum to bytes: BYTE=1, HWORD=2, WORD=4
+    return static_cast<U8>(1U << m_currentBeatSize.e);
+}
 
-        // Only enable global interrupts when the counter
-        // reaches 0 and the state of the global interrupt flag
-        // was enabled when entering critical state */
-        if ((!cpu_irq_critical_section_counter) && cpu_irq_prev_interrupt_state) {
-            __DMB();
-            __enable_irq();
-        }
+static void waitForChannelSuspend() {
+    volatile U32 limit = F_CPU;
+    while (limit > 0 && !(DMAC->CHINTFLAG.reg & DMAC_CHINTFLAG_SUSP)) {
+        limit--;
+    }
+
+    // Check if we timed out
+    FW_ASSERT(limit != 0);
+}
+
+static U32 calculateEndAddress(U32 startAddr, U32 len, bool increment) {
+    if (increment) {
+        return startAddr + len;
+    } else {
+        return startAddr;
     }
 }
 
-DmaChannel::DmaChannel(U8 channel_id) : m_channel_id(channel_id), m_configured(false), m_busy(false) {}
+void DmaChannel::setupDescriptor(DmacDescriptor* desc,
+                                 U32 sourceAddr,
+                                 U32 destAddr,
+                                 U32 len,
+                                 const Samd21::DmaDriver_BeatSize& beatSize,
+                                 bool incrementSource,
+                                 bool incrementDestination,
+                                 const Samd21::DmaDriver_AddressIncrementStepSize& stepSize,
+                                 const Samd21::DmaDriver_StepSelection& stepSelection) {
+    // Validate parameters
+    FW_ASSERT(desc != nullptr, m_channel_id);
+    FW_ASSERT(sourceAddr != 0, m_channel_id);
+    FW_ASSERT(destAddr != 0, m_channel_id);
 
-void DmaChannel::configure(const Samd21::DmaDriver_TriggerSource& trigger,
-                           const Samd21::DmaDriver_TransactionType& action,
-                           const Samd21::DmaDriver_BeatSize& beatSize,
-                           const Samd21::DmaDriver_Priority& priority,
-                           bool incrementSource,
-                           bool incrementDestination,
-                           const Samd21::DmaDriver_AddressIncrementStepSize& stepSize,
-                           const Samd21::DmaDriver_StepSelection& stepSelection) {
+    U8 beatSizeBytes = static_cast<U8>(1U << beatSize.e);
+    FW_ASSERT(sourceAddr % beatSizeBytes == 0, sourceAddr, beatSizeBytes);
+    FW_ASSERT(destAddr % beatSizeBytes == 0, destAddr, beatSizeBytes);
+    FW_ASSERT(len % beatSizeBytes == 0, len, beatSizeBytes);
+
+    FwSizeType beatCount = len / beatSizeBytes;
+    FW_ASSERT(beatCount > 0 && beatCount <= 65535, beatCount);
+
+    // Setup BTCTRL - Block Transfer Control
+    desc->BTCTRL.reg = DMAC_BTCTRL_VALID |         // Descriptor is valid
+                       DMAC_BTCTRL_BLOCKACT_INT |  // Generate interrupt on completion
+                       (beatSize.e << DMAC_BTCTRL_BEATSIZE_Pos) | (incrementSource ? DMAC_BTCTRL_SRCINC : 0) |
+                       (incrementDestination ? DMAC_BTCTRL_DSTINC : 0) | (stepSelection.e << DMAC_BTCTRL_STEPSEL_Pos) |
+                       (stepSize.e << DMAC_BTCTRL_STEPSIZE_Pos);
+
+    // Setup beat count
+    desc->BTCNT.reg = static_cast<uint16_t>(beatCount);
+
+    // Setup addresses (END addresses if increment is enabled)
+    desc->SRCADDR.reg = calculateEndAddress(sourceAddr, len, incrementSource);
+    desc->DSTADDR.reg = calculateEndAddress(destAddr, len, incrementDestination);
+
+    // No next descriptor by default
+    desc->DESCADDR.reg = 0;
+}
+
+void DmaChannel::startTransaction(const Samd21::DmaDriver_TriggerSource& trigger,
+                                  const Samd21::DmaDriver_TransactionType& action,
+                                  const Samd21::DmaDriver_Priority& priority,
+                                  U32 sourceAddr,
+                                  U32 destAddr,
+                                  U32 len,
+                                  const Samd21::DmaDriver_BeatSize& beatSize,
+                                  bool incrementSource,
+                                  bool incrementDestination,
+                                  const Samd21::DmaDriver_AddressIncrementStepSize& stepSize,
+                                  const Samd21::DmaDriver_StepSelection& stepSelection) {
     FW_ASSERT(!m_busy, m_channel_id);
+
+    Os::ScopeLock lock(s_dmac_mutex);
+
+    // Store current beat size for later calculations
+    m_currentBeatSize = beatSize;
+
+    // Setup base descriptor
+    DmacDescriptor* desc = &dmac_base[m_channel_id];
+    setupDescriptor(desc, sourceAddr, destAddr, len, beatSize, incrementSource, incrementDestination, stepSize,
+                    stepSelection);
+
+    // Configure channel
+    DMAC->CHID.reg = DMAC_CHID_ID(m_channel_id);
+    DMAC->CHCTRLA.reg &= ~DMAC_CHCTRLA_ENABLE;
+    DMAC->CHCTRLA.reg = DMAC_CHCTRLA_SWRST;  // Reset channel
+
+    // Clear software trigger
+    DMAC->SWTRIGCTRL.reg &= ~(1 << m_channel_id);
+
+    // Configure priority, trigger source, and trigger action
+    DMAC->CHCTRLB.reg = DMAC_CHCTRLB_LVL(priority.e) | DMAC_CHCTRLB_TRIGSRC(trigger.e) | DMAC_CHCTRLB_TRIGACT(action.e);
+
+    // Enable interrupts for this channel
+    DMAC->CHINTENSET.reg = DMAC_CHINTENSET_TCMPL | DMAC_CHINTENSET_TERR | DMAC_CHINTENSET_SUSP;
+
+    // Enable the channel
+    DMAC->CHCTRLA.reg |= DMAC_CHCTRLA_ENABLE;
+
+    m_busy = true;
+    m_descriptorUsed = 0;  // Base descriptor is managed separately
+}
+
+void DmaChannel::appendToChain(U32 sourceAddr,
+                               U32 destAddr,
+                               U32 len,
+                               const Samd21::DmaDriver_BeatSize& beatSize,
+                               bool incrementSource,
+                               bool incrementDestination,
+                               const Samd21::DmaDriver_AddressIncrementStepSize& stepSize,
+                               const Samd21::DmaDriver_StepSelection& stepSelection) {
+    FW_ASSERT(m_busy, m_channel_id);
+    FW_ASSERT(m_descriptorUsed < MAX_QUEUED_DESCRIPTORS, m_channel_id, m_descriptorUsed);
+
+    Os::ScopeLock lock(s_dmac_mutex);
+
+    // Allocate descriptor from pool
+    DmacDescriptor* newDesc = &m_descriptorPool[m_descriptorUsed];
+    m_descriptorUsed++;
+
+    // Setup new descriptor
+    setupDescriptor(newDesc, sourceAddr, destAddr, len, beatSize, incrementSource, incrementDestination, stepSize,
+                    stepSelection);
+
+    // Suspend channel to safely modify descriptor chain
+    DMAC->CHID.reg = DMAC_CHID_ID(m_channel_id);
+    DMAC->CHCTRLB.reg |= DMAC_CHCTRLB_CMD_SUSPEND;
+
+    // Wait for suspend to complete with timeout protection
+    waitForChannelSuspend();
+
+    // Find last descriptor in chain
+    DmacDescriptor* lastDesc = &dmac_base[m_channel_id];
+    while (lastDesc->DESCADDR.reg != 0) {
+        // Hardware stores descriptor addresses as uint32_t - reinterpret to pointer
+        lastDesc = reinterpret_cast<DmacDescriptor*>(lastDesc->DESCADDR.reg);
+    }
+
+    // Link new descriptor - hardware requires pointer as uint32_t
+    lastDesc->DESCADDR.reg = reinterpret_cast<uint32_t>(newDesc);
+
+    // Clear suspend flag
+    DMAC->CHINTFLAG.reg = DMAC_CHINTFLAG_SUSP;
+
+    // Resume channel
+    DMAC->CHCTRLB.reg |= DMAC_CHCTRLB_CMD_RESUME;
+}
+
+void DmaChannel::queueTransaction(const Samd21::DmaDriver_TriggerSource& trigger,
+                                  const Samd21::DmaDriver_TransactionType& action,
+                                  const Samd21::DmaDriver_Priority& priority,
+                                  U32 sourceAddr,
+                                  U32 destAddr,
+                                  U32 len,
+                                  const Samd21::DmaDriver_BeatSize& beatSize,
+                                  bool incrementSource,
+                                  bool incrementDestination,
+                                  const Samd21::DmaDriver_AddressIncrementStepSize& stepSize,
+                                  const Samd21::DmaDriver_StepSelection& stepSelection) {
+    // Validate all enums
     FW_ASSERT(trigger.isValid(), m_channel_id, trigger.e);
     FW_ASSERT(action.isValid(), m_channel_id, action.e);
     FW_ASSERT(beatSize.isValid(), m_channel_id, beatSize.e);
@@ -71,47 +197,31 @@ void DmaChannel::configure(const Samd21::DmaDriver_TriggerSource& trigger,
     FW_ASSERT(stepSize.isValid(), m_channel_id, stepSize.e);
     FW_ASSERT(stepSelection.isValid(), m_channel_id, stepSelection.e);
 
-    cpu_irq_enter_critical();
-
-    PM->AHBMASK.bit.DMAC_ = 1;  // Initialize DMA clocks
-    PM->APBBMASK.bit.DMAC_ = 1;
-    DMAC->CTRL.bit.DMAENABLE = 0;  // Disable DMA controller
-    DMAC->CTRL.bit.SWRST = 1;      // Perform software reset
-
-    // dmac_base[0].DESCADDR.reg = static_cast<U32>();
-
-    // Initialize descriptor list addresses
-    DMAC->BASEADDR.bit.BASEADDR = (uint32_t)dmac_base;
-    DMAC->WRBADDR.bit.WRBADDR = (uint32_t)dmac_writeback;
-    memset(dmac_base, 0, sizeof(dmac_base));
-    memset(dmac_writeback, 0, sizeof(dmac_writeback));
-
-    // Re-enable DMA controller with all priority levels
-    DMAC->CTRL.reg = DMAC_CTRL_DMAENABLE | DMAC_CTRL_LVLEN(0xF);
-
-    // Enable DMA interrupt at lowest priority
-    NVIC_EnableIRQ(DMAC_IRQn);
-    NVIC_SetPriority(DMAC_IRQn, (1 << __NVIC_PRIO_BITS) - 1);
-
-    m_configured = true;
-
-    // Reset the allocated channel
-    DMAC->CHID.bit.ID = m_channel_id;
-    DMAC->CHCTRLA.bit.ENABLE = 0;
-    DMAC->CHCTRLA.bit.SWRST = 1;
-
-    // Clear software trigger
-    DMAC->SWTRIGCTRL.reg &= ~(1 << m_channel_id);
-
-    // Set the priority level
-    DMAC->CHCTRLB.bit.LVL = static_cast<U8>(priority.e);
-
-    // Set the trigger source
-    DMAC->CHCTRLB.bit.TRIGSRC = static_cast<U8>(trigger.e);
-
-    // Set the trigger action
-    DMAC->CHCTRLB.bit.TRIGACT = static_cast<U8>(action.e);
-
-    cpu_irq_leave_critical();
+    if (!m_busy) {
+        // Channel idle - start new transaction
+        startTransaction(trigger, action, priority, sourceAddr, destAddr, len, beatSize, incrementSource,
+                         incrementDestination, stepSize, stepSelection);
+    } else {
+        // Channel busy - append to linked list
+        appendToChain(sourceAddr, destAddr, len, beatSize, incrementSource, incrementDestination, stepSize,
+                      stepSelection);
+    }
 }
+
+void DmaChannel::suspend() {
+    if (!m_busy) {
+        return;  // Nothing to suspend
+    }
+
+    Os::ScopeLock lock(s_dmac_mutex);
+
+    DMAC->CHID.reg = DMAC_CHID_ID(m_channel_id);
+    DMAC->CHCTRLB.reg |= DMAC_CHCTRLB_CMD_SUSPEND;
+}
+
+void DmaChannel::markIdle() {
+    m_busy = false;
+    m_descriptorUsed = 0;  // Reset descriptor pool
+}
+
 }  // namespace Samd21

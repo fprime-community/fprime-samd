@@ -19,10 +19,19 @@ register_fprime_library(
         "${CMAKE_CURRENT_LIST_DIR}/DmaDriver.fpp"
     SOURCES
         "${CMAKE_CURRENT_LIST_DIR}/DmaDriver.cpp"
+        "${CMAKE_CURRENT_LIST_DIR}/DmaDriverIsr.cpp"
         "${CMAKE_CURRENT_LIST_DIR}/DmaChannel.cpp"
 #   DEPENDS
 #       MyPackage_MyOtherModule
 )
+
+# Disable LTO on ISR file to avoid DMAC_Handler ISR getting optimized away
+if (SAMD21_LTO)
+    set_source_files_properties(
+        "${CMAKE_CURRENT_LIST_DIR}/RtcDriverIsr.cpp"
+        PROPERTIES COMPILE_FLAGS "-fno-lto"
+    )
+endif()
 
 ### Unit Tests ###
 # register_fprime_ut(
