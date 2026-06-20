@@ -1,7 +1,7 @@
 module Samd21 {
 
     @ The set of all SERCOM instances on the SAMD21
-    enum SercomKind {
+    enum SercomKind : U8 {
         SERCOM_0,
         SERCOM_1,
         SERCOM_2,

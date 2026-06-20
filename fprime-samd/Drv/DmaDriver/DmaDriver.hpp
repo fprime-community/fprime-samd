@@ -7,12 +7,16 @@
 #ifndef Samd21_DmaDriver_HPP
 #define Samd21_DmaDriver_HPP
 
+#include "config/DmaDriverConfig.hpp"
 #include "fprime-samd/Drv/DmaDriver/DmaChannel.hpp"
 #include "fprime-samd/Drv/DmaDriver/DmaDriverComponentAc.hpp"
+#include "samd.h"
 
 namespace Samd21 {
 
 class DmaDriver final : public DmaDriverComponentBase {
+    static_assert(DmaDriverConfig::DMA_DESCRIPTOR_N <= 32, "Bit-field used to track DMAC Descriptor usage");
+
   public:
     // ----------------------------------------------------------------------
     // Component construction and destruction
@@ -78,8 +82,25 @@ class DmaDriver final : public DmaDriverComponentBase {
                            ) override;
 
   private:
+    //! Free a descriptor back to the pool
+    void freeDescriptor(DmacDescriptor* desc);
+
+    //! Free all descriptors in the chain starting from the given descriptor
+    void freeChain(DmacDescriptor* chainStart);
+
+    //! Storage of DMA descriptors for queuing jobs on the DMAC
+    DmacDescriptor m_descriptors[DmaDriverConfig::DMA_DESCRIPTOR_N];
+
+    //! Bitfield tracking if the descriptor is in use
+    U32 m_descriptors_used;
+
     DmaChannel m_channels[DmaDriver::NUM_SENDTRANSACTIONIN_INPUT_PORTS];
-    bool m_initialized{false};
+
+    //! Track the currently executing descriptor for each channel (for incremental freeing)
+    //! Points to the descriptor currently loaded in hardware (dmac_base or from m_descriptors)
+    DmacDescriptor* m_currentExecutingDesc[DmaDriver::NUM_SENDTRANSACTIONIN_INPUT_PORTS];
+
+    bool m_initialized;
 };
 
 }  // namespace Samd21

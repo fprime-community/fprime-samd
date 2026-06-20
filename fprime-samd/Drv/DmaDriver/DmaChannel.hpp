@@ -7,22 +7,17 @@
 #ifndef Samd21_DmaChannel_HPP
 #define Samd21_DmaChannel_HPP
 
-#include "fprime-samd/Drv/Types/AddressIncrementStepSizeEnumAc.hpp"
-#include "fprime-samd/Drv/Types/BeatSizeEnumAc.hpp"
 #include "fprime-samd/Drv/Types/PriorityEnumAc.hpp"
-#include "fprime-samd/Drv/Types/StepSelectionEnumAc.hpp"
 #include "fprime-samd/Drv/Types/TransactionTypeEnumAc.hpp"
 #include "fprime-samd/Drv/Types/TriggerSourceEnumAc.hpp"
+
 #include "samd.h"
 
 namespace Samd21 {
 
-// Maximum descriptors that can be queued per channel (beyond the base descriptor)
-constexpr U8 MAX_QUEUED_DESCRIPTORS = 4;
-
 class DmaChannel final {
   public:
-    DmaChannel() : m_channel_id(0), m_busy(false), m_descriptorUsed(0), m_currentBeatSize(Dma::BeatSize::BYTE) {}
+    DmaChannel() : m_channel_id(0) {}
     DmaChannel(U8 channel_id);
 
     //! Set the channel ID (called during initialization)
@@ -33,14 +28,7 @@ class DmaChannel final {
     void queueTransaction(const Samd21::Dma::TriggerSource& trigger,
                           const Samd21::Dma::TransactionType& action,
                           const Samd21::Dma::Priority& priority,
-                          U32 sourceAddr,
-                          U32 destAddr,
-                          U32 len,
-                          const Samd21::Dma::BeatSize& beatSize,
-                          bool incrementSource,
-                          bool incrementDestination,
-                          const Samd21::Dma::AddressIncrementStepSize& stepSize,
-                          const Samd21::Dma::StepSelection& stepSelection);
+                          DmacDescriptor* descriptor);
 
     //! Suspend this channel
     void suspend();
@@ -55,50 +43,17 @@ class DmaChannel final {
     U8 getBeatSizeBytes() const;
 
   private:
-
-    //! Setup a descriptor with transaction parameters
-    void setupDescriptor(DmacDescriptor* desc,
-                         U32 sourceAddr,
-                         U32 destAddr,
-                         U32 len,
-                         const Samd21::Dma::BeatSize& beatSize,
-                         bool incrementSource,
-                         bool incrementDestination,
-                         const Samd21::Dma::AddressIncrementStepSize& stepSize,
-                         const Samd21::Dma::StepSelection& stepSelection);
-
-    //! Start transaction on idle channel
+    //! Start transaction on idle channel with pre-configured descriptor
     void startTransaction(const Samd21::Dma::TriggerSource& trigger,
                           const Samd21::Dma::TransactionType& action,
                           const Samd21::Dma::Priority& priority,
-                          U32 sourceAddr,
-                          U32 destAddr,
-                          U32 len,
-                          const Samd21::Dma::BeatSize& beatSize,
-                          bool incrementSource,
-                          bool incrementDestination,
-                          const Samd21::Dma::AddressIncrementStepSize& stepSize,
-                          const Samd21::Dma::StepSelection& stepSelection);
+                          DmacDescriptor* desc);
 
     //! Append descriptor to end of linked list on busy channel
-    void appendToChain(U32 sourceAddr,
-                       U32 destAddr,
-                       U32 len,
-                       const Samd21::Dma::BeatSize& beatSize,
-                       bool incrementSource,
-                       bool incrementDestination,
-                       const Samd21::Dma::AddressIncrementStepSize& stepSize,
-                       const Samd21::Dma::StepSelection& stepSelection);
+    void appendToChain(DmacDescriptor* desc);
 
     U8 m_channel_id;
     bool m_busy;
-
-    // Descriptor pool for linked list
-    DmacDescriptor m_descriptorPool[MAX_QUEUED_DESCRIPTORS];
-    U8 m_descriptorUsed;  // Number of descriptors currently in use
-
-    // Store current beat size for address calculations
-    Samd21::Dma::BeatSize m_currentBeatSize;
 };
 
 }  // namespace Samd21

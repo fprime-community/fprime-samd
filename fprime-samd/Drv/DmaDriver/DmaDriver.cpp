@@ -7,7 +7,11 @@
 #include "fprime-samd/Drv/DmaDriver/DmaDriver.hpp"
 #include <cstring>
 #include "Fw/Types/Assert.hpp"
+#include "config/DmaDriverConfig.hpp"
+#include "config/FwAssertArgTypeAliasAc.h"
+#include "config/FwIndexTypeAliasAc.h"
 #include "sam.h"
+#include "samd21/include/component/dmac.h"
 
 namespace Samd21 {
 
@@ -26,6 +30,7 @@ DmaDriver::DmaDriver(const char* const compName) : DmaDriverComponentBase(compNa
     // Initialize each channel with its ID using setter
     for (U8 i = 0; i < DMAC_CH_NUM; i++) {
         m_channels[i].setChannelId(i);
+        m_currentExecutingDesc[i] = nullptr;
     }
 
     // Register singleton for ISR access - pointer cast required for FW_ASSERT diagnostic
@@ -51,9 +56,91 @@ static void waitForDmacReset() {
     FW_ASSERT(limit != 0);
 }
 
+static U32 calculateEndAddress(U32 startAddr, U32 len, bool increment) {
+    if (increment) {
+        return startAddr + len;
+    } else {
+        return startAddr;
+    }
+}
+
+static void setupDescriptor(DmacDescriptor* desc,
+                            U32 sourceAddr,
+                            U32 destAddr,
+                            U32 len,
+                            const Samd21::Dma::BeatSize& beatSize,
+                            bool incrementSource,
+                            bool incrementDestination,
+                            const Samd21::Dma::AddressIncrementStepSize& stepSize,
+                            const Samd21::Dma::StepSelection& stepSelection) {
+    // Validate parameters
+    FW_ASSERT(desc != nullptr);
+    FW_ASSERT(sourceAddr);
+    FW_ASSERT(destAddr);
+
+    U8 beatSizeBytes = static_cast<U8>(1U << beatSize.e);
+    FW_ASSERT(sourceAddr % beatSizeBytes == 0, sourceAddr, beatSizeBytes);
+    FW_ASSERT(destAddr % beatSizeBytes == 0, destAddr, beatSizeBytes);
+    FW_ASSERT(len % beatSizeBytes == 0, len, beatSizeBytes);
+
+    FwSizeType beatCount = len / beatSizeBytes;
+    FW_ASSERT(beatCount > 0 && beatCount <= 65535, beatCount);
+
+    // Setup BTCTRL - Block Transfer Control
+    desc->BTCTRL.reg = DMAC_BTCTRL_VALID |         // Descriptor is valid
+                       DMAC_BTCTRL_BLOCKACT_INT |  // Generate interrupt on completion
+                       (beatSize.e << DMAC_BTCTRL_BEATSIZE_Pos) | (incrementSource ? DMAC_BTCTRL_SRCINC : 0) |
+                       (incrementDestination ? DMAC_BTCTRL_DSTINC : 0) | (stepSelection.e << DMAC_BTCTRL_STEPSEL_Pos) |
+                       (stepSize.e << DMAC_BTCTRL_STEPSIZE_Pos);
+
+    // Setup beat count
+    desc->BTCNT.reg = static_cast<uint16_t>(beatCount);
+
+    // Setup addresses (END addresses if increment is enabled)
+    desc->SRCADDR.reg = calculateEndAddress(sourceAddr, len, incrementSource);
+    desc->DSTADDR.reg = calculateEndAddress(destAddr, len, incrementDestination);
+
+    // No next descriptor by default
+    desc->DESCADDR.reg = 0;
+}
+
 // ----------------------------------------------------------------------
 // Public member functions
 // ----------------------------------------------------------------------
+
+void DmaDriver::freeDescriptor(DmacDescriptor* desc) {
+    // Check if this descriptor is from our pool
+    if (desc < m_descriptors || desc >= m_descriptors + DmaDriverConfig::DMA_DESCRIPTOR_N) {
+        // Not from our pool (e.g., dmac_base[]), nothing to free
+        return;
+    }
+
+    // Calculate bit index
+    U32 index = static_cast<U32>(desc - m_descriptors);
+    FW_ASSERT(index < DmaDriverConfig::DMA_DESCRIPTOR_N, index);
+
+    // Clear the bit
+    m_descriptors_used &= ~(1U << index);
+}
+
+void DmaDriver::freeChain(DmacDescriptor* chainStart) {
+    DmacDescriptor* current = chainStart;
+
+    while (current != nullptr && current->DESCADDR.reg != 0) {
+        // Get next descriptor before freeing current
+        DmacDescriptor* next = reinterpret_cast<DmacDescriptor*>(current->DESCADDR.reg);
+
+        // Free current descriptor if it's from our pool
+        freeDescriptor(current);
+
+        current = next;
+    }
+
+    // Free the last descriptor (with DESCADDR == 0)
+    if (current != nullptr) {
+        freeDescriptor(current);
+    }
+}
 
 void DmaDriver::init() {
     FW_ASSERT(!m_initialized);
@@ -117,7 +204,19 @@ void DmaDriver::handleInterrupt() {
         // Clear flag
         DMAC->CHINTFLAG.reg = DMAC_CHINTFLAG_TERR;
 
-        // Channel is disabled by hardware, mark as idle
+        // Channel is disabled by hardware on error
+        // Free the currently executing descriptor and all remaining descriptors in chain
+        if (m_currentExecutingDesc[id] != nullptr) {
+            freeDescriptor(m_currentExecutingDesc[id]);
+        }
+
+        // Free remaining chain (everything after the failed descriptor)
+        DmacDescriptor* wb = &dmac_writeback[id];
+        if (wb->DESCADDR.reg != 0) {
+            freeChain(reinterpret_cast<DmacDescriptor*>(wb->DESCADDR.reg));
+        }
+
+        m_currentExecutingDesc[id] = nullptr;
         m_channels[id].markIdle();
     }
 
@@ -127,12 +226,10 @@ void DmaDriver::handleInterrupt() {
             // Fetch error - check if end-of-chain or invalid descriptor
             DmacDescriptor* wb = &dmac_writeback[id];
             if (wb->DESCADDR.reg == 0x00000000) {
-                // Normal end of linked list - treat as successful completion
-                Samd21::Dma::Reply reply;
-                reply.set_status(Samd21::Dma::Status::OK);
-                reply.set_remainingBytes(0);
-
-                this->transactionIsrOut_out(id, reply);
+                // Normal end of linked list
+                // All chained descriptors were already freed incrementally in TCMPL handler
+                // Just mark the channel idle
+                m_currentExecutingDesc[id] = nullptr;
                 m_channels[id].markIdle();
             } else {
                 // Invalid descriptor with non-zero DESCADDR - programming error
@@ -147,8 +244,27 @@ void DmaDriver::handleInterrupt() {
         DMAC->CHINTFLAG.reg = DMAC_CHINTFLAG_SUSP;
     }
 
-    // Handle Transfer Complete
+    // Handle Transfer Complete (intermediate descriptor or final descriptor)
     if (flags & DMAC_CHINTFLAG_TCMPL) {
+        // The writeback descriptor contains the just-completed descriptor's state
+        // Its DESCADDR field points to the next descriptor that's now executing
+        DmacDescriptor* wb = &dmac_writeback[id];
+
+        // Free the descriptor that just completed (if it's from our pool)
+        // This is the descriptor we were tracking as "currently executing"
+        if (m_currentExecutingDesc[id] != nullptr) {
+            freeDescriptor(m_currentExecutingDesc[id]);
+        }
+
+        // Update tracking: the next descriptor (from writeback's DESCADDR) is now executing
+        // If DESCADDR is 0, we've reached the end and SUSP will fire next
+        if (wb->DESCADDR.reg != 0) {
+            m_currentExecutingDesc[id] = reinterpret_cast<DmacDescriptor*>(wb->DESCADDR.reg);
+        } else {
+            // End of chain - no more descriptors executing
+            m_currentExecutingDesc[id] = nullptr;
+        }
+
         Samd21::Dma::Reply reply;
         reply.set_status(Samd21::Dma::Status::OK);
         reply.set_remainingBytes(0);
@@ -158,7 +274,8 @@ void DmaDriver::handleInterrupt() {
         // Clear flag
         DMAC->CHINTFLAG.reg = DMAC_CHINTFLAG_TCMPL;
 
-        m_channels[id].markIdle();
+        // Don't mark idle here - intermediate descriptors also trigger TCMPL
+        // The channel is marked idle when end-of-chain is detected in the SUSP handler
     }
 }
 
@@ -181,9 +298,34 @@ void DmaDriver::sendTransactionIn_handler(FwIndexType portNum,
     FW_ASSERT(m_initialized);
     FW_ASSERT(portNum < NUM_SENDTRANSACTIONIN_INPUT_PORTS, portNum);
 
-    // Queue transaction on the channel (will start immediately if idle, or append if busy)
-    m_channels[portNum].queueTransaction(trigger, action, priority, sourceAddr, destAddr, len, beatSize,
-                                         incrementSource, incrementDestination, stepSize, stepSelection);
+    // Search for a free DMAC Descriptor
+    DmacDescriptor* desc = nullptr;
+    for (U32 i = 0; i < DmaDriverConfig::DMA_DESCRIPTOR_N; i++) {
+        if (!(this->m_descriptors_used & (1 << i))) {
+            desc = &this->m_descriptors[i];
+            setupDescriptor(desc, sourceAddr, destAddr, len, beatSize, incrementSource, incrementDestination, stepSize,
+                            stepSelection);
+
+            // Mark the descriptor as used
+            this->m_descriptors_used |= (1 << i);
+            break;
+        }
+    }
+
+    // Make sure we got a descriptor
+    FW_ASSERT(desc, portNum, static_cast<FwAssertArgType>(trigger.e));
+
+    // Queue transaction on the channel
+    bool wasIdle = !m_channels[portNum].isBusy();
+    m_channels[portNum].queueTransaction(trigger, action, priority, desc);
+
+    if (wasIdle) {
+        // startTransaction() copied the descriptor to dmac_base[portNum]
+        // The original can be freed, and dmac_base[portNum] is now "executing"
+        freeDescriptor(desc);
+        m_currentExecutingDesc[portNum] = &dmac_base[portNum];
+    }
+    // else: appendToChain() linked desc by address - it will be freed when it completes
 }
 
 void DmaDriver::suspendIn_handler(FwIndexType portNum) {

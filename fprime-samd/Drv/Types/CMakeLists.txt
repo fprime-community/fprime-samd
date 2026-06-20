@@ -14,4 +14,5 @@ register_fprime_library(
     AUTOCODER_INPUTS
         "${CMAKE_CURRENT_LIST_DIR}/Dma.fpp"
         "${CMAKE_CURRENT_LIST_DIR}/Types.fpp"
+        "${CMAKE_CURRENT_LIST_DIR}/ThinBuffer.cpp"
 )
