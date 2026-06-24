@@ -4,6 +4,9 @@
 // \brief  hpp file for ThinBuffer class
 // ======================================================================
 
+#ifndef Samd21_ThinBuffer_HPP
+#define Samd21_ThinBuffer_HPP
+
 #include "Fw/Buffer/Buffer.hpp"
 #include "Fw/Types/BasicTypes.h"
 #include "config/FwSizeTypeAliasAc.h"
@@ -24,3 +27,5 @@ class ThinBuffer {
     U32 m_context;
 };
 }  // namespace Samd21
+
+#endif

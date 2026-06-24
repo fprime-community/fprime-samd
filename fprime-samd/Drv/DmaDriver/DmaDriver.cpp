@@ -205,15 +205,18 @@ void DmaDriver::handleInterrupt() {
         DMAC->CHINTFLAG.reg = DMAC_CHINTFLAG_TERR;
 
         // Channel is disabled by hardware on error
-        // Free the currently executing descriptor and all remaining descriptors in chain
-        if (m_currentExecutingDesc[id] != nullptr) {
-            freeDescriptor(m_currentExecutingDesc[id]);
-        }
+        // Only free descriptors if not in circular mode
+        if (!m_channels[id].isCircular()) {
+            // Free the currently executing descriptor and all remaining descriptors in chain
+            if (m_currentExecutingDesc[id] != nullptr) {
+                freeDescriptor(m_currentExecutingDesc[id]);
+            }
 
-        // Free remaining chain (everything after the failed descriptor)
-        DmacDescriptor* wb = &dmac_writeback[id];
-        if (wb->DESCADDR.reg != 0) {
-            freeChain(reinterpret_cast<DmacDescriptor*>(wb->DESCADDR.reg));
+            // Free remaining chain (everything after the failed descriptor)
+            DmacDescriptor* wb = &dmac_writeback[id];
+            if (wb->DESCADDR.reg != 0) {
+                freeChain(reinterpret_cast<DmacDescriptor*>(wb->DESCADDR.reg));
+            }
         }
 
         m_currentExecutingDesc[id] = nullptr;
@@ -250,10 +253,14 @@ void DmaDriver::handleInterrupt() {
         // Its DESCADDR field points to the next descriptor that's now executing
         DmacDescriptor* wb = &dmac_writeback[id];
 
-        // Free the descriptor that just completed (if it's from our pool)
-        // This is the descriptor we were tracking as "currently executing"
-        if (m_currentExecutingDesc[id] != nullptr) {
-            freeDescriptor(m_currentExecutingDesc[id]);
+        // Only free descriptors if not in circular mode
+        // In circular mode, descriptors are reused indefinitely
+        if (!m_channels[id].isCircular()) {
+            // Free the descriptor that just completed (if it's from our pool)
+            // This is the descriptor we were tracking as "currently executing"
+            if (m_currentExecutingDesc[id] != nullptr) {
+                freeDescriptor(m_currentExecutingDesc[id]);
+            }
         }
 
         // Update tracking: the next descriptor (from writeback's DESCADDR) is now executing
@@ -326,6 +333,22 @@ void DmaDriver::sendTransactionIn_handler(FwIndexType portNum,
         m_currentExecutingDesc[portNum] = &dmac_base[portNum];
     }
     // else: appendToChain() linked desc by address - it will be freed when it completes
+}
+
+void DmaDriver::linkToFrontIn_handler(FwIndexType portNum) {
+    FW_ASSERT(m_initialized);
+    FW_ASSERT(portNum < NUM_LINKTOFRONTIN_INPUT_PORTS, portNum);
+
+    m_channels[portNum].linkToFront();
+}
+
+Samd21::Dma::Writeback DmaDriver::popFrontIn_handler(FwIndexType portNum) {
+    FW_ASSERT(m_initialized);
+    FW_ASSERT(portNum < NUM_POPFRONTIN_INPUT_PORTS, portNum);
+
+    Samd21::Dma::Writeback result;
+    m_channels[portNum].popFront(result);
+    return result;
 }
 
 void DmaDriver::suspendIn_handler(FwIndexType portNum) {

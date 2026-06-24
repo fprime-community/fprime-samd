@@ -10,6 +10,7 @@
 #include "fprime-samd/Drv/Types/PriorityEnumAc.hpp"
 #include "fprime-samd/Drv/Types/TransactionTypeEnumAc.hpp"
 #include "fprime-samd/Drv/Types/TriggerSourceEnumAc.hpp"
+#include "fprime-samd/Drv/Types/WritebackSerializableAc.hpp"
 
 #include "samd.h"
 
@@ -30,11 +31,24 @@ class DmaChannel final {
                           const Samd21::Dma::Priority& priority,
                           DmacDescriptor* descriptor);
 
+    //! Link the last descriptor back to the first to create a circular buffer
+    //! The channel must have at least one linked descriptor already queued.
+    //! Once called, the channel is marked as circular and descriptors will not be freed.
+    void linkToFront();
+
+    //! Suspend channel, read writeback, and advance to next descriptor
+    //! Used for IDLE frame detection: process partial buffer and move to alternate.
+    //! Returns the writeback state before advancing to the next descriptor.
+    void popFront(Samd21::Dma::Writeback& result);
+
     //! Suspend this channel
     void suspend();
 
     //! Check if channel is busy
     bool isBusy() const { return m_busy; }
+
+    //! Check if channel is in circular buffer mode
+    bool isCircular() const { return m_circular; }
 
     //! Mark channel as idle (called from ISR on completion)
     void markIdle();
@@ -54,6 +68,7 @@ class DmaChannel final {
 
     U8 m_channel_id;
     bool m_busy;
+    bool m_circular;
 };
 
 }  // namespace Samd21

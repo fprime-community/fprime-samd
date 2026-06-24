@@ -9,6 +9,24 @@ module Samd21 {
         @ Invalid parameters (alignment, length, null addresses) trigger assertions.
         guarded input port sendTransactionIn: [Dma.CHANNEL_NUM] Dma.Transaction
 
+        @ Updates the final DmaDescriptor in the chain configured on this channel to link
+        @ back to the first. This allows this channel to loop to the first transaction continuously.
+        guarded input port linkToFrontIn: [Dma.CHANNEL_NUM] Fw.Signal
+
+        @ Suspend the channel, read writeback, and advance to the next descriptor.
+        @ Used for IDLE frame detection: process partial buffer and move to alternate.
+        @
+        @ Algorithm:
+        @ 1. Suspend the channel (if not already suspended)
+        @ 2. Wait for CHINTFLAG.SUSP to confirm suspension
+        @ 3. Read writeback to get current state
+        @ 4. User calculates bytes received (original_BTCNT - writeback.btcnt)
+        @ 5. Skip to next descriptor by setting writeback BTCNT to 0
+        @ 6. Resume the channel
+        @
+        @ Returns: Writeback state at suspend point
+        guarded input port popFrontIn: [Dma.CHANNEL_NUM] Dma.ReadWriteback
+
         @ Suspend a DMA channel.
         @ This will trigger suspendIsrOut after the DMA channel has finished transferring its current block
         guarded input port suspendIn: [Dma.CHANNEL_NUM] Fw.Signal

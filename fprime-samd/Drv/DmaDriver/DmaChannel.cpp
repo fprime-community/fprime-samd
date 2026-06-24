@@ -20,7 +20,7 @@ __attribute__((__aligned__(16))) DmacDescriptor dmac_writeback[DMAC_CH_NUM] SECT
 // Global mutex for DMAC register access
 static Os::Mutex s_dmac_mutex;
 
-DmaChannel::DmaChannel(U8 channel_id) : m_channel_id(channel_id), m_busy(false) {}
+DmaChannel::DmaChannel(U8 channel_id) : m_channel_id(channel_id), m_busy(false), m_circular(false) {}
 
 static void waitForChannelSuspend() {
     volatile U32 limit = F_CPU;
@@ -111,6 +111,78 @@ void DmaChannel::queueTransaction(const Samd21::Dma::TriggerSource& trigger,
         // Channel busy - append to linked list
         appendToChain(desc);
     }
+}
+
+void DmaChannel::linkToFront() {
+    FW_ASSERT(m_busy, m_channel_id);
+
+    Os::ScopeLock lock(s_dmac_mutex);
+
+    // Suspend channel to safely modify descriptor chain
+    DMAC->CHID.reg = DMAC_CHID_ID(m_channel_id);
+    DMAC->CHCTRLB.reg |= DMAC_CHCTRLB_CMD_SUSPEND;
+
+    // Wait for suspend to complete with timeout protection
+    waitForChannelSuspend();
+
+    // Must have at least one descriptor to make a circular chain
+    DmacDescriptor* base = &dmac_base[m_channel_id];
+    FW_ASSERT(base->DESCADDR.reg != 0, m_channel_id);  // Must have at least one linked descriptor
+
+    // Find the last descriptor in the chain
+    DmacDescriptor* lastDesc = base;
+    while (lastDesc->DESCADDR.reg != 0) {
+        lastDesc = reinterpret_cast<DmacDescriptor*>(lastDesc->DESCADDR.reg);
+    }
+
+    // Point last descriptor back to base to create circular buffer
+    lastDesc->DESCADDR.reg = reinterpret_cast<uint32_t>(base);
+
+    // Mark channel as circular to prevent descriptor freeing
+    m_circular = true;
+
+    // Clear suspend flag
+    DMAC->CHINTFLAG.reg = DMAC_CHINTFLAG_SUSP;
+
+    // Resume channel
+    DMAC->CHCTRLB.reg |= DMAC_CHCTRLB_CMD_RESUME;
+}
+
+void DmaChannel::popFront(Samd21::Dma::Writeback& result) {
+    FW_ASSERT(m_busy, m_channel_id);
+    FW_ASSERT(m_circular, m_channel_id);  // Only valid for circular buffers
+
+    Os::ScopeLock lock(s_dmac_mutex);
+
+    // 1. Suspend the channel (if not already suspended)
+    DMAC->CHID.reg = DMAC_CHID_ID(m_channel_id);
+    DMAC->CHCTRLB.reg |= DMAC_CHCTRLB_CMD_SUSPEND;
+
+    // 2. Wait for suspend to complete with timeout protection
+    waitForChannelSuspend();
+
+    // 3. Read writeback descriptor for this channel
+    DmacDescriptor* wb = &dmac_writeback[m_channel_id];
+
+    result.set_btctrl(wb->BTCTRL.reg);
+    result.set_btcnt(wb->BTCNT.reg);
+    result.set_srcaddr(wb->SRCADDR.reg);
+    result.set_dstaddr(wb->DSTADDR.reg);
+    result.set_descaddr(wb->DESCADDR.reg);
+
+    // 4. Calculate bytes received (caller will use: original_BTCNT - result.btcnt)
+
+    // 5. Skip to next descriptor by marking current descriptor as complete
+    // Setting BTCNT to 0 forces the DMA to move to the next descriptor
+    if (wb->DESCADDR.reg != 0) {
+        wb->BTCNT.reg = 0;  // Mark current descriptor as "complete"
+    }
+
+    // 6. Clear suspend flag
+    DMAC->CHINTFLAG.reg = DMAC_CHINTFLAG_SUSP;
+
+    // 7. Resume channel - DMA will start on the next descriptor
+    DMAC->CHCTRLB.reg |= DMAC_CHCTRLB_CMD_RESUME;
 }
 
 void DmaChannel::suspend() {

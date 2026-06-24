@@ -43,6 +43,20 @@ class DmaDriver final : public DmaDriverComponentBase {
     // Handler implementations for typed input ports
     // ----------------------------------------------------------------------
 
+    //! Handler implementation for linkToFrontIn
+    //!
+    //! Updates the final DmaDescriptor in the chain configured on this channel to link
+    //! back to the first. This allows this channel to loop to the first transaction continuously.
+    void linkToFrontIn_handler(FwIndexType portNum  //!< The port number
+                              ) override;
+
+    //! Handler implementation for popFrontIn
+    //!
+    //! Suspend the channel, read writeback, and advance to the next descriptor.
+    //! Used for IDLE frame detection: process partial buffer and move to alternate.
+    Samd21::Dma::Writeback popFrontIn_handler(FwIndexType portNum  //!< The port number
+                                             ) override;
+
     //! Handler implementation for readWritebackIn
     //!
     //! Read the writeback register on the active DMA transfer for this channel
