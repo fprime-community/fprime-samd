@@ -4,7 +4,7 @@
 
 The `Samd21::RtcDriver` component provides a hardware driver for the SAMD21 Real-Time Clock (RTC) peripheral configured in periodic interrupt mode. This passive component drives rate group execution using preset tick rates (1-128 Hz) and implements the F´ OSAL `Os::RawTime` interface for microsecond-resolution system timestamps.
 
-The driver configures the RTC to generate periodic interrupts while remaining operational during SAMD21 standby modes. The blocking `cycle()` method uses the ARM WFI instruction to sleep between ticks, enabling low-power operation. Time measurement combines a monotonic tick counter with the RTC's 32-bit hardware counter (32768 Hz) to provide accurate timestamps with sub-tick precision.
+The driver configures the RTC to generate periodic interrupts while remaining operational during SAMD21 standby modes. The component is cycled via the `activeIn` port (typically connected to a `Svc::PassiveCycler` component), which checks for RTC interrupts and emits cycle signals when they occur. Time measurement combines a monotonic tick counter with the RTC's 32-bit hardware counter (32768 Hz) to provide accurate timestamps with sub-tick precision.
 
 ## 2. Requirements
 
@@ -13,7 +13,7 @@ The driver configures the RTC to generate periodic interrupts while remaining op
 | SAMD21-RTC-001 | The RtcDriver shall configure the RTC peripheral for periodic interrupts | Hardware Test |
 | SAMD21-RTC-002 | The RtcDriver shall support configurable interrupt periods (1-128 Hz)    | Hardware Test |
 | SAMD21-RTC-003 | The RtcDriver shall remain operational during SAMD21 standby modes       | Hardware Test |
-| SAMD21-RTC-004 | The RtcDriver shall provide a blocking cycle interface using WFI         | Hardware Test |
+| SAMD21-RTC-004 | The RtcDriver shall detect RTC interrupts via activeIn port              | Hardware Test |
 | SAMD21-RTC-005 | The RtcDriver shall support internal, external, and ULP clock sources    | Hardware Test |
 | SAMD21-RTC-006 | The RtcDriver shall emit cycle signals via the CycleOut port             | Hardware Test |
 | SAMD21-RTC-007 | The RtcDriver shall provide an Os::RawTime implementation                | Hardware Test |
@@ -29,6 +29,7 @@ The driver configures the RTC to generate periodic interrupts while remaining op
 
 | Kind     | Name         | Port Type         | Usage                                            |
 | -------- | ------------ | ----------------- | ------------------------------------------------ |
+| `sync input` | `activeIn` | `Svc.Sched`     | Runs on every interrupt cycle to check for RTC interrupts |
 | `output` | `CycleOut`   | `Svc.Cycle`       | Periodic timing signal sent to rate group driver |
 | `output` | `timeGetOut` | `Fw.Time`         | Time get port for timestamp requests             |
 | `output` | `tlmOut`     | `Fw.Tlm`          | Telemetry port for emitting telemetry channels   |
@@ -69,7 +70,7 @@ enum ClockSource {
 
 void configure(ClockSource clk_source, TickRate rate);  // Configure RTC peripheral and clock
 void enable();                                          // Enable RTC interrupt and peripheral
-void cycle();                                           // Blocking call: waits for RTC interrupt, emits CycleOut
+void activeIn_handler(FwIndexType portNum, U32 context); // Port handler: checks for RTC interrupt, emits CycleOut
 ```
 
 ### 3.6 Os::RawTime Implementation
@@ -87,14 +88,14 @@ Timestamps combine the coarse tick counter (seconds-level precision) with the ha
 A watchdog mechanism detects when rate group processing exceeds the configured period:
 
 **Mechanism:**
-- Before each WFI sleep, `rtc_deadline_reached` flag is set to `true`
-- RTC interrupt handler checks this flag - if `false`, rate groups are still processing
-- When overrun detected, `rtc_deadline_exceeded` counter (U16) increments
-- The `CycleOverrun` telemetry channel reports this counter value on every cycle
+- On each `activeIn_handler` call, `deadline_reached` flag is set to `true`
+- RTC interrupt handler checks this flag - if `false`, rate groups are still processing from the previous cycle
+- When overrun detected, `deadline_exceeded` counter (U16) increments
+- The `CycleOverrun` telemetry channel reports this counter value on every RTC interrupt
 - Counter persists across cycles to track total overruns since boot
 
 **Telemetry:**
-- Emitted on every cycle via `tlmWrite_CycleOverrun(rtc_deadline_exceeded)`
+- Emitted on every RTC interrupt via `tlmWrite_CycleOverrun(deadline_exceeded)`
 - Ground systems can monitor for increases to detect timing constraint violations
 - Counter wraps at 65535 (U16 overflow)
 
@@ -179,37 +180,39 @@ The `configure()` method sets up the clock sources, GCLK routing, and RTC periph
 - Assert fires if GCLK or RTC peripheral synchronization times out
 - Prevents infinite loops if hardware fails to respond
 
-### 4.4 Main Loop
+### 4.4 Driving the Component
 
-The main loop repeatedly calls `cycle()` to drive rate group execution:
+The RtcDriver is driven by a passive cycler component (such as `Svc::PassiveCycler`) which calls the `activeIn` port handler:
 
 ```cpp
+// PassiveCycler's cycle() method is called from the main loop
+// It invokes all connected components' activeIn ports
 while (true) {
-    rtcDriver.cycle();  // Blocks until RTC interrupt, then emits CycleOut
+    passiveCycler.cycle();  // Calls rtcDriver.activeIn_handler (and other components)
 }
 ```
 
-**Cycle Execution Flow:**
-1. Set `rtc_deadline_reached = true` (watchdog flag)
-2. Execute WFI instruction to enter sleep mode
-3. MCU wakes on RTC CMP0 interrupt
-4. Check `rtc_wakeup_interrupt` flag
-5. If RTC interrupt:
-   - Acknowledge by clearing `rtc_wakeup_interrupt` flag
+**activeIn_handler Execution Flow:**
+1. Set `deadline_reached = true` (watchdog flag)
+2. Check `wakeup_interrupt` flag
+3. If RTC interrupt occurred:
+   - Acknowledge by clearing `wakeup_interrupt` flag
    - Capture current timestamp via `Os::RawTime::now()`
    - Emit `CycleOverrun` telemetry with current overrun count
    - Emit `CycleOut` signal with timestamp to trigger rate groups
-6. Return to caller
+4. Return to caller
 
-The WFI instruction puts the MCU in low-power mode until any interrupt occurs. The driver verifies the interrupt came from the RTC before emitting the cycle signal.
+The PassiveCycler's `cycle()` method is typically called in a loop with WFI instructions between calls to enable low-power operation. The driver checks whether an RTC interrupt has occurred and only emits signals when it has.
 
 ### 4.5 Topology Connections
 
 ```fpp
+instance passiveCycler: Svc.PassiveCycler base id 0xD00
 instance rtcDriver: Samd21.RtcDriver base id 0xE00
 instance rateGroupDriver: Svc.RateGroupDriver base id 0xE10
 
 connections RtcTiming {
+  passiveCycler.cycleOut -> rtcDriver.activeIn
   rtcDriver.CycleOut -> rateGroupDriver.CycleIn
 }
 ```

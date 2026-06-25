@@ -131,8 +131,8 @@ void RtcDriverTester::testCycle() {
     // Simulate an RTC interrupt
     this->simulateRtcInterrupt();
 
-    // Call cycle - should emit the signal
-    this->component.cycle();
+    // Call activeIn_handler - should emit the signal
+    this->invoke_to_activeIn(0, 0);
 
     // Verify cycle was emitted
     ASSERT_FROM_PORT_HISTORY_SIZE(1);
@@ -158,8 +158,8 @@ void RtcDriverTester::testCycleOverrun() {
 
     this->simulateRtcInterrupt();
 
-    // Call cycle
-    this->component.cycle();
+    // Call activeIn_handler
+    this->invoke_to_activeIn(0, 0);
 
     // Verify overrun was detected and reported
     this->assertTlmCycleOverrun(1);
@@ -187,8 +187,8 @@ void RtcDriverTester::testMultipleCycles() {
         // Simulate an RTC interrupt
         this->simulateRtcInterrupt();
 
-        // Call cycle
-        this->component.cycle();
+        // Call activeIn_handler
+        this->invoke_to_activeIn(0, i);
 
         // Verify cycle was emitted (check total count)
         ASSERT_FROM_PORT_HISTORY_SIZE(i + 1);
