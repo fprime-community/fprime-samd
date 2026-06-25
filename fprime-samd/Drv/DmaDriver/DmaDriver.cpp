@@ -10,8 +10,8 @@
 #include "config/DmaDriverConfig.hpp"
 #include "config/FwAssertArgTypeAliasAc.h"
 #include "config/FwIndexTypeAliasAc.h"
+#include "fprime-samd/Drv/DmaDriver/DmaChannel.hpp"
 #include "sam.h"
-#include "samd21/include/component/dmac.h"
 
 namespace Samd21 {
 
@@ -19,8 +19,8 @@ namespace Samd21 {
 DmaDriver* DmaDriver::s_instance = nullptr;
 
 // External references to global descriptor memory (defined in DmaChannel.cpp)
-extern DmacDescriptor dmac_base[DMAC_CH_NUM];
-extern DmacDescriptor dmac_writeback[DMAC_CH_NUM];
+extern ::DmacDescriptor dmac_base[DMAC_CH_NUM];
+extern ::DmacDescriptor dmac_writeback[DMAC_CH_NUM];
 
 // ----------------------------------------------------------------------
 // Component construction and destruction
@@ -86,22 +86,24 @@ static void setupDescriptor(DmacDescriptor* desc,
     FwSizeType beatCount = len / beatSizeBytes;
     FW_ASSERT(beatCount > 0 && beatCount <= 65535, beatCount);
 
+    auto* desc_hw = reinterpret_cast<::DmacDescriptor*>(desc);
+
     // Setup BTCTRL - Block Transfer Control
-    desc->BTCTRL.reg = DMAC_BTCTRL_VALID |         // Descriptor is valid
-                       DMAC_BTCTRL_BLOCKACT_INT |  // Generate interrupt on completion
-                       (beatSize.e << DMAC_BTCTRL_BEATSIZE_Pos) | (incrementSource ? DMAC_BTCTRL_SRCINC : 0) |
-                       (incrementDestination ? DMAC_BTCTRL_DSTINC : 0) | (stepSelection.e << DMAC_BTCTRL_STEPSEL_Pos) |
-                       (stepSize.e << DMAC_BTCTRL_STEPSIZE_Pos);
+    desc_hw->BTCTRL.reg = DMAC_BTCTRL_VALID |         // Descriptor is valid
+                          DMAC_BTCTRL_BLOCKACT_INT |  // Generate interrupt on completion
+                          (beatSize.e << DMAC_BTCTRL_BEATSIZE_Pos) | (incrementSource ? DMAC_BTCTRL_SRCINC : 0) |
+                          (incrementDestination ? DMAC_BTCTRL_DSTINC : 0) |
+                          (stepSelection.e << DMAC_BTCTRL_STEPSEL_Pos) | (stepSize.e << DMAC_BTCTRL_STEPSIZE_Pos);
 
     // Setup beat count
-    desc->BTCNT.reg = static_cast<uint16_t>(beatCount);
+    desc_hw->BTCNT.reg = static_cast<uint16_t>(beatCount);
 
     // Setup addresses (END addresses if increment is enabled)
-    desc->SRCADDR.reg = calculateEndAddress(sourceAddr, len, incrementSource);
-    desc->DSTADDR.reg = calculateEndAddress(destAddr, len, incrementDestination);
+    desc_hw->SRCADDR.reg = calculateEndAddress(sourceAddr, len, incrementSource);
+    desc_hw->DSTADDR.reg = calculateEndAddress(destAddr, len, incrementDestination);
 
     // No next descriptor by default
-    desc->DESCADDR.reg = 0;
+    desc_hw->DESCADDR.reg = 0;
 }
 
 // ----------------------------------------------------------------------
@@ -124,25 +126,25 @@ void DmaDriver::freeDescriptor(DmacDescriptor* desc) {
 }
 
 void DmaDriver::freeChain(DmacDescriptor* chainStart) {
-    DmacDescriptor* current = chainStart;
+    auto current = reinterpret_cast<::DmacDescriptor*>(chainStart);
 
     while (current != nullptr && current->DESCADDR.reg != 0) {
         // Get next descriptor before freeing current
-        DmacDescriptor* next = reinterpret_cast<DmacDescriptor*>(current->DESCADDR.reg);
+        auto next = reinterpret_cast<::DmacDescriptor*>(current->DESCADDR.reg);
 
         // Free current descriptor if it's from our pool
-        freeDescriptor(current);
+        freeDescriptor(reinterpret_cast<DmacDescriptor*>(current));
 
         current = next;
     }
 
     // Free the last descriptor (with DESCADDR == 0)
     if (current != nullptr) {
-        freeDescriptor(current);
+        freeDescriptor(reinterpret_cast<DmacDescriptor*>(current));
     }
 }
 
-void DmaDriver::init() {
+void DmaDriver::configure() {
     FW_ASSERT(!m_initialized);
 
     // Enable DMAC clocks
@@ -190,7 +192,7 @@ void DmaDriver::handleInterrupt() {
             FW_ASSERT(false, id);
         } else {
             // Pure bus error - report it
-            DmacDescriptor* wb = &dmac_writeback[id];
+            ::DmacDescriptor* wb = &dmac_writeback[id];
             U32 beatSizeBytes = m_channels[id].getBeatSizeBytes();
             U32 remainingBytes = wb->BTCNT.reg * beatSizeBytes;
 
@@ -213,7 +215,7 @@ void DmaDriver::handleInterrupt() {
             }
 
             // Free remaining chain (everything after the failed descriptor)
-            DmacDescriptor* wb = &dmac_writeback[id];
+            ::DmacDescriptor* wb = &dmac_writeback[id];
             if (wb->DESCADDR.reg != 0) {
                 freeChain(reinterpret_cast<DmacDescriptor*>(wb->DESCADDR.reg));
             }
@@ -227,7 +229,7 @@ void DmaDriver::handleInterrupt() {
     if (flags & DMAC_CHINTFLAG_SUSP) {
         if (status & DMAC_CHSTATUS_FERR) {
             // Fetch error - check if end-of-chain or invalid descriptor
-            DmacDescriptor* wb = &dmac_writeback[id];
+            ::DmacDescriptor* wb = &dmac_writeback[id];
             if (wb->DESCADDR.reg == 0x00000000) {
                 // Normal end of linked list
                 // All chained descriptors were already freed incrementally in TCMPL handler
@@ -251,7 +253,7 @@ void DmaDriver::handleInterrupt() {
     if (flags & DMAC_CHINTFLAG_TCMPL) {
         // The writeback descriptor contains the just-completed descriptor's state
         // Its DESCADDR field points to the next descriptor that's now executing
-        DmacDescriptor* wb = &dmac_writeback[id];
+        ::DmacDescriptor* wb = &dmac_writeback[id];
 
         // Only free descriptors if not in circular mode
         // In circular mode, descriptors are reused indefinitely
@@ -330,7 +332,7 @@ void DmaDriver::sendTransactionIn_handler(FwIndexType portNum,
         // startTransaction() copied the descriptor to dmac_base[portNum]
         // The original can be freed, and dmac_base[portNum] is now "executing"
         freeDescriptor(desc);
-        m_currentExecutingDesc[portNum] = &dmac_base[portNum];
+        m_currentExecutingDesc[portNum] = reinterpret_cast<DmacDescriptor*>(&dmac_base[portNum]);
     }
     // else: appendToChain() linked desc by address - it will be freed when it completes
 }
@@ -363,7 +365,7 @@ Samd21::Dma::Writeback DmaDriver::readWritebackIn_handler(FwIndexType portNum) {
     FW_ASSERT(portNum < NUM_READWRITEBACKIN_INPUT_PORTS, portNum);
 
     // Read writeback descriptor for this channel
-    DmacDescriptor* wb = &dmac_writeback[portNum];
+    ::DmacDescriptor* wb = &dmac_writeback[portNum];
 
     Samd21::Dma::Writeback result;
     result.set_btctrl(wb->BTCTRL.reg);

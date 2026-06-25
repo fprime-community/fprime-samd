@@ -13,9 +13,9 @@
 namespace Samd21 {
 
 // Global descriptor memory - 16-byte aligned, placed in special section
-__attribute__((__aligned__(16))) DmacDescriptor dmac_base[DMAC_CH_NUM] SECTION_DMAC_DESCRIPTOR;
+__attribute__((__aligned__(16))) ::DmacDescriptor dmac_base[DMAC_CH_NUM] SECTION_DMAC_DESCRIPTOR;
 
-__attribute__((__aligned__(16))) DmacDescriptor dmac_writeback[DMAC_CH_NUM] SECTION_DMAC_DESCRIPTOR;
+__attribute__((__aligned__(16))) ::DmacDescriptor dmac_writeback[DMAC_CH_NUM] SECTION_DMAC_DESCRIPTOR;
 
 // Global mutex for DMAC register access
 static Os::Mutex s_dmac_mutex;
@@ -78,10 +78,10 @@ void DmaChannel::appendToChain(DmacDescriptor* newDesc) {
     waitForChannelSuspend();
 
     // Find last descriptor in chain starting from the base descriptor for this channel
-    DmacDescriptor* lastDesc = &dmac_base[m_channel_id];
+    ::DmacDescriptor* lastDesc = &dmac_base[m_channel_id];
     while (lastDesc->DESCADDR.reg != 0) {
         // Hardware stores descriptor addresses as uint32_t - reinterpret to pointer
-        lastDesc = reinterpret_cast<DmacDescriptor*>(lastDesc->DESCADDR.reg);
+        lastDesc = reinterpret_cast<::DmacDescriptor*>(lastDesc->DESCADDR.reg);
     }
 
     // Link new descriptor - hardware requires pointer as uint32_t
@@ -126,13 +126,13 @@ void DmaChannel::linkToFront() {
     waitForChannelSuspend();
 
     // Must have at least one descriptor to make a circular chain
-    DmacDescriptor* base = &dmac_base[m_channel_id];
+    ::DmacDescriptor* base = &dmac_base[m_channel_id];
     FW_ASSERT(base->DESCADDR.reg != 0, m_channel_id);  // Must have at least one linked descriptor
 
     // Find the last descriptor in the chain
-    DmacDescriptor* lastDesc = base;
+    ::DmacDescriptor* lastDesc = base;
     while (lastDesc->DESCADDR.reg != 0) {
-        lastDesc = reinterpret_cast<DmacDescriptor*>(lastDesc->DESCADDR.reg);
+        lastDesc = reinterpret_cast<::DmacDescriptor*>(lastDesc->DESCADDR.reg);
     }
 
     // Point last descriptor back to base to create circular buffer
@@ -162,7 +162,7 @@ void DmaChannel::popFront(Samd21::Dma::Writeback& result) {
     waitForChannelSuspend();
 
     // 3. Read writeback descriptor for this channel
-    DmacDescriptor* wb = &dmac_writeback[m_channel_id];
+    ::DmacDescriptor* wb = &dmac_writeback[m_channel_id];
 
     result.set_btctrl(wb->BTCTRL.reg);
     result.set_btcnt(wb->BTCNT.reg);

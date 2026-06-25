@@ -184,7 +184,7 @@ class UsartDriver final : public UsartDriverComponentBase {
 
     //! Fifo tracking the queue of TX DMA transactions.
     //! DMA replies should come back in the same order
-    Fw::FifoQueue<ThinBuffer, UsartDriverConfig::TX_BUFFER_N> m_tx_queue;
+    Fw::FifoQueue<ThinBuffer, UsartDriverConfig::USART_TX_BUFFER_N> m_tx_queue;
 
     //! Rx buffers (A and B) for receiving data over the DMA
     ThinBuffer m_rx[2];

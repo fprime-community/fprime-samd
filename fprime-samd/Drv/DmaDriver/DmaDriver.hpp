@@ -10,7 +10,6 @@
 #include "config/DmaDriverConfig.hpp"
 #include "fprime-samd/Drv/DmaDriver/DmaChannel.hpp"
 #include "fprime-samd/Drv/DmaDriver/DmaDriverComponentAc.hpp"
-#include "samd.h"
 
 namespace Samd21 {
 
@@ -30,7 +29,7 @@ class DmaDriver final : public DmaDriverComponentBase {
     ~DmaDriver();
 
     //! Initialize the DMAC hardware (must be called before first use)
-    void init();
+    void configure();
 
     //! Handle DMA interrupt (called from DMAC_Handler)
     void handleInterrupt();

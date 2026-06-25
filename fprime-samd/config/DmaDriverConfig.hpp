@@ -4,8 +4,8 @@
  * Configuration settings for the SAMD21 UART driver component.
  */
 
-#ifndef SAMD21_USART_DRIVER_CFG_HPP_
-#define SAMD21_USART_DRIVER_CFG_HPP_
+#ifndef SAMD21_DMA_DRIVER_CFG_HPP_
+#define SAMD21_DMA_DRIVER_CFG_HPP_
 
 namespace Samd21 {
 enum DmaDriverConfig {

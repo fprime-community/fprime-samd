@@ -39,10 +39,5 @@ module Samd21 {
 
         @ Signal from ISR that a DMA transaction has completed (success or error)
         output port transactionIsrOut: [Dma.CHANNEL_NUM] Dma.TransactionReply
-
-        # The port number determines which channel is being configured/started
-
-        match transactionIsrOut with sendTransactionIn
-        match suspendIsrOut with suspendIn
     }
 }

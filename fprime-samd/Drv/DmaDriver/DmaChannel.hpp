@@ -12,9 +12,15 @@
 #include "fprime-samd/Drv/Types/TriggerSourceEnumAc.hpp"
 #include "fprime-samd/Drv/Types/WritebackSerializableAc.hpp"
 
-#include "samd.h"
-
 namespace Samd21 {
+
+struct DmacDescriptor {
+    U32 btctrl;
+    U32 btcnt;
+    U32 srcaddr;
+    U32 dstaddr;
+    U32 descaddr;
+};
 
 class DmaChannel final {
   public:
