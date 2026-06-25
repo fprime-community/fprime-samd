@@ -134,10 +134,10 @@ class UsartDriver final : public UsartDriverComponentBase {
                       Fw::Buffer& fwBuffer  //!< The buffer
                       ) override;
 
-    //! Handler for input port cycleIn
-    void cycleIn_handler(FwIndexType portNum,  //!< The port number
-                         U32 context           //!< The call order
-                         ) override;
+    //! Handler for input port activeIn
+    void activeIn_handler(FwIndexType portNum,  //!< The port number
+                          U32 context           //!< The call order
+                          ) override;
 
     // ----------------------------------------------------------------------
     // Helper functions

@@ -49,10 +49,6 @@ void RtcHal::waitForRtcMode0() {
     FW_ASSERT(limit != 0);
 }
 
-void RtcHal::waitForInterrupt() {
-    asm("wfi");
-}
-
 void RtcHal::configureGclk(RtcDriver::ClockSource clock_source) {
     // Configure GCLK4 with no division to get 32768 Hz
     REG_GCLK_GENDIV = GCLK_GENDIV_ID(0x4) | GCLK_GENDIV_DIV(1);

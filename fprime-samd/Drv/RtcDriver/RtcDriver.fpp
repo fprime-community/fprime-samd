@@ -2,6 +2,8 @@ module Samd21 {
     @ A driver for the Samd21 realtime clock
     passive component RtcDriver {
 
+        sync input port activeIn: Svc.Sched
+
         @ Implement tick interface for rate group timing
         import Drv.Tick
         import Fw.Channel

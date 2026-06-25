@@ -44,8 +44,8 @@ module Samd21 {
         @ 2. Detect IDLE Rx. Pull the in-progress DMA Rx and send it downstream
         sync input port schedIn: Svc.Sched
 
-        @ TODO(tumbar) Description
-        sync input port cycleIn: Svc.Sched
+        @ Unload the event loop to service any requests coming from interrupts
+        sync input port activeIn: Svc.Sched
 
         ####################################
         ## Buffer management ports

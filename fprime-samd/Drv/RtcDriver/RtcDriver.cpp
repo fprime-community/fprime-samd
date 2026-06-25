@@ -7,10 +7,10 @@
 #include "fprime-samd/Drv/RtcDriver/RtcDriver.hpp"
 #include "Fw/Types/Assert.hpp"
 #include "Os/RawTime.hpp"
-#include "fprime-samd/Drv/RtcDriver/RawTime.hpp"
-#include "fprime-samd/Drv/RtcDriver/RtcDriverHardware.hpp"
 #include "config/FwAssertArgTypeAliasAc.h"
 #include "config/RtcDriverConfig.hpp"
+#include "fprime-samd/Drv/RtcDriver/RawTime.hpp"
+#include "fprime-samd/Drv/RtcDriver/RtcDriverHardware.hpp"
 
 namespace Os {
 namespace Samd21 {
@@ -117,11 +117,10 @@ void RtcDriver ::enable() {
     RtcHardware::RtcHal::enableRtc();
 }
 
-void RtcDriver ::cycle() {
+void RtcDriver ::activeIn_handler(FwIndexType portNum, U32 context) {
+    // Acknowledge the ISR on every cycle
     RtcHardware::RtcState& state = RtcHardware::getRtcState();
-
     state.deadline_reached = true;
-    RtcHardware::RtcHal::waitForInterrupt();
 
     if (state.wakeup_interrupt) {
         // Acknowledge the interrupt

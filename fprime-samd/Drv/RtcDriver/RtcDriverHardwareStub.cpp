@@ -38,11 +38,6 @@ void RtcHal::waitForRtcMode0() {
     // Stub: no-op
 }
 
-void RtcHal::waitForInterrupt() {
-    // Stub: no-op for tests
-    // Tests should call simulateRtcInterrupt() explicitly before cycle()
-}
-
 void RtcHal::configureGclk(RtcDriver::ClockSource clock_source) {
     // Stub: no-op for tests
 }

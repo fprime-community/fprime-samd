@@ -361,7 +361,7 @@ void UsartDriver ::schedIn_handler(FwIndexType portNum, U32 context) {
     }
 }
 
-void UsartDriver ::cycleIn_handler(FwIndexType portNum, U32 context) {
+void UsartDriver ::activeIn_handler(FwIndexType portNum, U32 context) {
     // Unload the queue
     while (!this->m_queue.isEmpty()) {
         Signal signal;
