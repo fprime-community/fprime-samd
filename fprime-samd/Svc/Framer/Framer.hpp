@@ -9,6 +9,7 @@
 
 #include "Fw/Com/ComBuffer.hpp"
 #include "fprime-samd/Svc/Framer/FramerComponentAc.hpp"
+#include "fprime-samd/config/FramerConfig.hpp"
 
 namespace Samd21 {
 
@@ -64,9 +65,6 @@ class Framer final : public FramerComponentBase {
     //! Flush the active buffer to the driver
     void flushActiveBuffer();
 
-    //! Maximum size for a single transmit buffer (header + multiple ComBuffers + trailers)
-    static constexpr FwSizeType TX_BUFFER_SIZE = 256;
-
     //! Double-buffer state
     enum BufferState {
         IDLE,         //!< Buffer is idle and available for accumulation
@@ -75,9 +73,9 @@ class Framer final : public FramerComponentBase {
     };
 
     struct TxBuffer {
-        U8 data[TX_BUFFER_SIZE];  //!< Buffer storage
-        FwSizeType size;          //!< Current size of data in buffer
-        BufferState state;        //!< Current state of buffer
+        U8 data[FramerConfig::FRAMER_TX_BUFFER_SIZE];  //!< Buffer storage
+        FwSizeType size;                               //!< Current size of data in buffer
+        BufferState state;                             //!< Current state of buffer
     };
 
     bool m_driverConnected;

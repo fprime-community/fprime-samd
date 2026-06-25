@@ -41,7 +41,7 @@ void Framer ::comPacketQueueIn_handler(FwIndexType portNum, Fw::ComBuffer& data,
     FwSizeType spaceNeeded = data.getSize() + Svc::FprimeProtocol::FrameTrailer::SERIALIZED_SIZE;
 
     // If adding this ComBuffer would overflow, flush first
-    if (activeBuf.size + spaceNeeded > TX_BUFFER_SIZE) {
+    if (activeBuf.size + spaceNeeded > FramerConfig::FRAMER_TX_BUFFER_SIZE) {
         flushActiveBuffer();
 
         // If both buffers are in flight (backpressure), drop this packet
@@ -61,7 +61,7 @@ void Framer ::comPacketQueueIn_handler(FwIndexType portNum, Fw::ComBuffer& data,
     }
 
     // Append ComBuffer data directly to the buffer (after existing data)
-    Fw::Buffer bufWrapper(activeBuf.data + activeBuf.size, TX_BUFFER_SIZE - activeBuf.size);
+    Fw::Buffer bufWrapper(activeBuf.data + activeBuf.size, FramerConfig::FRAMER_TX_BUFFER_SIZE - activeBuf.size);
     Fw::ExternalSerializeBuffer serializer(bufWrapper.getData(), bufWrapper.getSize());
 
     Fw::SerializeStatus status =
@@ -70,7 +70,7 @@ void Framer ::comPacketQueueIn_handler(FwIndexType portNum, Fw::ComBuffer& data,
 
     // Update buffer size to include the ComBuffer data
     activeBuf.size += serializer.getSize();
-    FW_ASSERT(activeBuf.size <= TX_BUFFER_SIZE);
+    FW_ASSERT(activeBuf.size <= FramerConfig::FRAMER_TX_BUFFER_SIZE);
 }
 
 void Framer ::sendFatalPacket(Fw::ComBuffer& data) {
