@@ -3,7 +3,7 @@
 // \brief stub implementation for Samd21Os::Mutex
 // ======================================================================
 #include "Mutex.hpp"
-#include <Arduino.h>
+#include <sam.h>
 #include "Os/Mutex.hpp"
 
 namespace Os {

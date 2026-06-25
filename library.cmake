@@ -16,6 +16,7 @@ add_library(fprime_samd_mcu STATIC
     "${CMAKE_CURRENT_LIST_DIR}/fprime-samd/Mcu/Reset.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/fprime-samd/Mcu/Handlers.c"
     "${CMAKE_CURRENT_LIST_DIR}/fprime-samd/Mcu/SystemInit.c"
+    "${CMAKE_CURRENT_LIST_DIR}/fprime-samd/Mcu/SysTickStubs.c"
 )
 
 target_include_directories(fprime_samd_mcu PUBLIC

@@ -6,7 +6,8 @@
 #include <Fw/Types/assert_hook.hpp>
 #include <Fw/Types/format.hpp>
 
-#include <Arduino/config/FprimeArduino.hpp>
+#include <sam.h>
+#include "../Mcu/Delay.hpp"
 #include "Fw/Com/ComBuffer.hpp"
 #include "Fw/Types/Assert.hpp"
 #include "Fw/Types/Serializable.hpp"
