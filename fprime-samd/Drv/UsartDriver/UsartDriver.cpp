@@ -25,9 +25,15 @@ static Sercom* getSercomHw(SercomKind sercom);
 // ----------------------------------------------------------------------
 
 UsartDriver ::UsartDriver(const char* const compName)
-    : UsartDriverComponentBase(compName), m_active_rx(RxDmaBufferID::INVALID), m_configured(false) {}
+    : UsartDriverComponentBase(compName),
+      m_sercom(SercomKind::SERCOM_0),
+      m_rx_state{},
+      m_active_rx(RxDmaBufferID::INVALID),
+      m_configured(false),
+      m_rx_dog(0),
+      m_rx_dog_reset(0) {}
 
-UsartDriver ::~UsartDriver() {}
+UsartDriver ::~UsartDriver() = default;
 
 void UsartDriver ::configure(SercomKind sercom,
                              RxPinOut rx,
@@ -50,6 +56,44 @@ void UsartDriver ::configure(SercomKind sercom,
 
     // Store configuration
     m_sercom = sercom;
+
+    // Enable SERCOM peripheral clock (APBC bus)
+    // Per §8.6 PM – Power Manager and datasheet Table 14-2
+    switch (sercom.e) {
+        case SercomKind::SERCOM_0:
+            PM->APBCMASK.reg |= PM_APBCMASK_SERCOM0;
+            break;
+        case SercomKind::SERCOM_1:
+            PM->APBCMASK.reg |= PM_APBCMASK_SERCOM1;
+            break;
+        case SercomKind::SERCOM_2:
+            PM->APBCMASK.reg |= PM_APBCMASK_SERCOM2;
+            break;
+        case SercomKind::SERCOM_3:
+            PM->APBCMASK.reg |= PM_APBCMASK_SERCOM3;
+            break;
+#ifdef SERCOM4
+        case SercomKind::SERCOM_4:
+            PM->APBCMASK.reg |= PM_APBCMASK_SERCOM4;
+            break;
+#endif
+#ifdef SERCOM5
+        case SercomKind::SERCOM_5:
+            PM->APBCMASK.reg |= PM_APBCMASK_SERCOM5;
+            break;
+#endif
+        default:
+            FW_ASSERT(false, static_cast<FwAssertArgType>(sercom));
+    }
+
+    // Assign Generic Clock Generator 0 (48MHz) to this SERCOM
+    // Per §14.8.3 GCLK_CLKCTRL – Generic Clock Control
+    U8 gclk_id = static_cast<U8>(GCLK_CLKCTRL_ID_SERCOM0_CORE_Val) + sercom.e;
+    GCLK->CLKCTRL.reg = GCLK_CLKCTRL_ID(gclk_id) |
+                        GCLK_CLKCTRL_GEN_GCLK0 |  // Use Generic Clock Generator 0 (48MHz main clock)
+                        GCLK_CLKCTRL_CLKEN;
+    while (GCLK->STATUS.bit.SYNCBUSY)
+        ;
 
     // Build CTRLA and CTRLB registers per §27.6.2.1 initialization sequence
     // Steps 1-4, 6, 7a configure CTRLA; steps 5, 7b, 8, 10 configure CTRLB
@@ -216,13 +260,11 @@ void UsartDriver ::configure(SercomKind sercom,
     }
 
     // Allocate buffers for the Rx
-    this->m_rx[0] = ThinBuffer(this->allocate_out(0, rx_buffer_size));
-    this->m_rx[1] = ThinBuffer(this->allocate_out(0, rx_buffer_size));
+    auto rx_buffer = this->allocate_out(0, rx_buffer_size);
+    auto each_buffer_size = rx_buffer_size / 2;
 
-    // Send these buffers to the DMA
-    this->dmaQueueRxSend(this->m_rx[0]);
-    this->dmaQueueRxSend(this->m_rx[1]);
-    this->dmaRxCircular_out(0);
+    this->m_rx[0] = ThinBuffer(rx_buffer.getData(), each_buffer_size);
+    this->m_rx[1] = ThinBuffer(&rx_buffer.getData()[each_buffer_size], each_buffer_size);
 
     // Initialize the RX state
     this->m_rx_state[0] = RxDmaBufferState::DMA;
@@ -230,6 +272,11 @@ void UsartDriver ::configure(SercomKind sercom,
     this->m_active_rx = RxDmaBufferID::A;
     this->m_rx_dog = rx_dog_cnt;
     this->m_rx_dog_reset = rx_dog_cnt;
+
+    // Send these buffers to the DMA
+    this->dmaQueueRxSend(this->m_rx[0]);
+    this->dmaQueueRxSend(this->m_rx[1]);
+    this->dmaRxCircular_out(0);
 
     this->m_configured = true;
 
@@ -267,7 +314,7 @@ static Sercom* getSercomHw(SercomKind sercom) {
             return SERCOM5;
 #endif
         default:
-            FW_ASSERT(0, sercom.e);
+            FW_ASSERT(false, sercom.e);
             return nullptr;
     }
 }
@@ -315,7 +362,6 @@ Dma::TriggerSource UsartDriver ::getSercomTxTrigger(SercomKind sercom) {
             return Dma::TriggerSource::SERCOM4_TX;
         case SercomKind::SERCOM_5:
             return Dma::TriggerSource::SERCOM5_TX;
-            break;
         default:
             FW_ASSERT(0, static_cast<FwAssertArgType>(sercom));
     }
@@ -335,7 +381,6 @@ Dma::TriggerSource UsartDriver ::getSercomRxTrigger(SercomKind sercom) {
             return Dma::TriggerSource::SERCOM4_RX;
         case SercomKind::SERCOM_5:
             return Dma::TriggerSource::SERCOM5_RX;
-            break;
         default:
             FW_ASSERT(0, static_cast<FwAssertArgType>(sercom));
     }
@@ -346,105 +391,121 @@ Dma::TriggerSource UsartDriver ::getSercomRxTrigger(SercomKind sercom) {
 // ----------------------------------------------------------------------
 
 void UsartDriver ::schedIn_handler(FwIndexType portNum, U32 context) {
-    FW_ASSERT(this->m_rx_dog > 0);
-    this->m_rx_dog -= 1;
+    if (this->m_configured) {
+        FW_ASSERT(this->m_rx_dog > 0);
+        this->m_rx_dog -= 1;
 
-    if (this->m_rx_dog == 0) {
-        // We have tripped the idle watchdog!
+        if (this->m_rx_dog == 0) {
+            // We have tripped the idle watchdog!
 
-        // Read the active Rx transfer
-        auto currentRx = this->dmaRxPopCurrent_out(0);
+            // Read the active Rx transfer
+            auto currentRx = this->dmaRxPopCurrent_out(0);
 
-        // Notify our queue of the current Rx status
-        this->m_queue.enqueue(Samd21::UsartDriver::Signal{
-            .kind = SignalKind::RX_BUFFER_DONE, .rx = m_active_rx, .rx_bytes_remaining = currentRx.get_btcnt()});
+            // Check if we received any bytes
+            // Notify our queue of the current Rx status
+            this->m_queue.enqueue(Signal{
+                .kind = SignalKind::RX_BUFFER_DONE, .rx = m_active_rx, .rx_bytes_remaining = currentRx.get_btcnt()});
+            // The watchdog is acknowledged in the active loop
+        }
     }
 }
 
 void UsartDriver ::activeIn_handler(FwIndexType portNum, U32 context) {
-    // Unload the queue
-    while (!this->m_queue.isEmpty()) {
-        Signal signal;
-        auto status = this->m_queue.dequeue(signal);
-        FW_ASSERT(status == Fw::Success::SUCCESS, status);
+    if (this->m_configured) {
+        // Unload the queue
+        while (!this->m_queue.isEmpty()) {
+            Signal signal;
+            auto status = this->m_queue.dequeue(signal);
+            FW_ASSERT(status == Fw::Success::SUCCESS, status);
 
-        ThinBuffer thinBuffer;
-        Fw::Buffer thickBuffer;
-        Fw::Success bufferStatus;
+            ThinBuffer thinBuffer;
+            Fw::Buffer thickBuffer;
+            Fw::Success bufferStatus;
 
-        switch (signal.kind) {
-            case SignalKind::TX_BUFFER_OK:
-                bufferStatus = this->m_tx_queue.dequeue(thinBuffer);
-                FW_ASSERT(bufferStatus == Fw::Success::SUCCESS);
-                thickBuffer = thinBuffer.getBuffer();
-
-                this->sendReturnOut_out(0, thickBuffer, Drv::ByteStreamStatus::OP_OK);
-                break;
-            case SignalKind::TX_CHANNEL_ERROR:
-                // A tx channel error indicates the entire TX DMA channel needs to be restarted
-                // We need to dump all the bending buffers on the queue
-                while (!this->m_tx_queue.isEmpty()) {
+            switch (signal.kind) {
+                case SignalKind::TX_BUFFER_OK:
                     bufferStatus = this->m_tx_queue.dequeue(thinBuffer);
                     FW_ASSERT(bufferStatus == Fw::Success::SUCCESS);
                     thickBuffer = thinBuffer.getBuffer();
-                    this->sendReturnOut_out(0, thickBuffer, Drv::ByteStreamStatus::OTHER_ERROR);
+
+                    this->sendReturnOut_out(0, thickBuffer, Drv::ByteStreamStatus::OP_OK);
+                    break;
+                case SignalKind::TX_CHANNEL_ERROR:
+                    // A tx channel error indicates the entire TX DMA channel needs to be restarted
+                    // We need to dump all the bending buffers on the queue
+                    while (!this->m_tx_queue.isEmpty()) {
+                        bufferStatus = this->m_tx_queue.dequeue(thinBuffer);
+                        FW_ASSERT(bufferStatus == Fw::Success::SUCCESS);
+                        thickBuffer = thinBuffer.getBuffer();
+                        this->sendReturnOut_out(0, thickBuffer, Drv::ByteStreamStatus::OTHER_ERROR);
+                    }
+
+                    break;
+                case SignalKind::RX_BUFFER_DONE: {
+                    // Stroke the RX watchdog
+                    this->m_rx_dog = this->m_rx_dog_reset;
+
+                    switch (signal.rx) {
+                        case RxDmaBufferID::A:
+                            // Make sure our expected state matches
+                            FW_ASSERT(this->m_rx_state[0] == RxDmaBufferState::DMA,
+                                      static_cast<FwAssertArgType>(this->m_rx_state[0]));
+                            FW_ASSERT(this->m_rx_state[1] == RxDmaBufferState::DMA_WAITING,
+                                      static_cast<FwAssertArgType>(this->m_rx_state[1]));
+
+                            // Update all the states to represent the new overall state
+                            this->m_active_rx = RxDmaBufferID::B;
+                            this->m_rx_state[1] = RxDmaBufferState::DMA;
+                            this->m_rx_state[0] = RxDmaBufferState::IN_USE;
+                            thickBuffer = this->m_rx[0].getBuffer();
+                            break;
+                        case RxDmaBufferID::B:
+                            // Make sure our expected state matches
+                            FW_ASSERT(this->m_rx_state[1] == RxDmaBufferState::DMA,
+                                      static_cast<FwAssertArgType>(this->m_rx_state[1]));
+                            FW_ASSERT(this->m_rx_state[0] == RxDmaBufferState::DMA_WAITING,
+                                      static_cast<FwAssertArgType>(this->m_rx_state[0]));
+
+                            // Update all the states to represent the new overall state
+                            this->m_active_rx = RxDmaBufferID::A;
+                            this->m_rx_state[0] = RxDmaBufferState::DMA;
+                            this->m_rx_state[1] = RxDmaBufferState::IN_USE;
+                            thickBuffer = this->m_rx[1].getBuffer();
+                            break;
+                        case RxDmaBufferID::INVALID:
+                            FW_ASSERT(false, static_cast<FwAssertArgType>(signal.rx));
+                    }
+
+                    FW_ASSERT(thickBuffer.getSize() >= signal.rx_bytes_remaining);
+                    thickBuffer.setSize(thickBuffer.getSize() - signal.rx_bytes_remaining);
+
+                    // Send out the data we received to downstream processes
+                    if (thickBuffer.getSize() > 0) {
+                        this->recv_out(0, thickBuffer, Drv::ByteStreamStatus::OP_OK);
+                    } else {
+                        // We have not received any data, but we tripped the watchdog.
+                        // Pass this buffer back to the DMA
+                        switch (signal.rx) {
+                            case RxDmaBufferID::A:
+                                this->m_rx_state[0] = RxDmaBufferState::DMA_WAITING;
+                                break;
+                            case RxDmaBufferID::B:
+                                this->m_rx_state[1] = RxDmaBufferState::DMA_WAITING;
+                                break;
+                            case RxDmaBufferID::INVALID:
+                                FW_ASSERT(false, static_cast<FwAssertArgType>(signal.rx));
+                        }
+                    }
+
+                    break;
                 }
-
-                break;
-            case SignalKind::RX_BUFFER_DONE: {
-                // Stroke the RX watchdog
-                this->m_rx_dog = this->m_rx_dog_reset;
-
-                switch (signal.rx) {
-                    case RxDmaBufferID::A:
-                        // Make sure our expected state matches
-                        FW_ASSERT(this->m_rx_state[0] == RxDmaBufferState::DMA,
-                                  static_cast<FwAssertArgType>(this->m_rx_state[0]));
-                        FW_ASSERT(this->m_rx_state[1] == RxDmaBufferState::DMA_WAITING,
-                                  static_cast<FwAssertArgType>(this->m_rx_state[1]));
-
-                        // Update all the states to represent the new overall state
-                        this->m_active_rx = RxDmaBufferID::B;
-                        this->m_rx_state[1] = RxDmaBufferState::DMA;
-                        this->m_rx_state[0] = RxDmaBufferState::IN_USE;
-                        thickBuffer = this->m_rx[0].getBuffer();
-                        break;
-                    case RxDmaBufferID::B:
-                        // Make sure our expected state matches
-                        FW_ASSERT(this->m_rx_state[1] == RxDmaBufferState::DMA,
-                                  static_cast<FwAssertArgType>(this->m_rx_state[1]));
-                        FW_ASSERT(this->m_rx_state[0] == RxDmaBufferState::DMA_WAITING,
-                                  static_cast<FwAssertArgType>(this->m_rx_state[0]));
-
-                        // Update all the states to represent the new overall state
-                        this->m_active_rx = RxDmaBufferID::A;
-                        this->m_rx_state[0] = RxDmaBufferState::DMA;
-                        this->m_rx_state[1] = RxDmaBufferState::IN_USE;
-                        thickBuffer = this->m_rx[1].getBuffer();
-                        break;
-                    case RxDmaBufferID::INVALID:
-                        FW_ASSERT(false, static_cast<FwAssertArgType>(signal.rx));
-                }
-
-                FW_ASSERT(thickBuffer.getSize() >= signal.rx_bytes_remaining);
-                thickBuffer.setSize(thickBuffer.getSize() - signal.rx_bytes_remaining);
-
-                // Send out the data we received to downstream processes
-                if (thickBuffer.getSize() > 0) {
-                    this->recv_out(0, thickBuffer, Drv::ByteStreamStatus::OP_OK);
-                } else {
-                    // We have not received any data but we tripped the watchdog.
-                    // We can drop this signal
-                }
-
-                break;
+                case SignalKind::RX_CHANNEL_ERROR:
+                    // TODO(tumbar) What do we do here? Give the buffer back to DMA?
+                    FW_ASSERT(false);
+                    break;
+                default:
+                    FW_ASSERT(false, static_cast<FwAssertArgType>(signal.kind));
             }
-            case SignalKind::RX_CHANNEL_ERROR:
-                // TODO(tumbar) What do we do here? Give the buffer back to DMA?
-                FW_ASSERT(false);
-                break;
-            default:
-                FW_ASSERT(false, static_cast<FwAssertArgType>(signal.kind));
         }
     }
 }
@@ -464,7 +525,9 @@ void UsartDriver ::dmaReplyIn_handler(FwIndexType portNum, const Samd21::Dma::Re
 
 void UsartDriver ::recvReturnIn_handler(FwIndexType portNum, Fw::Buffer& fwBuffer) {
     // The 'other' buffer (i.e. non currently DMA-ing buffer) should be in-use.
-    // When we get the buffer back we
+    // When we get the buffer back, transition to DMA_WAITING and re-queue to DMA
+    // Note: ThinBuffer preserves the original buffer size, so calling getBuffer()
+    // on it will create a fresh Fw::Buffer with the full size restored
     switch (this->m_active_rx) {
         case RxDmaBufferID::A:
             FW_ASSERT(this->m_rx_state[1] == RxDmaBufferState::IN_USE,
@@ -477,7 +540,7 @@ void UsartDriver ::recvReturnIn_handler(FwIndexType portNum, Fw::Buffer& fwBuffe
             this->m_rx_state[0] = RxDmaBufferState::DMA_WAITING;
             break;
         case RxDmaBufferID::INVALID:
-            break;
+            FW_ASSERT(false);
     }
 }
 

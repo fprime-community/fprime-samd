@@ -13,8 +13,8 @@
 register_fprime_library(
     AUTOCODER_INPUTS
         "${CMAKE_CURRENT_LIST_DIR}/Dma.fpp"
-        "${CMAKE_CURRENT_LIST_DIR}/Pins.fpp"
         "${CMAKE_CURRENT_LIST_DIR}/Types.fpp"
     SOURCES
         "${CMAKE_CURRENT_LIST_DIR}/ThinBuffer.cpp"
+        "${CMAKE_CURRENT_LIST_DIR}/PinMux.cpp"
 )
