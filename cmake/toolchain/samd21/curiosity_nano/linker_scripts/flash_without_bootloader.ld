@@ -57,15 +57,21 @@ ENTRY(Reset_Handler)
 
 SECTIONS
 {
+	.isr_vector :
+	{
+		__isr_vector_start = .;
+		KEEP(*(.isr_vector))
+		__isr_vector_end = .;
+	} > FLASH
+
 	.text :
 	{
 		__text_start__ = .;
 
-		KEEP(*(.isr_vector))
-		*(.text*)
-
 		KEEP(*(.init))
 		KEEP(*(.fini))
+
+		*(.text*)
 
 		/* .ctors */
 		*crtbegin.o(.ctors)

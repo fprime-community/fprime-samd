@@ -15,8 +15,8 @@
 namespace Samd21 {
 
 struct DmacDescriptor {
-    U32 btctrl;
-    U32 btcnt;
+    U16 btctrl;
+    U16 btcnt;
     U32 srcaddr;
     U32 dstaddr;
     U32 descaddr;

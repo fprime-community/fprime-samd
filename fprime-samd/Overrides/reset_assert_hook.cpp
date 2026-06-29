@@ -54,6 +54,10 @@ void Fw::defaultPrintAssert(const CHAR* msg) {
     }
 }
 
+void trigger_breakpoint() {
+    __asm__ volatile ("BKPT #0");
+}
+
 void Fw::defaultReportAssert(FILE_NAME_ARG file,
                              FwSizeType lineNo,
                              FwSizeType numArgs,
@@ -65,6 +69,8 @@ void Fw::defaultReportAssert(FILE_NAME_ARG file,
                              FwAssertArgType arg6,
                              CHAR* destBuffer,
                              FwSizeType buffSize) {
+    trigger_breakpoint();
+
     static volatile bool assertReached = false;
     if (assertReached) {
         // Assert within assert!

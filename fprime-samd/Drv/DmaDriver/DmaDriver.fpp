@@ -27,15 +27,8 @@ module Samd21 {
         @ Returns: Writeback state at suspend point
         guarded input port popFrontIn: [Dma.CHANNEL_NUM] Dma.ReadWriteback
 
-        @ Suspend a DMA channel.
-        @ This will trigger suspendIsrOut after the DMA channel has finished transferring its current block
-        guarded input port suspendIn: [Dma.CHANNEL_NUM] Fw.Signal
-
         @ Read the writeback register on the active DMA transfer for this channel
         sync input port readWritebackIn: [Dma.CHANNEL_NUM] Dma.ReadWriteback
-
-        @ Signal from ISR that a DMA channel has been suspended
-        output port suspendIsrOut: [Dma.CHANNEL_NUM] Fw.Signal
 
         @ Signal from ISR that a DMA transaction has completed (success or error)
         output port transactionIsrOut: [Dma.CHANNEL_NUM] Dma.TransactionReply

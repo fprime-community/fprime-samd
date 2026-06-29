@@ -14,7 +14,7 @@ add_compile_definitions(
 )
 
 # Enable LTO for this board (has limited flash)
-set(SAMD21_LTO ON)
+set(SAMD21_LTO OFF)
 
 # Set the board type
 set(BOARD_TYPE "SAMD21_CURIOSITY_NANO")
@@ -22,14 +22,17 @@ set(BOARD_TYPE "SAMD21_CURIOSITY_NANO")
 # Variant directory (relative to this toolchain file)
 get_filename_component(CURIOSITY_VARIANT_DIR "${CMAKE_CURRENT_LIST_DIR}/samd21/curiosity_nano" ABSOLUTE)
 
-# Linker script
-set(CMAKE_EXE_LINKER_FLAGS_INIT "${CMAKE_EXE_LINKER_FLAGS_INIT} \
-    -T${CURIOSITY_VARIANT_DIR}/linker_scripts/flash_without_bootloader.ld \
-    -L${CURIOSITY_VARIANT_DIR}/linker_scripts \
-")
+# Set linker script path (will be used after common toolchain is included)
+set(SAMD21_LINKER_SCRIPT "${CURIOSITY_VARIANT_DIR}/linker_scripts/flash_without_bootloader.ld")
 
 # Include common samd21 toolchain setup
 include("${CMAKE_CURRENT_LIST_DIR}/samd21-common.cmake")
+
+# Add linker script AFTER common toolchain (so it doesn't get overwritten)
+set(CMAKE_EXE_LINKER_FLAGS_INIT "${CMAKE_EXE_LINKER_FLAGS_INIT} \
+    -T${SAMD21_LINKER_SCRIPT} \
+    -L${CURIOSITY_VARIANT_DIR}/linker_scripts \
+")
 
 # Board-specific defines (after toolchain, so they append to CMAKE_C/CXX_FLAGS_INIT)
 set(CMAKE_C_FLAGS_INIT "${CMAKE_C_FLAGS_INIT} \

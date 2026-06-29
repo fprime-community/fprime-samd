@@ -26,7 +26,7 @@ extern ::DmacDescriptor dmac_writeback[DMAC_CH_NUM];
 // Component construction and destruction
 // ----------------------------------------------------------------------
 
-DmaDriver::DmaDriver(const char* const compName) : DmaDriverComponentBase(compName) {
+DmaDriver::DmaDriver(const char* const compName) : DmaDriverComponentBase(compName), m_initialized(false) {
     // Initialize each channel with its ID using setter
     for (U8 i = 0; i < DMAC_CH_NUM; i++) {
         m_channels[i].setChannelId(i);
@@ -73,6 +73,8 @@ static void setupDescriptor(DmacDescriptor* desc,
                             bool incrementDestination,
                             const Samd21::Dma::AddressIncrementStepSize& stepSize,
                             const Samd21::Dma::StepSelection& stepSelection) {
+    static_assert(sizeof(::DmacDescriptor) == sizeof(Samd21::DmacDescriptor), "sam.h descriptor does not match Samd21::Dm");
+
     // Validate parameters
     FW_ASSERT(desc != nullptr);
     FW_ASSERT(sourceAddr);
@@ -240,9 +242,6 @@ void DmaDriver::handleInterrupt() {
                 // Invalid descriptor with non-zero DESCADDR - programming error
                 FW_ASSERT(false, id, wb->DESCADDR.reg);
             }
-        } else {
-            // User-requested suspend (not completion)
-            this->suspendIsrOut_out(id);
         }
 
         // Clear flag
@@ -351,13 +350,6 @@ Samd21::Dma::Writeback DmaDriver::popFrontIn_handler(FwIndexType portNum) {
     Samd21::Dma::Writeback result;
     m_channels[portNum].popFront(result);
     return result;
-}
-
-void DmaDriver::suspendIn_handler(FwIndexType portNum) {
-    FW_ASSERT(m_initialized);
-    FW_ASSERT(portNum < NUM_SUSPENDIN_INPUT_PORTS, portNum);
-
-    m_channels[portNum].suspend();
 }
 
 Samd21::Dma::Writeback DmaDriver::readWritebackIn_handler(FwIndexType portNum) {

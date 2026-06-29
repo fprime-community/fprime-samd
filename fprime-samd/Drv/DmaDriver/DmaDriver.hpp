@@ -47,20 +47,20 @@ class DmaDriver final : public DmaDriverComponentBase {
     //! Updates the final DmaDescriptor in the chain configured on this channel to link
     //! back to the first. This allows this channel to loop to the first transaction continuously.
     void linkToFrontIn_handler(FwIndexType portNum  //!< The port number
-                              ) override;
+                               ) override;
 
     //! Handler implementation for popFrontIn
     //!
     //! Suspend the channel, read writeback, and advance to the next descriptor.
     //! Used for IDLE frame detection: process partial buffer and move to alternate.
-    Samd21::Dma::Writeback popFrontIn_handler(FwIndexType portNum  //!< The port number
-                                             ) override;
+    Dma::Writeback popFrontIn_handler(FwIndexType portNum  //!< The port number
+                                      ) override;
 
     //! Handler implementation for readWritebackIn
     //!
     //! Read the writeback register on the active DMA transfer for this channel
-    Samd21::Dma::Writeback readWritebackIn_handler(FwIndexType portNum  //!< The port number
-                                                   ) override;
+    Dma::Writeback readWritebackIn_handler(FwIndexType portNum  //!< The port number
+                                           ) override;
 
     //! Handler implementation for sendTransactionIn
     //!
@@ -68,31 +68,24 @@ class DmaDriver final : public DmaDriverComponentBase {
     //! If the channel is idle, the transaction starts immediately.
     //! If the channel is busy, the transaction is appended to the linked descriptor chain.
     void sendTransactionIn_handler(
-        FwIndexType portNum,                        //!< The port number
-        const Samd21::Dma::TriggerSource& trigger,  //!< DMA controller trigger source
-        const Samd21::Dma::TransactionType&
-            action,  //!< DMA controller behavior on this channel given memory and a trigger source
-        const Samd21::Dma::Priority& priority,  //!< DMA transaction priority
-        U32 sourceAddr,                         //!< The source address to move data from
-        U32 destAddr,                           //!< The destination address to move data to
-        U32 len,                                //!< Number of bytes to copy from source to destination
-        const Samd21::Dma::BeatSize& beatSize,  //!< Size of each beat. Controls the width of each DMA action
+        FwIndexType portNum,                //!< The port number
+        const Dma::TriggerSource& trigger,  //!< DMA controller trigger source
+        const Dma::TransactionType&
+            action,                     //!< DMA controller behavior on this channel given memory and a trigger source
+        const Dma::Priority& priority,  //!< DMA transaction priority
+        U32 sourceAddr,                 //!< The source address to move data from
+        U32 destAddr,                   //!< The destination address to move data to
+        U32 len,                        //!< Number of bytes to copy from source to destination
+        const Dma::BeatSize& beatSize,  //!< Size of each beat. Controls the width of each DMA action
         bool incrementSource,  //!< Whether the DMA controller should increment the source pointer after each action
                                //!< signal
         bool incrementDestination,  //!< Whether the DMA controller should increment the destination pointer after each
                                     //!< action signal
-        const Samd21::Dma::AddressIncrementStepSize&
+        const Dma::AddressIncrementStepSize&
             stepSize,  //!< Size to increment address (source/dest when enabled) on each beat
-        const Samd21::Dma::StepSelection&
+        const Dma::StepSelection&
             stepSelection  //!< Determines whether the step size setting is applied to the source or destination address
         ) override;
-
-    //! Handler implementation for suspendIn
-    //!
-    //! Suspend a DMA channel.
-    //! This will trigger suspendIsrOut after the DMA channel has finished transferring its current block
-    void suspendIn_handler(FwIndexType portNum  //!< The port number
-                           ) override;
 
   private:
     //! Free a descriptor back to the pool
@@ -107,11 +100,11 @@ class DmaDriver final : public DmaDriverComponentBase {
     //! Bitfield tracking if the descriptor is in use
     U32 m_descriptors_used;
 
-    DmaChannel m_channels[DmaDriver::NUM_SENDTRANSACTIONIN_INPUT_PORTS];
+    DmaChannel m_channels[NUM_SENDTRANSACTIONIN_INPUT_PORTS];
 
     //! Track the currently executing descriptor for each channel (for incremental freeing)
     //! Points to the descriptor currently loaded in hardware (dmac_base or from m_descriptors)
-    DmacDescriptor* m_currentExecutingDesc[DmaDriver::NUM_SENDTRANSACTIONIN_INPUT_PORTS];
+    DmacDescriptor* m_currentExecutingDesc[NUM_SENDTRANSACTIONIN_INPUT_PORTS];
 
     bool m_initialized;
 };

@@ -19,7 +19,7 @@ The driver implements a descriptor-based architecture with support for linked de
 | SAMD21-DMA-007  | The DmaDriver shall support 8-bit, 16-bit, and 32-bit beat sizes            | Hardware Test |
 | SAMD21-DMA-008  | The DmaDriver shall support configurable address increment modes             | Hardware Test |
 | SAMD21-DMA-009  | The DmaDriver shall detect and report bus errors via ISR output ports        | Hardware Test |
-| SAMD21-DMA-010  | The DmaDriver shall support channel suspend/resume operations                | Hardware Test |
+| SAMD21-DMA-010  | The DmaDriver shall support popFront operations for partial buffer processing | Hardware Test |
 | SAMD21-DMA-011  | The DmaDriver shall provide writeback register access for live monitoring    | Hardware Test |
 | SAMD21-DMA-012  | The DmaDriver shall emit completion signals via interrupt-driven ports       | Hardware Test |
 
@@ -33,11 +33,11 @@ The driver implements a descriptor-based architecture with support for linked de
 
 | Kind     | Name                  | Port Type              | Usage                                                     |
 | -------- | --------------------- | ---------------------- | --------------------------------------------------------- |
-| `sync input` | `sendTransactionIn`   | `DmaTransaction`       | Queue DMA transaction on channel (array of 12 ports)      |
-| `sync input` | `suspendIn`           | `Fw.Signal`            | Suspend active channel (array of 12 ports)                |
-| `sync input` | `readWritebackIn`     | `DmaReadWriteback`     | Read writeback descriptor (array of 12 ports)             |
-| `output` | `transactionIsrOut`   | `DmaTransactionReply`  | Transaction completion signal from ISR (array of 12 ports)|
-| `output` | `suspendIsrOut`       | `Fw.Signal`            | Suspend completion signal from ISR (array of 12 ports)    |
+| `guarded input` | `sendTransactionIn`   | `Dma.Transaction`       | Queue DMA transaction on channel (array of 12 ports)      |
+| `guarded input` | `linkToFrontIn`       | `Fw.Signal`            | Link last descriptor to first for looping (array of 12 ports) |
+| `guarded input` | `popFrontIn`          | `Dma.ReadWriteback`    | Suspend, read writeback, advance to next descriptor (array of 12 ports) |
+| `sync input` | `readWritebackIn`     | `Dma.ReadWriteback`     | Read writeback descriptor (array of 12 ports)             |
+| `output` | `transactionIsrOut`   | `Dma.TransactionReply`  | Transaction completion signal from ISR (array of 12 ports)|
 
 Port indices 0-11 map directly to DMAC hardware channels 0-11.
 
@@ -66,7 +66,20 @@ Port indices 0-11 map directly to DMAC hardware channels 0-11.
 - **srcaddr / dstaddr** - Current addresses
 - **descaddr** - Next descriptor address (0 if last)
 
-### 3.4 Hardware Configuration
+### 3.4 Advanced Operations
+
+**linkToFrontIn port** - Configures the last descriptor in a channel's linked chain to loop back to the first descriptor. This enables continuous circular transfers where the channel automatically restarts from the beginning after completing the last descriptor. Used for applications requiring seamless looping (e.g., continuous ADC sampling, circular audio buffers).
+
+**popFrontIn port** - Handles IDLE frame detection by suspending the channel, reading the writeback state, and advancing to the next descriptor. This operation:
+1. Suspends the channel (if not already suspended)
+2. Waits for CHINTFLAG.SUSP to confirm suspension
+3. Reads and returns the writeback state (caller can calculate bytes received as `original_BTCNT - writeback.btcnt`)
+4. Sets writeback BTCNT to 0 to skip to the next descriptor
+5. Resumes the channel
+
+This is critical for UART protocols where IDLE detection requires processing a partial buffer and immediately switching to an alternate buffer to avoid data loss.
+
+### 3.5 Hardware Configuration
 
 The `init()` method configures the DMAC peripheral:
 - Enables DMAC clocks (AHBMASK and APBBMASK)
@@ -75,7 +88,7 @@ The `init()` method configures the DMAC peripheral:
 - Enables all 4 priority levels
 - Enables DMAC interrupt in NVIC at lowest priority
 
-### 3.5 Descriptor Architecture
+### 3.6 Descriptor Architecture
 
 Each channel uses a descriptor-based transfer model:
 
@@ -85,19 +98,17 @@ Each channel uses a descriptor-based transfer model:
 
 Transactions can be queued while a channel is active. The driver suspends the channel momentarily, links the new descriptor to the chain, and resumes automatically.
 
-### 3.6 Interrupt Handling
+### 3.7 Interrupt Handling
 
-The driver handles three interrupt types:
+The driver handles two interrupt types:
 
 **Transfer Complete (TCMPL)** - Descriptor completed successfully, emits `transactionIsrOut` with status OK
 
 **Transfer Error (TERR)** - AHB bus error (invalid address, MPU violation), emits `transactionIsrOut` with status BUS_ERROR and remaining byte count
 
-**Suspend (SUSP)** - Channel suspended, either user-requested (emits `suspendIsrOut`) or end-of-linked-chain (emits `transactionIsrOut` with status OK)
+### 3.8 Thread Safety
 
-### 3.7 Thread Safety
-
-A global mutex protects DMAC register access when submitting transactions or suspending channels from multiple F´ threads. ISR context reads registers without mutex protection.
+A global mutex protects DMAC register access when submitting transactions or performing popFront operations from multiple F´ threads. ISR context reads registers without mutex protection.
 
 ## 4. Usage
 
@@ -162,7 +173,38 @@ dmaDriver.sendTransactionIn_out(3, ..., buf2, output+128, 256, ...);
 dmaDriver.sendTransactionIn_out(3, ..., buf3, output+384, 64, ...);
 ```
 
-### 4.5 Topology Connections
+### 4.5 Circular Buffer with linkToFront
+
+Configure a channel to loop continuously through a linked descriptor chain:
+
+```cpp
+// Queue multiple descriptors
+dmaDriver.sendTransactionIn_out(2, ..., buf1, dest, 256, ...);
+dmaDriver.sendTransactionIn_out(2, ..., buf2, dest, 256, ...);
+dmaDriver.sendTransactionIn_out(2, ..., buf3, dest, 256, ...);
+
+// Link last descriptor back to first for continuous looping
+dmaDriver.linkToFrontIn_out(2);
+```
+
+### 4.6 IDLE Frame Detection with popFront
+
+Handle UART IDLE detection by processing partial buffers:
+
+```cpp
+// On IDLE interrupt from UART peripheral:
+Dma::Writeback wb = dmaDriver.popFrontIn_out(1);  // Channel 1
+
+// Calculate bytes received in current buffer
+U32 bytesReceived = originalBtcnt - wb.btcnt;
+
+// Process the partial buffer
+processUartData(currentBuffer, bytesReceived);
+
+// Channel has automatically advanced to next descriptor (alternate buffer)
+```
+
+### 4.7 Topology Connections
 
 ```fpp
 instance dmaDriver: Samd21.DmaDriver base id 0xD00

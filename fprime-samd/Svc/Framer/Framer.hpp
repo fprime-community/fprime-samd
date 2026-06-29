@@ -61,7 +61,6 @@ class Framer final : public FramerComponentBase {
                          U32 context           //!< The call order
                          ) override;
 
-  private:
     //! Flush the active buffer to the driver
     void flushActiveBuffer();
 

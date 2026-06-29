@@ -28,7 +28,7 @@ register_fprime_library(
 # Disable LTO on ISR file to avoid DMAC_Handler ISR getting optimized away
 if (SAMD21_LTO)
     set_source_files_properties(
-        "${CMAKE_CURRENT_LIST_DIR}/RtcDriverIsr.cpp"
+        "${CMAKE_CURRENT_LIST_DIR}/DmaDriverIsr.cpp"
         PROPERTIES COMPILE_FLAGS "-fno-lto"
     )
 endif()

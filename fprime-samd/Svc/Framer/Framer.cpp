@@ -33,8 +33,6 @@ Framer ::~Framer() {}
 // ----------------------------------------------------------------------
 
 void Framer ::comPacketQueueIn_handler(FwIndexType portNum, Fw::ComBuffer& data, U32 context) {
-    FW_ASSERT(m_driverConnected);
-
     TxBuffer& activeBuf = m_buffers[m_activeBufferIdx];
 
     // Calculate space needed: ComBuffer data + trailer (header already reserved)
@@ -78,7 +76,7 @@ void Framer ::sendFatalPacket(Fw::ComBuffer& data) {
 }
 
 void Framer ::drvConnected_handler(FwIndexType portNum) {
-    m_driverConnected = true;
+    this->m_driverConnected = true;
 }
 
 void Framer ::drvReturnIn_handler(FwIndexType portNum, Fw::Buffer& fwBuffer, const Drv::ByteStreamStatus& status) {
@@ -95,6 +93,8 @@ void Framer ::drvReturnIn_handler(FwIndexType portNum, Fw::Buffer& fwBuffer, con
 }
 
 void Framer ::flushActiveBuffer() {
+    FW_ASSERT(this->m_driverConnected);
+
     TxBuffer& activeBuf = m_buffers[m_activeBufferIdx];
 
     // Nothing to flush if buffer is idle or contains only header
@@ -136,12 +136,12 @@ void Framer ::flushActiveBuffer() {
     // Update size to include trailer
     FwSizeType totalFrameSize = activeBuf.size + Svc::FprimeProtocol::FrameTrailer::SERIALIZED_SIZE;
 
+    // Mark buffer as in-flight
+    activeBuf.state = TRANSMITTING;
+
     // Send the complete frame to the driver
     Fw::Buffer txBuffer(activeBuf.data, totalFrameSize);
     drvSendOut_out(0, txBuffer);
-
-    // Mark buffer as in-flight
-    activeBuf.state = TRANSMITTING;
 
     // Try to switch to the other buffer
     FwIndexType nextBufferIdx = (m_activeBufferIdx + 1) % 2;

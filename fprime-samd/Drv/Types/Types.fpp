@@ -9,5 +9,4 @@ module Samd21 {
         SERCOM_4,
         SERCOM_5,
     }
-
 }
