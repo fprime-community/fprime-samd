@@ -73,7 +73,8 @@ static void setupDescriptor(DmacDescriptor* desc,
                             bool incrementDestination,
                             const Samd21::Dma::AddressIncrementStepSize& stepSize,
                             const Samd21::Dma::StepSelection& stepSelection) {
-    static_assert(sizeof(::DmacDescriptor) == sizeof(Samd21::DmacDescriptor), "sam.h descriptor does not match Samd21::Dm");
+    static_assert(sizeof(::DmacDescriptor) == sizeof(Samd21::DmacDescriptor),
+                  "sam.h descriptor does not match Samd21::Dm");
 
     // Validate parameters
     FW_ASSERT(desc != nullptr);

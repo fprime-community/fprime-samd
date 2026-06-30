@@ -27,12 +27,34 @@ The driver configures the RTC to generate periodic interrupts while remaining op
 
 ### 3.2 Ports
 
-| Kind     | Name         | Port Type         | Usage                                            |
-| -------- | ------------ | ----------------- | ------------------------------------------------ |
-| `sync input` | `activeIn` | `Svc.Sched`     | Runs on every interrupt cycle to check for RTC interrupts |
-| `output` | `CycleOut`   | `Svc.Cycle`       | Periodic timing signal sent to rate group driver |
-| `output` | `timeGetOut` | `Fw.Time`         | Time get port for timestamp requests             |
-| `output` | `tlmOut`     | `Fw.Tlm`          | Telemetry port for emitting telemetry channels   |
+| Kind          | Name         | Port Type         | Usage                                            |
+| ------------- | ------------ | ----------------- | ------------------------------------------------ |
+| `sync input`  | `activeIn`   | `Svc.Sched`       | Cycled by PassiveCycler to poll for RTC interrupts |
+| `output`      | `CycleOut`   | `Svc.Cycle`       | Periodic timing signal sent to rate group driver |
+| `output`      | `timeGetOut` | `Fw.Time`         | Time get port for timestamp requests             |
+| `output`      | `tlmOut`     | `Fw.Tlm`          | Telemetry port for emitting telemetry channels   |
+
+#### 3.2.1 activeIn Port Pattern
+
+The `activeIn` port is the key mechanism for driving the RtcDriver in a passive, baremetal system without an RTOS. This port must be connected to a `Svc::PassiveCycler` component which repeatedly invokes all connected components from the main execution loop.
+
+**Port Handler Behavior:**
+
+On each `activeIn_handler` invocation:
+1. **Watchdog Reset**: Sets `deadline_reached = true` to signal the ISR that processing completed before the next interrupt
+2. **Interrupt Poll**: Checks the `wakeup_interrupt` flag set by the RTC ISR
+3. **Cycle Emission**: If an RTC interrupt occurred:
+   - Clears the `wakeup_interrupt` flag to acknowledge the interrupt
+   - Captures the current timestamp via `Os::RawTime::now()`
+   - Emits `CycleOverrun` telemetry with the current overrun count
+   - Calls `CycleOut_out(0, cycle_start)` to trigger downstream rate groups
+4. **Return**: Returns immediately if no interrupt occurred (no-op cycle)
+
+**Why This Pattern:**
+
+In baremetal F´ deployments, active components (threads) are not available. The PassiveCycler provides a polling mechanism that allows passive components to be "driven" by the main loop while still responding to hardware interrupts efficiently. The RTC hardware interrupt sets a flag (`wakeup_interrupt`), and the main loop polls this flag via `activeIn` to determine when to emit timing signals.
+
+This pattern separates interrupt handling (minimal ISR that sets a flag) from signal processing (full F´ port invocations with timestamps and telemetry), keeping ISR latency low while maintaining clean component boundaries.
 
 ### 3.3 Telemetry
 
@@ -183,27 +205,53 @@ The `configure()` method sets up the clock sources, GCLK routing, and RTC periph
 
 ### 4.4 Driving the Component
 
-The RtcDriver is driven by a passive cycler component (such as `Svc::PassiveCycler`) which calls the `activeIn` port handler:
+#### 4.4.1 PassiveCycler Integration
+
+The RtcDriver requires a `Svc::PassiveCycler` component to drive its `activeIn` port from the main execution loop. The PassiveCycler acts as a dispatcher that cycles through all connected passive components on each iteration:
 
 ```cpp
-// PassiveCycler's cycle() method is called from the main loop
-// It invokes all connected components' activeIn ports
+// Main loop continuously cycles the PassiveCycler
+// which invokes all connected components' activeIn ports
 while (true) {
     passiveCycler.cycle();  // Calls rtcDriver.activeIn_handler (and other components)
+    __WFI();                // Wait-For-Interrupt: sleep until next hardware event
 }
 ```
 
-**activeIn_handler Execution Flow:**
-1. Set `deadline_reached = true` (watchdog flag)
-2. Check `wakeup_interrupt` flag
-3. If RTC interrupt occurred:
-   - Acknowledge by clearing `wakeup_interrupt` flag
-   - Capture current timestamp via `Os::RawTime::now()`
-   - Emit `CycleOverrun` telemetry with current overrun count
-   - Emit `CycleOut` signal with timestamp to trigger rate groups
-4. Return to caller
+**Main Loop Execution:**
+1. `passiveCycler.cycle()` invokes all connected `activeIn` ports in sequence
+2. Each component (including RtcDriver) checks for pending work (interrupts, events, etc.)
+3. `__WFI()` puts the CPU into low-power sleep mode until the next hardware interrupt
+4. RTC interrupt wakes the CPU and sets the `wakeup_interrupt` flag
+5. Loop repeats: PassiveCycler polls again, RtcDriver detects the flag and emits signals
 
-The PassiveCycler's `cycle()` method is typically called in a loop with WFI instructions between calls to enable low-power operation. The driver checks whether an RTC interrupt has occurred and only emits signals when it has.
+This pattern enables efficient power management: the CPU sleeps between RTC ticks and wakes only when hardware events occur, while still allowing F´ components to process interrupts through standard port interfaces.
+
+#### 4.4.2 activeIn_handler Execution Flow
+
+Each time the PassiveCycler calls `activeIn_handler`:
+
+1. **Watchdog Reset**: Set `deadline_reached = true` (signals ISR that previous cycle completed)
+2. **Interrupt Check**: Check if `wakeup_interrupt` flag is set (indicates RTC interrupt occurred)
+3. **Signal Emission** (if interrupt occurred):
+   - Acknowledge interrupt by clearing `wakeup_interrupt = false`
+   - Capture current timestamp: `Os::RawTime::now()` (combines tick counter + hardware counter)
+   - Emit `CycleOverrun` telemetry: `tlmWrite_CycleOverrun(deadline_exceeded)` (reports overrun count)
+   - Emit cycle signal: `CycleOut_out(0, cycle_start)` (triggers downstream rate groups)
+4. **Return**: Return to PassiveCycler (no-op if no interrupt occurred)
+
+**Interrupt vs Port Handler Responsibilities:**
+
+| Responsibility                          | RTC ISR                       | activeIn_handler                |
+| --------------------------------------- | ----------------------------- | ------------------------------- |
+| Latency requirement                     | Minimal (< 10 µs)             | Full cycle budget (e.g., 125 ms @ 8Hz) |
+| Interrupt flag management               | Set `wakeup_interrupt = true` | Clear `wakeup_interrupt = false` |
+| Watchdog check                          | Check `deadline_reached`      | Set `deadline_reached = true`   |
+| F´ port invocations                     | None                          | `CycleOut_out()`, `tlmWrite_*()`|
+| Timestamp capture                       | None                          | `Os::RawTime::now()`            |
+| Overrun detection                       | Increment `deadline_exceeded` | Report via telemetry            |
+
+This separation keeps ISR overhead minimal while allowing full F´ functionality (timestamps, telemetry, port calls) in the port handler.
 
 ### 4.5 Topology Connections
 
