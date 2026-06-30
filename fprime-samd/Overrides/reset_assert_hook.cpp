@@ -27,14 +27,14 @@ extern void sendFatalPacket(Fw::ComBuffer& data);
 extern void sendBailFrame(FILE_NAME_ARG file, FwSizeType lineNo);
 }  // namespace Samd21
 
-extern "C" void HardFault_Handler(void) {
-    Samd21::sendBailFrame(0x0, 0x0);
-    Fw::defaultDoAssert();
+void trigger_breakpoint() {
+    __BKPT(2);
 }
 
 void Fw::defaultDoAssert() {
     // Hold for 10s to allow flashing without reinitializing the USB
     // TODO(tumbar) We will want to disable RTC interrupts here
+    trigger_breakpoint();
     __disable_irq();
     NVIC_SystemReset();
 
@@ -54,10 +54,6 @@ void Fw::defaultPrintAssert(const CHAR* msg) {
     }
 }
 
-void trigger_breakpoint() {
-    __asm__ volatile ("BKPT #0");
-}
-
 void Fw::defaultReportAssert(FILE_NAME_ARG file,
                              FwSizeType lineNo,
                              FwSizeType numArgs,
@@ -69,16 +65,14 @@ void Fw::defaultReportAssert(FILE_NAME_ARG file,
                              FwAssertArgType arg6,
                              CHAR* destBuffer,
                              FwSizeType buffSize) {
-    trigger_breakpoint();
-
     static volatile bool assertReached = false;
     if (assertReached) {
-        // Assert within assert!
-        for (int i = 0; i < 10; i++) {
-            Samd21::sendBailFrame(file, lineNo);
-            delay(1000);
-        }
-        delay(1000);
+        // // Assert within assert!
+        // for (int i = 0; i < 10; i++) {
+        //     Samd21::sendBailFrame(file, lineNo);
+        //     delay(1000);
+        // }
+        // delay(1000);
         Fw::defaultDoAssert();
         return;
     }
