@@ -8,13 +8,13 @@ module Samd21 {
 
         @ Invoke this port to send data out the driver (asynchronous)
         @ Status and ownership of the buffer are returned through the sendReturnOut callback
-        guarded input port $send: Fw.BufferSend @< send buffer to the DMAC synchronously
+        sync input port $send: Fw.BufferSend @< send buffer to the DMAC synchronously
 
         @ Port returning ownership of data received on $send port
         output port sendReturnOut: Drv.ByteStreamData
 
         @ Port receiving back ownership of data sent out on $recv port
-        guarded input port recvReturnIn: Fw.BufferSend
+        sync input port recvReturnIn: Fw.BufferSend
     }
 
     @ Universal Synchronous and Asynchronous Receiver and Transmitter Driver for SAMD21 SERCOM
@@ -38,24 +38,22 @@ module Samd21 {
 
         import AsyncNonQueuedByteStreamDriver
 
-        @ Service the UART driver at a fixed rate:
-        @
-        @ 1. Return Tx buffers that finished DMA transmission.
-        @ 2. Detect IDLE Rx. Pull the in-progress DMA Rx and send it downstream
+        @ REQUIRED CONNECTION: Service the UART driver at a fixed rate for idle RX detection.
+        @ This port MUST be connected to a rate group (e.g., 1Hz-8Hz).
+        @ On each rate group tick, this handler:
+        @ 1. Decrements the idle watchdog counter
+        @ 2. Triggers partial RX frame extraction when the watchdog expires
+        @ Without this connection, the driver can only receive full buffers.
         sync input port schedIn: Svc.Sched
 
-        @ Unload the event loop to service any requests coming from interrupts
+        @ REQUIRED CONNECTION: Process the internal signal queue from DMA ISR handlers.
+        @ This port MUST be connected to a PassiveCycler driven by the main loop.
+        @ This handler:
+        @ 1. Dequeues signals from DMA completion ISRs
+        @ 2. Returns TX buffers with status to senders
+        @ 3. Sends RX buffers downstream to consumers
+        @ Without this connection, all TX/RX operations will hang.
         sync input port activeIn: Svc.Sched
-
-        ####################################
-        ## Buffer management ports
-        ####################################
-
-        @ Allocation port used for allocating memory in the receive task
-        output port allocate: Fw.BufferGet
-
-        @ Deallocation of allocated buffers
-        output port deallocate: Fw.BufferSend
 
         ####################################
         ## DMA management ports

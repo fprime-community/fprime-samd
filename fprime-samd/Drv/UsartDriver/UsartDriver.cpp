@@ -10,10 +10,11 @@
 #include "Fw/Types/SuccessEnumAc.hpp"
 #include "config/FwAssertArgTypeAliasAc.h"
 #include "config/FwIndexTypeAliasAc.h"
-#include "config/FwSizeTypeAliasAc.h"
 #include "fprime-samd/Drv/Types/PriorityEnumAc.hpp"
+#include "fprime-samd/Drv/Types/ThinBuffer.hpp"
 #include "fprime-samd/Drv/Types/TriggerSourceEnumAc.hpp"
 #include "fprime-samd/Drv/UsartDriver/UsartDriver_DmaChannelEnumAc.hpp"
+#include "fprime-samd/config/UsartDriverConfig.hpp"
 #include "samd.h"
 
 namespace Samd21 {
@@ -45,7 +46,6 @@ void UsartDriver ::configure(SercomKind sercom,
                              DataBits data_bits,
                              StopBits stop_bits,
                              Parity parity,
-                             FwSizeType rx_buffer_size,
                              U16 rx_dog_cnt) {
     FW_ASSERT(!this->m_configured, static_cast<FwAssertArgType>(sercom));
     FW_ASSERT(rx_dog_cnt > 0, static_cast<FwAssertArgType>(sercom));
@@ -256,13 +256,6 @@ void UsartDriver ::configure(SercomKind sercom,
             ;
     }
 
-    // Allocate buffers for the Rx
-    auto rx_buffer = this->allocate_out(0, rx_buffer_size);
-    auto each_buffer_size = rx_buffer_size / 2;
-
-    this->m_rx[0] = ThinBuffer(rx_buffer.getData(), each_buffer_size);
-    this->m_rx[1] = ThinBuffer(&rx_buffer.getData()[each_buffer_size], each_buffer_size);
-
     // Initialize the RX state
     this->m_rx_state[0] = RxDmaBufferState::DMA;
     this->m_rx_state[1] = RxDmaBufferState::DMA_WAITING;
@@ -271,8 +264,8 @@ void UsartDriver ::configure(SercomKind sercom,
     this->m_rx_dog_reset = rx_dog_cnt;
 
     // Send these buffers to the DMA
-    this->dmaQueueRxSend(this->m_rx[0]);
-    this->dmaQueueRxSend(this->m_rx[1]);
+    this->dmaQueueRxSend(ThinBuffer(this->m_rx[0].data, USART_RX_BUFFER_SIZE));
+    this->dmaQueueRxSend(ThinBuffer(this->m_rx[1].data, USART_RX_BUFFER_SIZE));
     this->dmaRxCircular_out(0);
 
     this->m_configured = true;
@@ -461,7 +454,7 @@ void UsartDriver ::activeIn_handler(FwIndexType portNum, U32 context) {
                             this->m_active_rx = RxDmaBufferID::B;
                             this->m_rx_state[1] = RxDmaBufferState::DMA;
                             this->m_rx_state[0] = RxDmaBufferState::IN_USE;
-                            thickBuffer = this->m_rx[0].getBuffer();
+                            thickBuffer = Fw::Buffer(this->m_rx[0].data, USART_RX_BUFFER_SIZE);
                             break;
                         case RxDmaBufferID::B:
                             // Make sure our expected state matches
@@ -474,7 +467,7 @@ void UsartDriver ::activeIn_handler(FwIndexType portNum, U32 context) {
                             this->m_active_rx = RxDmaBufferID::A;
                             this->m_rx_state[0] = RxDmaBufferState::DMA;
                             this->m_rx_state[1] = RxDmaBufferState::IN_USE;
-                            thickBuffer = this->m_rx[1].getBuffer();
+                            thickBuffer = Fw::Buffer(this->m_rx[1].data, USART_RX_BUFFER_SIZE);
                             break;
                         case RxDmaBufferID::INVALID:
                             FW_ASSERT(false, static_cast<FwAssertArgType>(signal.rx));

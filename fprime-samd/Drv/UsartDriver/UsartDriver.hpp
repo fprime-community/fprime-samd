@@ -8,7 +8,6 @@
 #define Samd21_UsartDriver_HPP
 
 #include "Fw/DataStructures/FifoQueue.hpp"
-#include "config/FwSizeTypeAliasAc.h"
 #include "config/UsartDriverConfig.hpp"
 #include "fprime-samd/Drv/Types/SercomKindEnumAc.hpp"
 #include "fprime-samd/Drv/Types/ThinBuffer.hpp"
@@ -98,7 +97,6 @@ class UsartDriver final : public UsartDriverComponentBase {
                    DataBits data_bits,
                    StopBits stop_bits,
                    Parity parity,
-                   FwSizeType rx_buffer_size,
                    U16 rx_dog_cnt);
 
   private:
@@ -186,8 +184,12 @@ class UsartDriver final : public UsartDriverComponentBase {
     //! DMA replies should come back in the same order
     Fw::FifoQueue<ThinBuffer, UsartDriverConfig::USART_TX_BUFFER_N> m_tx_queue;
 
+    struct RxBuffer {
+        U8 data[USART_RX_BUFFER_SIZE];
+    };
+
     //! Rx buffers (A and B) for receiving data over the DMA
-    ThinBuffer m_rx[2];
+    RxBuffer m_rx[2];
     RxDmaBufferState m_rx_state[2];
     RxDmaBufferID m_active_rx;
 

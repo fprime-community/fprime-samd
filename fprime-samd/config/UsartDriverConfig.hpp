@@ -9,8 +9,12 @@
 
 namespace Samd21 {
 enum UsartDriverConfig {
-    //!< Length of the TX job queue
+    //! Length of the TX job queue
     USART_TX_BUFFER_N = 2,
+
+    //! Length of each Rx buffer
+    //! Each USART driver will allocate two Rx buffers
+    USART_RX_BUFFER_SIZE = 256,
 };
 }  // namespace Samd21
 

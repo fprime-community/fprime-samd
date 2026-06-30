@@ -3,15 +3,22 @@
 ## 1. Introduction
 
 The `Samd21::UsartDriver` component provides a hardware driver for the SAMD21 SERCOM peripheral configured in USART (
-Universal Synchronous and Asynchronous Receiver Transmitter) mode. This passive component implements the F´
-`Drv.ByteStreamDriver` interface with DMA-accelerated transmission and reception, supporting both asynchronous and
-synchronous communication modes.
+Universal Synchronous and Asynchronous Receiver Transmitter) mode. This passive component uses a custom
+`AsyncNonQueuedByteStreamDriver` interface inspired by F´'s `Drv.ByteStreamDriver` pattern but adapted for baremetal
+deployments with DMA-accelerated transmission and reception, supporting both asynchronous and synchronous communication
+modes.
 
 The driver uses a dual-buffer circular receive strategy with DMA channels for both TX and RX operations. Transmission is
 queue-based with asynchronous completion callbacks, while reception uses double-buffering with an idle watchdog to
 detect partial frames. The component is cycled via the `activeIn` port (typically connected to a `Svc::PassiveCycler`
 component) to process DMA completion signals and the `schedIn` port (typically connected to a rate group) to detect idle
 periods on receive.
+
+**Design Note:** This driver does NOT implement the standard F´ `Drv.ByteStreamDriver` interface. The custom
+`AsyncNonQueuedByteStreamDriver` interface is required because the standard interface assumes either an active component
+with a queue or a purely synchronous passive component. This driver needs neither — it's passive (no thread) but handles
+asynchronous DMA completions via ISR-to-main-loop signaling. The topology must use baremetal-aware components (e.g.,
+`Samd21.Framer`) that understand this custom interface rather than standard F´ components expecting `Drv.ByteStreamDriver`.
 
 ## 2. Requirements
 
@@ -27,26 +34,27 @@ periods on receive.
 
 ### 3.1 Component Diagram
 
-`Samd21::UsartDriver` is a passive component that implements the `Drv.ByteStreamDriver` interface pattern using the
-custom `AsyncNonQueuedByteStreamDriver` interface defined in the same FPP file.
+`Samd21::UsartDriver` is a passive component that uses a custom `AsyncNonQueuedByteStreamDriver` interface defined in
+the same FPP file. This interface is based on the F´ `Drv.ByteStreamDriver` pattern but is specifically designed for
+baremetal deployments using passive cycling and DMA. Unlike the standard `Drv.ByteStreamDriver`, this component requires
+explicit wiring to a `PassiveCycler` (via `activeIn`) and a rate group (via `schedIn`) to function correctly. This design
+is optimized for single-threaded baremetal environments where all work is driven by hardware interrupts and cyclic scheduling.
 
 ### 3.2 Ports
 
-| Kind            | Name              | Port Type              | Usage                                                    |
-|-----------------|-------------------|------------------------|----------------------------------------------------------|
-| `guarded input` | `send`            | `Fw.BufferSend`        | Send data buffer out the UART (queued asynchronously)    |
-| `guarded input` | `recvReturnIn`    | `Fw.BufferSend`        | Return ownership of received buffer back to driver       |
-| `sync input`    | `dmaReplyIn[2]`   | `Dma.TransactionReply` | DMA completion signals from DMAC (called in ISR context) |
-| `sync input`    | `schedIn`         | `Svc.Sched`            | Rate group handler for idle detection watchdog           |
-| `sync input`    | `activeIn`        | `Svc.Sched`            | Active handler for processing DMA completion queue       |
-| `output`        | `ready`           | `Drv.ByteStreamReady`  | Signals driver is ready to send/receive data             |
-| `output`        | `recv`            | `Drv.ByteStreamData`   | Outputs received data to downstream consumers            |
-| `output`        | `sendReturnOut`   | `Drv.ByteStreamData`   | Returns ownership of sent buffer with status             |
-| `output`        | `allocate`        | `Fw.BufferGet`         | Allocates RX buffers during initialization               |
-| `output`        | `deallocate`      | `Fw.BufferSend`        | Deallocates buffers (unused currently)                   |
-| `output`        | `dmaQueueOut[2]`  | `Dma.Transaction`      | Sends DMA transaction requests to DMAC driver            |
-| `output`        | `dmaRxCircular`   | `Fw.Signal`            | Configures RX DMA channel for circular mode              |
-| `output`        | `dmaRxPopCurrent` | `Dma.ReadWriteback`    | Reads current RX DMA transfer state during idle          |
+| Kind          | Name              | Port Type              | Usage                                                                              |
+|---------------|-------------------|------------------------|------------------------------------------------------------------------------------|
+| `sync input`  | `send`            | `Fw.BufferSend`        | Send data buffer out the UART (queued for DMA transmission)                       |
+| `sync input`  | `recvReturnIn`    | `Fw.BufferSend`        | Return ownership of received buffer back to driver for reuse                      |
+| `sync input`  | `dmaReplyIn[2]`   | `Dma.TransactionReply` | DMA completion signals from DMAC (called in ISR context)                          |
+| `sync input`  | `schedIn`         | `Svc.Sched`            | **REQUIRED:** Rate group handler for idle RX detection (must connect to rate group) |
+| `sync input`  | `activeIn`        | `Svc.Sched`            | **REQUIRED:** Signal queue processor (must connect to PassiveCycler)                |
+| `output`      | `ready`           | `Drv.ByteStreamReady`  | Signals driver is ready to send/receive data                                       |
+| `output`      | `recv`            | `Drv.ByteStreamData`   | Outputs received data to downstream consumers                                      |
+| `output`      | `sendReturnOut`   | `Drv.ByteStreamData`   | Returns ownership of sent buffer with completion status                            |
+| `output`      | `dmaQueueOut[2]`  | `Dma.Transaction`      | Sends DMA transaction requests to DMAC driver                                      |
+| `output`      | `dmaRxCircular`   | `Fw.Signal`            | Configures RX DMA channel for circular mode                                        |
+| `output`      | `dmaRxPopCurrent` | `Dma.ReadWriteback`    | Reads current RX DMA transfer state during idle periods                            |
 
 ### 3.3 Hardware Configuration
 
@@ -123,7 +131,6 @@ void configure(SercomKind sercom,
                DataBits data_bits,
                StopBits stop_bits,
                Parity parity,
-               FwSizeType rx_buffer_size,
                U16 rx_dog_cnt);
 ```
 
@@ -164,7 +171,7 @@ The driver implements a double-buffered circular receive strategy with idle dete
 
 **RX Double-Buffer Operation:**
 
-1. Two equal-size buffers (A and B) allocated via `allocate_out()` port
+1. Two equal-size buffers (A and B) statically allocated within the component (`USART_RX_BUFFER_SIZE` bytes each, configurable via `UsartDriverConfig.hpp`)
 2. Both buffers queued to DMA in circular mode during `configure()`
 3. At any time:
     - One buffer is actively receiving (state = `DMA`)
@@ -222,6 +229,15 @@ The driver uses a signal queue (`m_queue`) to decouple ISR context from port inv
 4. Handler dequeues all pending signals and invokes output ports
 5. This ensures no F´ port calls occur within ISR context
 
+**Why Sync Ports for Send/RecvReturn:**
+
+The `$send` and `recvReturnIn` ports are `sync` (not `guarded`) because:
+- This is a baremetal deployment with no RTOS — there are no concurrent threads, only ISR context and main context
+- All port invocations happen in the main context (via `activeIn_handler` or external callers)
+- The internal signal queue already provides ISR-to-main-context decoupling
+- Mutex protection (`guarded`) would add unnecessary overhead with no concurrency benefit
+- In a future multi-core deployment, the entire driver instance would be bound to a single core, so intra-core mutexes are still not needed
+
 ### 3.8 Baud Rate Calculation
 
 The driver calculates the USART BAUD register value based on mode:
@@ -250,18 +266,20 @@ Range: 0-255 (asserted during configuration)
 
 ### 4.1 Configuration
 
-The driver supports configuration of TX queue depth via `config/UsartDriverConfig.hpp`:
+The driver supports compile-time configuration via `config/UsartDriverConfig.hpp`:
 
 ```cpp
 namespace Samd21 {
 enum UsartDriverConfig {
-    USART_TX_BUFFER_N = 2,  // Number of pending TX buffers
+    USART_TX_BUFFER_N = 2,      // Number of pending TX buffers (default: 2)
+    USART_RX_BUFFER_SIZE = 256, // Size of each RX buffer in bytes (default: 256)
 };
 }
 ```
 
-Increasing `USART_TX_BUFFER_N` allows more TX requests to be queued simultaneously, reducing `SEND_RETRY` occurrences
-under high TX load.
+**Configuration Notes:**
+- `USART_TX_BUFFER_N`: Increasing this allows more TX requests to be queued simultaneously, reducing `SEND_RETRY` occurrences under high TX load.
+- `USART_RX_BUFFER_SIZE`: Each UsartDriver instance allocates **two** RX buffers of this size statically. Total memory per instance = `2 * USART_RX_BUFFER_SIZE` bytes. On SAMD21 with 16KB RAM, this is a significant allocation — size accordingly.
 
 ### 4.2 Common Configurations
 
@@ -286,10 +304,11 @@ usartDriver.configure(
     UsartDriver::DataBits::BITS_8,
     UsartDriver::StopBits::ONE,
     UsartDriver::Parity::NONE,
-    256,   // RX buffer size (128 bytes per buffer)
-    10     // Idle watchdog count (10 ticks = ~1.25s at 8Hz)
+    8     // Idle watchdog count (8 ticks = 1s at 8Hz rate group)
 );
 ```
+
+**Note:** RX buffer size is now configured at compile-time via `USART_RX_BUFFER_SIZE` in `UsartDriverConfig.hpp`, not as a runtime parameter.
 
 ### 4.3 Initialization Sequence
 
@@ -306,14 +325,13 @@ The `configure()` method performs the following steps:
 6. Disable USART peripheral for configuration
 7. Write CTRLA and CTRLB registers (enable-protected)
 8. Calculate and write BAUD register (internal clock only)
-9. Allocate RX buffers via `allocate_out()` port
-10. Initialize RX state machine (A = `DMA`, B = `DMA_WAITING`)
-11. Queue both RX buffers to DMA
-12. Configure RX DMA for circular mode via `dmaRxCircular_out()`
-13. Set `m_configured = true`
-14. Enable USART peripheral
-15. Enable transmitter and receiver (TXEN, RXEN bits)
-16. Signal ready via `ready_out()` port
+9. Initialize RX state machine (A = `DMA`, B = `DMA_WAITING`) using statically allocated buffers
+10. Queue both RX buffers to DMA
+11. Configure RX DMA for circular mode via `dmaRxCircular_out()`
+12. Set `m_configured = true`
+13. Enable USART peripheral
+14. Enable transmitter and receiver (TXEN, RXEN bits)
+15. Signal ready via `ready_out()` port
 
 **Safety Features:**
 
@@ -353,29 +371,30 @@ The `schedIn_handler()` decrements the idle watchdog and triggers partial RX fra
 instance passiveCycler: Svc.PassiveCycler base id 0xD00
 instance usartDriver: Samd21.UsartDriver base id 0xF00
 instance dmacDriver: Samd21.DmacDriver base id 0xF10
-instance staticMallocator: Svc.StaticMemAllocator base id 0xF20
 instance rateGroup1Hz: Svc.ActiveRateGroup base id 0xF30
 
 connections UsartComm {
-  # Cycler drives the driver
+  # REQUIRED: Cycler drives the driver (processes signal queue from ISRs)
   passiveCycler.cycleOut -> usartDriver.activeIn
 
-  # Rate group provides idle watchdog ticks
+  # REQUIRED: Rate group provides idle watchdog ticks (detects partial RX frames)
   rateGroup1Hz.RateGroupMemberOut[0] -> usartDriver.schedIn
 
-  # DMA channel connections
-  usartDriver.dmaQueueOut[0] -> dmacDriver.jobIn[0]   # TX channel
-  usartDriver.dmaQueueOut[1] -> dmacDriver.jobIn[1]   # RX channel
-  dmacDriver.jobReplyOut[0] -> usartDriver.dmaReplyIn[0]
-  dmacDriver.jobReplyOut[1] -> usartDriver.dmaReplyIn[1]
-  usartDriver.dmaRxCircular -> dmacDriver.channelCircularIn[1]
-  usartDriver.dmaRxPopCurrent -> dmacDriver.channelReadWritebackIn[1]
+  # DMA channel connections (TX)
+  usartDriver.dmaQueueOut[Samd21.UsartDriver.DmaChannel.TX] -> dmaDriver.sendTransactionIn[0]
+  dmaDriver.transactionIsrOut[0] -> usartDriver.dmaReplyIn[Samd21.UsartDriver.DmaChannel.TX]
 
-  # Buffer allocation for RX
-  usartDriver.allocate -> staticMallocator.bufferAllocate
-  usartDriver.deallocate -> staticMallocator.bufferDeallocate
+  # DMA channel connections (RX)
+  usartDriver.dmaQueueOut[Samd21.UsartDriver.DmaChannel.RX] -> dmaDriver.sendTransactionIn[1]
+  dmaDriver.transactionIsrOut[1] -> usartDriver.dmaReplyIn[Samd21.UsartDriver.DmaChannel.RX]
+  usartDriver.dmaRxCircular -> dmaDriver.linkToFrontIn[1]
+  usartDriver.dmaRxPopCurrent -> dmaDriver.popFrontIn[1]
 }
 ```
+
+**Critical Wiring Requirements:**
+- `activeIn` **must** be connected to a `PassiveCycler` driven by the main loop. This port processes the internal signal queue populated by DMA ISR handlers. Without this connection, TX/RX buffers will never be returned to their owners.
+- `schedIn` **must** be connected to a rate group (1Hz-8Hz recommended). This port drives the idle watchdog that detects partial RX frames. Without this connection, the driver can only receive full buffers and will miss short messages.
 
 ### 4.6 Tested Configurations
 
@@ -395,10 +414,13 @@ This component has been tested on the following hardware venues:
 
 ### 5.2 Memory Usage
 
-- **Static**: ~220 bytes (component state, queues)
-- **Dynamic**: 0 bytes (all allocations via `allocate` port during `configure()`)
-- **RX Buffers**: User-configured via `rx_buffer_size` parameter (typically 128-256 bytes total)
-- **TX Queue**: `USART_TX_BUFFER_N * sizeof(ThinBuffer)` = `2 * 16` = 32 bytes
+- **Static per instance**: 
+  - Component state: ~80 bytes (queues, state machines, flags)
+  - RX buffers: `2 * USART_RX_BUFFER_SIZE` bytes (default: 512 bytes)
+  - TX queue: `USART_TX_BUFFER_N * sizeof(ThinBuffer)` ≈ 32 bytes
+  - **Total**: ~600 bytes per instance (with default config)
+- **Dynamic**: 0 bytes (no heap allocations)
+- **Stack**: Minimal (< 100 bytes worst-case for handler call chains)
 
 ### 5.3 Limitations
 
