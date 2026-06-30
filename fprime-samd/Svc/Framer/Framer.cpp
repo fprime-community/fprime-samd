@@ -38,6 +38,12 @@ void Framer ::comPacketQueueIn_handler(FwIndexType portNum, Fw::ComBuffer& data,
     // Calculate space needed: ComBuffer data + trailer (header already reserved)
     FwSizeType spaceNeeded = data.getSize() + Svc::FprimeProtocol::FrameTrailer::SERIALIZED_SIZE;
 
+    // If both buffers are in flight (backpressure), drop this packet
+    if (activeBuf.state == TRANSMITTING) {
+        // TODO: Add telemetry to track dropped packets due to backpressure
+        return;
+    }
+
     // If adding this ComBuffer would overflow, flush first
     if (activeBuf.size + spaceNeeded > FramerConfig::FRAMER_TX_BUFFER_SIZE) {
         flushActiveBuffer();

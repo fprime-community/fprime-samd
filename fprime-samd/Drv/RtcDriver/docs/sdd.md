@@ -144,9 +144,10 @@ This allows projects to use non-standard external crystal frequencies while main
 
 This component has been tested on the following hardware venues:
 
-| Board Name | Chip       | Tick rate | Clock source    |
-| ---------- | ---------- | --------- | --------------- |
-| QtPy       | SAMD21E18A | 8Hz       | Ultra low power |
+| Board Name     | Chip       | Tick rate | Clock source    |
+|----------------|------------| --------- | --------------- |
+| QtPy           | SAMD21E18A | 8Hz       | Ultra low power |
+| Curiosity Nano | SAMD21G17A | 8Hz       | Ultra low power |
 
 ### 4.3 Initialization
 
