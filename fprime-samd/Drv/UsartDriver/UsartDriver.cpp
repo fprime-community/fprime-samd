@@ -228,10 +228,6 @@ void UsartDriver ::configure(SercomKind sercom,
             FW_ASSERT(false, static_cast<FwAssertArgType>(stop_bits));
     }
 
-    // Step 10: Enable transmitter and receiver (CTRLB.TXEN, CTRLB.RXEN)
-    ctrlb.bit.TXEN = 1;
-    ctrlb.bit.RXEN = 1;
-
     // § 27.6.2.1 Initialization: These registers are enable-protected and can only
     // be written when CTRLA.ENABLE=0
 
@@ -246,7 +242,8 @@ void UsartDriver ::configure(SercomKind sercom,
     while (sercom_hw->USART.SYNCBUSY.reg)
         ;
 
-    // Write CTRLB register (steps 5, 7b, 8, 10)
+    // Write CTRLB register (steps 5, 7b, 8) - but NOT TXEN/RXEN yet
+    // Per datasheet: TXEN/RXEN written while disabled will be cleared when USART is enabled
     sercom_hw->USART.CTRLB.reg = ctrlb.reg;
     while (sercom_hw->USART.SYNCBUSY.reg)
         ;
@@ -283,6 +280,13 @@ void UsartDriver ::configure(SercomKind sercom,
     // Enable USART
     sercom_hw->USART.CTRLA.bit.ENABLE = 1;
     while (sercom_hw->USART.SYNCBUSY.bit.ENABLE)
+        ;
+
+    // Step 10: Enable transmitter and receiver AFTER enabling the USART
+    // Per datasheet §26.6.2.1: "Writing '1' to CTRLB.TXEN when the USART is enabled
+    // will set SYNCBUSY.CTRLB, which will remain set until the transmitter is enabled"
+    sercom_hw->USART.CTRLB.reg |= SERCOM_USART_CTRLB_TXEN | SERCOM_USART_CTRLB_RXEN;
+    while (sercom_hw->USART.SYNCBUSY.bit.CTRLB)
         ;
 
     if (this->isConnected_ready_OutputPort(0)) {
@@ -548,10 +552,11 @@ void UsartDriver ::send_handler(FwIndexType portNum, Fw::Buffer& fwBuffer) {
     auto status = this->m_tx_queue.enqueue(ThinBuffer(fwBuffer));
     if (status == Fw::Success::SUCCESS) {
         // This job has been added to the queue, send it to the DMA
+        // Note: Use DATA.reg to get the actual register address, not the structure address
         this->dmaQueueOut_out(
             UsartDriver_DmaChannel::TX, getSercomTxTrigger(m_sercom), Dma::TransactionType::BEAT,
             Dma::Priority::PRIORITY_0, reinterpret_cast<U32>(fwBuffer.getData()),
-            reinterpret_cast<U32>(&getSercomHw(m_sercom)->USART.DATA), fwBuffer.getSize(), Dma::BeatSize::BYTE,
+            reinterpret_cast<U32>(&getSercomHw(m_sercom)->USART.DATA.reg), fwBuffer.getSize(), Dma::BeatSize::BYTE,
             /* increment source */ true,
             /* incrementDestination */ false, Dma::AddressIncrementStepSize::SIZE_1, Dma::StepSelection::SOURCE);
     } else {
@@ -562,8 +567,9 @@ void UsartDriver ::send_handler(FwIndexType portNum, Fw::Buffer& fwBuffer) {
 }
 
 void UsartDriver ::dmaQueueRxSend(const ThinBuffer& buffer) {
+    // Note: Use DATA.reg to get the actual register address, not the structure address
     this->dmaQueueOut_out(UsartDriver_DmaChannel::RX, getSercomRxTrigger(m_sercom), Dma::TransactionType::BEAT,
-                          Dma::Priority::PRIORITY_0, reinterpret_cast<U32>(&getSercomHw(m_sercom)->USART.DATA),
+                          Dma::Priority::PRIORITY_0, reinterpret_cast<U32>(&getSercomHw(m_sercom)->USART.DATA.reg),
                           reinterpret_cast<U32>(buffer.getData()), buffer.getSize(), Dma::BeatSize::BYTE,
                           /* increment source */ false,
                           /* incrementDestination */ true, Dma::AddressIncrementStepSize::SIZE_1,
