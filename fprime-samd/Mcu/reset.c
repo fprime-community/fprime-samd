@@ -17,21 +17,13 @@
   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
-#include "Handlers.h"
 #include <sam.h>
 #include <stddef.h>
 #include <stdint.h>
 
-/* RTOS Hooks */
-extern void svcHook(void);
-extern void pendSVHook(void);
-extern int sysTickHook(void);
-
 /* Default empty handler */
 void Dummy_Handler(void) {
-#if defined DEBUG
     __BKPT(3);
-#endif
     for (;;) {
     }
 }
@@ -462,9 +454,10 @@ __attribute__((used)) __attribute__((section(".isr_vector"))) const DeviceVector
 #endif
 
 extern int main(void);
+extern void __libc_init_array(void);
 
 /* This is called on processor reset to initialize the device and call main() */
-void Reset_Handler(void) {
+__attribute__((used, noreturn)) void Reset_Handler(void) {
     uint32_t *pSrc, *pDest;
 
     /* Initialize the initialized data section */
@@ -482,17 +475,10 @@ void Reset_Handler(void) {
             *pDest = 0;
     }
 
-#if defined(__FPU_USED) && defined(__SAMD51__)
-    /* Enable FPU */
-    SCB->CPACR |= (0xFu << 20);
-    __DSB();
-    __ISB();
-#endif
-
-    SystemInit();
+    __libc_init_array();
 
     main();
 
-    while (1)
-        ;
+    for (;;) {
+    }
 }
