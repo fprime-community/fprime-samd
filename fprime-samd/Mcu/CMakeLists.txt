@@ -8,6 +8,7 @@ find_package(CMSIS REQUIRED)
 
 add_library(fprime_samd_mcu STATIC
         "${CMAKE_CURRENT_LIST_DIR}/reset.c"
+        "${CMAKE_CURRENT_LIST_DIR}/SystemInit.c"
 )
 
 target_link_libraries(fprime_samd_mcu PUBLIC

@@ -20,10 +20,11 @@
 #include <sam.h>
 #include <stddef.h>
 #include <stdint.h>
+#include "fprime-samd/Mcu/SystemInit.h"
 
 /* Default empty handler */
 void Dummy_Handler(void) {
-    __BKPT(3);
+    __BKPT(4);
     for (;;) {
     }
 }
@@ -453,8 +454,28 @@ __attribute__((used)) __attribute__((section(".isr_vector"))) const DeviceVector
 
 #endif
 
+#if defined(__SAMD51__)
+uint32_t SystemCoreClock = F_CPU;
+#else
+/*
+ * System Core Clock is at 1MHz (8MHz/8) at Reset.
+ * It is switched to 48MHz in the Reset Handler (startup.c)
+ */
+uint32_t SystemCoreClock = 1000000ul;
+#endif
+
 extern int main(void);
 extern void __libc_init_array(void);
+
+#ifdef MICRO_TRACE_BUFFER
+__attribute__((__aligned__(MICRO_TRACE_BUFFER * sizeof(uint32_t)))) uint32_t mtb[MICRO_TRACE_BUFFER] = {0};
+
+void init_mtb(void) {
+    REG_MTB_POSITION = ((uint32_t)(mtb - REG_MTB_BASE)) & 0xFFFFFFF8;
+    REG_MTB_FLOW = ((uint32_t)mtb + MICRO_TRACE_BUFFER * sizeof(uint32_t)) & 0xFFFFFFF8;
+    REG_MTB_MASTER = 0x80000000 + 6;
+}
+#endif
 
 /* This is called on processor reset to initialize the device and call main() */
 __attribute__((used, noreturn)) void Reset_Handler(void) {
@@ -476,6 +497,18 @@ __attribute__((used, noreturn)) void Reset_Handler(void) {
     }
 
     __libc_init_array();
+
+    // Keep the debug active during sleep
+    SYSCTRL->VREG.bit.RUNSTDBY = 1;
+    SYSCTRL->OSC8M.bit.RUNSTDBY = 1;
+    PM->AHBMASK.reg |= PM_AHBMASK_HPB0;
+
+#ifdef MICRO_TRACE_BUFFER
+    init_mtb();
+#endif
+
+    /* Initialize system clocks FIRST - before any C runtime initialization */
+    SystemInit();
 
     main();
 
