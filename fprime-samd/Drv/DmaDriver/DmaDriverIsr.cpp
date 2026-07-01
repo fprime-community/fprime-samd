@@ -4,10 +4,8 @@
 // ISR entry point (called by hardware)
 // ----------------------------------------------------------------------
 
-extern "C" {
-void DMAC_Handler(void) {
+extern "C" __attribute__((used)) void DMAC_Handler(void) {
     if (Samd21::DmaDriver::s_instance != nullptr) {
         Samd21::DmaDriver::s_instance->handleInterrupt();
     }
-}
 }

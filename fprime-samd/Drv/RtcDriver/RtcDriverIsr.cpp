@@ -1,7 +1,7 @@
 #include "fprime-samd/Drv/RtcDriver/RtcDriverHardware.hpp"
 
 //! RTC interrupt handler
-extern "C" void RTC_Handler(void) {
+extern "C" __attribute__((used)) void RTC_Handler(void) {
     Samd21::RtcHardware::RtcState& state = Samd21::RtcHardware::getRtcState();
 
     if (!state.deadline_reached) {

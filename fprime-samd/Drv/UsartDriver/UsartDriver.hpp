@@ -47,9 +47,9 @@ class UsartDriver final : public UsartDriverComponentBase {
     };
 
     enum class TxPinOut : U8 {
-        PAD0 = 0,  //!< TX: SERCOM PAD[0], XCK: SERCOM PAD[1]
-        PAD1 = 1,  //!< TX: SERCOM PAD[2], XCK: SERCOM PAD[3]
-        PAD2 = 2,  //!< TX: SERCOM PAD[0], RTS: SERCOM PAD[2], CTS: SERCOM PAD[3]
+        PAD0 = 0,                    //!< TX: SERCOM PAD[0], XCK: SERCOM PAD[1]
+        PAD2_XCK_PAD3 = 1,           //!< TX: SERCOM PAD[2], XCK: SERCOM PAD[3]
+        PAD0_RTS_PAD2_CTS_PAD3 = 2,  //!< TX: SERCOM PAD[0], RTS: SERCOM PAD[2], CTS: SERCOM PAD[3]
     };
 
     enum class DataOrder : U8 {
@@ -136,6 +136,11 @@ class UsartDriver final : public UsartDriverComponentBase {
     void activeIn_handler(FwIndexType portNum,  //!< The port number
                           U32 context           //!< The call order
                           ) override;
+
+    //! Handler for input port sendSync
+    Drv::ByteStreamStatus sendSync_handler(FwIndexType portNum,    //!< The port number
+                                           Fw::Buffer& sendBuffer  //!< Data to send
+                                           ) override;
 
     // ----------------------------------------------------------------------
     // Helper functions

@@ -41,6 +41,14 @@ class Framer final : public FramerComponentBase {
                                   U32 context           //!< Call context value; meaning chosen by user
                                   ) override;
 
+    //! Handler implementation for comPacketSyncIn
+    //!
+    //! Input port that handles downlink packets synchronously
+    void comPacketSyncIn_handler(FwIndexType portNum,  //!< The port number
+                                 Fw::ComBuffer& data,  //!< Buffer containing packet data
+                                 U32 context           //!< Call context value; meaning chosen by user
+                                 ) override;
+
     //! Handler implementation for drvConnected
     //!
     //! Signal from the driver that it is ready

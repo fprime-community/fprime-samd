@@ -151,13 +151,16 @@ void DmaDriver::configure() {
     FW_ASSERT(!m_initialized);
 
     // Enable DMAC clocks
-    PM->AHBMASK.bit.DMAC_ = 1;
-    PM->APBBMASK.bit.DMAC_ = 1;
+    PM->AHBMASK.reg |= PM_AHBMASK_DMAC;
+    PM->APBBMASK.reg |= PM_APBBMASK_DMAC;
 
     // Perform software reset
     DMAC->CTRL.bit.DMAENABLE = 0;
     DMAC->CTRL.bit.SWRST = 1;
     waitForDmacReset();
+
+    // Keep the DMAC running during debug paus
+    DMAC->DBGCTRL.bit.DBGRUN = 1;
 
     // Setup descriptor base address and write-back section base address - hardware requires pointer as uint32_t
     DMAC->BASEADDR.reg = reinterpret_cast<uint32_t>(dmac_base);

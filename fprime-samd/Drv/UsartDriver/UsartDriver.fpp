@@ -55,6 +55,10 @@ module Samd21 {
         @ Without this connection, all TX/RX operations will hang.
         sync input port activeIn: Svc.Sched
 
+        @ Synchronously transmit data on this UART
+        @ Blocks until the entire buffer is transferred
+        sync input port $sendSync: Drv.ByteStreamSend
+
         ####################################
         ## DMA management ports
         ####################################

@@ -7,11 +7,11 @@ module Samd21 {
         @ If the channel is idle, the transaction starts immediately.
         @ If the channel is busy, the transaction is appended to the linked descriptor chain.
         @ Invalid parameters (alignment, length, null addresses) trigger assertions.
-        guarded input port sendTransactionIn: [Dma.CHANNEL_NUM] Dma.Transaction
+        sync input port sendTransactionIn: [Dma.CHANNEL_NUM] Dma.Transaction
 
         @ Updates the final DmaDescriptor in the chain configured on this channel to link
         @ back to the first. This allows this channel to loop to the first transaction continuously.
-        guarded input port linkToFrontIn: [Dma.CHANNEL_NUM] Fw.Signal
+        sync input port linkToFrontIn: [Dma.CHANNEL_NUM] Fw.Signal
 
         @ Suspend the channel, read writeback, and advance to the next descriptor.
         @ Used for IDLE frame detection: process partial buffer and move to alternate.
@@ -25,7 +25,7 @@ module Samd21 {
         @ 6. Resume the channel
         @
         @ Returns: Writeback state at suspend point
-        guarded input port popFrontIn: [Dma.CHANNEL_NUM] Dma.ReadWriteback
+        sync input port popFrontIn: [Dma.CHANNEL_NUM] Dma.ReadWriteback
 
         @ Read the writeback register on the active DMA transfer for this channel
         sync input port readWritebackIn: [Dma.CHANNEL_NUM] Dma.ReadWriteback

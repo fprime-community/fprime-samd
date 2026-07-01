@@ -22,20 +22,21 @@
 #define fileIdFs "Assert: \"%s:%" PRI_FwSizeType "\""
 #endif
 
+extern "C" __attribute__((used)) void HardFault_Handler(void) {
+    __BKPT(3);
+    NVIC_SystemReset();
+}
+
 namespace Samd21 {
 extern void sendFatalPacket(Fw::ComBuffer& data);
 extern void sendBailFrame(FILE_NAME_ARG file, FwSizeType lineNo);
 }  // namespace Samd21
 
-void trigger_breakpoint() {
-    __BKPT(2);
-}
-
 void Fw::defaultDoAssert() {
     // Hold for 10s to allow flashing without reinitializing the USB
     // TODO(tumbar) We will want to disable RTC interrupts here
-    trigger_breakpoint();
-    __disable_irq();
+    __BKPT(2);
+    delay(10000);
     NVIC_SystemReset();
 
     while (true) {
@@ -43,12 +44,17 @@ void Fw::defaultDoAssert() {
 }
 
 void Fw::defaultPrintAssert(const CHAR* msg) {
-    auto ptr = reinterpret_cast<const U8*>(reinterpret_cast<PlatformPointerCastType>(msg));
+    static volatile bool assertReached = false;
+    if (assertReached) {
+        defaultDoAssert();
+    }
 
+    assertReached = true;
+
+    auto ptr = reinterpret_cast<const U8*>(reinterpret_cast<PlatformPointerCastType>(msg));
     Fw::ComBuffer frame(const_cast<U8*>(ptr), static_cast<FwSizeType>(Samd21::FatalPacket::SERIALIZED_SIZE));
 
     for (int i = 0; i < 10; i++) {
-        // Drv::framerSendComPacket(frame);
         Samd21::sendFatalPacket(frame);
         delay(1000);
     }
@@ -65,20 +71,6 @@ void Fw::defaultReportAssert(FILE_NAME_ARG file,
                              FwAssertArgType arg6,
                              CHAR* destBuffer,
                              FwSizeType buffSize) {
-    static volatile bool assertReached = false;
-    if (assertReached) {
-        // // Assert within assert!
-        // for (int i = 0; i < 10; i++) {
-        //     Samd21::sendBailFrame(file, lineNo);
-        //     delay(1000);
-        // }
-        // delay(1000);
-        Fw::defaultDoAssert();
-        return;
-    }
-
-    assertReached = true;
-
     Fw::ExternalSerializeBuffer writer(reinterpret_cast<U8*>(destBuffer), buffSize);
 
     // Serialize the file location

@@ -86,7 +86,10 @@ void UsartDriver ::configure(SercomKind sercom,
             FW_ASSERT(false, static_cast<FwAssertArgType>(sercom));
     }
 
-    // Assign Generic Clock Generator 0 (48MHz) to this SERCOM
+    while (GCLK->STATUS.bit.SYNCBUSY)
+        ;
+
+    // Assign Generic Clock Generator 0 (48MHz) to all sercom
     // Per §14.8.3 GCLK_CLKCTRL – Generic Clock Control
     U8 gclk_id = static_cast<U8>(GCLK_CLKCTRL_ID_SERCOM0_CORE_Val) + sercom.e;
     GCLK->CLKCTRL.reg = GCLK_CLKCTRL_ID(gclk_id) |
@@ -147,10 +150,10 @@ void UsartDriver ::configure(SercomKind sercom,
         case TxPinOut::PAD0:
             ctrla.bit.TXPO = 0;  // TxD on PAD[0], XCK on PAD[1]
             break;
-        case TxPinOut::PAD1:
+        case TxPinOut::PAD2_XCK_PAD3:
             ctrla.bit.TXPO = 1;  // TxD on PAD[2], XCK on PAD[3]
             break;
-        case TxPinOut::PAD2:
+        case TxPinOut::PAD0_RTS_PAD2_CTS_PAD3:
             ctrla.bit.TXPO = 2;  // TxD on PAD[0], RTS on PAD[2], CTS on PAD[3]
             break;
         default:
@@ -228,6 +231,10 @@ void UsartDriver ::configure(SercomKind sercom,
             FW_ASSERT(false, static_cast<FwAssertArgType>(stop_bits));
     }
 
+    ctrla.bit.SAMPR = 0;
+    ctrlb.bit.RXEN = 1;
+    ctrlb.bit.TXEN = 1;
+
     // § 27.6.2.1 Initialization: These registers are enable-protected and can only
     // be written when CTRLA.ENABLE=0
 
@@ -237,24 +244,38 @@ void UsartDriver ::configure(SercomKind sercom,
     while (sercom_hw->USART.SYNCBUSY.bit.ENABLE)
         ;
 
-    // Write CTRLA register (steps 1-4, 6, 7a)
-    sercom_hw->USART.CTRLA.reg = ctrla.reg;
-    while (sercom_hw->USART.SYNCBUSY.reg)
+    sercom_hw->USART.CTRLA.reg |= SERCOM_USART_CTRLA_SWRST;
+    while (sercom_hw->USART.SYNCBUSY.bit.SWRST)
         ;
 
-    // Write CTRLB register (steps 5, 7b, 8) - but NOT TXEN/RXEN yet
-    // Per datasheet: TXEN/RXEN written while disabled will be cleared when USART is enabled
+    // Write CTRLA register (steps 1-4, 6, 7a)
+    sercom_hw->USART.CTRLA.reg = ctrla.reg;
+
+    while (sercom_hw->USART.SYNCBUSY.bit.ENABLE)
+        ;
+
+    // Write CTRLB register (steps 5, 7b, 8)
     sercom_hw->USART.CTRLB.reg = ctrlb.reg;
-    while (sercom_hw->USART.SYNCBUSY.reg)
+    while (sercom_hw->USART.SYNCBUSY.bit.CTRLB)
         ;
 
     // Step 9: Configure baud rate (only for internal clock)
     if (clock == ClockMode::INTERNAL) {
         U16 baud_value = calculateBaud(baud_rate, mode);
         sercom_hw->USART.BAUD.reg = baud_value;
-        while (sercom_hw->USART.SYNCBUSY.reg)
-            ;
     }
+
+    // Enable the Tx and Rx triggers to drive the DMA
+    sercom_hw->USART.INTENSET.reg = SERCOM_USART_INTENSET_DRE | SERCOM_USART_INTENSET_RXC;
+
+    // Enable USART
+    sercom_hw->USART.CTRLA.reg |= SERCOM_USART_CTRLA_ENABLE;
+    while (sercom_hw->USART.SYNCBUSY.bit.ENABLE)
+        ;
+
+    // Wait for the Tx and Rx lines to be enabled
+    while (sercom_hw->USART.SYNCBUSY.bit.CTRLB)
+        ;
 
     // Initialize the RX state
     this->m_rx_state[0] = RxDmaBufferState::DMA;
@@ -269,18 +290,6 @@ void UsartDriver ::configure(SercomKind sercom,
     this->dmaRxCircular_out(0);
 
     this->m_configured = true;
-
-    // Enable USART
-    sercom_hw->USART.CTRLA.bit.ENABLE = 1;
-    while (sercom_hw->USART.SYNCBUSY.bit.ENABLE)
-        ;
-
-    // Step 10: Enable transmitter and receiver AFTER enabling the USART
-    // Per datasheet §26.6.2.1: "Writing '1' to CTRLB.TXEN when the USART is enabled
-    // will set SYNCBUSY.CTRLB, which will remain set until the transmitter is enabled"
-    sercom_hw->USART.CTRLB.reg |= SERCOM_USART_CTRLB_TXEN | SERCOM_USART_CTRLB_RXEN;
-    while (sercom_hw->USART.SYNCBUSY.bit.CTRLB)
-        ;
 
     if (this->isConnected_ready_OutputPort(0)) {
         this->ready_out(0);
@@ -317,7 +326,7 @@ static Sercom* getSercomHw(SercomKind sercom) {
 }
 
 U16 UsartDriver ::calculateBaud(BaudRate baud_rate, CommunicationMode mode) {
-    const U32 f_ref = F_CPU;
+    const U64 f_ref = F_CPU;
     const U32 f_baud = static_cast<U32>(baud_rate);
     U16 baud_value;
 
@@ -327,7 +336,8 @@ U16 UsartDriver ::calculateBaud(BaudRate baud_rate, CommunicationMode mode) {
             // BAUD = 65536 * (1 - S * (f_BAUD / f_ref))
             // where S = 16 (oversampling)
             const U32 S = 16;
-            baud_value = 65536 - ((65536 * S * f_baud) / f_ref);
+            U64 top = 65536ULL * S * static_cast<U64>(f_baud);
+            baud_value = 65536 - static_cast<U64>(top / f_ref);
             break;
         }
         case CommunicationMode::SYNC:
@@ -557,6 +567,22 @@ void UsartDriver ::send_handler(FwIndexType portNum, Fw::Buffer& fwBuffer) {
         // Reply back to the producer with a "retry"
         this->sendReturnOut_out(0, fwBuffer, Drv::ByteStreamStatus::SEND_RETRY);
     }
+}
+
+Drv::ByteStreamStatus UsartDriver ::sendSync_handler(FwIndexType portNum, Fw::Buffer& sendBuffer) {
+    auto sercom_hw = getSercomHw(this->m_sercom);
+    for (U32 i = 0; i < sendBuffer.getSize(); i++) {
+        U8 b = sendBuffer.getData()[i];
+        while (!sercom_hw->USART.INTFLAG.bit.DRE)
+            ;
+
+        sercom_hw->USART.DATA.reg = b;
+    }
+
+    while (!sercom_hw->USART.INTFLAG.bit.DRE)
+        ;
+
+    return Drv::ByteStreamStatus::OP_OK;
 }
 
 void UsartDriver ::dmaQueueRxSend(const ThinBuffer& buffer) {

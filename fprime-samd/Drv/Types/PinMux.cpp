@@ -9,26 +9,26 @@
 
 namespace Samd21 {
 void PinMux ::configure(U32 pinmux) {
-    /* the variable pinmux consist of two components:
-        31:16 is a pad, wich includes:
-            31:21 : port information 0->PORTA, 1->PORTB
-            20:16 : pin 0-31
-        15:00 pin multiplex information
-        there are defines for pinmux like: PINMUX_PA09D_SERCOM2_PAD1
-    */
-    uint16_t pad = pinmux >> 16;  // get pad (port+pin)
-    uint8_t port = pad >> 5;      // get port
-    uint8_t pin = pad & 0x1F;     // get number of pin - no port information anymore
+    // 1. Extract the pin number and multiplexer function
+    uint16_t pin = (pinmux >> 16);          // Upper 16 bits contain the pin index (e.g., 8)
+    uint16_t mux_func = (pinmux & 0xFFFF);  // Lower 16 bits contain the mux letter (e.g., 2 for 'C')
 
-    PORT->Group[port].PINCFG[pin].bit.PMUXEN = 1;
+    // 2. Identify the PORT group (Group 0 = PORTA, Group 1 = PORTB)
+    uint8_t port_group = pin / 32;
+    uint8_t pin_index = pin % 32;
 
-    /* each pinmux register is for two pins! with pin/2 you can get the index of the needed pinmux register
-       the p mux resiter is 8Bit   (7:4 odd pin; 3:0 evan bit)  */
-    // reset pinmux values.                             VV shift if pin is odd (if evan:  (4*(pin & 1))==0  )
-    PORT->Group[port].PMUX[pin / 2].reg &= ~(0xF << (4 * (pin & 1)));
-    //
-    // set new values
-    PORT->Group[port].PMUX[pin / 2].reg |= ((uint8_t)((pinmux & 0xFFFF) << (4 * (pin & 1))));
+    // 3. Enable the Peripheral Multiplexer for this specific pin
+    PORT->Group[port_group].PINCFG[pin_index].reg |= PORT_PINCFG_PMUXEN;
+
+    // 4. Update the PMUX register.
+    // Pins share a PMUX register: Even index uses PMUXE, Odd index uses PMUXO
+    if (pin_index % 2 == 0) {
+        // Clear old even mux and set new one
+        PORT->Group[port_group].PMUX[pin_index >> 1].bit.PMUXE = mux_func;
+    } else {
+        // Clear old odd mux and set new one
+        PORT->Group[port_group].PMUX[pin_index >> 1].bit.PMUXO = mux_func;
+    }
 }
 
 }  // namespace Samd21

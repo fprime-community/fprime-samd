@@ -3,10 +3,13 @@ module Samd21 {
     passive component Framer {
 
         @ Input port that flushes the active Tx buffer to the driver
-        guarded input port schedIn: Svc.Sched
+        sync input port schedIn: Svc.Sched
 
         @ Input port that handles downlink packets
-        guarded input port comPacketQueueIn: [ComQueueComPorts] Fw.Com
+        sync input port comPacketQueueIn: [ComQueueComPorts] Fw.Com
+
+        @ Input port that handles downlink packets synchronously
+        sync input port comPacketSyncIn: [ComQueueComPorts] Fw.Com
 
         @ Signal from the driver that it is ready
         sync input port drvConnected: Drv.ByteStreamReady
@@ -15,7 +18,10 @@ module Samd21 {
         output port drvSendOut: Fw.BufferSend
 
         @ Receive buffer back from driver
-        guarded input port drvReturnIn: Drv.ByteStreamData
+        sync input port drvReturnIn: Drv.ByteStreamData
+
+        @ Send a framed packet to the driver and synchronously transmit
+        output port drvSendSyncOut: Drv.ByteStreamSend
 
     }
 }
