@@ -14,7 +14,7 @@ add_compile_definitions(
 )
 
 # Enable LTO for this board (has limited flash)
-set(SAMD21_LTO OFF)
+set(SAMD21_LTO ON)
 
 # Set the board type
 set(BOARD_TYPE "SAMD21_CURIOSITY_NANO")

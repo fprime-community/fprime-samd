@@ -46,12 +46,11 @@ set(CPU_FLAGS "-mcpu=cortex-m0plus -mthumb")
 # Common C/C++ flags
 set(COMMON_FLAGS "\
     ${CPU_FLAGS} \
-    -Os \
+    -O2 \
     -g \
     -ffunction-sections \
     -fdata-sections \
     -nostdlib \
-    --param max-inline-insns-single=500 \
     -Werror=return-type \
 ")
 
@@ -64,10 +63,11 @@ set(CMAKE_C_FLAGS_INIT "\
 # C++-specific flags
 set(CMAKE_CXX_FLAGS_INIT "\
     ${COMMON_FLAGS} \
-    -std=gnu++11 \
+    -std=c++11 \
     -fno-threadsafe-statics \
     -fno-rtti \
     -fno-exceptions \
+    -fno-use-cxa-atexit \
 ")
 
 # ASM flags
