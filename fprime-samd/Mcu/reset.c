@@ -468,7 +468,8 @@ extern int main(void);
 extern void __libc_init_array(void);
 
 #ifdef MICRO_TRACE_BUFFER
-__attribute__((__aligned__(MICRO_TRACE_BUFFER * sizeof(uint32_t)))) uint32_t mtb[MICRO_TRACE_BUFFER] = {0};
+__attribute__((__aligned__(MICRO_TRACE_BUFFER * sizeof(uint32_t)),
+               visibility("default"))) uint32_t mtb[MICRO_TRACE_BUFFER] = {0};
 
 void init_mtb(void) {
     REG_MTB_POSITION = ((uint32_t)(mtb - REG_MTB_BASE)) & 0xFFFFFFF8;

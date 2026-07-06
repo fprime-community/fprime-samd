@@ -77,5 +77,28 @@ module Samd21 {
         @ This signal comes inside an ISR!
         sync input port dmaReplyIn: [DmaChannel.N] Dma.TransactionReply
 
+        enum SignalKind : U8 {
+            TX_BUFFER_OK,      @< A buffer has been TXed over the DMA successfully
+            TX_CHANNEL_ERROR,  @< An error occurred on the TX DMA channel. Clear all the TX buffers off the queue to try again
+            RX_BUFFER_DONE,    @< An RX buffer has been filled/partially filled and is ready for processing
+            RX_CHANNEL_ERROR,  @< An error occurred on the RX DMA channel.
+        };
+
+        enum RxDmaBufferID {
+            A, B, INVALID
+        }
+
+        event Signal(
+            sercom: Samd21.SercomKind,
+            kind: SignalKind,
+            rx: RxDmaBufferID,
+            rx_bytes_remaining: U16
+        ) severity diagnostic format "Got a USART {} signal {} rx={}, rx_bytes_remaining={}"
+
+        event Dog(cnt: U32) severity diagnostic format "Dog {}"
+
+        time get port timeCaller
+        import Fw.Event
+
     }
 }

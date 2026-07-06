@@ -181,7 +181,7 @@ void DmaChannel::popFront(Samd21::Dma::Writeback& result) {
     suspendChannel(m_channel_id);
 
     // Read writeback descriptor for this channel
-    ::DmacDescriptor* wb = &dmac_writeback[m_channel_id];
+    auto wb = &dmac_writeback[m_channel_id];
 
     result.set_btctrl(wb->BTCTRL.reg);
     result.set_btcnt(wb->BTCNT.reg);

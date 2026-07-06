@@ -6,6 +6,7 @@
 
 #include "fprime-samd/Drv/DmaDriver/DmaDriver.hpp"
 #include <cstring>
+#include "Drv/DmaDriver/DmaDriver_TransactionSerializableAc.hpp"
 #include "Fw/Types/Assert.hpp"
 #include "config/DmaDriverConfig.hpp"
 #include "config/FwAssertArgTypeAliasAc.h"
@@ -312,7 +313,8 @@ void DmaDriver::sendTransactionIn_handler(FwIndexType portNum,
 
     // Search for a free DMAC Descriptor
     DmacDescriptor* desc = nullptr;
-    for (U32 i = 0; i < DmaDriverConfig::DMA_DESCRIPTOR_N; i++) {
+    U32 i = 0;
+    for (; i < DmaDriverConfig::DMA_DESCRIPTOR_N; i++) {
         if (!(this->m_descriptors_used & (1 << i))) {
             desc = &this->m_descriptors[i];
             setupDescriptor(desc, sourceAddr, destAddr, len, beatSize, incrementSource, incrementDestination, stepSize,
@@ -326,6 +328,11 @@ void DmaDriver::sendTransactionIn_handler(FwIndexType portNum,
 
     // Make sure we got a descriptor
     FW_ASSERT(desc, portNum, static_cast<FwAssertArgType>(trigger.e));
+
+    this->log_ACTIVITY_LO_Transaction(
+        portNum, i,
+        Samd21::DmaDriver_Transaction(trigger, action, priority, sourceAddr, destAddr, len, beatSize, incrementSource,
+                                      incrementDestination, stepSize, stepSelection));
 
     // Queue transaction on the channel
     bool wasIdle = !m_channels[portNum].isBusy();
@@ -343,6 +350,8 @@ void DmaDriver::sendTransactionIn_handler(FwIndexType portNum,
 void DmaDriver::linkToFrontIn_handler(FwIndexType portNum) {
     FW_ASSERT(m_initialized);
     FW_ASSERT(portNum < NUM_LINKTOFRONTIN_INPUT_PORTS, portNum);
+
+    this->log_ACTIVITY_LO_ChannelCirculuar(portNum);
 
     m_channels[portNum].linkToFront();
 }

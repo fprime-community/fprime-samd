@@ -14,9 +14,9 @@ module Samd21 {
 
         @ Action the DMAC should perform on a single trigger on the channel
         enum TransactionType: U8 {
-            BEAT,           @< One data transfer bus access per trigger
-            BLOCK,          @< 1kB to 64kB per trigger
-            TRANSACTION,    @< Perform the entire transaction on a signal trigger
+            BLOCK = 0x0,       @< One trigger required for each block transfer
+            BEAT = 0x2,        @< One trigger required for each beat transfer
+            TRANSACTION = 0x3, @< One trigger required for each transaction
         }
 
         enum TriggerSource: U8 {

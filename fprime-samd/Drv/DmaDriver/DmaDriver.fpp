@@ -32,5 +32,43 @@ module Samd21 {
 
         @ Signal from ISR that a DMA transaction has completed (success or error)
         output port transactionIsrOut: [Dma.CHANNEL_NUM] Dma.TransactionReply
+
+        struct Transaction {
+            @ DMA controller trigger source
+            trigger: Dma.TriggerSource,
+            @ DMA controller behavior on this channel given memory and a trigger source
+            $action: Dma.TransactionType,
+            @ DMA transaction priority
+            $priority: Dma.Priority,
+            @ The source address to move data from
+            sourceAddr: U32, # FIXME(tumbar) Is there a alias type I should be using for pointers?
+            @ The destination address to move data to
+            destAddr: U32,
+            @ Number of bytes to copy from source to destination
+            len: U32,
+            @ Size of each beat. Controls the width of each DMA action
+            beatSize: Dma.BeatSize,
+            @ Whether the DMA controller should increment the source pointer after each action signal
+            incrementSource: bool,
+            @ Whether the DMA controller should increment the destination pointer after each action signal
+            incrementDestination: bool,
+            @ Size to increment address (source/dest when enabled) on each beat
+            stepSize: Dma.AddressIncrementStepSize,
+            @ Determines whether the step size setting is applied to the source or destination address
+            stepSelection: Dma.StepSelection,
+        }
+
+        event Transaction (
+            channel: U32,
+            descriptor_index: U32,
+            transaction: Transaction
+        ) severity activity low format "Queueing DMA transaction on channel {} with descriptor index {}: {}"
+
+        event ChannelCirculuar(
+            channel: U32
+        ) severity activity low format "Linking DMA channel {} into a circular mode"
+
+        time get port timeCaller
+        import Fw.Event
     }
 }

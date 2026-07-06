@@ -11,6 +11,13 @@ add_library(fprime_samd_mcu STATIC
         "${CMAKE_CURRENT_LIST_DIR}/SystemInit.c"
 )
 
+if (SAMD21_LTO)
+    set_source_files_properties(
+        "${CMAKE_CURRENT_LIST_DIR}/reset.c"
+        PROPERTIES COMPILE_FLAGS "-fno-lto"
+    )
+endif()
+
 target_link_libraries(fprime_samd_mcu PUBLIC
         CMSIS::Headers
 )
