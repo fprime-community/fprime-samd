@@ -6,10 +6,7 @@ module Samd21 {
         sync input port schedIn: Svc.Sched
 
         @ Input port that handles downlink packets
-        sync input port comPacketQueueIn: [ComQueueComPorts] Fw.Com
-
-        @ Input port that handles downlink packets synchronously
-        sync input port comPacketSyncIn: [ComQueueComPorts] Fw.Com
+        sync input port comPacketQueueIn: Fw.Com
 
         @ Signal from the driver that it is ready
         sync input port drvConnected: Drv.ByteStreamReady
@@ -19,9 +16,6 @@ module Samd21 {
 
         @ Receive buffer back from driver
         sync input port drvReturnIn: Drv.ByteStreamData
-
-        @ Send a framed packet to the driver and synchronously transmit
-        output port drvSendSyncOut: Drv.ByteStreamSend
 
     }
 }

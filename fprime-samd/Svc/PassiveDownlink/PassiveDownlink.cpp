@@ -5,6 +5,9 @@
 // ======================================================================
 
 #include "fprime-samd/Svc/PassiveDownlink/PassiveDownlink.hpp"
+#include "Fw/Types/Assert.hpp"
+#include "Fw/Types/Serializable.hpp"
+#include "config/FwAssertArgTypeAliasAc.h"
 #include "fprime-samd/Svc/PassiveDownlink/PassiveDownlink_PacketPortEnumAc.hpp"
 
 namespace Samd21 {
@@ -26,17 +29,16 @@ void PassiveDownlink ::LogRecv_handler(FwIndexType portNum,
                                        Fw::Time& timeTag,
                                        const Fw::LogSeverity& severity,
                                        Fw::LogBuffer& args) {
-    m_logPacket.setId(id);
-    m_logPacket.setTimeTag(timeTag);
-    m_logPacket.setLogBuffer(args);
+    this->m_logPacket.setId(id);
+    this->m_logPacket.setTimeTag(timeTag);
+    this->m_logPacket.setLogBuffer(args);
+    this->m_logBuffer.resetSer();
 
-    auto comBuffer = this->m_tlmPacket.getBuffer();
-    comBuffer.resetSer();
-    Fw::SerializeStatus stat = this->m_logPacket.serializeTo(comBuffer);
+    Fw::SerializeStatus stat = this->m_logPacket.serializeTo(this->m_logBuffer);
     FW_ASSERT(Fw::FW_SERIALIZE_OK == stat, static_cast<FwAssertArgType>(stat));
 
     if (this->isConnected_PktSend_OutputPort(PassiveDownlink_PacketPort::EVENT)) {
-        this->PktSend_out(PassiveDownlink_PacketPort::EVENT, comBuffer, 0);
+        this->PktSend_out(PassiveDownlink_PacketPort::EVENT, this->m_logBuffer, 0);
     }
 
     // if connected, announce the FATAL
@@ -48,13 +50,24 @@ void PassiveDownlink ::LogRecv_handler(FwIndexType portNum,
 }
 
 void PassiveDownlink ::TlmRecv_handler(FwIndexType portNum, FwChanIdType id, Fw::Time& timeTag, Fw::TlmBuffer& val) {
-    m_tlmPacket.resetPktSer();
+    // Attempt to serialize the telemetry value into the current buffer
+    Fw::SerializeStatus status;
+    status = this->m_tlmPacket.addValue(id, timeTag, val);
 
-    Fw::SerializeStatus stat = m_tlmPacket.addValue(id, timeTag, val);
-    FW_ASSERT(stat == Fw::FW_SERIALIZE_OK, stat);
+    if (status == Fw::SerializeStatus::FW_SERIALIZE_NO_ROOM_LEFT) {
+        // We cannot fit the tlm value into this buffer
+        // Flush the buffer and add it to a clean buffer
+        if (this->isConnected_PktSend_OutputPort(PassiveDownlink_PacketPort::TELEMETRY)) {
+            this->PktSend_out(PassiveDownlink_PacketPort::TELEMETRY, m_tlmPacket.getBuffer(), 0);
+        }
 
-    if (this->isConnected_PktSend_OutputPort(PassiveDownlink_PacketPort::TELEMETRY)) {
-        this->PktSend_out(PassiveDownlink_PacketPort::TELEMETRY, m_tlmPacket.getBuffer(), 0);
+        this->m_tlmPacket.resetPktSer();
+        status = this->m_tlmPacket.addValue(id, timeTag, val);
+        FW_ASSERT(status == Fw::SerializeStatus::FW_SERIALIZE_OK, static_cast<FwAssertArgType>(status));
+    } else if (status == Fw::SerializeStatus::FW_SERIALIZE_OK) {
+        // Telemetry value was successfully added to the buffer
+    } else {
+        FW_ASSERT(false, static_cast<FwAssertArgType>(status));
     }
 }
 

@@ -41,7 +41,7 @@ static void suspendChannel(U8 channel_id) {
 
 static void resumeChannel() {
     DMAC->CHINTFLAG.reg = DMAC_CHINTFLAG_SUSP;
-    DMAC->CHINTENSET.reg = DMAC_CHINTENSET_SUSP;
+    DMAC->CHINTENSET.reg = DMAC_CHINTENSET_TCMPL | DMAC_CHINTENSET_TERR | DMAC_CHINTENSET_SUSP;
     DMAC->CHCTRLB.reg |= DMAC_CHCTRLB_CMD_RESUME;
 }
 
@@ -59,24 +59,26 @@ void DmaChannel::startTransaction(const Samd21::Dma::TriggerSource& trigger,
 
     // Configure channel
     DMAC->CHID.reg = DMAC_CHID_ID(m_channel_id);
-    DMAC->CHCTRLA.reg &= ~DMAC_CHCTRLA_ENABLE;
-    DMAC->CHCTRLA.reg = DMAC_CHCTRLA_SWRST;  // Reset channel
+    DMAC->CHCTRLA.bit.ENABLE = 0;
+    DMAC->CHCTRLA.bit.SWRST = 1;
 
     // Clear software trigger
     DMAC->SWTRIGCTRL.reg &= ~(1 << m_channel_id);
 
     // Configure priority, trigger source, and trigger action
-    DMAC->CHCTRLB.reg = DMAC_CHCTRLB_LVL(priority.e) | DMAC_CHCTRLB_TRIGSRC(trigger.e) | DMAC_CHCTRLB_TRIGACT(action.e);
+    DMAC->CHCTRLB.bit.LVL = priority.e;
+    DMAC->CHCTRLB.bit.TRIGSRC = trigger.e;
+    DMAC->CHCTRLB.bit.TRIGACT = action.e;
+
+    // Verify configuration was written correctly
+    FW_ASSERT(DMAC->CHCTRLB.bit.TRIGSRC == trigger.e, DMAC->CHCTRLB.bit.TRIGSRC, trigger.e);
+    FW_ASSERT(DMAC->CHCTRLB.bit.TRIGACT == action.e, DMAC->CHCTRLB.bit.TRIGACT, action.e);
 
     // Enable interrupts for this channel
     DMAC->CHINTENSET.reg = DMAC_CHINTENSET_TCMPL | DMAC_CHINTENSET_TERR | DMAC_CHINTENSET_SUSP;
 
     // Enable the channel
     DMAC->CHCTRLA.reg |= DMAC_CHCTRLA_ENABLE;
-
-    // Issue software trigger to initiate first transfer if peripheral trigger condition is already met
-    // Per datasheet §21.8.8: Writing '1' to SWTRIGn generates a DMA trigger if CHSTATUS.PEND=0
-    DMAC->SWTRIGCTRL.reg |= (1 << m_channel_id);
 
     m_busy = true;
 }
@@ -103,7 +105,7 @@ void DmaChannel::appendToChain(DmacDescriptor* newDesc) {
 
         // Clear SUSP flag and resume - this restarts the channel with the new base descriptor
         DMAC->CHINTFLAG.reg = DMAC_CHINTFLAG_SUSP;
-        DMAC->CHINTENSET.reg = DMAC_CHINTENSET_SUSP;  // Re-enable SUSP interrupt
+        DMAC->CHINTENSET.bit.SUSP = 1;  // Re-enable SUSP interrupt
         DMAC->CHCTRLB.reg |= DMAC_CHCTRLB_CMD_RESUME;
 
         // Issue software trigger to restart

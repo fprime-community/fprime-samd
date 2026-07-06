@@ -6,8 +6,6 @@
 
 #include "fprime-samd/Drv/UsartDriver/UsartDriver.hpp"
 #include "Drv/ByteStreamDriverModel/ByteStreamStatusEnumAc.hpp"
-#include "Drv/UsartDriver/UsartDriver_RxDmaBufferIDEnumAc.hpp"
-#include "Drv/UsartDriver/UsartDriver_SignalKindEnumAc.hpp"
 #include "Fw/Types/Assert.hpp"
 #include "Fw/Types/SuccessEnumAc.hpp"
 #include "config/FwAssertArgTypeAliasAc.h"
@@ -283,12 +281,16 @@ void UsartDriver ::configure(SercomKind sercom,
     this->m_rx_dog = rx_dog_cnt;
     this->m_rx_dog_reset = rx_dog_cnt;
 
-    // Send these buffers to the DMA
-    this->dmaQueueRxSend(ThinBuffer(this->m_rx[0].data, USART_RX_BUFFER_SIZE));
-    this->dmaQueueRxSend(ThinBuffer(this->m_rx[1].data, USART_RX_BUFFER_SIZE));
-    this->dmaRxCircular_out(0);
+    if (this->isConnected_dmaQueueOut_OutputPort(UsartDriver_DmaChannel::RX)) {
+        // Send these buffers to the DMA
+        this->dmaQueueRxSend(ThinBuffer(this->m_rx[0].data, USART_RX_BUFFER_SIZE));
+        this->dmaQueueRxSend(ThinBuffer(this->m_rx[1].data, USART_RX_BUFFER_SIZE));
+        this->dmaRxCircular_out(0);
+    }
 
     this->m_configured = true;
+
+    FW_ASSERT(sercom_hw->USART.INTFLAG.bit.DRE == 1);
 
     if (this->isConnected_ready_OutputPort(0)) {
         this->ready_out(0);
@@ -429,39 +431,6 @@ void UsartDriver ::activeIn_handler(FwIndexType portNum, U32 context) {
             Fw::Buffer thickBuffer;
             Fw::Success bufferStatus;
 
-            UsartDriver_SignalKind sk;
-            UsartDriver_RxDmaBufferID bfid;
-            switch (signal.kind) {
-                case SignalKind::TX_BUFFER_OK:
-                    sk = UsartDriver_SignalKind::TX_BUFFER_OK;
-                    break;
-                case SignalKind::TX_CHANNEL_ERROR:
-                    sk = UsartDriver_SignalKind::TX_CHANNEL_ERROR;
-                    break;
-                case SignalKind::RX_BUFFER_DONE:
-                    sk = UsartDriver_SignalKind::RX_BUFFER_DONE;
-                    break;
-                case SignalKind::RX_CHANNEL_ERROR:
-                    sk = UsartDriver_SignalKind::RX_CHANNEL_ERROR;
-                    break;
-                default:
-                    FW_ASSERT(false, static_cast<FwAssertArgType>(signal.kind));
-            }
-
-            switch (signal.rx) {
-                case RxDmaBufferID::A:
-                    bfid = UsartDriver_RxDmaBufferID::A;
-                    break;
-                case RxDmaBufferID::B:
-                    bfid = UsartDriver_RxDmaBufferID::B;
-                    break;
-                case RxDmaBufferID::INVALID:
-                    bfid = UsartDriver_RxDmaBufferID::INVALID;
-                    break;
-            }
-
-            this->log_DIAGNOSTIC_Signal(this->m_sercom, sk, bfid, signal.rx_bytes_remaining);
-
             switch (signal.kind) {
                 case SignalKind::TX_BUFFER_OK:
                     bufferStatus = this->m_tx_queue.dequeue(thinBuffer);
@@ -585,6 +554,8 @@ void UsartDriver ::recvReturnIn_handler(FwIndexType portNum, Fw::Buffer& fwBuffe
 }
 
 void UsartDriver ::send_handler(FwIndexType portNum, Fw::Buffer& fwBuffer) {
+    FW_ASSERT(this->m_configured);
+
     auto status = this->m_tx_queue.enqueue(ThinBuffer(fwBuffer));
     if (status == Fw::Success::SUCCESS) {
         // This job has been added to the queue, send it to the DMA

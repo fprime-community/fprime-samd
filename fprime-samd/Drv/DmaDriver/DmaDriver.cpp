@@ -276,6 +276,7 @@ void DmaDriver::handleInterrupt() {
         } else {
             // End of chain - no more descriptors executing
             m_currentExecutingDesc[id] = nullptr;
+            m_channels[id].markIdle();
         }
 
         Samd21::Dma::Reply reply;
