@@ -129,13 +129,14 @@ void DmaDriver::freeDescriptor(DmacDescriptor* desc) {
     FW_ASSERT(index < DmaDriverConfig::DMA_DESCRIPTOR_N, index);
 
     // Clear the bit
-    m_descriptors_used &= ~(1U << index);
+    this->m_descriptors_used &= ~(1U << index);
 }
 
 void DmaDriver::freeChain(DmacDescriptor* chainStart) {
     auto current = reinterpret_cast<::DmacDescriptor*>(chainStart);
 
-    while (current != nullptr && current->DESCADDR.reg != 0) {
+    U32 bound = 0;
+    while (bound <= DmaDriverConfig::DMA_DESCRIPTOR_N && current != nullptr && current->DESCADDR.reg != 0) {
         // Get next descriptor before freeing current
         auto next = reinterpret_cast<::DmacDescriptor*>(current->DESCADDR.reg);
 
@@ -143,7 +144,11 @@ void DmaDriver::freeChain(DmacDescriptor* chainStart) {
         freeDescriptor(reinterpret_cast<DmacDescriptor*>(current));
 
         current = next;
+        bound++;
     }
+
+    // Make sure we didn't hit the descriptor bound
+    FW_ASSERT(bound <= DmaDriverConfig::DMA_DESCRIPTOR_N);
 
     // Free the last descriptor (with DESCADDR == 0)
     if (current != nullptr) {
@@ -178,8 +183,9 @@ void DmaDriver::configure() {
     DMAC->CTRL.reg = DMAC_CTRL_DMAENABLE | DMAC_CTRL_LVLEN(0xF);
 
     // Enable DMA interrupt at lowest priority
+    static constexpr U32 LOWEST_PRIORITY = (1U << __NVIC_PRIO_BITS) - 1;
     NVIC_EnableIRQ(DMAC_IRQn);
-    NVIC_SetPriority(DMAC_IRQn, (1 << __NVIC_PRIO_BITS) - 1);
+    NVIC_SetPriority(DMAC_IRQn, LOWEST_PRIORITY);
 
     m_initialized = true;
 }

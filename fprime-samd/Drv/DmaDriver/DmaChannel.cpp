@@ -8,6 +8,7 @@
 #include <cstring>
 #include "Fw/Types/Assert.hpp"
 #include "Os/Mutex.hpp"
+#include "config/DmaDriverConfig.hpp"
 #include "sam.h"
 
 namespace Samd21 {
@@ -118,10 +119,15 @@ void DmaChannel::appendToChain(DmacDescriptor* newDesc) {
 
     // Find last descriptor in chain starting from the base descriptor for this channel
     ::DmacDescriptor* lastDesc = &dmac_base[m_channel_id];
-    while (lastDesc->DESCADDR.reg != 0) {
+    U32 bound = 0;
+    while (bound <= DmaDriverConfig::DMA_DESCRIPTOR_N && lastDesc->DESCADDR.reg != 0) {
         // Hardware stores descriptor addresses as uint32_t - reinterpret to pointer
         lastDesc = reinterpret_cast<::DmacDescriptor*>(lastDesc->DESCADDR.reg);
+        bound++;
     }
+
+    // Make sure we didn't hit the descriptor bound
+    FW_ASSERT(bound <= DmaDriverConfig::DMA_DESCRIPTOR_N);
 
     // Link new descriptor - hardware requires pointer as uint32_t
     lastDesc->DESCADDR.reg = reinterpret_cast<uint32_t>(newDesc);
@@ -161,9 +167,14 @@ void DmaChannel::linkToFront() {
 
     // Find the last descriptor in the chain
     ::DmacDescriptor* lastDesc = base;
-    while (lastDesc->DESCADDR.reg != 0) {
+    U32 bound = 0;
+    while (bound <= DmaDriverConfig::DMA_DESCRIPTOR_N && lastDesc->DESCADDR.reg != 0) {
         lastDesc = reinterpret_cast<::DmacDescriptor*>(lastDesc->DESCADDR.reg);
+        bound++;
     }
+
+    // Make sure we didn't hit the descriptor bound
+    FW_ASSERT(bound <= DmaDriverConfig::DMA_DESCRIPTOR_N);
 
     // Point last descriptor back to base to create circular buffer
     lastDesc->DESCADDR.reg = reinterpret_cast<uint32_t>(base);
