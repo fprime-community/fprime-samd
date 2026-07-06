@@ -24,8 +24,7 @@ struct DmacDescriptor {
 
 class DmaChannel final {
   public:
-    DmaChannel() : m_channel_id(0) {}
-    DmaChannel(U8 channel_id);
+    DmaChannel();
 
     //! Set the channel ID (called during initialization)
     void setChannelId(U8 channel_id) { m_channel_id = channel_id; }

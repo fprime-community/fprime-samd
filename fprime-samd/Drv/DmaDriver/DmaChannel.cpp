@@ -20,7 +20,7 @@ __attribute__((__aligned__(16))) ::DmacDescriptor dmac_writeback[DMAC_CH_NUM] SE
 // Global mutex for DMAC register access
 static Os::Mutex s_dmac_mutex;
 
-DmaChannel::DmaChannel(U8 channel_id) : m_channel_id(channel_id), m_busy(false), m_circular(false) {}
+DmaChannel::DmaChannel() : m_channel_id(0), m_busy(false), m_circular(false) {}
 
 static void waitForChannelSuspend() {
     volatile U32 limit = F_CPU;

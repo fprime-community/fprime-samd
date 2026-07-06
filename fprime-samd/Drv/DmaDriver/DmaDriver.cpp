@@ -6,7 +6,6 @@
 
 #include "fprime-samd/Drv/DmaDriver/DmaDriver.hpp"
 #include <cstring>
-#include "Drv/DmaDriver/DmaDriver_TransactionSerializableAc.hpp"
 #include "Fw/Types/Assert.hpp"
 #include "config/DmaDriverConfig.hpp"
 #include "config/FwAssertArgTypeAliasAc.h"
@@ -34,8 +33,8 @@ DmaDriver::DmaDriver(const char* const compName) : DmaDriverComponentBase(compNa
         m_currentExecutingDesc[i] = nullptr;
     }
 
-    // Register singleton for ISR access - pointer cast required for FW_ASSERT diagnostic
-    FW_ASSERT(s_instance == nullptr, reinterpret_cast<FwAssertArgType>(s_instance));
+    // Register singleton for ISR access
+    FW_ASSERT(s_instance == nullptr);
     s_instance = this;
 }
 
@@ -79,8 +78,11 @@ static void setupDescriptor(DmacDescriptor* desc,
 
     // Validate parameters
     FW_ASSERT(desc != nullptr);
-    FW_ASSERT(sourceAddr);
-    FW_ASSERT(destAddr);
+
+    // Addresses are trusted programmer-controlled values: only called from internal
+    // hardware drivers with static buffers or validated Fw::Buffer pointers
+    FW_ASSERT(sourceAddr != 0);
+    FW_ASSERT(destAddr != 0);
 
     U8 beatSizeBytes = static_cast<U8>(1U << beatSize.e);
     FW_ASSERT(sourceAddr % beatSizeBytes == 0, sourceAddr, beatSizeBytes);
@@ -90,6 +92,7 @@ static void setupDescriptor(DmacDescriptor* desc,
     FwSizeType beatCount = len / beatSizeBytes;
     FW_ASSERT(beatCount > 0 && beatCount <= 65535, beatCount);
 
+    // Cast to hardware descriptor type (layout verified by static_assert at line 77)
     auto* desc_hw = reinterpret_cast<::DmacDescriptor*>(desc);
 
     // Setup BTCTRL - Block Transfer Control
@@ -160,16 +163,16 @@ void DmaDriver::configure() {
     DMAC->CTRL.bit.SWRST = 1;
     waitForDmacReset();
 
-    // Keep the DMAC running during debug paus
+    // Keep the DMAC running during debug pause
     DMAC->DBGCTRL.bit.DBGRUN = 1;
 
     // Setup descriptor base address and write-back section base address - hardware requires pointer as uint32_t
     DMAC->BASEADDR.reg = reinterpret_cast<uint32_t>(dmac_base);
     DMAC->WRBADDR.reg = reinterpret_cast<uint32_t>(dmac_writeback);
 
-    // Clear descriptor memory - intentional discard, always succeeds
-    static_cast<void>(memset(dmac_base, 0, sizeof(dmac_base)));
-    static_cast<void>(memset(dmac_writeback, 0, sizeof(dmac_writeback)));
+    // Clear descriptor memory
+    memset(dmac_base, 0, sizeof(dmac_base));
+    memset(dmac_writeback, 0, sizeof(dmac_writeback));
 
     // Enable DMA controller with all priority levels
     DMAC->CTRL.reg = DMAC_CTRL_DMAENABLE | DMAC_CTRL_LVLEN(0xF);
@@ -330,11 +333,6 @@ void DmaDriver::sendTransactionIn_handler(FwIndexType portNum,
     // Make sure we got a descriptor
     FW_ASSERT(desc, portNum, static_cast<FwAssertArgType>(trigger.e));
 
-    this->log_ACTIVITY_LO_Transaction(
-        portNum, i,
-        Samd21::DmaDriver_Transaction(trigger, action, priority, sourceAddr, destAddr, len, beatSize, incrementSource,
-                                      incrementDestination, stepSize, stepSelection));
-
     // Queue transaction on the channel
     bool wasIdle = !m_channels[portNum].isBusy();
     m_channels[portNum].queueTransaction(trigger, action, priority, desc);
@@ -351,8 +349,6 @@ void DmaDriver::sendTransactionIn_handler(FwIndexType portNum,
 void DmaDriver::linkToFrontIn_handler(FwIndexType portNum) {
     FW_ASSERT(m_initialized);
     FW_ASSERT(portNum < NUM_LINKTOFRONTIN_INPUT_PORTS, portNum);
-
-    this->log_ACTIVITY_LO_ChannelCirculuar(portNum);
 
     m_channels[portNum].linkToFront();
 }

@@ -6,7 +6,6 @@
 # USB stack disabled - USB is connected to debugger only, not MCU
 ####
 
-# IMPORTANT: Set device define BEFORE including toolchain
 # This is required for <sam.h> to include the correct device header
 add_compile_definitions(
     __SAMD21G17D__
@@ -14,7 +13,7 @@ add_compile_definitions(
 )
 
 # Enable LTO for this board (has limited flash)
-set(SAMD21_LTO OFF)
+set(SAMD21_LTO ON)
 set(SAMD21_MTB OFF)
 
 # Set the board type
