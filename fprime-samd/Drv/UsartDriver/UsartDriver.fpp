@@ -27,15 +27,6 @@ module Samd21 {
             N
         }
 
-        @ Signals sent to the internal queue for processing during schedIn
-        enum Signal : U8 {
-            TX_BUFFER_OK, @< A buffer has been TXed over the DMA successfully
-            TX_BUFFER_ERROR, @< A buffer failed to be transmitted due to a bus error
-            RX_BUFFER_FULL, @< An RX buffer has been filled and is ready for processing
-            RX_BUFFER_PARTIAL, @< A partial RX buffer is ready for processing
-            RX_BUFFER_ERROR, @< An error occurred while filling an RX buffer
-        }
-
         import AsyncNonQueuedByteStreamDriver
 
         @ REQUIRED CONNECTION: Service the UART driver at a fixed rate for idle RX detection.
