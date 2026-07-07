@@ -80,6 +80,10 @@ class DmaDriver final : public DmaDriverComponentBase {
             stepSelection  //!< Determines whether the step size setting is applied to the source or destination address
         ) override;
 
+    void schedIn_handler(FwIndexType portNum,  //!< The port number
+                         U32 context           //!< The call order
+                         ) override;
+
   private:
     //! Free a descriptor back to the pool
     void freeDescriptor(DmacDescriptor* desc);

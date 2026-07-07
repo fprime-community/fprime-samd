@@ -472,7 +472,18 @@ void UsartDriver ::activeIn_handler(FwIndexType portNum, U32 context) {
                     }
 
                     if (thickBuffer.getSize() > 0) {
-                        this->log_DIAGNOSTIC_Rx(static_cast<U8>(this->m_active_rx), thickBuffer.getSize());
+                        switch (signal.kind) {
+                            case SignalKind::RX_BUFFER_PARTIAL:
+                                this->log_DIAGNOSTIC_RxPartial(static_cast<U8>(this->m_active_rx),
+                                                               this->m_active_processed, thickBuffer.getSize());
+                                break;
+                            case SignalKind::RX_BUFFER_DONE:
+                                this->log_DIAGNOSTIC_RxFull(static_cast<U8>(this->m_active_rx),
+                                                            this->m_active_processed, thickBuffer.getSize());
+                                break;
+                            default:
+                                break;
+                        }
                     }
 
                     switch (signal.kind) {

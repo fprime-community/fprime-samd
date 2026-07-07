@@ -71,10 +71,17 @@ module Samd21 {
         import Fw.Event
         time get port timeCaller
 
-        event Rx(
+        event RxPartial(
             buf_index: U8,
+            offset: U32,
+            n_bytes: U32,
+        ) severity diagnostic format "Rx partial buffer idx={} offset={} n={}"
+
+        event RxFull(
+            buf_index: U8,
+            offset: U32,
             n_bytes: U32
-        ) severity diagnostic format "Got an Rx {} buffer back from DMA with {} bytes"
+        ) severity diagnostic format "Rx full buffer idx={} offset={} n={}"
 
         event Tx(
             addr: U32,

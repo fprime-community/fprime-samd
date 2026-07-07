@@ -390,6 +390,17 @@ void DmaDriver::sendTransactionIn_handler(FwIndexType portNum,
     }
 }
 
+void DmaDriver ::schedIn_handler(FwIndexType portNum, U32 context) {
+    U8 freeDescriptors = DmaDriverConfig::DMA_DESCRIPTOR_N;
+    for (U8 i = 0; i < DmaDriverConfig::DMA_DESCRIPTOR_N; i++) {
+        if (this->m_descriptors_used & (1 << i)) {
+            freeDescriptors--;
+        }
+    }
+
+    this->tlmWrite_freeDescriptors(freeDescriptors);
+}
+
 void DmaDriver::linkToFrontIn_handler(FwIndexType portNum) {
     FW_ASSERT(m_initialized);
     FW_ASSERT(portNum < NUM_LINKTOFRONTIN_INPUT_PORTS, portNum);
