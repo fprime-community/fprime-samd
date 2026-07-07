@@ -109,8 +109,8 @@ module Samd21 {
             sourceAddr: U32, # FIXME(tumbar) Is there a alias type I should be using for pointers?
             @ The destination address to move data to
             destAddr: U32,
-            @ Number of bytes to copy from source to destination
-            len: U32,
+            @ Number of beats between source and destination
+            beat_count: U16,
             @ Size of each beat. Controls the width of each DMA action
             beatSize: Dma.BeatSize,
             @ Whether the DMA controller should increment the source pointer after each action signal

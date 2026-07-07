@@ -11,7 +11,6 @@
 #include "Svc/FprimeProtocol/FrameHeaderSerializableAc.hpp"
 #include "Svc/FprimeProtocol/FrameTrailerSerializableAc.hpp"
 #include "Utils/Hash/Hash.hpp"
-#include "config/FwPacketDescriptorTypeAliasAc.h"
 #include "fprime-samd/config/FramerConfig.hpp"
 
 namespace Samd21 {
@@ -101,11 +100,6 @@ void Framer ::comPacketQueueIn_handler(FwIndexType portNum, Fw::ComBuffer& data,
     // Update buffer size to include the packet frame
     activeBuf.size += serializer.getSize();
     FW_ASSERT(activeBuf.size <= FramerConfig::FRAMER_TX_BUFFER_SIZE);
-}
-
-void Framer ::sendFatalPacket(Fw::ComBuffer& data) {
-    this->comPacketQueueIn_handler(0, data, 0);
-    this->flushActiveBuffer();
 }
 
 void Framer ::drvConnected_handler(FwIndexType portNum) {

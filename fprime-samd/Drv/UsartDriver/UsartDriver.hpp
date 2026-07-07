@@ -195,8 +195,8 @@ class UsartDriver final : public UsartDriverComponentBase {
 
     //! Rx buffers (A and B) for receiving data over the DMA
     RxBuffer m_rx[2];
-    RxDmaBufferState m_rx_state[2];
     RxDmaBufferID m_active_rx;
+    U16 m_active_processed;
 
     //! Tracks whether configure() as been called or not
     bool m_configured;
@@ -209,16 +209,16 @@ class UsartDriver final : public UsartDriverComponentBase {
 
     //! Signals sent to the internal queue for processing during schedIn
     enum class SignalKind : U8 {
-        TX_BUFFER_OK,      //!< A buffer has been TXed over the DMA successfully
-        TX_CHANNEL_ERROR,  //!< An error occurred on the TX DMA channel. Clear all the TX buffers off the queue to try
-                           //!< again
-        RX_BUFFER_DONE,    //!< An RX buffer has been filled/partially filled and is ready for processing
-        RX_CHANNEL_ERROR,  //!< An error occurred on the RX DMA channel.
+        TX_BUFFER_OK,       //!< A buffer has been TXed over the DMA successfully
+        TX_CHANNEL_ERROR,   //!< An error occurred on the TX DMA channel. Clear all the TX buffers off the queue to try
+                            //!< again
+        RX_BUFFER_PARTIAL,  //!< An RX buffer has been partially filled and is ready for processing
+        RX_BUFFER_DONE,     //!< An RX buffer has been filled and is ready for processing
+        RX_CHANNEL_ERROR,   //!< An error occurred on the RX DMA channel.
     };
 
     struct Signal {
         SignalKind kind;
-        RxDmaBufferID rx;
         U16 rx_bytes_remaining;
     };
 

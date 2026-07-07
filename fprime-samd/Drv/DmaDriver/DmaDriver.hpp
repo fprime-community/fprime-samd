@@ -49,13 +49,6 @@ class DmaDriver final : public DmaDriverComponentBase {
     void linkToFrontIn_handler(FwIndexType portNum  //!< The port number
                                ) override;
 
-    //! Handler implementation for popFrontIn
-    //!
-    //! Suspend the channel, read writeback, and advance to the next descriptor.
-    //! Used for IDLE frame detection: process partial buffer and move to alternate.
-    Dma::Writeback popFrontIn_handler(FwIndexType portNum  //!< The port number
-                                      ) override;
-
     //! Handler implementation for readWritebackIn
     //!
     //! Read the writeback register on the active DMA transfer for this channel
@@ -75,7 +68,7 @@ class DmaDriver final : public DmaDriverComponentBase {
         const Dma::Priority& priority,  //!< DMA transaction priority
         U32 sourceAddr,                 //!< The source address to move data from
         U32 destAddr,                   //!< The destination address to move data to
-        U32 len,                        //!< Number of bytes to copy from source to destination
+        U16 btcnt,                      //!< Number of bytes to copy from source to destination
         const Dma::BeatSize& beatSize,  //!< Size of each beat. Controls the width of each DMA action
         bool incrementSource,  //!< Whether the DMA controller should increment the source pointer after each action
                                //!< signal
@@ -95,7 +88,7 @@ class DmaDriver final : public DmaDriverComponentBase {
     void freeChain(DmacDescriptor* chainStart);
 
     //! Storage of DMA descriptors for queuing jobs on the DMAC
-    DmacDescriptor m_descriptors[DmaDriverConfig::DMA_DESCRIPTOR_N];
+    __attribute__((__aligned__(16))) DmacDescriptor m_descriptors[DmaDriverConfig::DMA_DESCRIPTOR_N];
 
     //! Bitfield tracking if the descriptor is in use
     U32 m_descriptors_used;

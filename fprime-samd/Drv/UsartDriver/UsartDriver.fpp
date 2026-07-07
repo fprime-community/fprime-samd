@@ -62,11 +62,24 @@ module Samd21 {
 
         @ Read the current DMA transfer on the Rx. This can be used during IDLE
         @ periods on the transfer to extract data that is smaller than a single Rx buffer
-        output port dmaRxPopCurrent: Dma.ReadWriteback
+        output port dmaRxRead: Dma.ReadWriteback
 
         @ A signal from the DMAC that a request has finished.
         @ This signal comes inside an ISR!
         sync input port dmaReplyIn: [DmaChannel.N] Dma.TransactionReply
+
+        import Fw.Event
+        time get port timeCaller
+
+        event Rx(
+            buf_index: U8,
+            n_bytes: U32
+        ) severity diagnostic format "Got an Rx {} buffer back from DMA with {} bytes"
+
+        event Tx(
+            addr: U32,
+            n: U16
+        ) severity diagnostic format "Tx buffer 0x{x} finished transmitting {} bytes"
 
     }
 }

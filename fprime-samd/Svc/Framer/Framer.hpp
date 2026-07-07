@@ -26,8 +26,6 @@ class Framer final : public FramerComponentBase {
     //! Destroy Framer object
     ~Framer();
 
-    void sendFatalPacket(Fw::ComBuffer& data);
-
   private:
     // ----------------------------------------------------------------------
     // Handler implementations for typed input ports

@@ -41,13 +41,8 @@ class DmaChannel final {
     //! Once called, the channel is marked as circular and descriptors will not be freed.
     void linkToFront();
 
-    //! Suspend channel, read writeback, and advance to next descriptor
-    //! Used for IDLE frame detection: process partial buffer and move to alternate.
-    //! Returns the writeback state before advancing to the next descriptor.
-    void popFront(Samd21::Dma::Writeback& result);
-
-    //! Suspend this channel
-    void suspend();
+    //! Suspend channel, read writeback, resume channel
+    void readWriteback(Samd21::Dma::Writeback& result);
 
     //! Check if channel is busy
     bool isBusy() const { return m_busy; }
@@ -57,9 +52,6 @@ class DmaChannel final {
 
     //! Mark channel as idle (called from ISR on completion)
     void markIdle();
-
-    //! Get beat size in bytes for this channel's current configuration
-    U8 getBeatSizeBytes() const;
 
   private:
     //! Start transaction on idle channel with pre-configured descriptor

@@ -6,6 +6,8 @@
 
 #include "fprime-samd/Drv/DmaDriver/DmaDriver.hpp"
 #include <cstring>
+#include "Drv/Types/AddressIncrementStepSizeEnumAc.hpp"
+#include "Drv/Types/BeatSizeEnumAc.hpp"
 #include "Fw/Types/Assert.hpp"
 #include "config/DmaDriverConfig.hpp"
 #include "config/FwAssertArgTypeAliasAc.h"
@@ -18,9 +20,43 @@ namespace Samd21 {
 // Singleton instance for ISR access
 DmaDriver* DmaDriver::s_instance = nullptr;
 
+static volatile U32 cpu_irq_critical_section_counter = 0;
+static volatile U32 cpu_irq_prev_interrupt_state = 0;
+
 // External references to global descriptor memory (defined in DmaChannel.cpp)
 extern ::DmacDescriptor dmac_base[DMAC_CH_NUM];
 extern ::DmacDescriptor dmac_writeback[DMAC_CH_NUM];
+
+static void cpu_irq_enter_critical(void) {
+    if (!cpu_irq_critical_section_counter) {
+        if (__get_PRIMASK() == 0) {  // IRQ enabled?
+            __disable_irq();         // Disable it
+            __DMB();
+            cpu_irq_prev_interrupt_state = 1;
+        } else {
+            // Make sure the to save the prev state as false
+            cpu_irq_prev_interrupt_state = 0;
+        }
+    }
+
+    cpu_irq_critical_section_counter++;
+}
+
+static void cpu_irq_leave_critical(void) {
+    // Check if the user is trying to leave a critical section
+    // when not in a critical section
+    if (cpu_irq_critical_section_counter > 0) {
+        cpu_irq_critical_section_counter--;
+
+        // Only enable global interrupts when the counter
+        // reaches 0 and the state of the global interrupt flag
+        // was enabled when entering critical state */
+        if ((!cpu_irq_critical_section_counter) && cpu_irq_prev_interrupt_state) {
+            __DMB();
+            __enable_irq();
+        }
+    }
+}
 
 // ----------------------------------------------------------------------
 // Component construction and destruction
@@ -56,18 +92,22 @@ static void waitForDmacReset() {
     FW_ASSERT(limit != 0);
 }
 
-static U32 calculateEndAddress(U32 startAddr, U32 len, bool increment) {
+static U32 calculateEndAddress(U32 startAddr,
+                               U16 btcnt,
+                               Samd21::Dma::BeatSize beatSize,
+                               Samd21::Dma::AddressIncrementStepSize stepSize,
+                               bool increment) {
     if (increment) {
-        return startAddr + len;
+        return startAddr + btcnt * (beatSize.e + 1) * (1 << stepSize.e);
     } else {
-        return startAddr;
+        return startAddr + btcnt * (beatSize.e + 1);
     }
 }
 
 static void setupDescriptor(DmacDescriptor* desc,
                             U32 sourceAddr,
                             U32 destAddr,
-                            U32 len,
+                            U16 btcnt,
                             const Samd21::Dma::BeatSize& beatSize,
                             bool incrementSource,
                             bool incrementDestination,
@@ -78,36 +118,35 @@ static void setupDescriptor(DmacDescriptor* desc,
 
     // Validate parameters
     FW_ASSERT(desc != nullptr);
-
-    // Addresses are trusted programmer-controlled values: only called from internal
-    // hardware drivers with static buffers or validated Fw::Buffer pointers
     FW_ASSERT(sourceAddr != 0);
     FW_ASSERT(destAddr != 0);
-
-    U8 beatSizeBytes = static_cast<U8>(1U << beatSize.e);
-    FW_ASSERT(sourceAddr % beatSizeBytes == 0, sourceAddr, beatSizeBytes);
-    FW_ASSERT(destAddr % beatSizeBytes == 0, destAddr, beatSizeBytes);
-    FW_ASSERT(len % beatSizeBytes == 0, len, beatSizeBytes);
-
-    FwSizeType beatCount = len / beatSizeBytes;
-    FW_ASSERT(beatCount > 0 && beatCount <= 65535, beatCount);
 
     // Cast to hardware descriptor type (layout verified by static_assert at line 77)
     auto* desc_hw = reinterpret_cast<::DmacDescriptor*>(desc);
 
     // Setup BTCTRL - Block Transfer Control
-    desc_hw->BTCTRL.reg = DMAC_BTCTRL_VALID |         // Descriptor is valid
-                          DMAC_BTCTRL_BLOCKACT_INT |  // Generate interrupt on completion
-                          (beatSize.e << DMAC_BTCTRL_BEATSIZE_Pos) | (incrementSource ? DMAC_BTCTRL_SRCINC : 0) |
-                          (incrementDestination ? DMAC_BTCTRL_DSTINC : 0) |
-                          (stepSelection.e << DMAC_BTCTRL_STEPSEL_Pos) | (stepSize.e << DMAC_BTCTRL_STEPSIZE_Pos);
+    desc_hw->BTCTRL.bit.VALID = 1;
+    desc_hw->BTCTRL.bit.BLOCKACT = DMAC_BTCTRL_BLOCKACT_INT_Val;
+    desc_hw->BTCTRL.bit.BEATSIZE = beatSize.e;
+    desc_hw->BTCTRL.bit.SRCINC = incrementSource ? 1 : 0;
+    desc_hw->BTCTRL.bit.DSTINC = incrementDestination ? 1 : 0;
+    desc_hw->BTCTRL.bit.STEPSEL = stepSelection.e;
+    desc_hw->BTCTRL.bit.STEPSIZE = stepSize.e;
 
     // Setup beat count
-    desc_hw->BTCNT.reg = static_cast<uint16_t>(beatCount);
+    desc_hw->BTCNT.reg = btcnt;
 
-    // Setup addresses (END addresses if increment is enabled)
-    desc_hw->SRCADDR.reg = calculateEndAddress(sourceAddr, len, incrementSource);
-    desc_hw->DSTADDR.reg = calculateEndAddress(destAddr, len, incrementDestination);
+    // 20.6.2.7. Addressing
+    // When source address incrementation is configured (BTCTRL.SRCINC=1), SRCADDR is calculated as follows:
+    // If BTCTRL.STEPSEL=1:
+    //      SRCADDR = SRCADDRSTART + BTCNT ⋅ (BEATSIZE + 1) ⋅ 2**STEPSIZE
+    // If BTCTRL.STEPSEL=0:
+    //      SRCADDR = SRCADDRSTART + BTCNT ⋅ (BEATSIZE + 1)
+    desc_hw->SRCADDR.reg = calculateEndAddress(sourceAddr, incrementSource ? btcnt : 0, beatSize, stepSize,
+                                               incrementSource && stepSelection == Dma::StepSelection::SOURCE);
+    desc_hw->DSTADDR.reg =
+        calculateEndAddress(destAddr, incrementDestination ? btcnt : 0, beatSize, stepSize,
+                            incrementDestination && stepSelection == Dma::StepSelection::DESTINATION);
 
     // No next descriptor by default
     desc_hw->DESCADDR.reg = 0;
@@ -191,6 +230,8 @@ void DmaDriver::configure() {
 }
 
 void DmaDriver::handleInterrupt() {
+    cpu_irq_enter_critical();
+
     // Read which channel triggered the interrupt
     uint8_t id = DMAC->INTPEND.bit.ID;
     FW_ASSERT(id < DMAC_CH_NUM, id);
@@ -209,12 +250,10 @@ void DmaDriver::handleInterrupt() {
         } else {
             // Pure bus error - report it
             ::DmacDescriptor* wb = &dmac_writeback[id];
-            U32 beatSizeBytes = m_channels[id].getBeatSizeBytes();
-            U32 remainingBytes = wb->BTCNT.reg * beatSizeBytes;
 
             Samd21::Dma::Reply reply;
             reply.set_status(Samd21::Dma::Status::BUS_ERROR);
-            reply.set_remainingBytes(remainingBytes);
+            reply.set_remainingBytes(wb->BTCNT.reg);
 
             this->transactionIsrOut_out(id, reply);
         }
@@ -246,7 +285,7 @@ void DmaDriver::handleInterrupt() {
         if (status & DMAC_CHSTATUS_FERR) {
             // Fetch error - check if end-of-chain or invalid descriptor
             ::DmacDescriptor* wb = &dmac_writeback[id];
-            if (wb->DESCADDR.reg == 0x00000000) {
+            if (wb->DESCADDR.reg == 0) {
                 // Normal end of linked list
                 // All chained descriptors were already freed incrementally in TCMPL handler
                 // Just mark the channel idle
@@ -296,10 +335,9 @@ void DmaDriver::handleInterrupt() {
 
         // Clear flag
         DMAC->CHINTFLAG.reg = DMAC_CHINTFLAG_TCMPL;
-
-        // Don't mark idle here - intermediate descriptors also trigger TCMPL
-        // The channel is marked idle when end-of-chain is detected in the SUSP handler
     }
+
+    cpu_irq_leave_critical();
 }
 
 // ----------------------------------------------------------------------
@@ -312,7 +350,7 @@ void DmaDriver::sendTransactionIn_handler(FwIndexType portNum,
                                           const Samd21::Dma::Priority& priority,
                                           U32 sourceAddr,
                                           U32 destAddr,
-                                          U32 len,
+                                          U16 btcnt,
                                           const Samd21::Dma::BeatSize& beatSize,
                                           bool incrementSource,
                                           bool incrementDestination,
@@ -327,8 +365,8 @@ void DmaDriver::sendTransactionIn_handler(FwIndexType portNum,
     for (; i < DmaDriverConfig::DMA_DESCRIPTOR_N; i++) {
         if (!(this->m_descriptors_used & (1 << i))) {
             desc = &this->m_descriptors[i];
-            setupDescriptor(desc, sourceAddr, destAddr, len, beatSize, incrementSource, incrementDestination, stepSize,
-                            stepSelection);
+            setupDescriptor(desc, sourceAddr, destAddr, btcnt, beatSize, incrementSource, incrementDestination,
+                            stepSize, stepSelection);
 
             // Mark the descriptor as used
             this->m_descriptors_used |= (1 << i);
@@ -339,48 +377,40 @@ void DmaDriver::sendTransactionIn_handler(FwIndexType portNum,
     // Make sure we got a descriptor
     FW_ASSERT(desc, portNum, static_cast<FwAssertArgType>(trigger.e));
 
+    cpu_irq_enter_critical();
+
     // Queue transaction on the channel
     bool wasIdle = !m_channels[portNum].isBusy();
     m_channels[portNum].queueTransaction(trigger, action, priority, desc);
 
+    cpu_irq_leave_critical();
+
     if (wasIdle) {
-        // startTransaction() copied the descriptor to dmac_base[portNum]
-        // The original can be freed, and dmac_base[portNum] is now "executing"
-        freeDescriptor(desc);
-        m_currentExecutingDesc[portNum] = reinterpret_cast<DmacDescriptor*>(&dmac_base[portNum]);
+        m_currentExecutingDesc[portNum] = desc;
     }
-    // else: appendToChain() linked desc by address - it will be freed when it completes
 }
 
 void DmaDriver::linkToFrontIn_handler(FwIndexType portNum) {
     FW_ASSERT(m_initialized);
     FW_ASSERT(portNum < NUM_LINKTOFRONTIN_INPUT_PORTS, portNum);
 
+    cpu_irq_enter_critical();
+
     m_channels[portNum].linkToFront();
-}
 
-Samd21::Dma::Writeback DmaDriver::popFrontIn_handler(FwIndexType portNum) {
-    FW_ASSERT(m_initialized);
-    FW_ASSERT(portNum < NUM_POPFRONTIN_INPUT_PORTS, portNum);
-
-    Samd21::Dma::Writeback result;
-    m_channels[portNum].popFront(result);
-    return result;
+    cpu_irq_leave_critical();
 }
 
 Samd21::Dma::Writeback DmaDriver::readWritebackIn_handler(FwIndexType portNum) {
     FW_ASSERT(m_initialized);
     FW_ASSERT(portNum < NUM_READWRITEBACKIN_INPUT_PORTS, portNum);
 
-    // Read writeback descriptor for this channel
-    ::DmacDescriptor* wb = &dmac_writeback[portNum];
+    cpu_irq_enter_critical();
 
     Samd21::Dma::Writeback result;
-    result.set_btctrl(wb->BTCTRL.reg);
-    result.set_btcnt(wb->BTCNT.reg);
-    result.set_srcaddr(wb->SRCADDR.reg);
-    result.set_dstaddr(wb->DSTADDR.reg);
-    result.set_descaddr(wb->DESCADDR.reg);
+    m_channels[portNum].readWriteback(result);
+
+    cpu_irq_leave_critical();
 
     return result;
 }

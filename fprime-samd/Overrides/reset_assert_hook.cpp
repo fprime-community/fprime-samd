@@ -23,7 +23,7 @@
 #endif
 
 extern "C" __attribute__((used)) void HardFault_Handler(void) {
-    __BKPT(3);
+    // __BKPT(3);
     NVIC_SystemReset();
 }
 
@@ -33,10 +33,6 @@ extern void sendBailFrame(FILE_NAME_ARG file, FwSizeType lineNo);
 }  // namespace Samd21
 
 void Fw::defaultDoAssert() {
-    // Hold for 10s to allow flashing without reinitializing the USB
-    // TODO(tumbar) We will want to disable RTC interrupts here
-    __BKPT(2);
-    delay(10000);
     NVIC_SystemReset();
 
     while (true) {
@@ -44,6 +40,8 @@ void Fw::defaultDoAssert() {
 }
 
 void Fw::defaultPrintAssert(const CHAR* msg) {
+    __disable_irq();
+
     static volatile bool assertReached = false;
     if (assertReached) {
         defaultDoAssert();

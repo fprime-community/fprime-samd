@@ -33,9 +33,8 @@ static void waitForChannelSuspend() {
     FW_ASSERT(limit != 0);
 }
 
-static void suspendChannel(U8 channel_id) {
-    DMAC->CHID.reg = DMAC_CHID_ID(channel_id);
-    DMAC->CHINTENCLR.reg = DMAC_CHINTENCLR_SUSP;
+static void suspendChannel() {
+    DMAC->CHINTENCLR.bit.SUSP = 1;
     DMAC->CHCTRLB.reg |= DMAC_CHCTRLB_CMD_SUSPEND;
     waitForChannelSuspend();
 }
@@ -62,6 +61,8 @@ void DmaChannel::startTransaction(const Samd21::Dma::TriggerSource& trigger,
     DMAC->CHID.reg = DMAC_CHID_ID(m_channel_id);
     DMAC->CHCTRLA.bit.ENABLE = 0;
     DMAC->CHCTRLA.bit.SWRST = 1;
+    while (DMAC->CHCTRLA.bit.ENABLE)
+        ;
 
     // Clear software trigger
     DMAC->SWTRIGCTRL.reg &= ~(1 << m_channel_id);
@@ -96,41 +97,31 @@ void DmaChannel::appendToChain(DmacDescriptor* newDesc) {
     // Select this channel
     DMAC->CHID.reg = DMAC_CHID_ID(m_channel_id);
 
-    // Check if the channel completed before we could append (race condition)
-    // If SUSP interrupt is pending, the descriptor chain has ended
-    if (DMAC->CHINTFLAG.reg & DMAC_CHINTFLAG_SUSP) {
-        // Channel already completed and suspended - we missed our chance to append to the chain
-        // The new descriptor must become the new base descriptor
-        // Copy the new descriptor to the base
-        std::memcpy(reinterpret_cast<void*>(&dmac_base[m_channel_id]), newDesc, sizeof(DmacDescriptor));
-
-        // Clear SUSP flag and resume - this restarts the channel with the new base descriptor
-        DMAC->CHINTFLAG.reg = DMAC_CHINTFLAG_SUSP;
-        DMAC->CHINTENSET.bit.SUSP = 1;  // Re-enable SUSP interrupt
-        DMAC->CHCTRLB.reg |= DMAC_CHCTRLB_CMD_RESUME;
-
-        // Issue software trigger to restart
-        DMAC->SWTRIGCTRL.reg |= (1 << m_channel_id);
-        return;
-    }
-
-    // Normal case: channel is still executing, suspend and append to chain
-    suspendChannel(m_channel_id);
+    // Channel is still executing, suspend and append to chain
+    suspendChannel();
 
     // Find last descriptor in chain starting from the base descriptor for this channel
     ::DmacDescriptor* lastDesc = &dmac_base[m_channel_id];
-    U32 bound = 0;
-    while (bound <= DmaDriverConfig::DMA_DESCRIPTOR_N && lastDesc->DESCADDR.reg != 0) {
+    U32 n = 0;
+    while (n <= DmaDriverConfig::DMA_DESCRIPTOR_N && lastDesc->DESCADDR.reg != 0) {
         // Hardware stores descriptor addresses as uint32_t - reinterpret to pointer
         lastDesc = reinterpret_cast<::DmacDescriptor*>(lastDesc->DESCADDR.reg);
-        bound++;
+        n++;
     }
 
     // Make sure we didn't hit the descriptor bound
-    FW_ASSERT(bound <= DmaDriverConfig::DMA_DESCRIPTOR_N);
+    FW_ASSERT(n <= DmaDriverConfig::DMA_DESCRIPTOR_N);
+    FW_ASSERT(lastDesc->DESCADDR.reg == 0);
 
-    // Link new descriptor - hardware requires pointer as uint32_t
-    lastDesc->DESCADDR.reg = reinterpret_cast<uint32_t>(newDesc);
+    // Link new descriptor
+    lastDesc->DESCADDR.reg = reinterpret_cast<U32>(newDesc);
+
+    // If there is only one channel in the chain, we need to update the writeback as well to point to this descriptor
+    if (n == 0) {
+        auto wb = &dmac_writeback[m_channel_id];
+        FW_ASSERT(wb->DESCADDR.reg == 0);
+        wb->DESCADDR.reg = reinterpret_cast<U32>(newDesc);
+    }
 
     resumeChannel();
 }
@@ -156,10 +147,14 @@ void DmaChannel::queueTransaction(const Samd21::Dma::TriggerSource& trigger,
 
 void DmaChannel::linkToFront() {
     FW_ASSERT(m_busy, m_channel_id);
+    FW_ASSERT(!m_circular, m_channel_id);
 
     Os::ScopeLock lock(s_dmac_mutex);
 
-    suspendChannel(m_channel_id);
+    // Select this channel
+    DMAC->CHID.reg = DMAC_CHID_ID(m_channel_id);
+
+    suspendChannel();
 
     // Must have at least one descriptor to make a circular chain
     ::DmacDescriptor* base = &dmac_base[m_channel_id];
@@ -167,17 +162,17 @@ void DmaChannel::linkToFront() {
 
     // Find the last descriptor in the chain
     ::DmacDescriptor* lastDesc = base;
-    U32 bound = 0;
-    while (bound <= DmaDriverConfig::DMA_DESCRIPTOR_N && lastDesc->DESCADDR.reg != 0) {
+    U32 n = 0;
+    while (n <= DmaDriverConfig::DMA_DESCRIPTOR_N && lastDesc->DESCADDR.reg != 0) {
         lastDesc = reinterpret_cast<::DmacDescriptor*>(lastDesc->DESCADDR.reg);
-        bound++;
+        n++;
     }
 
     // Make sure we didn't hit the descriptor bound
-    FW_ASSERT(bound <= DmaDriverConfig::DMA_DESCRIPTOR_N);
+    FW_ASSERT(n <= DmaDriverConfig::DMA_DESCRIPTOR_N);
 
     // Point last descriptor back to base to create circular buffer
-    lastDesc->DESCADDR.reg = reinterpret_cast<uint32_t>(base);
+    lastDesc->DESCADDR.reg = reinterpret_cast<U32>(base);
 
     // Mark channel as circular to prevent descriptor freeing
     m_circular = true;
@@ -185,13 +180,11 @@ void DmaChannel::linkToFront() {
     resumeChannel();
 }
 
-void DmaChannel::popFront(Samd21::Dma::Writeback& result) {
+void DmaChannel::readWriteback(Samd21::Dma::Writeback& result) {
     FW_ASSERT(m_busy, m_channel_id);
-    FW_ASSERT(m_circular, m_channel_id);  // Only valid for circular buffers
 
-    Os::ScopeLock lock(s_dmac_mutex);
-
-    suspendChannel(m_channel_id);
+    DMAC->CHID.reg = DMAC_CHID_ID(m_channel_id);
+    suspendChannel();
 
     // Read writeback descriptor for this channel
     auto wb = &dmac_writeback[m_channel_id];
@@ -202,36 +195,11 @@ void DmaChannel::popFront(Samd21::Dma::Writeback& result) {
     result.set_dstaddr(wb->DSTADDR.reg);
     result.set_descaddr(wb->DESCADDR.reg);
 
-    // Skip to next descriptor by marking current descriptor as complete
-    // Setting BTCNT to 0 forces the DMA to move to the next descriptor
-    if (wb->DESCADDR.reg != 0) {
-        wb->BTCNT.reg = 0;  // Mark current descriptor as "complete"
-    }
-
     resumeChannel();
-}
-
-void DmaChannel::suspend() {
-    if (!m_busy) {
-        return;  // Nothing to suspend
-    }
-
-    Os::ScopeLock lock(s_dmac_mutex);
-
-    DMAC->CHID.reg = DMAC_CHID_ID(m_channel_id);
-    DMAC->CHCTRLB.reg |= DMAC_CHCTRLB_CMD_SUSPEND;
 }
 
 void DmaChannel::markIdle() {
     m_busy = false;
-}
-
-U8 DmaChannel::getBeatSizeBytes() const {
-    FW_ASSERT(m_busy, m_channel_id);
-
-    // Extract beat size from the base descriptor BTCTRL for this channel
-    U8 beatSizeEnum = (dmac_base[m_channel_id].BTCTRL.reg >> DMAC_BTCTRL_BEATSIZE_Pos) & 0x3;
-    return static_cast<U8>(1U << beatSizeEnum);
 }
 
 }  // namespace Samd21
