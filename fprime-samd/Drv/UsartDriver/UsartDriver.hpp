@@ -96,8 +96,7 @@ class UsartDriver final : public UsartDriverComponentBase {
                    DataOrder data_order,
                    DataBits data_bits,
                    StopBits stop_bits,
-                   Parity parity,
-                   U16 rx_dog_cnt);
+                   Parity parity);
 
   private:
     // ----------------------------------------------------------------------
@@ -153,13 +152,6 @@ class UsartDriver final : public UsartDriverComponentBase {
         INVALID,
     };
 
-    enum class RxDmaBufferState : U8 {
-        UNINITIALIZED,
-        DMA,
-        DMA_WAITING,
-        IN_USE,
-    };
-
     //! Calculate BAUD register value based on baud rate and mode
     U16 calculateBaud(BaudRate baud_rate, CommunicationMode mode);
 
@@ -196,16 +188,11 @@ class UsartDriver final : public UsartDriverComponentBase {
     //! Rx buffers (A and B) for receiving data over the DMA
     RxBuffer m_rx[2];
     RxDmaBufferID m_active_rx;
-    U16 m_active_processed;
 
     //! Tracks whether configure() as been called or not
     bool m_configured;
 
-    //! Watchdog counter for detecting IDLE Rx
-    U16 m_rx_dog;
-
-    //! Watchdog counter reset number
-    U16 m_rx_dog_reset;
+    U16 m_active_processed;
 
     //! Signals sent to the internal queue for processing during schedIn
     enum class SignalKind : U8 {
@@ -219,7 +206,7 @@ class UsartDriver final : public UsartDriverComponentBase {
 
     struct Signal {
         SignalKind kind;
-        U16 rx_bytes_remaining;
+        U16 rx_bytes;
     };
 
     Fw::FifoQueue<Signal, 4> m_queue;

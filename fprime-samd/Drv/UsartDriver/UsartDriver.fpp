@@ -29,11 +29,9 @@ module Samd21 {
 
         import AsyncNonQueuedByteStreamDriver
 
-        @ REQUIRED CONNECTION: Service the UART driver at a fixed rate for idle RX detection.
-        @ This port MUST be connected to a rate group (e.g., 1Hz-8Hz).
-        @ On each rate group tick, this handler:
-        @ 1. Decrements the idle watchdog counter
-        @ 2. Triggers partial RX frame extraction when the watchdog expires
+        @ RECOMMENDED CONNECTION: Service the UART driver at a fixed rate for partial RX extraction.
+        @ This port should be connected to a rate group (e.g., 1Hz-8Hz).
+        @ Looks in the current DMA buffer for any fresh data and extracts it.
         @ Without this connection, the driver can only receive full buffers.
         sync input port schedIn: Svc.Sched
 

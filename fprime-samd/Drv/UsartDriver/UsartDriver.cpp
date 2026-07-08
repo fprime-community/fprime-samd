@@ -30,10 +30,8 @@ UsartDriver ::UsartDriver(const char* const compName)
     : UsartDriverComponentBase(compName),
       m_sercom(SercomKind::SERCOM_0),
       m_active_rx(RxDmaBufferID::INVALID),
-      m_active_processed(0),
       m_configured(false),
-      m_rx_dog(0),
-      m_rx_dog_reset(0) {}
+      m_active_processed(0) {}
 
 UsartDriver ::~UsartDriver() = default;
 
@@ -46,10 +44,8 @@ void UsartDriver ::configure(SercomKind sercom,
                              DataOrder data_order,
                              DataBits data_bits,
                              StopBits stop_bits,
-                             Parity parity,
-                             U16 rx_dog_cnt) {
+                             Parity parity) {
     FW_ASSERT(!this->m_configured, static_cast<FwAssertArgType>(sercom));
-    FW_ASSERT(rx_dog_cnt > 0, static_cast<FwAssertArgType>(sercom));
 
     // Get SERCOM hardware register base
     Sercom* sercom_hw = getSercomHw(sercom);
@@ -278,8 +274,6 @@ void UsartDriver ::configure(SercomKind sercom,
     // Initialize the RX state
     this->m_active_rx = RxDmaBufferID::A;
     this->m_active_processed = 0;
-    this->m_rx_dog = rx_dog_cnt;
-    this->m_rx_dog_reset = rx_dog_cnt;
 
     this->m_configured = true;
 
@@ -398,20 +392,18 @@ Dma::TriggerSource UsartDriver ::getSercomRxTrigger(SercomKind sercom) {
 
 void UsartDriver ::schedIn_handler(FwIndexType portNum, U32 context) {
     if (this->m_configured) {
-        FW_ASSERT(this->m_rx_dog > 0);
-        this->m_rx_dog -= 1;
+        // We have tripped the idle watchdog!
 
-        if (this->m_rx_dog == 0) {
-            // We have tripped the idle watchdog!
+        // Read the active Rx transfer
+        auto currentRx = this->dmaRxRead_out(0);
 
-            // Read the active Rx transfer
-            auto currentRx = this->dmaRxRead_out(0);
-
+        // Check if there is any new data
+        auto newSize = USART_RX_BUFFER_SIZE - currentRx.get_btcnt() - this->m_active_processed;
+        if (newSize > 0) {
             // Notify our queue of the current Rx status
             auto status = this->m_queue.enqueue(
-                Signal{.kind = SignalKind::RX_BUFFER_PARTIAL, .rx_bytes_remaining = currentRx.get_btcnt()});
+                Signal{.kind = SignalKind::RX_BUFFER_PARTIAL, .rx_bytes = static_cast<U16>(newSize)});
             FW_ASSERT(status == Fw::Success::SUCCESS, status);
-            // The watchdog is acknowledged in the active loop
         }
     }
 }
@@ -448,24 +440,17 @@ void UsartDriver ::activeIn_handler(FwIndexType portNum, U32 context) {
                     break;
                 case SignalKind::RX_BUFFER_DONE:
                 case SignalKind::RX_BUFFER_PARTIAL:
-                    // Stroke the RX watchdog
-                    this->m_rx_dog = this->m_rx_dog_reset;
-
                     // Make sure the DMA doesn't give us more bytes than we expect
-                    FW_ASSERT(this->m_active_processed + signal.rx_bytes_remaining <= USART_RX_BUFFER_SIZE,
-                              this->m_sercom, this->m_active_processed, signal.rx_bytes_remaining);
+                    FW_ASSERT(this->m_active_processed + signal.rx_bytes <= USART_RX_BUFFER_SIZE, this->m_sercom,
+                              this->m_active_processed, signal.rx_bytes);
 
                     // Wrap the current DMA buffer in a Fw::Buffer
                     switch (this->m_active_rx) {
                         case RxDmaBufferID::A:
-                            thickBuffer =
-                                Fw::Buffer(this->m_rx[0].data + this->m_active_processed,
-                                           USART_RX_BUFFER_SIZE - signal.rx_bytes_remaining - this->m_active_processed);
+                            thickBuffer = Fw::Buffer(this->m_rx[0].data + this->m_active_processed, signal.rx_bytes);
                             break;
                         case RxDmaBufferID::B:
-                            thickBuffer =
-                                Fw::Buffer(this->m_rx[1].data + this->m_active_processed,
-                                           USART_RX_BUFFER_SIZE - signal.rx_bytes_remaining - this->m_active_processed);
+                            thickBuffer = Fw::Buffer(this->m_rx[1].data + this->m_active_processed, signal.rx_bytes);
                             break;
                         case RxDmaBufferID::INVALID:
                             break;
@@ -522,7 +507,7 @@ void UsartDriver ::activeIn_handler(FwIndexType portNum, U32 context) {
                     break;
                 case SignalKind::RX_CHANNEL_ERROR:
                     // A bus error on the DMA occured, we have no way of handling this
-                    FW_ASSERT(false, this->m_sercom, signal.rx_bytes_remaining);
+                    FW_ASSERT(false, this->m_sercom, signal.rx_bytes);
                     break;
                 default:
                     FW_ASSERT(false, static_cast<FwAssertArgType>(signal.kind));
@@ -601,14 +586,14 @@ void UsartDriver ::dmaReplyTxIsr(const Samd21::Dma::Reply& reply) {
         case Dma::Status::OK:
             status = this->m_queue.enqueue(Signal{
                 .kind = SignalKind::TX_BUFFER_OK,
-                .rx_bytes_remaining = 0,
+                .rx_bytes = 0,
             });
             FW_ASSERT(status == Fw::Success::SUCCESS, status);
             break;
         case Dma::Status::BUS_ERROR:
             status = this->m_queue.enqueue(Signal{
                 .kind = SignalKind::TX_CHANNEL_ERROR,
-                .rx_bytes_remaining = 0,
+                .rx_bytes = 0,
             });
             FW_ASSERT(status == Fw::Success::SUCCESS, status);
             break;
@@ -622,17 +607,18 @@ void UsartDriver ::dmaReplyRxIsr(const Samd21::Dma::Reply& reply) {
     switch (reply.get_status()) {
         case Dma::Status::OK:
             // Make sure remaining bytes will fit in our storage
-            FW_ASSERT(reply.get_remainingBytes() <= 0xFFFF, reply.get_remainingBytes());
+            FW_ASSERT(this->m_active_processed + reply.get_remainingBytes() <= USART_RX_BUFFER_SIZE);
             status = this->m_queue.enqueue(Signal{
                 .kind = SignalKind::RX_BUFFER_DONE,
-                .rx_bytes_remaining = static_cast<U16>(reply.get_remainingBytes()),
+                .rx_bytes = static_cast<U16>(USART_RX_BUFFER_SIZE - static_cast<U16>(reply.get_remainingBytes()) -
+                                             this->m_active_processed),
             });
             FW_ASSERT(status == Fw::Success::SUCCESS, status);
             break;
         case Dma::Status::BUS_ERROR:
             status = this->m_queue.enqueue(Signal{
                 .kind = SignalKind::RX_CHANNEL_ERROR,
-                .rx_bytes_remaining = static_cast<U16>(reply.get_remainingBytes()),
+                .rx_bytes = static_cast<U16>(reply.get_remainingBytes()),
             });
             FW_ASSERT(status == Fw::Success::SUCCESS, status);
             break;

@@ -16,8 +16,8 @@ The driver implements a descriptor-based architecture with support for linked de
 | SAMD21-DMA-004 | The DmaDriver shall support configurable DMA parameters (trigger sources, transaction types, priorities, beat sizes, address increment modes) | Hardware Test |
 | SAMD21-DMA-005 | The DmaDriver shall detect and report bus errors via ISR output ports                   | Hardware Test |
 | SAMD21-DMA-006 | The DmaDriver shall support circular buffer mode for continuous transfers               | Hardware Test |
-| SAMD21-DMA-007 | The DmaDriver shall support partial buffer extraction via popFront operations           | Hardware Test |
-| SAMD21-DMA-008 | The DmaDriver shall provide writeback register access for live transfer monitoring      | Hardware Test |
+| SAMD21-DMA-007 | The DmaDriver shall provide writeback register access for in-flight transfer monitoring | Hardware Test |
+| SAMD21-DMA-008 | The DmaDriver shall report the number of free descriptors as telemetry                  | Hardware Test |
 
 ## 3. Design
 
@@ -31,11 +31,19 @@ The driver implements a descriptor-based architecture with support for linked de
 | ------------- | ------------------- | ---------------------- | ----------------------------------------------------------------------- |
 | `sync input`  | `sendTransactionIn` | `Dma.Transaction`      | Queue DMA transaction on channel (array of 12 ports)                    |
 | `sync input`  | `linkToFrontIn`     | `Fw.Signal`            | Link last descriptor to first for circular mode (array of 12 ports)     |
-| `sync input`  | `popFrontIn`        | `Dma.ReadWriteback`    | Suspend, read writeback, advance to next descriptor (array of 12 ports) |
-| `sync input`  | `readWritebackIn`   | `Dma.ReadWriteback`    | Read writeback descriptor for live monitoring (array of 12 ports)       |
+| `sync input`  | `readWritebackIn`   | `Dma.ReadWriteback`    | Suspend, read the writeback descriptor, resume (array of 12 ports)      |
+| `sync input`  | `schedIn`           | `Svc.Sched`            | Rate group tick; publishes the `freeDescriptors` telemetry channel      |
 | `output`      | `transactionIsrOut` | `Dma.TransactionReply` | Transaction completion signal from ISR (array of 12 ports)              |
 
 Port indices 0-11 map directly to DMAC hardware channels 0-11. Each channel operates independently — transactions queued on different channels execute in parallel according to hardware priority arbitration.
+
+The component also imports `Fw.Channel` (with a `timeCaller` time-get port) to emit telemetry.
+
+**Telemetry:**
+
+| Channel           | Type | Description                                                        |
+| ----------------- | ---- | ------------------------------------------------------------------ |
+| `freeDescriptors` | `U8` | Number of unused descriptors in the shared pool, published on `schedIn` |
 
 #### 3.2.1 Why Sync Ports?
 
@@ -102,7 +110,7 @@ This port is invoked **from ISR context** and must connect to a `sync input` han
 
 #### 3.4.3 Writeback State
 
-The `readWritebackIn` and `popFrontIn` ports return a `Dma.Writeback` struct providing live transfer state:
+The `readWritebackIn` port returns a `Dma.Writeback` struct providing in-flight transfer state:
 
 ```fpp
 struct Writeback {
@@ -114,7 +122,9 @@ struct Writeback {
 }
 ```
 
-The writeback descriptor is updated live by hardware during DMA transfers. `readWritebackIn` reads it non-intrusively without affecting the ongoing transfer. `popFrontIn` reads it and then modifies it to skip to the next descriptor.
+The writeback descriptor is updated live by hardware during DMA transfers. To read a coherent snapshot, `readWritebackIn` momentarily suspends the channel, reads the writeback registers, and then resumes the channel — the transfer continues from where it left off. This lets a consumer (e.g. the `UsartDriver` idle watchdog) read how many bytes have arrived in the buffer the DMA is actively filling without disturbing the descriptor chain.
+
+> **Note:** The former `popFrontIn` port — which read the writeback and then forced the channel to advance to the next descriptor — has been removed. Consumers now read the in-flight byte count via `readWritebackIn` and extract data in place, leaving the descriptor chain untouched.
 
 ### 3.5 Descriptor Architecture
 
@@ -249,52 +259,47 @@ dmaDriver.linkToFrontIn_out(2);
 - Once circular mode is enabled, no further transactions can be queued (assertion failure)
 - Circular mode cannot be disabled (remains until channel reset)
 
-### 4.6 Partial Buffer Extraction with popFront
+### 4.6 In-Flight Transfer Monitoring with readWriteback
 
-Handle UART IDLE detection by processing partial buffers (requires circular mode):
+Read how far the active transfer has progressed. This is used, for example, by the `UsartDriver` idle watchdog to drain the buffer the RX DMA is currently filling without disturbing the descriptor chain:
 
 ```cpp
-// On IDLE interrupt from UART peripheral:
-Dma::Writeback wb = dmaDriver.popFrontIn_out(1);  // Channel 1
+// On UART IDLE detection:
+Dma::Writeback wb = dmaDriver.readWritebackIn_out(1);  // Channel 1
 
-// Calculate bytes received in current buffer
-U32 bytesReceived = originalBtcnt - wb.get_btcnt();
+// Calculate bytes received so far in the current buffer
+U32 beatsRemaining = wb.get_btcnt();
+U32 bytesReceived  = originalBtcnt - beatsRemaining;
 
-// Process the partial buffer (current DMA destination buffer)
+// Process the partial buffer in place; the DMA keeps filling the SAME buffer
 if (bytesReceived > 0) {
     processUartData(currentBuffer, bytesReceived);
 }
 
-// Channel has automatically advanced to next descriptor (alternate buffer)
-// DMA continues receiving into the next buffer seamlessly
+// Note: Addresses in writeback are END addresses if incrementing.
+// To get the current address: subtract (beatsRemaining * beatSize).
 ```
 
-**popFront Algorithm:**
-1. Suspend the channel (if not already suspended)
+**readWriteback Algorithm:**
+1. Suspend the channel
 2. Wait for CHINTFLAG.SUSP to confirm suspension
-3. Read writeback descriptor to get current state
-4. Set writeback BTCNT to 0 (forces skip to next descriptor)
-5. Resume the channel (moves to next descriptor immediately)
+3. Read the writeback descriptor to capture a coherent snapshot
+4. Resume the channel (the transfer continues into the same buffer)
 
 **Requirements:**
 - Channel must be busy (have an active transaction)
-- Channel must be in circular mode (popFront is only valid for circular buffers)
 
-### 4.7 Live Transfer Monitoring with readWriteback
+Unlike the removed `popFront`, `readWriteback` never advances the channel to the next descriptor — the active buffer stays in place and the consumer tracks its own read offset.
 
-Monitor transfer progress without affecting the ongoing operation:
+### 4.7 Free Descriptor Telemetry
 
-```cpp
-// Read current transfer state non-intrusively
-Dma::Writeback wb = dmaDriver.readWritebackIn_out(3);
+Connect `schedIn` to a rate group to periodically publish the number of unused descriptors in the shared pool via the `freeDescriptors` telemetry channel. This is useful for monitoring descriptor-pool exhaustion in flight:
 
-// Calculate transfer progress
-U32 beatsRemaining = wb.get_btcnt();
-U32 beatsCompleted = originalBtcnt - beatsRemaining;
-
-// Note: Addresses in writeback are END addresses if incrementing
-// To get current address: subtract (beatsRemaining * beatSize)
+```fpp
+rateGroup1Hz.RateGroupMemberOut[1] -> dmaDriver.schedIn
 ```
+
+On each tick, the handler counts the clear bits in the `m_descriptors_used` bitfield and writes the count to `freeDescriptors`.
 
 ### 4.8 Topology Connections
 
@@ -311,7 +316,10 @@ connections DmaConnections {
   usartDriver.dmaQueueOut[Samd21.UsartDriver.DmaChannel.RX] -> dmaDriver.sendTransactionIn[1]
   dmaDriver.transactionIsrOut[1] -> usartDriver.dmaReplyIn[Samd21.UsartDriver.DmaChannel.RX]
   usartDriver.dmaRxCircular -> dmaDriver.linkToFrontIn[1]
-  usartDriver.dmaRxPopCurrent -> dmaDriver.popFrontIn[1]
+  usartDriver.dmaRxRead -> dmaDriver.readWritebackIn[1]
+
+  # Rate group publishes the free-descriptor telemetry channel
+  rateGroup1Hz.RateGroupMemberOut[1] -> dmaDriver.schedIn
 }
 ```
 
@@ -347,7 +355,6 @@ When the descriptor pool is exhausted, `sendTransactionIn` asserts (no graceful 
 - **Irreversible** — Once `linkToFront` is called, the channel remains circular until reset
 - **No further queueing** — Attempting to queue transactions after `linkToFront` triggers assertion
 - **No descriptor freeing** — Descriptors in circular chains are never freed (remain allocated indefinitely)
-- **popFront requirement** — `popFront` can only be called on circular buffer channels
 
 ### 5.3 Alignment Requirements
 

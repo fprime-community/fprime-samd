@@ -4,7 +4,7 @@
 
 The `Samd21::UsartDriver` component provides a hardware driver for the SAMD21 SERCOM peripheral configured in USART (Universal Synchronous and Asynchronous Receiver Transmitter) mode. This passive component uses a custom `AsyncNonQueuedByteStreamDriver` interface inspired by F´'s `Drv.ByteStreamDriver` pattern but adapted for baremetal deployments with DMA-accelerated transmission and reception.
 
-The driver uses a dual-buffer circular receive strategy with DMA channels for both TX and RX operations. Transmission is queue-based with asynchronous completion callbacks, while reception uses double-buffering with an idle watchdog to detect partial frames. The component is cycled via the `activeIn` port (typically connected to a `Svc::PassiveCycler` component) to process DMA completion signals and the `schedIn` port (typically connected to a rate group) to detect idle periods on receive.
+The driver uses a dual-buffer circular receive strategy with DMA channels for both TX and RX operations. Transmission is queue-based with asynchronous completion callbacks. On receive, both RX buffers are queued into the DMA circular chain during configuration and remain there for the lifetime of the driver — they are never popped off the chain. Instead, the driver extracts data in-place from the buffer the DMA is actively filling, tracking a per-buffer offset so that both full buffers (DMA completion) and partial buffers (in-progress receive) can be drained downstream without disturbing the DMA. The component is cycled via the `activeIn` port (typically connected to a `Svc::PassiveCycler` component) to process DMA completion signals and the `schedIn` port (typically connected to a rate group) to poll the in-progress RX transfer for newly received bytes on every tick.
 
 **Design Note:** This driver does NOT implement the standard F´ `Drv.ByteStreamDriver` interface. The custom `AsyncNonQueuedByteStreamDriver` interface is required because the standard interface assumes either an active component with a queue or a purely synchronous passive component. This driver needs neither — it's passive (no thread) but handles asynchronous DMA completions via ISR-to-main-loop signaling. The topology must use baremetal-aware components (e.g., `Samd21.Framer`) that understand this custom interface rather than standard F´ components expecting `Drv.ByteStreamDriver`.
 
@@ -15,7 +15,7 @@ The driver uses a dual-buffer circular receive strategy with DMA channels for bo
 | SAMD21-UART-001 | The UsartDriver shall configure SERCOM peripherals for USART operation with configurable baud rates (9600-921600), data formats (5-9 bits), parity (none/even/odd), stop bits (1 or 2), bit ordering (MSB/LSB-first), communication modes (async/sync), and clock sources (internal/external) | Hardware Test |
 | SAMD21-UART-002 | The UsartDriver shall use DMA for both transmission and reception                                                                                                                                                                                                                             | Hardware Test |
 | SAMD21-UART-003 | The UsartDriver shall implement double-buffering for continuous RX                                                                                                                                                                                                                            | Hardware Test |
-| SAMD21-UART-004 | The UsartDriver shall detect idle periods to extract partial RX frames                                                                                                                                                                                                                        | Hardware Test |
+| SAMD21-UART-004 | The UsartDriver shall poll the in-progress RX transfer on each rate group tick to extract partial RX frames                                                                                                                                                                                    | Hardware Test |
 | SAMD21-UART-005 | The UsartDriver shall queue TX requests with asynchronous completion                                                                                                                                                                                                                          | Hardware Test |
 | SAMD21-UART-006 | The UsartDriver shall provide synchronous blocking transmission for early boot diagnostics                                                                                                                                                                                                    | Hardware Test |
 
@@ -23,7 +23,7 @@ The driver uses a dual-buffer circular receive strategy with DMA channels for bo
 
 ### 3.1 Component Diagram
 
-`Samd21::UsartDriver` is a passive component that uses a custom `AsyncNonQueuedByteStreamDriver` interface defined in the same FPP file. This interface is based on the F´ `Drv.ByteStreamDriver` pattern but is specifically designed for baremetal deployments using passive cycling and DMA. Unlike the standard `Drv.ByteStreamDriver`, this component requires explicit wiring to a `PassiveCycler` (via `activeIn`) and a rate group (via `schedIn`) to function correctly.
+`Samd21::UsartDriver` is a passive component that uses a custom `AsyncNonQueuedByteStreamDriver` interface defined in the same FPP file. This interface is based on the F´ `Drv.ByteStreamDriver` pattern but is specifically designed for baremetal deployments using passive cycling and DMA. Unlike the standard `Drv.ByteStreamDriver`, this component requires explicit wiring to a `PassiveCycler` (via `activeIn`) to function, and is recommended to be wired to a rate group (via `schedIn`) to extract partial RX frames.
 
 ### 3.2 Ports
 
@@ -31,32 +31,32 @@ The driver uses a dual-buffer circular receive strategy with DMA channels for bo
 | ------------ | ----------------- | ---------------------- | ----------------------------------------------------------------------------------- |
 | `sync input` | `send`            | `Fw.BufferSend`        | Send data buffer out the UART (queued for DMA transmission)                         |
 | `sync input` | `sendSync`        | `Drv.ByteStreamSend`   | Synchronously transmit data (blocks until complete, no DMA)                         |
-| `sync input` | `recvReturnIn`    | `Fw.BufferSend`        | Return ownership of received buffer back to driver for reuse                        |
+| `sync input` | `recvReturnIn`    | `Fw.BufferSend`        | Return ownership of a received buffer view (no-op; buffers stay in the DMA chain)   |
 | `sync input` | `dmaReplyIn[2]`   | `Dma.TransactionReply` | DMA completion signals from DMAC (called in ISR context)                            |
-| `sync input` | `schedIn`         | `Svc.Sched`            | **REQUIRED:** Rate group handler for idle RX detection (must connect to rate group) |
+| `sync input` | `schedIn`         | `Svc.Sched`            | **RECOMMENDED:** Rate group handler that polls the in-progress RX transfer (should connect to rate group) |
 | `sync input` | `activeIn`        | `Svc.Sched`            | **REQUIRED:** Signal queue processor (must connect to PassiveCycler)                |
 | `output`     | `ready`           | `Drv.ByteStreamReady`  | Signals driver is ready to send/receive data                                        |
 | `output`     | `recv`            | `Drv.ByteStreamData`   | Outputs received data to downstream consumers                                       |
 | `output`     | `sendReturnOut`   | `Drv.ByteStreamData`   | Returns ownership of sent buffer with completion status                             |
 | `output`     | `dmaQueueOut[2]`  | `Dma.Transaction`      | Sends DMA transaction requests to DMAC driver                                       |
 | `output`     | `dmaRxCircular`   | `Fw.Signal`            | Configures RX DMA channel for circular mode                                         |
-| `output`     | `dmaRxPopCurrent` | `Dma.ReadWriteback`    | Reads current RX DMA transfer state during idle periods                             |
+| `output`     | `dmaRxRead`       | `Dma.ReadWriteback`    | Reads the active RX transfer's remaining byte count in place (no descriptor pop)    |
 
 #### 3.2.1 activeIn and schedIn Port Pattern
 
-The driver requires two cyclic inputs to function:
+The driver uses two cyclic inputs — `activeIn` is required for the driver to function; `schedIn` is recommended for partial RX frame extraction:
 
-**activeIn (PassiveCycler):**
+**activeIn (PassiveCycler) — required:**
 - Processes the internal signal queue populated by DMA ISR handlers
 - Dequeues TX/RX completion signals and invokes output ports
 - Returns buffers to senders/consumers with status
 - Must be driven by `Svc::PassiveCycler` from the main loop
 - Without this connection, all TX/RX operations will hang
 
-**schedIn (Rate Group):**
-- Drives the idle watchdog for partial RX frame detection
-- Decrements watchdog counter on each tick
-- Triggers partial frame extraction when watchdog expires
+**schedIn (Rate Group) — recommended:**
+- Polls the in-progress RX transfer on every tick via `dmaRxRead_out()`
+- Enqueues a `RX_BUFFER_PARTIAL` signal whenever new bytes have arrived since the last extraction
+- The rate group frequency directly sets the partial-frame extraction latency and granularity
 - Typically connected to a 1Hz-8Hz rate group
 - Without this connection, driver can only receive full buffers
 
@@ -140,8 +140,7 @@ void configure(SercomKind sercom,
                DataOrder data_order,
                DataBits data_bits,
                StopBits stop_bits,
-               Parity parity,
-               U16 rx_dog_cnt);
+               Parity parity);
 ```
 
 ### 3.5 Transmission Architecture
@@ -164,25 +163,31 @@ The driver implements two transmission modes:
 
 ### 3.6 Reception Architecture
 
-The driver implements a double-buffered circular receive strategy with idle detection:
+The driver implements a double-buffered circular receive strategy with per-tick polling. The two RX buffers are queued into the DMA circular chain once during `configure()` and are **never popped off the chain**. Rather than handing DMA descriptors to downstream consumers, the driver reads data out of the buffer the DMA is currently filling and forwards views into it, so the DMA continues receiving uninterrupted.
 
 **RX Double-Buffer Operation:**
 - Two equal-size buffers (A and B) statically allocated within the component
-- Both buffers queued to DMA in circular mode during `configure()`
-- At any time: one buffer is actively receiving (DMA), one is waiting (DMA_WAITING)
-- When a buffer fills, DMA automatically switches to the waiting buffer
-- Filled buffer sent downstream via `recv_out()`
-- When downstream returns buffer via `recvReturnIn_handler()`, it transitions back to DMA_WAITING state
+- Both buffers queued to DMA in circular mode during `configure()` and left in the chain permanently
+- `m_active_rx` tracks which buffer (A or B) the DMA is currently filling
+- `m_active_processed` tracks how many bytes of the active buffer have already been forwarded downstream
+- When the DMA fills a buffer completely (`RX_BUFFER_DONE`), the remainder of that buffer (from `m_active_processed` to the end) is forwarded downstream, then `m_active_rx` flips to the other buffer and `m_active_processed` resets to 0. The DMA has already advanced to the other buffer via the circular chain.
 
-**Idle Detection Watchdog:**
-- Watchdog counter decremented on each `schedIn_handler()` call (rate group tick)
-- When counter reaches zero, current RX transfer state is read from DMA
-- Partial buffer extracted if any bytes received
-- If bytes > 0: sends partial buffer downstream via `recv_out()`
-- If bytes == 0: returns buffer to DMA_WAITING state
-- Watchdog counter reset after each extraction
+**Data Extraction (In-Place):**
+- The count of newly available bytes is computed as `USART_RX_BUFFER_SIZE - btcnt - m_active_processed`, where `btcnt` is the DMA's remaining beat count
+- This count is computed at signal-generation time (in `schedIn_handler()` or the RX ISR) and carried in the signal's `rx_bytes` field, so `activeIn_handler()` uses it directly
+- A `Fw::Buffer` view is constructed pointing at `m_rx[active].data + m_active_processed` with length `rx_bytes`
+- The buffer view is forwarded downstream via `recv_out()` only if it is non-empty
 
-This mechanism allows detection of short messages or idle periods without waiting for a full buffer.
+**Per-Tick RX Polling:**
+- On each `schedIn_handler()` call (rate group tick), the DMA's remaining beat count is read via `dmaRxRead_out()` without modifying the descriptor
+- If new bytes have arrived since the last extraction (`USART_RX_BUFFER_SIZE - btcnt - m_active_processed > 0`), a `RX_BUFFER_PARTIAL` signal carrying that byte count is enqueued for processing in `activeIn_handler()`; if no new bytes have arrived, no signal is enqueued
+- On a partial event, the newly received bytes are extracted in place and forwarded, and `m_active_processed` is advanced by that amount so the same bytes are not sent twice; the active buffer and DMA state are left untouched
+- There is no watchdog counter — every tick polls the DMA directly, so extraction latency is bounded by a single rate group period
+
+**Buffer Return:**
+- Because RX buffers are never removed from the DMA chain, `recvReturnIn_handler()` is a no-op — downstream consumers borrow a view into a live DMA buffer and simply return ownership when done
+
+This mechanism allows extraction of short messages without waiting for a full buffer, while keeping both RX buffers continuously available to the DMA.
 
 ### 3.7 Signal Queue and ISR Safety
 
@@ -198,8 +203,11 @@ The driver uses an internal signal queue to decouple ISR context from port invoc
 **Signal Types:**
 - `TX_BUFFER_OK`: TX DMA completed successfully
 - `TX_CHANNEL_ERROR`: TX DMA bus error (clears entire TX queue)
-- `RX_BUFFER_DONE`: RX buffer filled or partial frame detected
+- `RX_BUFFER_PARTIAL`: A `schedIn` poll found new bytes; drain them from the active buffer in place (advances `m_active_processed`, leaves the active buffer in the DMA chain)
+- `RX_BUFFER_DONE`: RX buffer filled; drain the buffer remainder, then flip the active buffer and reset `m_active_processed`
 - `RX_CHANNEL_ERROR`: RX DMA bus error (currently unhandled, asserts)
+
+Both RX signals carry the count of newly available bytes in the `rx_bytes` field, computed at signal-generation time; `activeIn_handler()` uses it directly to size the forwarded buffer view.
 
 ## 4. Usage
 
@@ -256,8 +264,7 @@ usartDriver.configure(
     UsartDriver::DataOrder::LSB_FIRST,  // Standard
     UsartDriver::DataBits::BITS_8,
     UsartDriver::StopBits::ONE,
-    UsartDriver::Parity::NONE,
-    8     // Idle watchdog count (8 ticks = 1s at 8Hz rate group)
+    UsartDriver::Parity::NONE
 );
 ```
 
@@ -267,7 +274,7 @@ usartDriver.configure(
 
 **Configuration Steps:**
 The `configure()` method performs the following:
-1. Validates configuration parameters (called only once, watchdog count > 0)
+1. Validates configuration parameters (called only once)
 2. Enables SERCOM peripheral clock and assigns GCLK0 (48MHz)
 3. Builds and writes CTRLA/CTRLB registers (mode, pins, parity, stop bits, data bits)
 4. Calculates and writes BAUD register (for internal clock mode)
@@ -304,7 +311,7 @@ The `activeIn_handler()` processes the signal queue, returning buffers and statu
 rateGroup1Hz.RateGroupMemberOut[0] -> usartDriver.schedIn
 ```
 
-The `schedIn_handler()` decrements the idle watchdog and triggers partial RX frame extraction when the watchdog expires.
+The `schedIn_handler()` polls the in-progress RX transfer on every tick and enqueues a partial-frame extraction whenever new bytes have arrived.
 
 ### 4.5 Topology Connections
 
@@ -318,7 +325,7 @@ connections UsartComm {
   # REQUIRED: Cycler drives the driver (processes signal queue from ISRs)
   passiveCycler.cycleOut -> usartDriver.activeIn
 
-  # REQUIRED: Rate group provides idle watchdog ticks (detects partial RX frames)
+  # RECOMMENDED: Rate group ticks drive per-tick RX polling (detects partial RX frames)
   rateGroup1Hz.RateGroupMemberOut[0] -> usartDriver.schedIn
 
   # DMA channel connections (TX)
@@ -329,13 +336,13 @@ connections UsartComm {
   usartDriver.dmaQueueOut[Samd21.UsartDriver.DmaChannel.RX] -> dmaDriver.sendTransactionIn[1]
   dmaDriver.transactionIsrOut[1] -> usartDriver.dmaReplyIn[Samd21.UsartDriver.DmaChannel.RX]
   usartDriver.dmaRxCircular -> dmaDriver.linkToFrontIn[1]
-  usartDriver.dmaRxPopCurrent -> dmaDriver.popFrontIn[1]
+  usartDriver.dmaRxRead -> dmaDriver.readWritebackIn[1]
 }
 ```
 
-**Critical Wiring Requirements:**
+**Wiring Requirements:**
 - `activeIn` **must** be connected to a `PassiveCycler` driven by the main loop. Without this connection, TX/RX buffers will never be returned to their owners.
-- `schedIn` **must** be connected to a rate group (1Hz-8Hz recommended). Without this connection, the driver can only receive full buffers and will miss short messages.
+- `schedIn` **should** be connected to a rate group (1Hz-8Hz recommended). Without this connection, the driver can only receive full buffers and will miss short messages.
 
 ### 4.6 Tested Configurations
 
@@ -350,7 +357,7 @@ This component has been tested on the following hardware venues:
 ### 5.1 Timing
 
 - **TX Latency**: Single DMA setup overhead (?? CPU cycles) + DMA transfer time
-- **RX Latency**: DMA transfer time + idle watchdog period (configurable, typically 1-2 rate group periods)
+- **RX Latency**: DMA transfer time + up to one rate group period (partial frames extracted on the next `schedIn` tick)
 - **ISR Duration**: < ?? CPU cycles (signal enqueue only, no port calls)
 
 ### 5.2 Memory Usage
@@ -366,6 +373,6 @@ This component has been tested on the following hardware venues:
 ### 5.3 Limitations
 
 - Maximum TX queue depth: `USART_TX_BUFFER_N` (configurable, default = 2)
-- RX buffer overrun occurs if downstream consumer does not return buffers before both buffers fill
-- Idle watchdog resolution limited by rate group frequency (e.g., 125ms at 8Hz)
+- RX buffer overrun occurs if the driver is not cycled (`activeIn`/`schedIn`) fast enough to drain the active buffer before the DMA laps back around the circular chain and overwrites unread bytes. Because downstream consumers borrow a view into a live DMA buffer, they must consume the data before this happens.
+- Partial RX frame extraction resolution limited by rate group frequency (e.g., 125ms at 8Hz)
 - Component configuration is one-time only (no runtime reconfiguration)
