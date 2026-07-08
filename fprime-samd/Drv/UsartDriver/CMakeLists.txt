@@ -35,13 +35,15 @@ register_fprime_library(
 )
 
 ### Unit Tests ###
-# register_fprime_ut(
-#     AUTOCODER_INPUTS
-#         "${CMAKE_CURRENT_LIST_DIR}/UsartDrv.fpp"
-#     SOURCES
-#         "${CMAKE_CURRENT_LIST_DIR}/test/ut/UsartDrvTestMain.cpp"
-#         "${CMAKE_CURRENT_LIST_DIR}/test/ut/UsartDrvTester.cpp"
-#     DEPENDS
-#         STest # For rules-based testing
-#     UT_AUTO_HELPERS
-# )
+register_fprime_ut(
+    AUTOCODER_INPUTS
+        "${CMAKE_CURRENT_LIST_DIR}/UsartDriver.fpp"
+    SOURCES
+        "${CMAKE_CURRENT_LIST_DIR}/test/ut/UsartDriverTestMain.cpp"
+        "${CMAKE_CURRENT_LIST_DIR}/test/ut/UsartDriverTester.cpp"
+        # Use stub hardware for unit tests
+        "${CMAKE_CURRENT_LIST_DIR}/UsartDriverHardwareStub.cpp"
+    DEPENDS
+        STest # For rules-based testing
+    UT_AUTO_HELPERS
+)

@@ -13,9 +13,6 @@
 namespace Samd21 {
 namespace UsartHardware {
 
-//! Hardware abstraction layer for USART peripheral operations
-//! This isolates all MCU register access so UsartDriver.cpp can build under
-//! native unit testing (Linux) by linking the stub implementation instead.
 struct UsartHal {
     //! Configure and enable the SERCOM USART peripheral
     //!
@@ -49,6 +46,44 @@ struct UsartHal {
     //! \return Address of the SERCOM USART DATA register
     static U32 getDataRegisterAddress(SercomKind sercom);
 };
+
+//! Test-only hooks into the stub hardware implementation.
+//! These are compiled only for native/test builds (not the SAMD21 target) and
+//! let unit tests observe the arguments passed to the HAL and control the
+//! values it returns.
+#ifndef __SAMD21__
+//! State captured by the stub hardware on every HAL call.
+struct StubState {
+    // configure() capture
+    bool configured;
+    U32 configure_count;
+    SercomKind sercom;
+    UsartDriver::RxPinOut rx;
+    UsartDriver::TxPinOut tx;
+    UsartDriver::ClockMode clock;
+    UsartDriver::CommunicationMode mode;
+    UsartDriver::BaudRate baud_rate;
+    UsartDriver::DataOrder data_order;
+    UsartDriver::DataBits data_bits;
+    UsartDriver::StopBits stop_bits;
+    UsartDriver::Parity parity;
+
+    // sendSync() capture
+    U32 send_sync_count;
+    SercomKind send_sync_sercom;
+    U32 send_sync_size;
+    U8 send_sync_data[512];
+
+    // getDataRegisterAddress() control
+    U32 data_register_address;
+};
+
+//! Get the mutable stub state (shared across all HAL calls)
+StubState& getStubState();
+
+//! Reset the stub state for a clean test run
+void resetStubState();
+#endif
 
 }  // namespace UsartHardware
 }  // namespace Samd21

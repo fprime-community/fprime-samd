@@ -291,7 +291,7 @@ void UsartDriver ::send_handler(FwIndexType portNum, Fw::Buffer& fwBuffer) {
         // Note: Use DATA.reg to get the actual register address, not the structure address
         this->dmaQueueOut_out(
             UsartDriver_DmaChannel::TX, getSercomTxTrigger(m_sercom), Dma::TransactionType::BEAT,
-            Dma::Priority::PRIORITY_0, reinterpret_cast<U32>(fwBuffer.getData()),
+            Dma::Priority::PRIORITY_0, static_cast<U32>(reinterpret_cast<uintptr_t>(fwBuffer.getData())),
             UsartHardware::UsartHal::getDataRegisterAddress(m_sercom), fwBuffer.getSize(), Dma::BeatSize::BYTE,
             /* increment source */ true,
             /* incrementDestination */ false, Dma::AddressIncrementStepSize::SIZE_1, Dma::StepSelection::SOURCE);
@@ -311,7 +311,8 @@ void UsartDriver ::dmaQueueRxSend(const ThinBuffer& buffer) {
     // Note: Use DATA.reg to get the actual register address, not the structure address
     this->dmaQueueOut_out(UsartDriver_DmaChannel::RX, getSercomRxTrigger(m_sercom), Dma::TransactionType::BEAT,
                           Dma::Priority::PRIORITY_0, UsartHardware::UsartHal::getDataRegisterAddress(m_sercom),
-                          reinterpret_cast<U32>(buffer.getData()), buffer.getSize(), Dma::BeatSize::BYTE,
+                          static_cast<U32>(reinterpret_cast<uintptr_t>(buffer.getData())), buffer.getSize(),
+                          Dma::BeatSize::BYTE,
                           /* increment source */ false,
                           /* incrementDestination */ true, Dma::AddressIncrementStepSize::SIZE_1,
                           Dma::StepSelection::DESTINATION);
