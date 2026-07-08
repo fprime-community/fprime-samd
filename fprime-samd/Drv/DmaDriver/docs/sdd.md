@@ -8,16 +8,16 @@ The driver implements a descriptor-based architecture with support for linked de
 
 ## 2. Requirements
 
-| Name           | Description                                                                             | Validation    |
-| -------------- | --------------------------------------------------------------------------------------- | ------------- |
-| SAMD21-DMA-001 | The DmaDriver shall manage all 12 DMAC hardware channels independently                  | Hardware Test |
-| SAMD21-DMA-002 | The DmaDriver shall support descriptor-based DMA transactions                           | Hardware Test |
-| SAMD21-DMA-003 | The DmaDriver shall support linked descriptor chains for sequential transfers           | Hardware Test |
+| Name           | Description                                                                                                                                   | Validation    |
+| -------------- | --------------------------------------------------------------------------------------------------------------------------------------------- | ------------- |
+| SAMD21-DMA-001 | The DmaDriver shall manage all 12 DMAC hardware channels independently                                                                        | Hardware Test |
+| SAMD21-DMA-002 | The DmaDriver shall support descriptor-based DMA transactions                                                                                 | Hardware Test |
+| SAMD21-DMA-003 | The DmaDriver shall support linked descriptor chains for sequential transfers                                                                 | Hardware Test |
 | SAMD21-DMA-004 | The DmaDriver shall support configurable DMA parameters (trigger sources, transaction types, priorities, beat sizes, address increment modes) | Hardware Test |
-| SAMD21-DMA-005 | The DmaDriver shall detect and report bus errors via ISR output ports                   | Hardware Test |
-| SAMD21-DMA-006 | The DmaDriver shall support circular buffer mode for continuous transfers               | Hardware Test |
-| SAMD21-DMA-007 | The DmaDriver shall provide writeback register access for in-flight transfer monitoring | Hardware Test |
-| SAMD21-DMA-008 | The DmaDriver shall report the number of free descriptors as telemetry                  | Hardware Test |
+| SAMD21-DMA-005 | The DmaDriver shall detect and report bus errors via ISR output ports                                                                         | Hardware Test |
+| SAMD21-DMA-006 | The DmaDriver shall support circular buffer mode for continuous transfers                                                                     | Hardware Test |
+| SAMD21-DMA-007 | The DmaDriver shall provide writeback register access for in-flight transfer monitoring                                                       | Hardware Test |
+| SAMD21-DMA-008 | The DmaDriver shall report the number of free descriptors as telemetry                                                                        | Hardware Test |
 
 ## 3. Design
 
@@ -27,13 +27,13 @@ The driver implements a descriptor-based architecture with support for linked de
 
 ### 3.2 Ports
 
-| Kind          | Name                | Port Type              | Usage                                                                   |
-| ------------- | ------------------- | ---------------------- | ----------------------------------------------------------------------- |
-| `sync input`  | `sendTransactionIn` | `Dma.Transaction`      | Queue DMA transaction on channel (array of 12 ports)                    |
-| `sync input`  | `linkToFrontIn`     | `Fw.Signal`            | Link last descriptor to first for circular mode (array of 12 ports)     |
-| `sync input`  | `readWritebackIn`   | `Dma.ReadWriteback`    | Suspend, read the writeback descriptor, resume (array of 12 ports)      |
-| `sync input`  | `schedIn`           | `Svc.Sched`            | Rate group tick; publishes the `freeDescriptors` telemetry channel      |
-| `output`      | `transactionIsrOut` | `Dma.TransactionReply` | Transaction completion signal from ISR (array of 12 ports)              |
+| Kind         | Name                | Port Type              | Usage                                                               |
+| ------------ | ------------------- | ---------------------- | ------------------------------------------------------------------- |
+| `sync input` | `sendTransactionIn` | `Dma.Transaction`      | Queue DMA transaction on channel (array of 12 ports)                |
+| `sync input` | `linkToFrontIn`     | `Fw.Signal`            | Link last descriptor to first for circular mode (array of 12 ports) |
+| `sync input` | `readWritebackIn`   | `Dma.ReadWriteback`    | Suspend, read the writeback descriptor, resume (array of 12 ports)  |
+| `sync input` | `schedIn`           | `Svc.Sched`            | Rate group tick; publishes the `freeDescriptors` telemetry channel  |
+| `output`     | `transactionIsrOut` | `Dma.TransactionReply` | Transaction completion signal from ISR (array of 12 ports)          |
 
 Port indices 0-11 map directly to DMAC hardware channels 0-11. Each channel operates independently — transactions queued on different channels execute in parallel according to hardware priority arbitration.
 
@@ -41,8 +41,8 @@ The component also imports `Fw.Channel` (with a `timeCaller` time-get port) to e
 
 **Telemetry:**
 
-| Channel           | Type | Description                                                        |
-| ----------------- | ---- | ------------------------------------------------------------------ |
+| Channel           | Type | Description                                                             |
+| ----------------- | ---- | ----------------------------------------------------------------------- |
 | `freeDescriptors` | `U8` | Number of unused descriptors in the shared pool, published on `schedIn` |
 
 #### 3.2.1 Why Sync Ports?
@@ -53,15 +53,15 @@ The `sendTransactionIn` and related ports are `sync` (not `guarded`) because thi
 
 The `configure()` method initializes the DMAC peripheral:
 
-| Feature           | Configuration                                                |
-| ----------------- | ------------------------------------------------------------ |
-| Clock Enable      | AHBMASK and APBBMASK via PM registers                        |
-| Reset             | Software reset with timeout protection (waits up to F_CPU cycles) |
-| Base Descriptors  | 16-byte aligned `dmac_base[12]` array (one per channel)     |
-| Writeback Descriptors | 16-byte aligned `dmac_writeback[12]` array (hardware-updated) |
-| Priority Levels   | All 4 levels enabled (DMAC_CTRL_LVLEN(0xF))                 |
-| Debug Operation   | DMAC continues running during debug pause (DBGCTRL.DBGRUN=1) |
-| Interrupt         | NVIC enabled at lowest priority ((1 << __NVIC_PRIO_BITS) - 1) |
+| Feature               | Configuration                                                     |
+| --------------------- | ----------------------------------------------------------------- |
+| Clock Enable          | AHBMASK and APBBMASK via PM registers                             |
+| Reset                 | Software reset with timeout protection (waits up to F_CPU cycles) |
+| Base Descriptors      | 16-byte aligned `dmac_base[12]` array (one per channel)           |
+| Writeback Descriptors | 16-byte aligned `dmac_writeback[12]` array (hardware-updated)     |
+| Priority Levels       | All 4 levels enabled (DMAC_CTRL_LVLEN(0xF))                       |
+| Debug Operation       | DMAC continues running during debug pause (DBGCTRL.DBGRUN=1)      |
+| Interrupt             | NVIC enabled at lowest priority ((1 << __NVIC_PRIO_BITS) - 1)     |
 
 The method must be called exactly once during topology initialization (in `configComponents` phase). Calling `configure()` when already initialized triggers an assertion failure.
 
@@ -124,8 +124,6 @@ struct Writeback {
 
 The writeback descriptor is updated live by hardware during DMA transfers. To read a coherent snapshot, `readWritebackIn` momentarily suspends the channel, reads the writeback registers, and then resumes the channel — the transfer continues from where it left off. This lets a consumer (e.g. the `UsartDriver` idle watchdog) read how many bytes have arrived in the buffer the DMA is actively filling without disturbing the descriptor chain.
 
-> **Note:** The former `popFrontIn` port — which read the writeback and then forced the channel to advance to the next descriptor — has been removed. Consumers now read the in-flight byte count via `readWritebackIn` and extract data in place, leaving the descriptor chain untouched.
-
 ### 3.5 Descriptor Architecture
 
 Each channel uses a descriptor-based transfer model:
@@ -143,13 +141,11 @@ The descriptor pool is shared across all 12 channels. A 32-bit bitfield (`m_desc
 1. **Allocation** — Driver searches `m_descriptors_used` bitfield for a free descriptor
 2. **Configuration** — Descriptor populated with source/dest addresses, length, beat size, control flags
 3. **Linking:**
-   - If channel is idle: descriptor is copied to `dmac_base[channel_id]`, original freed immediately
+   - If channel is idle: descriptor is copied to `dmac_base[channel_id]`, original descriptor is freed on completion
    - If channel is busy: descriptor linked to chain via DESCADDR pointers, freed on completion
 4. **Execution** — Hardware processes descriptors sequentially, updating writeback after each
 5. **Completion** — On TCMPL interrupt, completed descriptor freed (unless circular mode)
 6. **Error** — On TERR, current descriptor and all remaining chain descriptors freed (unless circular mode)
-
-Base descriptors (`dmac_base[]`) are never freed—they belong to hardware-managed memory.
 
 ### 3.6 Interrupt Handling
 
@@ -261,7 +257,7 @@ dmaDriver.linkToFrontIn_out(2);
 
 ### 4.6 In-Flight Transfer Monitoring with readWriteback
 
-Read how far the active transfer has progressed. This is used, for example, by the `UsartDriver` idle watchdog to drain the buffer the RX DMA is currently filling without disturbing the descriptor chain:
+Reads how far the active transfer has progressed. This is used, for example, by the `UsartDriver` idle watchdog to drain the buffer the RX DMA is currently filling without disturbing the descriptor chain:
 
 ```cpp
 // On UART IDLE detection:
@@ -288,8 +284,6 @@ if (bytesReceived > 0) {
 
 **Requirements:**
 - Channel must be busy (have an active transaction)
-
-Unlike the removed `popFront`, `readWriteback` never advances the channel to the next descriptor — the active buffer stays in place and the consumer tracks its own read offset.
 
 ### 4.7 Free Descriptor Telemetry
 
@@ -335,9 +329,9 @@ dmaDriver.configure();
 
 This component has been tested on the following hardware venues:
 
-| Board Name               | Chip       | Channels Tested | Use Case                |
-| ------------------------ | ---------- | --------------- | ----------------------- |
-| Microchip Curiosity Nano | SAMD21G17A | 0, 1            | USART TX/RX (circular)  |
+| Board Name               | Chip       | Channels Tested | Use Case                                 |
+| ------------------------ | ---------- | --------------- | ---------------------------------------- |
+| Microchip Curiosity Nano | SAMD21G17A | 0, 1, 2, 3      | SERCOM0 USART TX/RX, SERCOM3 USART Tx/Rx |
 
 ## 5. Constraints and Limitations
 
@@ -378,38 +372,11 @@ When the descriptor pool is exhausted, `sendTransactionIn` asserts (no graceful 
 - **No recovery from bus errors** — On TERR interrupt, the channel is disabled by hardware and all queued transactions are cancelled (returned with `BUS_ERROR` status)
 - **Timeout protection** — Software reset and channel suspend operations have CPU cycle-based timeouts (F_CPU iterations) to prevent infinite loops
 
-### 5.6 Hardware-Specific Behavior
-
-- **SAMD21 specific** — Uses SAMD21 register definitions from `sam.h` (not portable to other MCUs)
-- **Software trigger quirk** — Software trigger only fires if `CHSTATUS.PEND=0` (see SAMD21 datasheet §21.8.8)
-- **Address end-pointing** — SAMD21 DMAC stores END addresses in SRCADDR/DSTADDR when increment is enabled (not current addresses)
-- **Step size feature** — Step increments (SIZE_2 through SIZE_128) are for circular buffer stride patterns and audio interleaving
-
 ## 6. Performance Characteristics
 
-### 6.1 Descriptor Allocation Overhead
+### 6.1 Memory Usage
 
-- **Best case** — First descriptor found: ~10 CPU cycles
-- **Worst case** — All 16 descriptors scanned: ~160 CPU cycles
-- **Assertion** — No free descriptor: FW_ASSERT triggers (unbounded)
-
-### 6.2 Transaction Submission Latency
-
-- **Idle channel** — Descriptor setup + channel configuration: ~50 CPU cycles
-- **Busy channel** — Descriptor setup + suspend + link + resume: ~200 CPU cycles
-- **Race condition** — Channel completes during submission: +50 CPU cycles (restart path)
-
-### 6.3 Memory Usage
-
-- **Component state** — ~150 bytes (bitfield, channel state, descriptor pool)
-- **Descriptor pool** — `16 * 16 bytes = 256 bytes` (configurable)
+- **Component state** — 368 bytes (bitfield, channel state, descriptor pool)
 - **Hardware descriptors** — `2 * 12 * 16 bytes = 384 bytes` (base + writeback)
-- **Total** — ~790 bytes per DmaDriver instance
-
-### 6.4 Interrupt Latency
-
-- **ISR entry** — NVIC overhead + context save: ~10 µs @ 48 MHz
-- **ISR body** — Descriptor freeing + port call: ~20 µs @ 48 MHz
-- **Total** — < 30 µs per interrupt (measurement needed)
-
-Interrupt priority is set to lowest level during `configure()` to minimize impact on critical ISRs (e.g., hard fault, systick).
+  - Must be allocated inside SRAM
+- **Total** — 752 bytes for DmaDriver. Only one instance is supported

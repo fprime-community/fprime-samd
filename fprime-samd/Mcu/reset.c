@@ -499,16 +499,11 @@ __attribute__((used, noreturn)) void Reset_Handler(void) {
 
     __libc_init_array();
 
-    // Keep the debug active during sleep
-    SYSCTRL->VREG.bit.RUNSTDBY = 1;
-    SYSCTRL->OSC8M.bit.RUNSTDBY = 1;
-    PM->AHBMASK.reg |= PM_AHBMASK_HPB0;
-
 #ifdef MICRO_TRACE_BUFFER
     init_mtb();
 #endif
 
-    /* Initialize system clocks FIRST - before any C runtime initialization */
+    /* Initialize system clocks */
     SystemInit();
 
     main();
