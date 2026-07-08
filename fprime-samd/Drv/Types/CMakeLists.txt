@@ -17,4 +17,5 @@ register_fprime_library(
     SOURCES
         "${CMAKE_CURRENT_LIST_DIR}/ThinBuffer.cpp"
         "${CMAKE_CURRENT_LIST_DIR}/PinMux.cpp"
+        "${CMAKE_CURRENT_LIST_DIR}/CriticalSection.cpp"
 )

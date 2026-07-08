@@ -11,6 +11,7 @@
 #include "config/FwAssertArgTypeAliasAc.h"
 #include "config/FwIndexTypeAliasAc.h"
 #include "config/UsartDriverConfig.hpp"
+#include "fprime-samd/Drv/Types/CriticalSection.hpp"
 #include "fprime-samd/Drv/Types/PriorityEnumAc.hpp"
 #include "fprime-samd/Drv/Types/ThinBuffer.hpp"
 #include "fprime-samd/Drv/Types/TriggerSourceEnumAc.hpp"
@@ -45,7 +46,7 @@ void UsartDriver ::configure(SercomKind sercom,
                              DataBits data_bits,
                              StopBits stop_bits,
                              Parity parity) {
-    FW_ASSERT(!this->m_configured, static_cast<FwAssertArgType>(sercom));
+    FW_ASSERT(!this->m_configured, sercom.e);
 
     // Get SERCOM hardware register base
     Sercom* sercom_hw = getSercomHw(sercom);
@@ -364,6 +365,7 @@ Dma::TriggerSource UsartDriver ::getSercomTxTrigger(SercomKind sercom) {
             return Dma::TriggerSource::SERCOM5_TX;
         default:
             FW_ASSERT(0, static_cast<FwAssertArgType>(sercom));
+            return Dma::TriggerSource::SERCOM0_TX;
     }
 }
 
@@ -383,6 +385,7 @@ Dma::TriggerSource UsartDriver ::getSercomRxTrigger(SercomKind sercom) {
             return Dma::TriggerSource::SERCOM5_RX;
         default:
             FW_ASSERT(0, static_cast<FwAssertArgType>(sercom));
+            return Dma::TriggerSource::SERCOM0_RX;
     }
 }
 
@@ -400,9 +403,14 @@ void UsartDriver ::schedIn_handler(FwIndexType portNum, U32 context) {
         // Check if there is any new data
         auto newSize = USART_RX_BUFFER_SIZE - currentRx.get_btcnt() - this->m_active_processed;
         if (newSize > 0) {
-            // Notify our queue of the current Rx status
-            auto status = this->m_queue.enqueue(
-                Signal{.kind = SignalKind::RX_BUFFER_PARTIAL, .rx_bytes = static_cast<U16>(newSize)});
+            // Notify our queue of the current Rx status.
+            // m_queue is shared with the DMA ISR (dmaReplyIn), so the enqueue must be
+            // protected from a concurrent enqueue happening inside the ISR.
+            Fw::Success status;
+            {
+                CriticalSection cs;
+                status = this->m_queue.enqueue(Signal(SignalKind::RX_BUFFER_PARTIAL, static_cast<U16>(newSize)));
+            }
             FW_ASSERT(status == Fw::Success::SUCCESS, status);
         }
     }
@@ -411,9 +419,21 @@ void UsartDriver ::schedIn_handler(FwIndexType portNum, U32 context) {
 void UsartDriver ::activeIn_handler(FwIndexType portNum, U32 context) {
     if (this->m_configured) {
         // Unload the queue
-        while (!this->m_queue.isEmpty()) {
+        for (;;) {
             Signal signal;
-            auto status = this->m_queue.dequeue(signal);
+            Fw::Success status;
+
+            // Dequeue an item off the queue
+            {
+                CriticalSection cs;
+                if (this->m_queue.isEmpty()) {
+                    // No more items
+                    break;
+                } else {
+                    status = this->m_queue.dequeue(signal);
+                }
+            }
+
             FW_ASSERT(status == Fw::Success::SUCCESS, status);
 
             ThinBuffer thinBuffer;
@@ -583,18 +603,16 @@ void UsartDriver ::dmaQueueRxSend(const ThinBuffer& buffer) {
 void UsartDriver ::dmaReplyTxIsr(const Samd21::Dma::Reply& reply) {
     Fw::Success status;
     switch (reply.get_status()) {
-        case Dma::Status::OK:
-            status = this->m_queue.enqueue(Signal{
-                .kind = SignalKind::TX_BUFFER_OK,
-                .rx_bytes = 0,
-            });
+        case Dma::Status::OK: {
+            CriticalSection cs;
+            status = this->m_queue.enqueue(Signal(SignalKind::TX_BUFFER_OK, 0));
+        }
             FW_ASSERT(status == Fw::Success::SUCCESS, status);
             break;
-        case Dma::Status::BUS_ERROR:
-            status = this->m_queue.enqueue(Signal{
-                .kind = SignalKind::TX_CHANNEL_ERROR,
-                .rx_bytes = 0,
-            });
+        case Dma::Status::BUS_ERROR: {
+            CriticalSection cs;
+            status = this->m_queue.enqueue(Signal(SignalKind::TX_CHANNEL_ERROR, 0));
+        }
             FW_ASSERT(status == Fw::Success::SUCCESS, status);
             break;
         default:
@@ -608,18 +626,20 @@ void UsartDriver ::dmaReplyRxIsr(const Samd21::Dma::Reply& reply) {
         case Dma::Status::OK:
             // Make sure remaining bytes will fit in our storage
             FW_ASSERT(this->m_active_processed + reply.get_remainingBytes() <= USART_RX_BUFFER_SIZE);
-            status = this->m_queue.enqueue(Signal{
-                .kind = SignalKind::RX_BUFFER_DONE,
-                .rx_bytes = static_cast<U16>(USART_RX_BUFFER_SIZE - static_cast<U16>(reply.get_remainingBytes()) -
-                                             this->m_active_processed),
-            });
+            {
+                CriticalSection cs;
+                status = this->m_queue.enqueue(
+                    Signal(SignalKind::RX_BUFFER_DONE,
+                           static_cast<U16>(USART_RX_BUFFER_SIZE - static_cast<U16>(reply.get_remainingBytes()) -
+                                            this->m_active_processed)));
+            }
             FW_ASSERT(status == Fw::Success::SUCCESS, status);
             break;
-        case Dma::Status::BUS_ERROR:
-            status = this->m_queue.enqueue(Signal{
-                .kind = SignalKind::RX_CHANNEL_ERROR,
-                .rx_bytes = static_cast<U16>(reply.get_remainingBytes()),
-            });
+        case Dma::Status::BUS_ERROR: {
+            CriticalSection cs;
+            status = this->m_queue.enqueue(
+                Signal(SignalKind::RX_CHANNEL_ERROR, static_cast<U16>(reply.get_remainingBytes())));
+        }
             FW_ASSERT(status == Fw::Success::SUCCESS, status);
             break;
         default:

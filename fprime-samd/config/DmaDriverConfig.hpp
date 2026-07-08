@@ -1,7 +1,7 @@
 /*
- * UsartDriverConfig.hpp:
+ * DmaDriverConfig.hpp:
  *
- * Configuration settings for the SAMD21 UART driver component.
+ * Configuration settings for the SAMD21 Dma driver component.
  */
 
 #ifndef SAMD21_DMA_DRIVER_CFG_HPP_

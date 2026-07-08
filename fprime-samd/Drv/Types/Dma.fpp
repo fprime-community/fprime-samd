@@ -1,7 +1,6 @@
 module Samd21 {
 
     module Dma {
-        # FIXME(tumbar) Does this need to be in the configuration?
         @ Number of DMAC channels on the SAMD21
         constant CHANNEL_NUM = 12
 

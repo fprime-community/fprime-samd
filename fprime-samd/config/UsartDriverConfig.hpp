@@ -15,6 +15,9 @@ enum UsartDriverConfig {
     //! Length of each Rx buffer
     //! Each USART driver will allocate two Rx buffers
     USART_RX_BUFFER_SIZE = 256,
+
+    //! Length of the USART event queue
+    USART_QUEUE_DEPTH = 4,
 };
 }  // namespace Samd21
 

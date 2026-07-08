@@ -13,6 +13,7 @@
 #include "config/FwAssertArgTypeAliasAc.h"
 #include "config/FwIndexTypeAliasAc.h"
 #include "fprime-samd/Drv/DmaDriver/DmaChannel.hpp"
+#include "fprime-samd/Drv/Types/CriticalSection.hpp"
 #include "sam.h"
 
 namespace Samd21 {
@@ -20,49 +21,16 @@ namespace Samd21 {
 // Singleton instance for ISR access
 DmaDriver* DmaDriver::s_instance = nullptr;
 
-static volatile U32 cpu_irq_critical_section_counter = 0;
-static volatile U32 cpu_irq_prev_interrupt_state = 0;
-
 // External references to global descriptor memory (defined in DmaChannel.cpp)
 extern ::DmacDescriptor dmac_base[DMAC_CH_NUM];
 extern ::DmacDescriptor dmac_writeback[DMAC_CH_NUM];
-
-static void cpu_irq_enter_critical(void) {
-    if (!cpu_irq_critical_section_counter) {
-        if (__get_PRIMASK() == 0) {  // IRQ enabled?
-            __disable_irq();         // Disable it
-            __DMB();
-            cpu_irq_prev_interrupt_state = 1;
-        } else {
-            // Make sure the to save the prev state as false
-            cpu_irq_prev_interrupt_state = 0;
-        }
-    }
-
-    cpu_irq_critical_section_counter++;
-}
-
-static void cpu_irq_leave_critical(void) {
-    // Check if the user is trying to leave a critical section
-    // when not in a critical section
-    if (cpu_irq_critical_section_counter > 0) {
-        cpu_irq_critical_section_counter--;
-
-        // Only enable global interrupts when the counter
-        // reaches 0 and the state of the global interrupt flag
-        // was enabled when entering critical state */
-        if ((!cpu_irq_critical_section_counter) && cpu_irq_prev_interrupt_state) {
-            __DMB();
-            __enable_irq();
-        }
-    }
-}
 
 // ----------------------------------------------------------------------
 // Component construction and destruction
 // ----------------------------------------------------------------------
 
-DmaDriver::DmaDriver(const char* const compName) : DmaDriverComponentBase(compName), m_initialized(false) {
+DmaDriver::DmaDriver(const char* const compName)
+    : DmaDriverComponentBase(compName), m_descriptors(), m_descriptors_used(0), m_initialized(false) {
     // Initialize each channel with its ID using setter
     for (U8 i = 0; i < DMAC_CH_NUM; i++) {
         m_channels[i].setChannelId(i);
@@ -211,8 +179,8 @@ void DmaDriver::configure() {
     DMAC->DBGCTRL.bit.DBGRUN = 1;
 
     // Setup descriptor base address and write-back section base address - hardware requires pointer as uint32_t
-    DMAC->BASEADDR.reg = reinterpret_cast<uint32_t>(dmac_base);
-    DMAC->WRBADDR.reg = reinterpret_cast<uint32_t>(dmac_writeback);
+    DMAC->BASEADDR.reg = reinterpret_cast<U32>(dmac_base);
+    DMAC->WRBADDR.reg = reinterpret_cast<U32>(dmac_writeback);
 
     // Clear descriptor memory
     memset(dmac_base, 0, sizeof(dmac_base));
@@ -230,16 +198,16 @@ void DmaDriver::configure() {
 }
 
 void DmaDriver::handleInterrupt() {
-    cpu_irq_enter_critical();
+    Samd21::CriticalSection::enter();
 
     // Read which channel triggered the interrupt
-    uint8_t id = DMAC->INTPEND.bit.ID;
+    U8 id = DMAC->INTPEND.bit.ID;
     FW_ASSERT(id < DMAC_CH_NUM, id);
 
     // Select the channel
     DMAC->CHID.reg = DMAC_CHID_ID(id);
-    uint8_t flags = DMAC->CHINTFLAG.reg;
-    uint8_t status = DMAC->CHSTATUS.reg;
+    U8 flags = DMAC->CHINTFLAG.reg;
+    U8 status = DMAC->CHSTATUS.reg;
 
     // Handle Transfer Error (bus error)
     if (flags & DMAC_CHINTFLAG_TERR) {
@@ -337,7 +305,7 @@ void DmaDriver::handleInterrupt() {
         DMAC->CHINTFLAG.reg = DMAC_CHINTFLAG_TCMPL;
     }
 
-    cpu_irq_leave_critical();
+    Samd21::CriticalSection::leave();
 }
 
 // ----------------------------------------------------------------------
@@ -377,13 +345,13 @@ void DmaDriver::sendTransactionIn_handler(FwIndexType portNum,
     // Make sure we got a descriptor
     FW_ASSERT(desc, portNum, static_cast<FwAssertArgType>(trigger.e));
 
-    cpu_irq_enter_critical();
+    Samd21::CriticalSection::enter();
 
     // Queue transaction on the channel
     bool wasIdle = !m_channels[portNum].isBusy();
     m_channels[portNum].queueTransaction(trigger, action, priority, desc);
 
-    cpu_irq_leave_critical();
+    Samd21::CriticalSection::leave();
 
     if (wasIdle) {
         m_currentExecutingDesc[portNum] = desc;
@@ -405,23 +373,23 @@ void DmaDriver::linkToFrontIn_handler(FwIndexType portNum) {
     FW_ASSERT(m_initialized);
     FW_ASSERT(portNum < NUM_LINKTOFRONTIN_INPUT_PORTS, portNum);
 
-    cpu_irq_enter_critical();
+    Samd21::CriticalSection::enter();
 
     m_channels[portNum].linkToFront();
 
-    cpu_irq_leave_critical();
+    Samd21::CriticalSection::leave();
 }
 
 Samd21::Dma::Writeback DmaDriver::readWritebackIn_handler(FwIndexType portNum) {
     FW_ASSERT(m_initialized);
     FW_ASSERT(portNum < NUM_READWRITEBACKIN_INPUT_PORTS, portNum);
 
-    cpu_irq_enter_critical();
+    Samd21::CriticalSection::enter();
 
     Samd21::Dma::Writeback result;
     m_channels[portNum].readWriteback(result);
 
-    cpu_irq_leave_critical();
+    Samd21::CriticalSection::leave();
 
     return result;
 }

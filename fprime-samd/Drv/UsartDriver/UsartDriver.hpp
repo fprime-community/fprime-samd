@@ -12,6 +12,7 @@
 #include "fprime-samd/Drv/Types/SercomKindEnumAc.hpp"
 #include "fprime-samd/Drv/Types/ThinBuffer.hpp"
 #include "fprime-samd/Drv/UsartDriver/UsartDriverComponentAc.hpp"
+#include "fprime-samd/config/UsartDriverConfig.hpp"
 
 namespace Samd21 {
 
@@ -28,14 +29,18 @@ class UsartDriver final : public UsartDriverComponentBase {
     //! Destroy UsartDriver object
     ~UsartDriver();
 
+    // ----------------------------------------------------------------------
+    // Component configuration
+    // ----------------------------------------------------------------------
+
     enum class ClockMode : U8 {
-        EXTERNAL = 0x0,
-        INTERNAL = 0x1,
+        EXTERNAL = 0x0,  //!< Drive baud on the external XCK pad
+        INTERNAL = 0x1,  //!< Drive the baud off a prescaled GCLK0
     };
 
     enum class CommunicationMode : U8 {
-        ASYNC = 0x0,
-        SYNC = 0x1,
+        ASYNC = 0x0,  //!< Asynchronous UART with TX/RX
+        SYNC = 0x1,   //!< Synchronous UART with TX/RX, RTS/CTS
     };
 
     // These bits define the receive data (RxD) pin configuration.
@@ -207,9 +212,12 @@ class UsartDriver final : public UsartDriverComponentBase {
     struct Signal {
         SignalKind kind;
         U16 rx_bytes;
+
+        Signal() : kind(SignalKind::TX_BUFFER_OK), rx_bytes(0) {}
+        explicit Signal(SignalKind kind_, U16 rx_bytes_) : kind(kind_), rx_bytes(rx_bytes_) {}
     };
 
-    Fw::FifoQueue<Signal, 4> m_queue;
+    Fw::FifoQueue<Signal, UsartDriverConfig::USART_QUEUE_DEPTH> m_queue;
 };
 
 }  // namespace Samd21

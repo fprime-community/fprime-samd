@@ -18,9 +18,6 @@ __attribute__((__aligned__(16))) ::DmacDescriptor dmac_base[DMAC_CH_NUM] SECTION
 
 __attribute__((__aligned__(16))) ::DmacDescriptor dmac_writeback[DMAC_CH_NUM] SECTION_DMAC_DESCRIPTOR;
 
-// Global mutex for DMAC register access
-static Os::Mutex s_dmac_mutex;
-
 DmaChannel::DmaChannel() : m_channel_id(0), m_busy(false), m_circular(false) {}
 
 static void waitForChannelSuspend() {
@@ -52,8 +49,6 @@ void DmaChannel::startTransaction(const Samd21::Dma::TriggerSource& trigger,
     FW_ASSERT(!m_busy, m_channel_id);
     FW_ASSERT(desc != nullptr, m_channel_id);
 
-    Os::ScopeLock lock(s_dmac_mutex);
-
     // Copy descriptor to base descriptor for this channel
     std::memcpy(reinterpret_cast<void*>(&dmac_base[m_channel_id]), desc, sizeof(DmacDescriptor));
 
@@ -65,7 +60,7 @@ void DmaChannel::startTransaction(const Samd21::Dma::TriggerSource& trigger,
         ;
 
     // Clear software trigger
-    DMAC->SWTRIGCTRL.reg &= ~(1 << m_channel_id);
+    DMAC->SWTRIGCTRL.reg &= ~(1U << m_channel_id);
 
     // Configure priority, trigger source, and trigger action
     DMAC->CHCTRLB.bit.LVL = priority.e;
@@ -91,8 +86,6 @@ void DmaChannel::appendToChain(DmacDescriptor* newDesc) {
 
     // We cannot add a transaction to a circular chain (there is no end)
     FW_ASSERT(!this->m_circular, m_channel_id);
-
-    Os::ScopeLock lock(s_dmac_mutex);
 
     // Select this channel
     DMAC->CHID.reg = DMAC_CHID_ID(m_channel_id);
@@ -148,8 +141,6 @@ void DmaChannel::queueTransaction(const Samd21::Dma::TriggerSource& trigger,
 void DmaChannel::linkToFront() {
     FW_ASSERT(m_busy, m_channel_id);
     FW_ASSERT(!m_circular, m_channel_id);
-
-    Os::ScopeLock lock(s_dmac_mutex);
 
     // Select this channel
     DMAC->CHID.reg = DMAC_CHID_ID(m_channel_id);
