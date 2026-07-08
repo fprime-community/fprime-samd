@@ -157,9 +157,6 @@ class UsartDriver final : public UsartDriverComponentBase {
         INVALID,
     };
 
-    //! Calculate BAUD register value based on baud rate and mode
-    U16 calculateBaud(BaudRate baud_rate, CommunicationMode mode);
-
     //! Get SERCOM TX DMA trigger source
     Dma::TriggerSource getSercomTxTrigger(SercomKind sercom);
 

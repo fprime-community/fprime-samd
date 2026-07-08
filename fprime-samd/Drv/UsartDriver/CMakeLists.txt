@@ -14,11 +14,21 @@
 # root when not specifically overridden by the developer, i.e. the module defined by
 # `MyProj/Some/Path/CMakeLists.txt` will be named `MyProj_Some_Path`.
 
+# Select hardware implementation based on platform
+if (FPRIME_PLATFORM STREQUAL "Samd21")
+    # SAMD21 target build - use real hardware implementation
+    set(USART_HARDWARE_SOURCE "${CMAKE_CURRENT_LIST_DIR}/UsartDriverHardware.cpp")
+else()
+    # Linux/test build - use stub implementation
+    set(USART_HARDWARE_SOURCE "${CMAKE_CURRENT_LIST_DIR}/UsartDriverHardwareStub.cpp")
+endif()
+
 register_fprime_library(
     AUTOCODER_INPUTS
         "${CMAKE_CURRENT_LIST_DIR}/UsartDriver.fpp"
     SOURCES
         "${CMAKE_CURRENT_LIST_DIR}/UsartDriver.cpp"
+        ${USART_HARDWARE_SOURCE}
   DEPENDS
       Drv_Interfaces
       fprime-samd_Drv_Types
