@@ -127,16 +127,20 @@ void UsartDriver ::schedIn_handler(FwIndexType portNum, U32 context) {
         // Read the active Rx transfer
         auto currentRx = this->dmaRxRead_out(0);
 
-        // Check if there is any new data
-        auto newSize = USART_RX_BUFFER_SIZE - currentRx.get_btcnt() - this->m_active_processed;
-        if (newSize > 0) {
+        // Absolute count of bytes filled in the current DMA buffer so far
+        auto filled = static_cast<U16>(USART_RX_BUFFER_SIZE - currentRx.get_btcnt());
+
+        // Only notify if new data has arrived since we last processed this buffer.
+        // Signals carry the absolute high-water mark (not a delta) so that a PARTIAL and
+        // a concurrently-enqueued DONE/PARTIAL cannot double-count the same bytes.
+        if (filled > this->m_active_processed) {
             // Notify our queue of the current Rx status.
             // m_queue is shared with the DMA ISR (dmaReplyIn), so the enqueue must be
             // protected from a concurrent enqueue happening inside the ISR.
             Fw::Success status;
             {
                 CriticalSection cs;
-                status = this->m_queue.enqueue(Signal(SignalKind::RX_BUFFER_PARTIAL, static_cast<U16>(newSize)));
+                status = this->m_queue.enqueue(Signal(SignalKind::RX_BUFFER_PARTIAL, filled));
             }
             FW_ASSERT(status == Fw::Success::SUCCESS, status);
         }
@@ -186,18 +190,19 @@ void UsartDriver ::activeIn_handler(FwIndexType portNum, U32 context) {
 
                     break;
                 case SignalKind::RX_BUFFER_DONE:
-                case SignalKind::RX_BUFFER_PARTIAL:
-                    // Make sure the DMA doesn't give us more bytes than we expect
-                    FW_ASSERT(this->m_active_processed + signal.rx_bytes <= USART_RX_BUFFER_SIZE, this->m_sercom,
-                              this->m_active_processed, signal.rx_bytes);
+                case SignalKind::RX_BUFFER_PARTIAL: {
+                    FW_ASSERT(signal.rx_bytes <= USART_RX_BUFFER_SIZE, this->m_sercom, signal.rx_bytes);
+                    FW_ASSERT(signal.rx_bytes >= this->m_active_processed, this->m_sercom, this->m_active_processed,
+                              signal.rx_bytes);
 
-                    // Wrap the current DMA buffer in a Fw::Buffer
+                    U16 newBytes = signal.rx_bytes - this->m_active_processed;
+                    // Wrap the newly received region of the current DMA buffer in a Fw::Buffer
                     switch (this->m_active_rx) {
                         case RxDmaBufferID::A:
-                            thickBuffer = Fw::Buffer(this->m_rx[0].data + this->m_active_processed, signal.rx_bytes);
+                            thickBuffer = Fw::Buffer(this->m_rx[0].data + this->m_active_processed, newBytes);
                             break;
                         case RxDmaBufferID::B:
-                            thickBuffer = Fw::Buffer(this->m_rx[1].data + this->m_active_processed, signal.rx_bytes);
+                            thickBuffer = Fw::Buffer(this->m_rx[1].data + this->m_active_processed, newBytes);
                             break;
                         case RxDmaBufferID::INVALID:
                             break;
@@ -206,12 +211,12 @@ void UsartDriver ::activeIn_handler(FwIndexType portNum, U32 context) {
                     if (thickBuffer.getSize() > 0) {
                         switch (signal.kind) {
                             case SignalKind::RX_BUFFER_PARTIAL:
-                                this->log_DIAGNOSTIC_RxPartial(static_cast<U8>(this->m_active_rx),
-                                                               this->m_active_processed, thickBuffer.getSize());
+                                // this->log_DIAGNOSTIC_RxPartial(static_cast<U8>(this->m_active_rx),
+                                //    this->m_active_processed, thickBuffer.getSize());
                                 break;
                             case SignalKind::RX_BUFFER_DONE:
-                                this->log_DIAGNOSTIC_RxFull(static_cast<U8>(this->m_active_rx),
-                                                            this->m_active_processed, thickBuffer.getSize());
+                                // this->log_DIAGNOSTIC_RxFull(static_cast<U8>(this->m_active_rx),
+                                //                             this->m_active_processed, thickBuffer.getSize());
                                 break;
                             default:
                                 break;
@@ -252,6 +257,7 @@ void UsartDriver ::activeIn_handler(FwIndexType portNum, U32 context) {
                     }
 
                     break;
+                }
                 case SignalKind::RX_CHANNEL_ERROR:
                     // A bus error on the DMA occured, we have no way of handling this
                     FW_ASSERT(false, this->m_sercom, signal.rx_bytes);
@@ -308,14 +314,12 @@ Drv::ByteStreamStatus UsartDriver ::sendSync_handler(FwIndexType portNum, Fw::Bu
 }
 
 void UsartDriver ::dmaQueueRxSend(const ThinBuffer& buffer) {
-    // Note: Use DATA.reg to get the actual register address, not the structure address
-    this->dmaQueueOut_out(UsartDriver_DmaChannel::RX, getSercomRxTrigger(m_sercom), Dma::TransactionType::BEAT,
-                          Dma::Priority::PRIORITY_0, UsartHardware::UsartHal::getDataRegisterAddress(m_sercom),
-                          static_cast<U32>(reinterpret_cast<uintptr_t>(buffer.getData())), buffer.getSize(),
-                          Dma::BeatSize::BYTE,
-                          /* increment source */ false,
-                          /* incrementDestination */ true, Dma::AddressIncrementStepSize::SIZE_1,
-                          Dma::StepSelection::DESTINATION);
+    this->dmaQueueOut_out(
+        UsartDriver_DmaChannel::RX, getSercomRxTrigger(m_sercom), Dma::TransactionType::BEAT, Dma::Priority::PRIORITY_0,
+        UsartHardware::UsartHal::getDataRegisterAddress(m_sercom),
+        static_cast<U32>(reinterpret_cast<uintptr_t>(buffer.getData())), buffer.getSize(), Dma::BeatSize::BYTE,
+        /* increment source */ false,
+        /* incrementDestination */ true, Dma::AddressIncrementStepSize::SIZE_1, Dma::StepSelection::DESTINATION);
 }
 
 void UsartDriver ::dmaReplyTxIsr(const Samd21::Dma::Reply& reply) {
@@ -342,15 +346,20 @@ void UsartDriver ::dmaReplyRxIsr(const Samd21::Dma::Reply& reply) {
     Fw::Success status;
     switch (reply.get_status()) {
         case Dma::Status::OK:
-            // Make sure remaining bytes will fit in our storage
-            FW_ASSERT(this->m_active_processed + reply.get_remainingBytes() <= USART_RX_BUFFER_SIZE);
+            // Make sure remaining bytes are consistent with our storage
+            FW_ASSERT(reply.get_remainingBytes() <= USART_RX_BUFFER_SIZE, reply.get_remainingBytes());
             {
+                // Carry the absolute count of bytes filled in the current buffer (high-water mark)
+                // rather than a delta against m_active_processed. m_active_processed is only mutated
+                // in activeIn_handler, so reading it here (in an ISR) would race; the absolute count
+                // is computed purely from DMA state and the delta is resolved at consume time.
                 CriticalSection cs;
                 status = this->m_queue.enqueue(
                     Signal(SignalKind::RX_BUFFER_DONE,
-                           static_cast<U16>(USART_RX_BUFFER_SIZE - static_cast<U16>(reply.get_remainingBytes()) -
-                                            this->m_active_processed)));
+                           static_cast<U16>(USART_RX_BUFFER_SIZE - static_cast<U16>(reply.get_remainingBytes()))));
             }
+            // TODO(tumbar) If we are Rx-ing too fast, this will assert
+            //              Maybe a better thing to do is to drop this buffer?
             FW_ASSERT(status == Fw::Success::SUCCESS, status);
             break;
         case Dma::Status::BUS_ERROR: {

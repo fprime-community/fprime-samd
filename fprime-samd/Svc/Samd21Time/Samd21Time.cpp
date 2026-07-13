@@ -41,7 +41,7 @@ void Samd21Time ::getTime_handler(FwIndexType portNum, Fw::Time& time) {
 // Handler implementations for commands
 // ----------------------------------------------------------------------
 
-void Samd21Time ::SET_TIME_cmdHandler(FwOpcodeType opCode, U32 cmdSeq, Fw::TimeValue value) {
+void Samd21Time ::SET_TIME_cmdHandler(FwOpcodeType opCode, U32 cmdSeq, const Fw::TimeValue& value) {
     // TODO
     this->cmdResponse_out(opCode, cmdSeq, Fw::CmdResponse::OK);
 }

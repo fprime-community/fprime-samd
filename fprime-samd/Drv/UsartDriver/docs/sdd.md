@@ -15,7 +15,7 @@ The driver uses a dual-buffer circular receive strategy with DMA channels for bo
 | SAMD21-UART-001 | The UsartDriver shall configure SERCOM peripherals for USART operation with configurable baud rates (9600-921600), data formats (5-9 bits), parity (none/even/odd), stop bits (1 or 2), bit ordering (MSB/LSB-first), communication modes (async/sync), and clock sources (internal/external) | Hardware Test |
 | SAMD21-UART-002 | The UsartDriver shall use DMA for both transmission and reception                                                                                                                                                                                                                             | Hardware Test |
 | SAMD21-UART-003 | The UsartDriver shall implement double-buffering for continuous RX                                                                                                                                                                                                                            | Hardware Test |
-| SAMD21-UART-004 | The UsartDriver shall poll the in-progress RX transfer on each rate group tick to extract partial RX frames                                                                                                                                                                                    | Hardware Test |
+| SAMD21-UART-004 | The UsartDriver shall poll the in-progress RX transfer on each rate group tick to extract partial RX frames                                                                                                                                                                                   | Hardware Test |
 | SAMD21-UART-005 | The UsartDriver shall queue TX requests with asynchronous completion                                                                                                                                                                                                                          | Hardware Test |
 | SAMD21-UART-006 | The UsartDriver shall provide synchronous blocking transmission for early boot diagnostics                                                                                                                                                                                                    | Hardware Test |
 
@@ -27,20 +27,20 @@ The driver uses a dual-buffer circular receive strategy with DMA channels for bo
 
 ### 3.2 Ports
 
-| Kind         | Name              | Port Type              | Usage                                                                               |
-| ------------ | ----------------- | ---------------------- | ----------------------------------------------------------------------------------- |
-| `sync input` | `send`            | `Fw.BufferSend`        | Send data buffer out the UART (queued for DMA transmission)                         |
-| `sync input` | `sendSync`        | `Drv.ByteStreamSend`   | Synchronously transmit data (blocks until complete, no DMA)                         |
-| `sync input` | `recvReturnIn`    | `Fw.BufferSend`        | Return ownership of a received buffer view (no-op; buffers stay in the DMA chain)   |
-| `sync input` | `dmaReplyIn[2]`   | `Dma.TransactionReply` | DMA completion signals from DMAC (called in ISR context)                            |
-| `sync input` | `schedIn`         | `Svc.Sched`            | **RECOMMENDED:** Rate group handler that polls the in-progress RX transfer (should connect to rate group) |
-| `sync input` | `activeIn`        | `Svc.Sched`            | **REQUIRED:** Signal queue processor (must connect to PassiveCycler)                |
-| `output`     | `ready`           | `Drv.ByteStreamReady`  | Signals driver is ready to send/receive data                                        |
-| `output`     | `recv`            | `Drv.ByteStreamData`   | Outputs received data to downstream consumers                                       |
-| `output`     | `sendReturnOut`   | `Drv.ByteStreamData`   | Returns ownership of sent buffer with completion status                             |
-| `output`     | `dmaQueueOut[2]`  | `Dma.Transaction`      | Sends DMA transaction requests to DMAC driver                                       |
-| `output`     | `dmaRxCircular`   | `Fw.Signal`            | Configures RX DMA channel for circular mode                                         |
-| `output`     | `dmaRxRead`       | `Dma.ReadWriteback`    | Reads the active RX transfer's remaining byte count in place (no descriptor pop)    |
+| Kind         | Name             | Port Type              | Usage                                                                                                     |
+| ------------ | ---------------- | ---------------------- | --------------------------------------------------------------------------------------------------------- |
+| `sync input` | `send`           | `Fw.BufferSend`        | Send data buffer out the UART (queued for DMA transmission)                                               |
+| `sync input` | `sendSync`       | `Drv.ByteStreamSend`   | Synchronously transmit data (blocks until complete, no DMA)                                               |
+| `sync input` | `recvReturnIn`   | `Fw.BufferSend`        | Return ownership of a received buffer view (no-op; buffers stay in the DMA chain)                         |
+| `sync input` | `dmaReplyIn[2]`  | `Dma.TransactionReply` | DMA completion signals from DMAC (called in ISR context)                                                  |
+| `sync input` | `schedIn`        | `Svc.Sched`            | **RECOMMENDED:** Rate group handler that polls the in-progress RX transfer (should connect to rate group) |
+| `sync input` | `activeIn`       | `Svc.Sched`            | **REQUIRED:** Signal queue processor (must connect to PassiveCycler)                                      |
+| `output`     | `ready`          | `Drv.ByteStreamReady`  | Signals driver is ready to send/receive data                                                              |
+| `output`     | `recv`           | `Drv.ByteStreamData`   | Outputs received data to downstream consumers                                                             |
+| `output`     | `sendReturnOut`  | `Drv.ByteStreamData`   | Returns ownership of sent buffer with completion status                                                   |
+| `output`     | `dmaQueueOut[2]` | `Dma.Transaction`      | Sends DMA transaction requests to DMAC driver                                                             |
+| `output`     | `dmaRxCircular`  | `Fw.Signal`            | Configures RX DMA channel for circular mode                                                               |
+| `output`     | `dmaRxRead`      | `Dma.ReadWriteback`    | Reads the active RX transfer's remaining byte count in place (no descriptor pop)                          |
 
 #### 3.2.1 activeIn and schedIn Port Pattern
 
@@ -346,11 +346,26 @@ connections UsartComm {
 
 ### 4.6 Tested Configurations
 
-This component has been tested on the following hardware venues:
+This component has been tested on the following hardware venues with the following tests:
 
-| Board Name               | Chip       | SERCOM  | Config     | Baud   | Data Order |
-| ------------------------ | ---------- | ------- | ---------- | ------ | ---------- |
-| Microchip Curiosity Nano | SAMD21G17A | SERCOM0 | Async, 8N1 | 115200 | LSB-first  |
+1. In the main F Prime communications pipeline. Here we do two things:
+    a. Send telemetry and events at the requested baud-rate
+    b. Receive command packets at the requested baud. The ground will spam NO_OP commands at the maximum rate of the UART bus and we will watch for dispatch.
+
+    **This test is the `Fw` column**. It is the rate that we can practically run at before the MCU chokes on too many commands.
+
+2. Loopback mode. Use a component that Tx-es what it Rx-es
+    a. The ground will just spam NO_OP commands though it doesn't make a difference
+
+    **This test is the `Loopback` column**
+
+| Board Name               | Chip       | SERCOM  | Config     | Baud   | Data Order | Loopback | Fw  |
+| ------------------------ | ---------- | ------- | ---------- | ------ | ---------- | -------- | --- |
+| Microchip Curiosity Nano | SAMD21G17A | SERCOM0 | Async, 8N1 | 115200 | LSB-first  |          | Y   |
+| Microchip Curiosity Nano | SAMD21G17A | SERCOM3 | Async, 8N1 | 115200 | LSB-first  | Y        |     |
+| Microchip Curiosity Nano | SAMD21G17A | SERCOM3 | Async, 8N1 | 230400 | LSB-first  | Y        |     |
+| Microchip Curiosity Nano | SAMD21G17A | SERCOM3 | Async, 8N1 | 460800 | LSB-first  | Y        |     |
+| Microchip Curiosity Nano | SAMD21G17A | SERCOM3 | Async, 8N1 | 921600 | LSB-first  | Y        | N   |
 
 ## 5. Performance Characteristics
 

@@ -47,7 +47,7 @@ class Samd21Time final : public Samd21TimeComponentBase {
     //! Command to set the time
     void SET_TIME_cmdHandler(FwOpcodeType opCode,  //!< The opcode
                              U32 cmdSeq,           //!< The command sequence number
-                             Fw::TimeValue value) override;
+                             const Fw::TimeValue& value) override;
 
   private:
     //! Initialized at startup, this is the "zero" reference clock for PROC_TIME
