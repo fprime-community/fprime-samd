@@ -78,23 +78,5 @@ module Samd21 {
 
         @ Total bytes sent by Usart
         telemetry txBytes: U32
-
-        event RxPartial(
-            buf_index: U8,
-            offset: U32,
-            n_bytes: U32,
-        ) severity diagnostic format "Rx partial buffer idx={} offset={} n={}"
-
-        event RxFull(
-            buf_index: U8,
-            offset: U32,
-            n_bytes: U32
-        ) severity diagnostic format "Rx full buffer idx={} offset={} n={}"
-
-        event Tx(
-            addr: U32,
-            n: U16
-        ) severity diagnostic format "Tx buffer 0x{x} finished transmitting {} bytes"
-
     }
 }

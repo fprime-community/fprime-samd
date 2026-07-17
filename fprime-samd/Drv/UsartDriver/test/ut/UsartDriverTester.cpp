@@ -300,7 +300,6 @@ void UsartDriverTester::testSchedInNoData() {
     // No downstream data, no partial event
     this->invoke_to_activeIn(0, 0);
     ASSERT_from_recv_SIZE(0);
-    ASSERT_EVENTS_RxPartial_SIZE(0);
 }
 
 void UsartDriverTester::testSchedInPartial() {
@@ -320,10 +319,6 @@ void UsartDriverTester::testSchedInPartial() {
     ASSERT_EQ(this->recvBufferAddr(0), this->rxBufferAddr(0));
     ASSERT_EQ(this->fromPortHistory_recv->at(0).buffer.getSize(), received);
     ASSERT_EQ(this->fromPortHistory_recv->at(0).status, Drv::ByteStreamStatus::OP_OK);
-
-    // A partial event is emitted
-    ASSERT_EVENTS_RxPartial_SIZE(1);
-    ASSERT_EVENTS_RxPartial(0, 0 /*buf A*/, 0 /*offset*/, received);
 }
 
 void UsartDriverTester::testRxMultiplePartials() {
@@ -345,9 +340,6 @@ void UsartDriverTester::testRxMultiplePartials() {
     ASSERT_from_recv_SIZE(2);
     ASSERT_EQ(this->recvBufferAddr(1), this->rxBufferAddr(0) + 10);
     ASSERT_EQ(this->fromPortHistory_recv->at(1).buffer.getSize(), 15U);
-
-    ASSERT_EVENTS_RxPartial_SIZE(2);
-    ASSERT_EVENTS_RxPartial(1, 0, 10, 15);
 }
 
 void UsartDriverTester::testRxBufferDone() {
@@ -364,9 +356,6 @@ void UsartDriverTester::testRxBufferDone() {
     ASSERT_from_recv_SIZE(1);
     ASSERT_EQ(this->recvBufferAddr(0), this->rxBufferAddr(0));
     ASSERT_EQ(this->fromPortHistory_recv->at(0).buffer.getSize(), USART_RX_BUFFER_SIZE);
-
-    ASSERT_EVENTS_RxFull_SIZE(1);
-    ASSERT_EVENTS_RxFull(0, 0, 0, USART_RX_BUFFER_SIZE);
 }
 
 void UsartDriverTester::testRxBufferFlip() {
@@ -381,13 +370,13 @@ void UsartDriverTester::testRxBufferFlip() {
 
     // A partial on buffer B should now index into m_rx[1]
     this->setRxRemainingBytes(USART_RX_BUFFER_SIZE - 4);
+    this->invoke_to_schedIn(0, 0);  // service the schedIn twice to trigger the IDLE watchdog
     this->invoke_to_schedIn(0, 0);
     this->invoke_to_activeIn(0, 0);
 
     ASSERT_from_recv_SIZE(2);
     ASSERT_EQ(this->recvBufferAddr(1), this->rxBufferAddr(1));
     ASSERT_EQ(this->fromPortHistory_recv->at(1).buffer.getSize(), 4U);
-    ASSERT_EVENTS_RxPartial(0, 1 /*buf B*/, 0, 4);
 
     // Complete buffer B -> active flips back to A
     this->clearHistory();
