@@ -7,7 +7,6 @@
 #include "fprime-samd/Drv/DmaDriver/DmaChannel.hpp"
 #include <cstring>
 #include "Fw/Types/Assert.hpp"
-#include "Os/Mutex.hpp"
 #include "config/DmaDriverConfig.hpp"
 #include "sam.h"
 
