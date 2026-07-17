@@ -30,6 +30,16 @@ static void waitForChannelSuspend() {
     FW_ASSERT(limit != 0);
 }
 
+static void waitForChannelDisable() {
+    volatile U32 limit = F_CPU;
+    while (limit > 0 && DMAC->CHCTRLA.bit.ENABLE != 0) {
+        limit--;
+    }
+
+    // Check if we timed out
+    FW_ASSERT(limit != 0);
+}
+
 static void suspendChannel() {
     DMAC->CHINTENCLR.bit.SUSP = 1;
     DMAC->CHCTRLB.reg |= DMAC_CHCTRLB_CMD_SUSPEND;
@@ -56,8 +66,7 @@ void DmaChannel::startTransaction(const Samd21::Dma::TriggerSource& trigger,
     DMAC->CHID.reg = DMAC_CHID_ID(m_channel_id);
     DMAC->CHCTRLA.bit.ENABLE = 0;
     DMAC->CHCTRLA.bit.SWRST = 1;
-    while (DMAC->CHCTRLA.bit.ENABLE)
-        ;
+    waitForChannelDisable();
 
     // Clear software trigger
     DMAC->SWTRIGCTRL.reg &= ~(1U << m_channel_id);
