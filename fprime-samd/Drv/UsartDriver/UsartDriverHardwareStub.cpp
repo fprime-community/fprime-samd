@@ -66,5 +66,10 @@ U32 UsartHal::getDataRegisterAddress(SercomKind sercom) {
     return s_state.data_register_address;
 }
 
+bool UsartHal::checkAndClearRxOverflow(SercomKind sercom) {
+    s_state.rx_overflow_check_count++;
+    return s_state.rx_overflow;
+}
+
 }  // namespace UsartHardware
 }  // namespace Samd21

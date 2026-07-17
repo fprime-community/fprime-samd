@@ -25,8 +25,5 @@ module Samd21 {
 
         import Fw.Channel
         time get port timeCaller
-
-        sync input port schedIn: Svc.Sched
-        telemetry freeDescriptors: U8
     }
 }

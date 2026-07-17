@@ -46,7 +46,7 @@ module Samd21 {
 
         @ Synchronously transmit data on this UART
         @ Blocks until the entire buffer is transferred
-        sync input port $sendSync: Drv.ByteStreamSend
+        sync input port sendSync: Drv.ByteStreamSend
 
         ####################################
         ## DMA management ports
@@ -67,7 +67,17 @@ module Samd21 {
         sync input port dmaReplyIn: [DmaChannel.N] Dma.TransactionReply
 
         import Fw.Event
+        import Fw.Channel
         time get port timeCaller
+
+        @ SERCOM RX hardware buffer overflows (STATUS.BUFOVF).
+        telemetry rxOverflows: U32
+
+        @ Total bytes received by Usart.
+        telemetry rxBytes: U32
+
+        @ Total bytes sent by Usart
+        telemetry txBytes: U32
 
         event RxPartial(
             buf_index: U8,

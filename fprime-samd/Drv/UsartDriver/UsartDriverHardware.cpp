@@ -353,5 +353,17 @@ U32 UsartHal::getDataRegisterAddress(SercomKind sercom) {
     return reinterpret_cast<U32>(&getSercomHw(sercom)->USART.DATA.reg);
 }
 
+bool UsartHal::checkAndClearRxOverflow(SercomKind sercom) {
+    Sercom* sercom_hw = getSercomHw(sercom);
+
+    // STATUS.BUFOVF is a sticky, write-1-to-clear flag (§27.8.5). Read it, then
+    // clear it by writing the bit back so the next check reports fresh overflows.
+    const bool overflowed = (sercom_hw->USART.STATUS.reg & SERCOM_USART_STATUS_BUFOVF) != 0;
+    if (overflowed) {
+        sercom_hw->USART.STATUS.reg = SERCOM_USART_STATUS_BUFOVF;
+    }
+    return overflowed;
+}
+
 }  // namespace UsartHardware
 }  // namespace Samd21

@@ -30,7 +30,13 @@ UsartDriver ::UsartDriver(const char* const compName)
       m_sercom(SercomKind::SERCOM_0),
       m_active_rx(RxDmaBufferID::INVALID),
       m_configured(false),
-      m_active_processed(0) {}
+      m_active_processed(0),
+      m_rxOverflows(0),
+      m_schedSkips(0),
+      m_rx_activity(0),
+      m_last_sched_activity(0),
+      m_rxBytes(0),
+      m_txBytes(0) {}
 
 UsartDriver ::~UsartDriver() = default;
 
@@ -122,28 +128,50 @@ Dma::TriggerSource UsartDriver ::getSercomRxTrigger(SercomKind sercom) {
 
 void UsartDriver ::schedIn_handler(FwIndexType portNum, U32 context) {
     if (this->m_configured) {
-        // We have tripped the idle watchdog!
-
-        // Read the active Rx transfer
-        auto currentRx = this->dmaRxRead_out(0);
-
-        // Absolute count of bytes filled in the current DMA buffer so far
-        auto filled = static_cast<U16>(USART_RX_BUFFER_SIZE - currentRx.get_btcnt());
-
-        // Only notify if new data has arrived since we last processed this buffer.
-        // Signals carry the absolute high-water mark (not a delta) so that a PARTIAL and
-        // a concurrently-enqueued DONE/PARTIAL cannot double-count the same bytes.
-        if (filled > this->m_active_processed) {
-            // Notify our queue of the current Rx status.
-            // m_queue is shared with the DMA ISR (dmaReplyIn), so the enqueue must be
-            // protected from a concurrent enqueue happening inside the ISR.
-            Fw::Success status;
-            {
-                CriticalSection cs;
-                status = this->m_queue.enqueue(Signal(SignalKind::RX_BUFFER_PARTIAL, filled));
-            }
-            FW_ASSERT(status == Fw::Success::SUCCESS, status);
+        // Check the SERCOM RX hardware overflow flag. This is a plain register
+        // read (no channel suspend) and is safe to do at any RX rate; it tells us
+        // whether the peripheral silently dropped any bytes since the last tick.
+        if (UsartHardware::UsartHal::checkAndClearRxOverflow(this->m_sercom)) {
+            this->m_rxOverflows++;
         }
+
+        // High-RX watchdog. dmaReplyRxIsr bumps m_rx_activity on every full-buffer
+        // RX completion. If it advanced since the previous tick, RX is actively
+        // streaming and the partial read below
+        const U32 activity = this->m_rx_activity;
+        const bool rxBusy = (activity != this->m_last_sched_activity);
+        this->m_last_sched_activity = activity;
+
+        if (rxBusy) {
+            this->m_schedSkips++;
+        } else {
+            // RX is idle -- safe to suspend and read the in-progress transfer.
+            auto currentRx = this->dmaRxRead_out(0);
+
+            // Absolute count of bytes filled in the current DMA buffer so far
+            auto filled = static_cast<U16>(USART_RX_BUFFER_SIZE - currentRx.get_btcnt());
+
+            // Only notify if new data has arrived since we last processed this buffer.
+            // Signals carry the absolute high-water mark (not a delta) so that a PARTIAL and
+            // a concurrently-enqueued DONE/PARTIAL cannot double-count the same bytes.
+            if (filled > this->m_active_processed) {
+                // Notify our queue of the current Rx status.
+                // m_queue is shared with the DMA ISR (dmaReplyIn), so the enqueue must be
+                // protected from a concurrent enqueue happening inside the ISR.
+                Fw::Success status;
+                {
+                    CriticalSection cs;
+                    status = this->m_queue.enqueue(Signal(SignalKind::RX_BUFFER_PARTIAL, filled));
+                }
+                FW_ASSERT(status == Fw::Success::SUCCESS, status);
+            }
+        }
+
+        // Emit diagnostics on the sched tick (no added TX load beyond telemetry).
+        auto time = getTime();
+        this->tlmWrite_rxOverflows(this->m_rxOverflows, time);
+        this->tlmWrite_rxBytes(this->m_rxBytes, time);
+        this->tlmWrite_txBytes(this->m_txBytes, time);
     }
 }
 
@@ -251,6 +279,7 @@ void UsartDriver ::activeIn_handler(FwIndexType portNum, U32 context) {
 
                     // Send the data we received to downstream uplink
                     if (thickBuffer.getSize() > 0) {
+                        this->m_rxBytes += static_cast<U32>(thickBuffer.getSize());
                         if (this->isConnected_recv_OutputPort(0)) {
                             this->recv_out(0, thickBuffer, Drv::ByteStreamStatus::OP_OK);
                         }
@@ -293,6 +322,7 @@ void UsartDriver ::send_handler(FwIndexType portNum, Fw::Buffer& fwBuffer) {
 
     auto status = this->m_tx_queue.enqueue(ThinBuffer(fwBuffer));
     if (status == Fw::Success::SUCCESS) {
+        this->m_txBytes += static_cast<U32>(fwBuffer.getSize());
         // This job has been added to the queue, send it to the DMA
         // Note: Use DATA.reg to get the actual register address, not the structure address
         this->dmaQueueOut_out(
@@ -348,6 +378,10 @@ void UsartDriver ::dmaReplyRxIsr(const Samd21::Dma::Reply& reply) {
         case Dma::Status::OK:
             // Make sure remaining bytes are consistent with our storage
             FW_ASSERT(reply.get_remainingBytes() <= USART_RX_BUFFER_SIZE, reply.get_remainingBytes());
+            // Signal the high-RX watchdog that a full buffer just completed. schedIn
+            // compares this across ticks to decide whether RX is busy (and thus
+            // whether the suspend-inducing partial read is safe to run).
+            this->m_rx_activity++;
             {
                 // Carry the absolute count of bytes filled in the current buffer (high-water mark)
                 // rather than a delta against m_active_processed. m_active_processed is only mutated

@@ -45,6 +45,18 @@ struct UsartHal {
     //! \param sercom SERCOM peripheral to query
     //! \return Address of the SERCOM USART DATA register
     static U32 getDataRegisterAddress(SercomKind sercom);
+
+    //! Check and clear the RX buffer-overflow flag (STATUS.BUFOVF)
+    //!
+    //! The SERCOM RX has only a 2-deep hardware buffer. If the RX DMA does not
+    //! service the RXC trigger within ~2 byte-times (e.g. while the channel is
+    //! suspended for a partial-read, or while it loses DMAC arbitration to a TX
+    //! burst) the peripheral sets STATUS.BUFOVF and silently discards the byte.
+    //! Nothing else reads this flag, so an overflow is an otherwise-invisible
+    //! data drop. This reads the sticky flag and clears it (write-1-to-clear).
+    //! \param sercom SERCOM peripheral to query
+    //! \return true if an overflow had occurred since the last check
+    static bool checkAndClearRxOverflow(SercomKind sercom);
 };
 
 //! Test-only hooks into the stub hardware implementation.
@@ -76,6 +88,10 @@ struct StubState {
 
     // getDataRegisterAddress() control
     U32 data_register_address;
+
+    // checkAndClearRxOverflow() control/capture
+    bool rx_overflow;               //!< value returned by checkAndClearRxOverflow()
+    U32 rx_overflow_check_count;    //!< number of times checkAndClearRxOverflow() was called
 };
 
 //! Get the mutable stub state (shared across all HAL calls)

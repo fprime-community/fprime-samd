@@ -80,7 +80,7 @@ void DmaChannel::startTransaction(const Samd21::Dma::TriggerSource& trigger,
     m_busy = true;
 }
 
-void DmaChannel::appendToChain(DmacDescriptor* newDesc) {
+bool DmaChannel::appendToChain(DmacDescriptor* newDesc) {
     FW_ASSERT(m_busy, m_channel_id);
     FW_ASSERT(newDesc != nullptr, m_channel_id);
 
@@ -106,20 +106,37 @@ void DmaChannel::appendToChain(DmacDescriptor* newDesc) {
     FW_ASSERT(n <= DmaDriverConfig::DMA_DESCRIPTOR_N);
     FW_ASSERT(lastDesc->DESCADDR.reg == 0);
 
-    // Link new descriptor
+    // Link the new descriptor onto the tail's SRAM copy.
     lastDesc->DESCADDR.reg = reinterpret_cast<U32>(newDesc);
 
-    // If there is only one channel in the chain, we need to update the writeback as well to point to this descriptor
-    if (n == 0) {
-        auto wb = &dmac_writeback[m_channel_id];
-        FW_ASSERT(wb->DESCADDR.reg == 0);
+    // Patch the write-back if the DMA is currently executing the tail node.
+    //
+    // The DMAC does not re-read a descriptor's next-pointer from SRAM: when it
+    // begins a block it prefetches that block's DESCADDR into the channel's
+    // write-back copy (datasheet 21.6.2.5). So if the node currently loaded in
+    // the write-back has DESCADDR==0, the hardware has already cached "no next"
+    // and will terminate the chain (auto-disabling the channel, 21.6.2.6) the
+    // instant it finishes -- our SRAM link above would be fetched too late and
+    // the appended transaction would never transmit. Writing the same link into
+    // the write-back closes that window: the hardware fetches our new descriptor
+    // instead of terminating.
+    //
+    // wb->DESCADDR==0 means "executing the tail" for ANY chain length, not just a
+    // single-node (n==0) chain. The previous code only patched the n==0 case, so
+    // a tail append on a multi-node chain (the common case under sustained TX)
+    // silently dropped the transaction. Gate on the write-back, not on n.
+    auto wb = &dmac_writeback[m_channel_id];
+    bool onTail = (wb->DESCADDR.reg == 0);
+    if (onTail) {
         wb->DESCADDR.reg = reinterpret_cast<U32>(newDesc);
     }
 
     resumeChannel();
+
+    return onTail;
 }
 
-void DmaChannel::queueTransaction(const Samd21::Dma::TriggerSource& trigger,
+bool DmaChannel::queueTransaction(const Samd21::Dma::TriggerSource& trigger,
                                   const Samd21::Dma::TransactionType& action,
                                   const Samd21::Dma::Priority& priority,
                                   DmacDescriptor* desc) {
@@ -132,9 +149,10 @@ void DmaChannel::queueTransaction(const Samd21::Dma::TriggerSource& trigger,
     if (!m_busy) {
         // Channel idle - start new transaction
         startTransaction(trigger, action, priority, desc);
+        return false;
     } else {
         // Channel busy - append to linked list
-        appendToChain(desc);
+        return appendToChain(desc);
     }
 }
 

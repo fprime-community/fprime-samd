@@ -31,7 +31,10 @@ class DmaChannel final {
 
     //! Queue a DMA transaction on this channel
     //! If channel is idle, starts immediately. If busy, appends to linked descriptor chain.
-    void queueTransaction(const Samd21::Dma::TriggerSource& trigger,
+    //! Returns true if the append patched the write-back of a currently-executing
+    //! tail node on a multi-node chain (the case that previously dropped the
+    //! transaction); false for an idle start or a plain mid-chain append.
+    bool queueTransaction(const Samd21::Dma::TriggerSource& trigger,
                           const Samd21::Dma::TransactionType& action,
                           const Samd21::Dma::Priority& priority,
                           DmacDescriptor* descriptor);
@@ -60,8 +63,9 @@ class DmaChannel final {
                           const Samd21::Dma::Priority& priority,
                           DmacDescriptor* desc);
 
-    //! Append descriptor to end of linked list on busy channel
-    void appendToChain(DmacDescriptor* desc);
+    //! Append descriptor to end of linked list on busy channel.
+    //! Returns true if the DMA was executing the tail node (write-back patched).
+    bool appendToChain(DmacDescriptor* desc);
 
     U8 m_channel_id;
     bool m_busy;

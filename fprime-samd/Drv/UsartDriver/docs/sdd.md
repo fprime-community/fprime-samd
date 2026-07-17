@@ -359,13 +359,14 @@ This component has been tested on the following hardware venues with the followi
 
     **This test is the `Loopback` column**
 
-| Board Name               | Chip       | SERCOM  | Config     | Baud   | Data Order | Loopback | Fw  |
-| ------------------------ | ---------- | ------- | ---------- | ------ | ---------- | -------- | --- |
-| Microchip Curiosity Nano | SAMD21G17A | SERCOM0 | Async, 8N1 | 115200 | LSB-first  |          | Y   |
-| Microchip Curiosity Nano | SAMD21G17A | SERCOM3 | Async, 8N1 | 115200 | LSB-first  | Y        |     |
-| Microchip Curiosity Nano | SAMD21G17A | SERCOM3 | Async, 8N1 | 230400 | LSB-first  | Y        |     |
-| Microchip Curiosity Nano | SAMD21G17A | SERCOM3 | Async, 8N1 | 460800 | LSB-first  | Y        |     |
-| Microchip Curiosity Nano | SAMD21G17A | SERCOM3 | Async, 8N1 | 921600 | LSB-first  | Y        | N   |
+| Board Name               | Chip       | SERCOM    | Config     | Baud   | Data Order | Loopback | Fw  |
+| ------------------------ | ---------- | --------- | ---------- | ------ | ---------- | -------- | --- |
+| Microchip Curiosity Nano | SAMD21G17A | SERCOM3/0 | Async, 8N1 | 9600   | LSB-first  | Y        | Y   |
+| Microchip Curiosity Nano | SAMD21G17A | SERCOM3/0 | Async, 8N1 | 19200  | LSB-first  | Y        | Y   |
+| Microchip Curiosity Nano | SAMD21G17A | SERCOM3/0 | Async, 8N1 | 115200 | LSB-first  | Y        | Y   |
+| Microchip Curiosity Nano | SAMD21G17A | SERCOM3   | Async, 8N1 | 230400 | LSB-first  | Y        |     |
+| Microchip Curiosity Nano | SAMD21G17A | SERCOM3   | Async, 8N1 | 460800 | LSB-first  | Y        |     |
+| Microchip Curiosity Nano | SAMD21G17A | SERCOM3   | Async, 8N1 | 921600 | LSB-first  | Y        |     |
 
 ## 5. Performance Characteristics
 

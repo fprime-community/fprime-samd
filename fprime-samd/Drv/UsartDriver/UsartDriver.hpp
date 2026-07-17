@@ -196,6 +196,25 @@ class UsartDriver final : public UsartDriverComponentBase {
 
     U16 m_active_processed;
 
+    //! m_rxOverflows: SERCOM STATUS.BUFOVF events (silent hardware RX drops).
+    U32 m_rxOverflows;
+
+    //! m_schedSkips: partial-read passes skipped by the high-RX watchdog.
+    U32 m_schedSkips;
+
+    //! High-RX watchdog. dmaReplyRxIsr bumps m_rx_activity on every RX
+    //! completion (ISR context); schedIn compares it against the value seen on
+    //! the previous tick. If it advanced, RX is actively moving full buffers, so
+    //! schedIn skips the partial read -- which would suspend the RX DMA channel
+    //! (see DmaChannel::readWriteback) and risk a BUFOVF drop. Full buffers are
+    //! delivered losslessly via RX_BUFFER_DONE, so skipping loses nothing; the
+    //! partial read only matters during genuine idle to extract a sub-buffer tail.
+    volatile U32 m_rx_activity;
+    U32 m_last_sched_activity;
+
+    U32 m_rxBytes;
+    U32 m_txBytes;
+
     //! Signals sent to the internal queue for processing during schedIn
     enum class SignalKind : U8 {
         TX_BUFFER_OK,       //!< A buffer has been TXed over the DMA successfully
