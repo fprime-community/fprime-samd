@@ -97,7 +97,7 @@ Dma::TriggerSource UsartDriver ::getSercomTxTrigger(SercomKind sercom) {
         case SercomKind::SERCOM_5:
             return Dma::TriggerSource::SERCOM5_TX;
         default:
-            FW_ASSERT(0, static_cast<FwAssertArgType>(sercom));
+            FW_ASSERT(false, static_cast<FwAssertArgType>(sercom));
             return Dma::TriggerSource::SERCOM0_TX;
     }
 }
@@ -117,7 +117,7 @@ Dma::TriggerSource UsartDriver ::getSercomRxTrigger(SercomKind sercom) {
         case SercomKind::SERCOM_5:
             return Dma::TriggerSource::SERCOM5_RX;
         default:
-            FW_ASSERT(0, static_cast<FwAssertArgType>(sercom));
+            FW_ASSERT(false, static_cast<FwAssertArgType>(sercom));
             return Dma::TriggerSource::SERCOM0_RX;
     }
 }
@@ -234,6 +234,8 @@ void UsartDriver ::activeIn_handler(FwIndexType portNum, U32 context) {
                             break;
                         case RxDmaBufferID::INVALID:
                             break;
+                        default:
+                            FW_ASSERT(false);
                     }
 
                     switch (signal.kind) {
@@ -256,6 +258,8 @@ void UsartDriver ::activeIn_handler(FwIndexType portNum, U32 context) {
                                     break;
                                 case RxDmaBufferID::INVALID:
                                     FW_ASSERT(false, static_cast<FwAssertArgType>(this->m_active_rx));
+                                default:
+                                    FW_ASSERT(false);
                             }
                             break;
                         default:
@@ -292,7 +296,7 @@ void UsartDriver ::dmaReplyIn_handler(FwIndexType portNum, const Samd21::Dma::Re
             this->dmaReplyRxIsr(reply);
             break;
         default:
-            FW_ASSERT(0, static_cast<FwAssertArgType>(portNum));
+            FW_ASSERT(false, static_cast<FwAssertArgType>(portNum));
     }
 }
 
@@ -353,7 +357,7 @@ void UsartDriver ::dmaReplyTxIsr(const Samd21::Dma::Reply& reply) {
             FW_ASSERT(status == Fw::Success::SUCCESS, status);
             break;
         default:
-            FW_ASSERT(0, static_cast<FwAssertArgType>(reply.get_status()));
+            FW_ASSERT(false, static_cast<FwAssertArgType>(reply.get_status()));
     }
 }
 
@@ -389,7 +393,7 @@ void UsartDriver ::dmaReplyRxIsr(const Samd21::Dma::Reply& reply) {
             FW_ASSERT(status == Fw::Success::SUCCESS, status);
             break;
         default:
-            FW_ASSERT(0, static_cast<FwAssertArgType>(reply.get_status()));
+            FW_ASSERT(false, static_cast<FwAssertArgType>(reply.get_status()));
     }
 }
 
