@@ -7,6 +7,7 @@
 #ifndef Samd21_PassiveDownlink_HPP
 #define Samd21_PassiveDownlink_HPP
 
+#include "Fw/Com/ComBuffer.hpp"
 #include "Fw/Log/LogPacket.hpp"
 #include "Fw/Tlm/TlmPacket.hpp"
 #include "fprime-samd/Svc/PassiveDownlink/PassiveDownlinkComponentAc.hpp"
@@ -50,6 +51,7 @@ class PassiveDownlink final : public PassiveDownlinkComponentBase {
                          Fw::TlmBuffer& val    //!< Buffer containing serialized telemetry value
                          ) override;
 
+    Fw::ComBuffer m_logBuffer;
     Fw::LogPacket m_logPacket;
     Fw::TlmPacket m_tlmPacket;
 };

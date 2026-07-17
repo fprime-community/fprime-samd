@@ -17,7 +17,10 @@
 # Select hardware implementation based on platform
 if (FPRIME_PLATFORM STREQUAL "Samd21")
     # SAMD21 target build - use real hardware implementation
-    set(RTC_HARDWARE_SOURCE "${CMAKE_CURRENT_LIST_DIR}/RtcDriverHardware.cpp")
+    set(RTC_HARDWARE_SOURCE
+        "${CMAKE_CURRENT_LIST_DIR}/RtcDriverHardware.cpp"
+        "${CMAKE_CURRENT_LIST_DIR}/RtcDriverIsr.cpp"
+    )
 else()
     # Linux/test build - use stub implementation
     set(RTC_HARDWARE_SOURCE "${CMAKE_CURRENT_LIST_DIR}/RtcDriverHardwareStub.cpp")
@@ -33,11 +36,10 @@ register_fprime_library(
 #       MyPackage_MyOtherModule
 )
 
-# Disable LTO for hardware files to ensure RTC_Handler ISR is not optimized away
+# Disable LTO for ISR file to ensure RTC_Handler ISR is not optimized away
 if (SAMD21_LTO)
     set_source_files_properties(
-        "${CMAKE_CURRENT_LIST_DIR}/RtcDriver.cpp"
-        "${CMAKE_CURRENT_LIST_DIR}/RtcDriverHardware.cpp"
+        "${CMAKE_CURRENT_LIST_DIR}/RtcDriverIsr.cpp"
         PROPERTIES COMPILE_FLAGS "-fno-lto"
     )
 endif()

@@ -21,9 +21,6 @@ struct RtcHal {
     //! Wait for RTC MODE0 synchronization
     static void waitForRtcMode0();
 
-    //! Wait for interrupt (WFI instruction)
-    static void waitForInterrupt();
-
     //! Configure GCLK4 for RTC
     //! \param clock_source Clock source selection
     static void configureGclk(RtcDriver::ClockSource clock_source);

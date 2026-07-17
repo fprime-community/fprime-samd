@@ -21,6 +21,8 @@ FatalHandler ::~FatalHandler() {}
 void FatalHandler ::FatalReceive_handler(const FwIndexType portNum, /*!< The port number*/
                                          FwEventIdType Id           /*!< The ID of the FATAL event*/
 ) {
+    
+
     FW_ASSERT(0, static_cast<FwAssertArgType>(portNum), static_cast<FwAssertArgType>(Id));
 }
 

@@ -29,23 +29,6 @@ RtcState& getRtcState() {
     return g_rtc_state;
 }
 
-//! RTC interrupt handler
-extern "C" void RTC_Handler(void) {
-    RtcState& state = getRtcState();
-
-    if (!state.deadline_reached) {
-        // We did not set this deadline reached before the next RTC cycle
-        // We should indicate slip in the cycle
-        state.deadline_exceeded++;
-    }
-
-    state.deadline_reached = false;
-    state.wakeup_interrupt = true;
-    state.n_ticks++;
-
-    RtcHal::clearRtcInterrupt();
-}
-
 void RtcHal::waitForGclk() {
     volatile U32 limit = F_CPU;
     while (limit > 0 && GCLK->STATUS.bit.SYNCBUSY) {
@@ -64,10 +47,6 @@ void RtcHal::waitForRtcMode0() {
 
     // Check if we timed out
     FW_ASSERT(limit != 0);
-}
-
-void RtcHal::waitForInterrupt() {
-    asm("wfi");
 }
 
 void RtcHal::configureGclk(RtcDriver::ClockSource clock_source) {

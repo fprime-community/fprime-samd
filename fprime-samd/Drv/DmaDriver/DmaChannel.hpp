@@ -1,0 +1,77 @@
+// ======================================================================
+// \title  DmaChannel.hpp
+// \author tumbar
+// \brief  hpp file for DmaChannel helper class
+// ======================================================================
+
+#ifndef Samd21_DmaChannel_HPP
+#define Samd21_DmaChannel_HPP
+
+#include "fprime-samd/Drv/Types/PriorityEnumAc.hpp"
+#include "fprime-samd/Drv/Types/TransactionTypeEnumAc.hpp"
+#include "fprime-samd/Drv/Types/TriggerSourceEnumAc.hpp"
+#include "fprime-samd/Drv/Types/WritebackSerializableAc.hpp"
+
+namespace Samd21 {
+
+struct DmacDescriptor {
+    U16 btctrl;
+    U16 btcnt;
+    U32 srcaddr;
+    U32 dstaddr;
+    U32 descaddr;
+};
+
+class DmaChannel final {
+  public:
+    DmaChannel();
+
+    //! Set the channel ID (called during initialization)
+    void setChannelId(U8 channel_id) { m_channel_id = channel_id; }
+
+    //! Queue a DMA transaction on this channel
+    //! If channel is idle, starts immediately. If busy, appends to linked descriptor chain.
+    //! Returns true if the append patched the write-back of a currently-executing
+    //! tail node on a multi-node chain (the case that previously dropped the
+    //! transaction); false for an idle start or a plain mid-chain append.
+    bool queueTransaction(const Samd21::Dma::TriggerSource& trigger,
+                          const Samd21::Dma::TransactionType& action,
+                          const Samd21::Dma::Priority& priority,
+                          DmacDescriptor* descriptor);
+
+    //! Link the last descriptor back to the first to create a circular buffer
+    //! The channel must have at least one linked descriptor already queued.
+    //! Once called, the channel is marked as circular and descriptors will not be freed.
+    void linkToFront();
+
+    //! Suspend channel, read writeback, resume channel
+    void readWriteback(Samd21::Dma::Writeback& result);
+
+    //! Check if channel is busy
+    bool isBusy() const { return m_busy; }
+
+    //! Check if channel is in circular buffer mode
+    bool isCircular() const { return m_circular; }
+
+    //! Mark channel as idle (called from ISR on completion)
+    void markIdle();
+
+  private:
+    //! Start transaction on idle channel with pre-configured descriptor
+    void startTransaction(const Samd21::Dma::TriggerSource& trigger,
+                          const Samd21::Dma::TransactionType& action,
+                          const Samd21::Dma::Priority& priority,
+                          DmacDescriptor* desc);
+
+    //! Append descriptor to end of linked list on busy channel.
+    //! Returns true if the DMA was executing the tail node (write-back patched).
+    bool appendToChain(DmacDescriptor* desc);
+
+    U8 m_channel_id;
+    bool m_busy;
+    bool m_circular;
+};
+
+}  // namespace Samd21
+
+#endif

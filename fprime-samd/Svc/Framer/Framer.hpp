@@ -9,6 +9,7 @@
 
 #include "Fw/Com/ComBuffer.hpp"
 #include "fprime-samd/Svc/Framer/FramerComponentAc.hpp"
+#include "fprime-samd/config/FramerConfig.hpp"
 
 namespace Samd21 {
 
@@ -24,8 +25,6 @@ class Framer final : public FramerComponentBase {
 
     //! Destroy Framer object
     ~Framer();
-
-    void sendFatalPacket(Fw::ComBuffer& data);
 
   private:
     // ----------------------------------------------------------------------
@@ -46,9 +45,39 @@ class Framer final : public FramerComponentBase {
     void drvConnected_handler(FwIndexType portNum  //!< The port number
                               ) override;
 
-  private:
+    //! Handler implementation for drvReturnIn
+    //!
+    //! Receive buffer back from driver
+    void drvReturnIn_handler(FwIndexType portNum,  //!< The port number
+                             Fw::Buffer& fwBuffer,
+                             const Drv::ByteStreamStatus& status) override;
+
+    //! Handler implementation for schedIn
+    //!
+    //! Input port that flushes the active Tx buffer to the driver
+    void schedIn_handler(FwIndexType portNum,  //!< The port number
+                         U32 context           //!< The call order
+                         ) override;
+
+    //! Flush the active buffer to the driver
+    void flushActiveBuffer();
+
+    //! Double-buffer state
+    enum BufferState {
+        IDLE,         //!< Buffer is idle and available for accumulation
+        ACTIVE,       //!< Buffer is being filled with ComBuffers
+        TRANSMITTING  //!< Buffer has been sent to driver
+    };
+
+    struct TxBuffer {
+        U8 data[FramerConfig::FRAMER_TX_BUFFER_SIZE];  //!< Buffer storage
+        FwSizeType size;                               //!< Current size of data in buffer
+        BufferState state;                             //!< Current state of buffer
+    };
+
     bool m_driverConnected;
-    Fw::ComBuffer m_packet;
+    TxBuffer m_buffers[2];          //!< Double buffer
+    FwIndexType m_activeBufferIdx;  //!< Index of currently active buffer
 };
 
 }  // namespace Samd21

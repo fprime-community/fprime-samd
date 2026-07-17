@@ -55,10 +55,10 @@ class RtcDriver final : public RtcDriverComponentBase {
     //! Enable the RTC interrupt and peripheral
     void enable();
 
-    //! Blocking call that will wait for the next interrupt.
-    //!
-    //! If the next interrupt comes from the RTC, emit a signal on the cycle output port
-    void cycle();
+    //! Handler for input port activeIn
+    void activeIn_handler(FwIndexType portNum,  //!< The port number
+                          U32 context           //!< The call order
+                          ) override;
 
     //! Construct RtcDriver object
     RtcDriver(const char* const compName  //!< The component name

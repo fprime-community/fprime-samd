@@ -1,4 +1,4 @@
-restrict_platforms(ArduinoFw)
+restrict_platforms(Samd21)
 add_custom_target("${FPRIME_CURRENT_MODULE}")
 
 register_os_implementation("Console" Samd21)
