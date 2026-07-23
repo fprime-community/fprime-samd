@@ -232,25 +232,20 @@ void UsartDriverTester::testSendCompletion() {
 }
 
 void UsartDriverTester::testSendChannelError() {
-    // REQUIREMENT("SAMD21-UART-005: TX bus error flushes queue with OTHER_ERROR");
+    // TX DMA bus errors are unrecoverable (invalid buffer pointer) and assert immediately
     this->resetTest();
     this->configureStandard();
     this->clearHistory();
 
-    // Queue two TX buffers
+    // Queue a TX buffer
     Fw::Buffer b0(this->m_tx_data, 8);
-    Fw::Buffer b1(this->m_tx_data + 8, 8);
     this->sendBuffer(b0);
-    this->sendBuffer(b1);
 
-    // A bus error on the TX channel arrives
-    this->injectDmaReply(UsartDriver_DmaChannel::TX, Samd21::Dma::Status::BUS_ERROR, 8);
-    this->invoke_to_activeIn(0, 0);
-
-    // All pending TX buffers are returned with OTHER_ERROR
-    ASSERT_from_sendReturnOut_SIZE(2);
-    ASSERT_EQ(this->fromPortHistory_sendReturnOut->at(0).status, Drv::ByteStreamStatus::OTHER_ERROR);
-    ASSERT_EQ(this->fromPortHistory_sendReturnOut->at(1).status, Drv::ByteStreamStatus::OTHER_ERROR);
+    // A DMA bus error indicates the driver handed the DMA an invalid buffer
+    // pointer. This is an unrecoverable programming error, so the ISR asserts
+    // immediately rather than deferring the failure to the signal queue.
+    ASSERT_DEATH_IF_SUPPORTED(this->injectDmaReply(UsartDriver_DmaChannel::TX, Samd21::Dma::Status::BUS_ERROR, 8),
+                              "Assert:");
 }
 
 // ----------------------------------------------------------------------
@@ -390,7 +385,7 @@ void UsartDriverTester::testRxBufferFlip() {
 }
 
 void UsartDriverTester::testRecvReturnIn() {
-    // REQUIREMENT("recvReturnIn is a no-op; buffers stay in the DMA chain");
+    // recvReturnIn is a no-op; buffers stay in the DMA chain
     this->resetTest();
     this->configureStandard();
     this->clearHistory();
@@ -408,7 +403,7 @@ void UsartDriverTester::testRecvReturnIn() {
 // ----------------------------------------------------------------------
 
 void UsartDriverTester::testSchedInUnconfigured() {
-    // REQUIREMENT("schedIn before configure() is a safe no-op");
+    // schedIn before configure() is a safe no-op
     this->resetTest();
 
     this->invoke_to_schedIn(0, 0);
@@ -419,7 +414,7 @@ void UsartDriverTester::testSchedInUnconfigured() {
 }
 
 void UsartDriverTester::testActiveInUnconfigured() {
-    // REQUIREMENT("activeIn before configure() is a safe no-op");
+    // activeIn before configure() is a safe no-op
     this->resetTest();
 
     this->invoke_to_activeIn(0, 0);
@@ -433,7 +428,7 @@ void UsartDriverTester::testActiveInUnconfigured() {
 // ----------------------------------------------------------------------
 
 void UsartDriverTester::testTriggerSourceMapping() {
-    // REQUIREMENT("SAMD21-UART-001: correct DMA trigger per SERCOM");
+    // REQUIREMENT("SAMD21-UART-002: correct DMA trigger per SERCOM for TX and RX");
     // Configure a fresh component on each SERCOM and confirm both the RX trigger
     // (requested during configure()) and the TX trigger (requested during a
     // send()) match the SERCOM.
@@ -480,20 +475,16 @@ void UsartDriverTester::testTriggerSourceMapping() {
 }
 
 void UsartDriverTester::testRxChannelError() {
-    // REQUIREMENT("SAMD21-UART-003: RX DMA bus error is enqueued for handling");
+    // RX DMA bus errors are unrecoverable (invalid buffer pointer) and assert immediately
     this->resetTest();
     this->configureStandard();
     this->clearHistory();
 
-    // A bus error on the RX channel is captured in the ISR and enqueued as an
-    // RX_CHANNEL_ERROR signal. Draining the queue in activeIn asserts, so we
-    // only verify the ISR path accepts the reply without faulting and queues
-    // nothing downstream on its own.
-    this->injectDmaReply(UsartDriver_DmaChannel::RX, Samd21::Dma::Status::BUS_ERROR, 4);
-
-    // The error is deferred to the queue; no recv/DMA traffic yet.
-    ASSERT_from_recv_SIZE(0);
-    ASSERT_from_dmaQueueOut_SIZE(0);
+    // A DMA bus error on the RX channel means the DMA was pointed at an invalid
+    // buffer address -- an unrecoverable programming error. The ISR asserts
+    // immediately rather than attempting to recover the RX channel.
+    ASSERT_DEATH_IF_SUPPORTED(this->injectDmaReply(UsartDriver_DmaChannel::RX, Samd21::Dma::Status::BUS_ERROR, 4),
+                              "Assert:");
 }
 
 }  // namespace Samd21
