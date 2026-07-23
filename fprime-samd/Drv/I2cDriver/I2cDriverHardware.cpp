@@ -255,6 +255,7 @@ void I2cHal::configure(SercomKind sercom,
         default:
             FW_ASSERT(false, static_cast<FwAssertArgType>(clock_stretch_mode));
     }
+
     if (frequency == I2cDriver::Frequency::HIGH_SPEED_3400KHZ) {
         // Hs mode mandates SCL stretch only after ACK regardless of request.
         ctrla.bit.SCLSM = 1;
