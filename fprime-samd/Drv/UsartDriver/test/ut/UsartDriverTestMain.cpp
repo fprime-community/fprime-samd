@@ -53,7 +53,7 @@ TEST(Send, Completion) {
 }
 
 TEST(Send, ChannelError) {
-    COMMENT("TX bus error flushes all pending buffers with OTHER_ERROR");
+    COMMENT("TX DMA bus error asserts (invalid buffer pointer handed to DMA)");
     Samd21::UsartDriverTester tester;
     tester.testSendChannelError();
 }
@@ -109,7 +109,7 @@ TEST(Rx, RecvReturnIn) {
 }
 
 TEST(Rx, ChannelError) {
-    COMMENT("an RX DMA bus error is captured in the ISR without faulting");
+    COMMENT("RX DMA bus error asserts (invalid buffer pointer handed to DMA)");
     Samd21::UsartDriverTester tester;
     tester.testRxChannelError();
 }
