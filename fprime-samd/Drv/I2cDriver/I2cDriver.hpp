@@ -9,6 +9,7 @@
 
 #include "fprime-samd/Drv/I2cDriver/I2cDriverComponentAc.hpp"
 #include "fprime-samd/Drv/Types/SercomKindEnumAc.hpp"
+#include "fprime-samd/Drv/Types/ThinBuffer.hpp"
 
 namespace Samd21 {
 
@@ -128,9 +129,12 @@ class I2cDriver final : public I2cDriverComponentBase {
     // Handler implementations for typed input ports
     // ----------------------------------------------------------------------
 
-    // Allow the isr handler call into a private function in this class
-    friend void Samd21::i2cDriverIsrHandler(SercomKind, void*);
-    void isrHandler();
+    //! Handler implementation for dmaReplyIn
+    //!
+    //! A signal from the DMAC that a request has finished.
+    //! This signal comes inside an ISR!
+    void dmaReplyIn_handler(FwIndexType portNum,  //!< The port number
+                            const Samd21::Dma::Reply& reply) override;
 
     //! Handler implementation for read
     //!
@@ -166,6 +170,35 @@ class I2cDriver final : public I2cDriverComponentBase {
 
     //! Tracks whether configure() has been called or not
     bool m_configured;
+
+    //! Current operation executing on the I2C/DMA
+    enum class State : U8 {
+        IDLE,
+        READ,
+        WRITE,
+        WRITE_READ_WRITING,
+        WRITE_READ_READING,
+    };
+
+    //! Current peripheral state/executing transaction
+    State m_state;
+
+    //! Current/pending read buffer
+    Samd21::ThinBuffer m_read;
+
+    //! The address that is pending during a writeRead operation
+    U32 m_pending_read_address;
+
+    //! Current/finished write buffer
+    Samd21::ThinBuffer m_write;
+
+    // ----------------------------------------------------------------------
+    // Helper functions
+    // ----------------------------------------------------------------------
+
+    // Allow the isr handler call into a private function in this class
+    friend void Samd21::i2cDriverIsrHandler(SercomKind, void*);
+    void isrHandler();
 };
 
 }  // namespace Samd21

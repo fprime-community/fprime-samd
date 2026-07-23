@@ -5,8 +5,13 @@
 // ======================================================================
 
 #include "fprime-samd/Drv/I2cDriver/I2cDriver.hpp"
+#include <samd21/include/samd21g17a.h>
+#include "Drv/Types/SercomKindEnumAc.hpp"
+#include "Drv/Types/TriggerSourceEnumAc.hpp"
 #include "Fw/Types/Assert.hpp"
+#include "config/FwAssertArgTypeAliasAc.h"
 #include "fprime-samd/Drv/Types/SercomIsr.hpp"
+#include "fprime-samd/Drv/Types/ThinBuffer.hpp"
 #include "samd.h"
 
 namespace Samd21 {
@@ -125,12 +130,61 @@ static U8 calculateHsBaud(I2cDriver::Frequency frequency) {
     return static_cast<U8>(hsbaud);
 }
 
+static Samd21::Dma::TriggerSource getReadTriggerSource(SercomKind sercom) {
+    switch (sercom) {
+        case SercomKind::SERCOM_0:
+            return Samd21::Dma::TriggerSource::SERCOM0_RX;
+        case SercomKind::SERCOM_1:
+            return Samd21::Dma::TriggerSource::SERCOM1_RX;
+        case SercomKind::SERCOM_2:
+            return Samd21::Dma::TriggerSource::SERCOM2_RX;
+        case SercomKind::SERCOM_3:
+            return Samd21::Dma::TriggerSource::SERCOM3_RX;
+        case SercomKind::SERCOM_4:
+            return Samd21::Dma::TriggerSource::SERCOM4_RX;
+        case SercomKind::SERCOM_5:
+            return Samd21::Dma::TriggerSource::SERCOM5_RX;
+        default:
+            FW_ASSERT(false, sercom);
+    }
+}
+
+static ::IRQn_Type getSercomIrq(SercomKind sercom) {
+    switch (sercom) {
+        case SercomKind::SERCOM_0:
+            return IRQn_Type::SERCOM0_IRQn;
+        case SercomKind::SERCOM_1:
+            return IRQn_Type::SERCOM1_IRQn;
+        case SercomKind::SERCOM_2:
+            return IRQn_Type::SERCOM2_IRQn;
+        case SercomKind::SERCOM_3:
+            return IRQn_Type::SERCOM3_IRQn;
+#ifdef SERCOM4
+        case SercomKind::SERCOM_4:
+            return IRQn_Type::SERCOM4_IRQn;
+#endif
+#ifdef SERCOM5
+        case SercomKind::SERCOM_5:
+            return IRQn_Type::SERCOM5_IRQn;
+#endif
+        default:
+            FW_ASSERT(false, sercom.e);
+            return IRQn_Type::SERCOM0_IRQn;
+    }
+}
+
 // ----------------------------------------------------------------------
 // Component construction and destruction
 // ----------------------------------------------------------------------
 
 I2cDriver ::I2cDriver(const char* const compName)
-    : I2cDriverComponentBase(compName), m_sercom(SercomKind::SERCOM_0), m_configured(false) {}
+    : I2cDriverComponentBase(compName),
+      m_sercom(SercomKind::SERCOM_0),
+      m_configured(false),
+      m_state(I2cDriver::State::IDLE),
+      m_read(),
+      m_pending_read_address(0),
+      m_write() {}
 
 I2cDriver ::~I2cDriver() {}
 
@@ -145,9 +199,10 @@ void I2cDriver::configure(SercomKind sercom,
                           PinUsage pin_usage,
                           RunInStandby run_in_standby) {
     FW_ASSERT(!this->m_configured, sercom.e);
+    FW_ASSERT(this->m_state == State::IDLE, static_cast<FwAssertArgType>(this->m_state));
 
     // Store configuration
-    m_sercom = sercom;
+    this->m_sercom = sercom;
 
     // Register with the ISR callback table
     Samd21::SercomIsr::registerHandler(sercom, i2cDriverIsrHandler, this);
@@ -350,6 +405,15 @@ void I2cDriver::configure(SercomKind sercom,
         sercom_hw->I2CM.BAUD.reg = SERCOM_I2CM_BAUD_BAUD(calculateBaud(frequency));
     }
 
+    // Enable only the ERROR interrupt for this sercom device
+    sercom_hw->I2CM.INTENSET.reg = SERCOM_I2CM_INTENSET_ERROR;
+
+    // Enable I2C interrupt at lowest priority
+    static constexpr U32 LOWEST_PRIORITY = (1U << __NVIC_PRIO_BITS) - 1;
+    auto irqn = getSercomIrq(sercom);
+    NVIC_EnableIRQ(irqn);
+    NVIC_SetPriority(irqn, LOWEST_PRIORITY);
+
     // Enable the peripheral.
     sercom_hw->I2CM.CTRLA.reg |= SERCOM_I2CM_CTRLA_ENABLE;
     waitForI2cSync(sercom_hw, SERCOM_I2CM_SYNCBUSY_ENABLE);
@@ -370,16 +434,89 @@ void i2cDriverIsrHandler(SercomKind sercom, void* i2cDriverRaw) {
     i2cDriver->isrHandler();
 }
 
+void I2cDriver ::isrHandler() {
+    auto sercom_hw = getSercomHw(this->m_sercom);
+
+    // Check the source of the SERCOM ISR
+    // _Only_ the error interrupt should have triggered us...
+    FW_ASSERT(sercom_hw->I2CM.INTFLAG.reg == SERCOM_I2CM_INTENSET_ERROR,
+              static_cast<FwAssertArgType>(sercom_hw->I2CM.INTFLAG.reg));
+
+    // Clear the interrupt flag
+
+    switch (this->m_state) {
+        case State::IDLE:
+            // We got an interrupt when we were not expecting to
+            FW_ASSERT(false, this->m_sercom);
+            break;
+        case State::READ:
+
+            break;
+        case State::WRITE:
+            break;
+        case State::WRITE_READ_WRITING:
+            break;
+        case State::WRITE_READ_READING:
+            break;
+        default:
+            FW_ASSERT(false, this->m_sercom, static_cast<FwAssertArgType>(this->m_state));
+    }
+}
+
 // ----------------------------------------------------------------------
 // Handler implementations for typed input ports
 // ----------------------------------------------------------------------
 
-void I2cDriver ::read_handler(FwIndexType portNum, U32 addr, Fw::Buffer& buffer) {
+void I2cDriver ::dmaReplyIn_handler(FwIndexType portNum, const Samd21::Dma::Reply& reply) {
     // TODO
 }
 
+void I2cDriver ::read_handler(FwIndexType portNum, U32 addr, Fw::Buffer& buffer) {
+    if (this->m_state != State::IDLE) {
+        // TODO(tumbar) Technically this is a programming error... maybe we should assert?
+        this->readComplete_out(portNum, buffer, Drv::I2cStatus::I2C_OTHER_ERR);
+        return;
+    }
+
+    this->m_state = State::READ;
+    this->m_read = ThinBuffer(buffer);
+
+    Sercom* sercom_hw = getSercomHw(this->m_sercom);
+    FW_ASSERT(sercom_hw != nullptr, this->m_sercom);
+
+    // I2C DMA is limited to 255 bytes
+    FW_ASSERT(buffer.getSize() <= 255, buffer.getSize());
+
+    // TODO(tumbar) We currently only support 7-bit address mode
+    FW_ASSERT((addr & ~0x7F) == 0, addr);
+
+    // Send ACK to data coming back from the peripheral
+    sercom_hw->I2CM.CTRLB.bit.ACKACT = 0;
+    waitForI2cSync(sercom_hw, SERCOM_I2CM_SYNCBUSY_SYSOP);
+
+    // Queue up a DMA operation to read the data from the device
+    this->dmaTransactionOut_out(0, getReadTriggerSource(this->m_sercom), Samd21::Dma::TransactionType::BEAT,
+                                Samd21::Dma::Priority::PRIORITY_1, reinterpret_cast<U32>(&sercom_hw->I2CM.DATA),
+                                reinterpret_cast<U32>(buffer.getData()), buffer.getSize(), Samd21::Dma::BeatSize::BYTE,
+                                /* incrementSource */ false, /* incrementDestination */ true,
+                                Samd21::Dma::AddressIncrementStepSize::SIZE_1, Samd21::Dma::StepSelection::DESTINATION);
+
+    SERCOM_I2CM_ADDR_Type addrReg = {};
+    addrReg.bit.HS = 0;     // We do not currently support high speed mode
+    addrReg.bit.LENEN = 1;  // Enable length mode to generate DMA requests
+    addrReg.bit.LEN = static_cast<U8>(buffer.getSize());
+    addrReg.bit.ADDR = (addr << 1) | 0x1;  // send a read request
+
+    // Kick off the I2C job by writing the address
+    sercom_hw->I2CM.ADDR.reg = addrReg.reg;
+}
+
 void I2cDriver ::write_handler(FwIndexType portNum, U32 addr, Fw::Buffer& buffer) {
-    // TODO
+    Sercom* sercom_hw = getSercomHw(this->m_sercom);
+    FW_ASSERT(sercom_hw != nullptr, this->m_sercom);
+
+    // Send NACK if anyone tries to send data to us
+    sercom_hw->I2CM.CTRLB.bit.ACKACT = 1;
 }
 
 void I2cDriver ::writeRead_handler(FwIndexType portNum, U32 addr, Fw::Buffer& writeBuffer, Fw::Buffer& readBuffer) {

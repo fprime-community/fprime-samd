@@ -39,5 +39,12 @@ module Samd21 {
         @ Enables telemetry channels handling
         import Fw.Channel
 
+        @ Port to send a DMA transaction to the DMA driver
+        output port dmaTransactionOut: Dma.Transaction
+
+        @ A signal from the DMAC that a request has finished.
+        @ This signal comes inside an ISR!
+        sync input port dmaReplyIn: Dma.TransactionReply
+
     }
 }
