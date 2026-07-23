@@ -12,6 +12,8 @@
 
 namespace Samd21 {
 
+void i2cDriverIsrHandler(SercomKind, void*);
+
 class I2cDriver final : public I2cDriverComponentBase {
   public:
     // ----------------------------------------------------------------------
@@ -125,6 +127,10 @@ class I2cDriver final : public I2cDriverComponentBase {
     // ----------------------------------------------------------------------
     // Handler implementations for typed input ports
     // ----------------------------------------------------------------------
+
+    // Allow the isr handler call into a private function in this class
+    friend void Samd21::i2cDriverIsrHandler(SercomKind, void*);
+    void isrHandler();
 
     //! Handler implementation for read
     //!

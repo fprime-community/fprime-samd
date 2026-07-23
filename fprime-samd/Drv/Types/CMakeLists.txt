@@ -16,12 +16,21 @@ if (FPRIME_PLATFORM STREQUAL "Samd21")
     set(TYPES_HARDWARE_SOURCE
         "${CMAKE_CURRENT_LIST_DIR}/PinMux.cpp"
         "${CMAKE_CURRENT_LIST_DIR}/CriticalSection.cpp"
+        "${CMAKE_CURRENT_LIST_DIR}/SercomIsr.cpp"
     )
+
+    if (SAMD21_LTO)
+        set_source_files_properties(
+            "${CMAKE_CURRENT_LIST_DIR}/SercomIsr.cpp"
+            PROPERTIES COMPILE_FLAGS "-fno-lto"
+        )
+    endif()
 else()
     # Linux/test build - use stub implementations
     set(TYPES_HARDWARE_SOURCE
         "${CMAKE_CURRENT_LIST_DIR}/PinMuxStub.cpp"
         "${CMAKE_CURRENT_LIST_DIR}/CriticalSectionStub.cpp"
+        "${CMAKE_CURRENT_LIST_DIR}/SercomIsrStub.cpp"
     )
 endif()
 
