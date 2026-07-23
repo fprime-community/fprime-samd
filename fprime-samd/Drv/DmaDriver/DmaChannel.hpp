@@ -47,6 +47,13 @@ class DmaChannel final {
     //! Suspend channel, read writeback, resume channel
     void readWriteback(Samd21::Dma::Writeback& result);
 
+    //! Abort the active transaction and drop the queued chain by disabling the
+    //! channel. Reports the beats remaining on the transaction that was executing
+    //! (from the write-back) via \p remainingBeats, then marks the channel idle.
+    //! Disabling raises no DMAC interrupt, so the caller must synthesize the
+    //! completion reply itself. Asserts if the channel is idle or circular.
+    void abort(U16& remainingBeats);
+
     //! Check if channel is busy
     bool isBusy() const { return m_busy; }
 

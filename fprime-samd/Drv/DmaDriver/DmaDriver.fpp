@@ -13,7 +13,8 @@ module Samd21 {
         @ back to the first. This allows this channel to loop to the first transaction continuously.
         sync input port linkToFrontIn: [Dma.CHANNEL_NUM] Fw.Signal
 
-        @ Abort all jobs
+        @ Abort all jobs on a single DMA channel.
+        @ There will be no replies on transactionIsrOut for any uncompleted transactions
         sync input port abortTransactionIn: [Dma.CHANNEL_NUM] Fw.Signal
 
         @ Read the writeback register on the active DMA transfer for this channel
