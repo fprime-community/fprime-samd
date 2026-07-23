@@ -505,14 +505,18 @@ void I2cDriver ::isrHandler() {
             auto buf = this->m_read.getBuffer();
             this->m_state = State::IDLE;
             this->dmaTransactionAbortOut_out(0);
-            this->readComplete_out(this->m_portNum, buf, Drv::I2cStatus::I2C_READ_ERR);
+            if (this->isConnected_readComplete_OutputPort(0)) {
+                this->readComplete_out(this->m_portNum, buf, Drv::I2cStatus::I2C_READ_ERR);
+            }
             break;
         }
         case State::WRITE: {
             auto buf = this->m_write.getBuffer();
             this->m_state = State::IDLE;
             this->dmaTransactionAbortOut_out(0);
-            this->writeComplete_out(this->m_portNum, buf, Drv::I2cStatus::I2C_WRITE_ERR);
+            if (this->isConnected_writeComplete_OutputPort(0)) {
+                this->writeComplete_out(this->m_portNum, buf, Drv::I2cStatus::I2C_WRITE_ERR);
+            }
             break;
         }
         case State::WRITE_READ_WRITING: {
@@ -520,7 +524,9 @@ void I2cDriver ::isrHandler() {
             auto r_buf = this->m_read.getBuffer();
             this->m_state = State::IDLE;
             this->dmaTransactionAbortOut_out(0);
-            this->writeReadComplete_out(this->m_portNum, w_buf, r_buf, Drv::I2cStatus::I2C_WRITE_ERR);
+            if (this->isConnected_writeReadComplete_OutputPort(0)) {
+                this->writeReadComplete_out(this->m_portNum, w_buf, r_buf, Drv::I2cStatus::I2C_WRITE_ERR);
+            }
             break;
         }
         case State::WRITE_READ_READING: {
@@ -528,7 +534,9 @@ void I2cDriver ::isrHandler() {
             auto r_buf = this->m_read.getBuffer();
             this->m_state = State::IDLE;
             this->dmaTransactionAbortOut_out(0);
-            this->writeReadComplete_out(this->m_portNum, w_buf, r_buf, Drv::I2cStatus::I2C_READ_ERR);
+            if (this->isConnected_writeReadComplete_OutputPort(0)) {
+                this->writeReadComplete_out(this->m_portNum, w_buf, r_buf, Drv::I2cStatus::I2C_READ_ERR);
+            }
             break;
         }
         default:
@@ -550,14 +558,18 @@ void I2cDriver ::dmaReplyIn_handler(FwIndexType portNum, const Samd21::Dma::Repl
             FW_ASSERT(reply.get_status() == Samd21::Dma::Status::OK);
             auto buf = this->m_read.getBuffer();
             this->m_state = State::IDLE;
-            this->readComplete_out(this->m_portNum, buf, Drv::I2cStatus::I2C_OK);
+            if (this->isConnected_readComplete_OutputPort(0)) {
+                this->readComplete_out(this->m_portNum, buf, Drv::I2cStatus::I2C_OK);
+            }
             break;
         }
         case State::WRITE: {
             FW_ASSERT(reply.get_status() == Samd21::Dma::Status::OK);
             auto buf = this->m_write.getBuffer();
             this->m_state = State::IDLE;
-            this->writeComplete_out(this->m_portNum, buf, Drv::I2cStatus::I2C_OK);
+            if (this->isConnected_writeComplete_OutputPort(0)) {
+                this->writeComplete_out(this->m_portNum, buf, Drv::I2cStatus::I2C_OK);
+            }
             break;
         }
         case State::WRITE_READ_WRITING: {
@@ -577,7 +589,9 @@ void I2cDriver ::dmaReplyIn_handler(FwIndexType portNum, const Samd21::Dma::Repl
             auto r_buf = this->m_read.getBuffer();
             this->m_state = State::IDLE;
 
-            this->writeReadComplete_out(this->m_portNum, w_buf, r_buf, Drv::I2cStatus::I2C_OK);
+            if (this->isConnected_writeReadComplete_OutputPort(0)) {
+                this->writeReadComplete_out(this->m_portNum, w_buf, r_buf, Drv::I2cStatus::I2C_OK);
+            }
             break;
         }
         default:
@@ -587,8 +601,9 @@ void I2cDriver ::dmaReplyIn_handler(FwIndexType portNum, const Samd21::Dma::Repl
 
 void I2cDriver ::read_handler(FwIndexType portNum, U32 addr, Fw::Buffer& buffer) {
     if (this->m_state != State::IDLE) {
-        // TODO(tumbar) Technically this is a programming error... maybe we should assert?
-        this->readComplete_out(portNum, buffer, Drv::I2cStatus::I2C_OTHER_ERR);
+        if (this->isConnected_readComplete_OutputPort(portNum)) {
+            this->readComplete_out(portNum, buffer, Drv::I2cStatus::I2C_OTHER_ERR);
+        }
         return;
     }
 
@@ -662,8 +677,9 @@ void I2cDriver::writeImpl(U32 addr, Fw::Buffer& buffer) {
 
 void I2cDriver ::write_handler(FwIndexType portNum, U32 addr, Fw::Buffer& buffer) {
     if (this->m_state != State::IDLE) {
-        // TODO(tumbar) Technically this is a programming error... maybe we should assert?
-        this->readComplete_out(portNum, buffer, Drv::I2cStatus::I2C_OTHER_ERR);
+        if (this->isConnected_writeComplete_OutputPort(portNum)) {
+            this->writeComplete_out(portNum, buffer, Drv::I2cStatus::I2C_OTHER_ERR);
+        }
         return;
     }
 
@@ -676,8 +692,9 @@ void I2cDriver ::write_handler(FwIndexType portNum, U32 addr, Fw::Buffer& buffer
 
 void I2cDriver ::writeRead_handler(FwIndexType portNum, U32 addr, Fw::Buffer& writeBuffer, Fw::Buffer& readBuffer) {
     if (this->m_state != State::IDLE) {
-        // TODO(tumbar) Technically this is a programming error... maybe we should assert?
-        this->writeReadComplete_out(portNum, writeBuffer, readBuffer, Drv::I2cStatus::I2C_OTHER_ERR);
+        if (this->isConnected_writeReadComplete_OutputPort(portNum)) {
+            this->writeReadComplete_out(portNum, writeBuffer, readBuffer, Drv::I2cStatus::I2C_OTHER_ERR);
+        }
         return;
     }
 
