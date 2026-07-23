@@ -10,14 +10,14 @@ The driver uses a dual-buffer circular receive strategy with DMA channels for bo
 
 ## 2. Requirements
 
-| Name            | Description                                                                                                                                                                                                                                                                                   | Validation    |
-| --------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------- |
-| SAMD21-UART-001 | The UsartDriver shall configure SERCOM peripherals for USART operation with configurable baud rates (9600-921600), data formats (5-9 bits), parity (none/even/odd), stop bits (1 or 2), bit ordering (MSB/LSB-first), communication modes (async/sync), and clock sources (internal/external) | Hardware Test |
-| SAMD21-UART-002 | The UsartDriver shall use DMA for both transmission and reception                                                                                                                                                                                                                             | Hardware Test |
-| SAMD21-UART-003 | The UsartDriver shall implement double-buffering for continuous RX                                                                                                                                                                                                                            | Hardware Test |
-| SAMD21-UART-004 | The UsartDriver shall poll the in-progress RX transfer on each rate group tick to extract partial RX frames                                                                                                                                                                                   | Hardware Test |
-| SAMD21-UART-005 | The UsartDriver shall queue TX requests with asynchronous completion                                                                                                                                                                                                                          | Hardware Test |
-| SAMD21-UART-006 | The UsartDriver shall provide synchronous blocking transmission for early boot diagnostics                                                                                                                                                                                                    | Hardware Test |
+| Name            | Description                                                                                                                                                                                                                                                                                   | Validation                |
+| --------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------- |
+| SAMD21-UART-001 | The UsartDriver shall configure SERCOM peripherals for USART operation with configurable baud rates (9600-921600), data formats (5-9 bits), parity (none/even/odd), stop bits (1 or 2), bit ordering (MSB/LSB-first), communication modes (async/sync), and clock sources (internal/external) | Unit Test, Hardware Test |
+| SAMD21-UART-002 | The UsartDriver shall use DMA for both transmission and reception                                                                                                                                                                                                                             | Unit Test, Hardware Test |
+| SAMD21-UART-003 | The UsartDriver shall implement double-buffering for continuous RX                                                                                                                                                                                                                            | Unit Test, Hardware Test |
+| SAMD21-UART-004 | The UsartDriver shall poll the in-progress RX transfer on each rate group tick to extract partial RX frames                                                                                                                                                                                   | Unit Test, Hardware Test |
+| SAMD21-UART-005 | The UsartDriver shall queue TX requests with asynchronous completion                                                                                                                                                                                                                          | Unit Test, Hardware Test |
+| SAMD21-UART-006 | The UsartDriver shall provide synchronous blocking transmission for early boot diagnostics                                                                                                                                                                                                    | Unit Test, Hardware Test |
 
 ## 3. Design
 
@@ -202,12 +202,12 @@ The driver uses an internal signal queue to decouple ISR context from port invoc
 
 **Signal Types:**
 - `TX_BUFFER_OK`: TX DMA completed successfully
-- `TX_CHANNEL_ERROR`: TX DMA bus error (clears entire TX queue)
 - `RX_BUFFER_PARTIAL`: A `schedIn` poll found new bytes; drain them from the active buffer in place (advances `m_active_processed`, leaves the active buffer in the DMA chain)
 - `RX_BUFFER_DONE`: RX buffer filled; drain the buffer remainder, then flip the active buffer and reset `m_active_processed`
-- `RX_CHANNEL_ERROR`: RX DMA bus error (currently unhandled, asserts)
 
 Both RX signals carry the count of newly available bytes in the `rx_bytes` field, computed at signal-generation time; `activeIn_handler()` uses it directly to size the forwarded buffer view.
+
+DMA bus errors are **not** carried through the signal queue. A bus error is raised by the DMAC only when the channel is handed an invalid source/destination address — a programming error that cannot occur with correctly configured descriptors. The TX/RX DMA reply ISRs therefore assert immediately (`FW_ASSERT(false, m_sercom)`) on a `BUS_ERROR` status rather than attempting to recover the channel.
 
 ## 4. Usage
 
@@ -234,14 +234,8 @@ enum UsartDriverConfig {
 
 ### 4.2 Error Handling
 
-**TX Channel Errors:**
-When a DMA bus error occurs on the TX channel, the driver:
-1. Dequeues all pending TX buffers from the TX queue
-2. Returns each buffer to the sender via `sendReturnOut_out()` with status `OTHER_ERROR`
-3. This allows the sender to retry transmission after the DMA channel recovers
-
-**RX Channel Errors:**
-RX DMA bus errors currently trigger an assertion (unhandled error condition). Future implementations may re-queue the RX buffer to DMA or reset the RX DMA channel.
+**DMA Bus Errors (TX and RX):**
+A DMA `BUS_ERROR` is only raised when the DMAC is given an invalid source or destination address. For this driver the descriptors are built from statically allocated buffers and the SERCOM `DATA` register, so a bus error indicates a programming error rather than a recoverable runtime condition. Both the TX and RX DMA reply ISRs therefore assert immediately (`FW_ASSERT(false, m_sercom)`) when a `BUS_ERROR` status is received. There is no attempt to flush the TX queue or reset the RX channel — the failure is treated as fatal.
 
 ### 4.3 Initialization
 

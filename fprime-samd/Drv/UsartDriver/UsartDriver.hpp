@@ -218,11 +218,8 @@ class UsartDriver final : public UsartDriverComponentBase {
     //! Signals sent to the internal queue for processing during schedIn
     enum class SignalKind : U8 {
         TX_BUFFER_OK,       //!< A buffer has been TXed over the DMA successfully
-        TX_CHANNEL_ERROR,   //!< An error occurred on the TX DMA channel. Clear all the TX buffers off the queue to try
-                            //!< again
         RX_BUFFER_PARTIAL,  //!< An RX buffer has been partially filled and is ready for processing
         RX_BUFFER_DONE,     //!< An RX buffer has been filled and is ready for processing
-        RX_CHANNEL_ERROR,   //!< An error occurred on the RX DMA channel.
     };
 
     struct Signal {
