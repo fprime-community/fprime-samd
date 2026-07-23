@@ -206,17 +206,6 @@ void UsartDriver ::activeIn_handler(FwIndexType portNum, U32 context) {
                     thickBuffer = thinBuffer.getBuffer();
                     this->sendReturnOut_out(0, thickBuffer, Drv::ByteStreamStatus::OP_OK);
                     break;
-                case SignalKind::TX_CHANNEL_ERROR:
-                    // A tx channel error indicates the entire TX DMA channel needs to be restarted
-                    // We need to dump all the bending buffers on the queue
-                    while (!this->m_tx_queue.isEmpty()) {
-                        bufferStatus = this->m_tx_queue.dequeue(thinBuffer);
-                        FW_ASSERT(bufferStatus == Fw::Success::SUCCESS);
-                        thickBuffer = thinBuffer.getBuffer();
-                        this->sendReturnOut_out(0, thickBuffer, Drv::ByteStreamStatus::OTHER_ERROR);
-                    }
-
-                    break;
                 case SignalKind::RX_BUFFER_DONE:
                 case SignalKind::RX_BUFFER_PARTIAL: {
                     FW_ASSERT(signal.rx_bytes <= USART_RX_BUFFER_SIZE, this->m_sercom, signal.rx_bytes);
@@ -276,10 +265,6 @@ void UsartDriver ::activeIn_handler(FwIndexType portNum, U32 context) {
 
                     break;
                 }
-                case SignalKind::RX_CHANNEL_ERROR:
-                    // A bus error on the DMA occured, we have no way of handling this
-                    FW_ASSERT(false, this->m_sercom, signal.rx_bytes);
-                    break;
                 default:
                     FW_ASSERT(false, static_cast<FwAssertArgType>(signal.kind));
             }
@@ -350,11 +335,9 @@ void UsartDriver ::dmaReplyTxIsr(const Samd21::Dma::Reply& reply) {
         }
             FW_ASSERT(status == Fw::Success::SUCCESS, status);
             break;
-        case Dma::Status::BUS_ERROR: {
-            CriticalSection cs;
-            status = this->m_queue.enqueue(Signal(SignalKind::TX_CHANNEL_ERROR, 0));
-        }
-            FW_ASSERT(status == Fw::Success::SUCCESS, status);
+        case Dma::Status::BUS_ERROR:
+            // We tried to transmit from a buffer on an invalid address
+            FW_ASSERT(false, this->m_sercom);
             break;
         default:
             FW_ASSERT(false, static_cast<FwAssertArgType>(reply.get_status()));
@@ -385,12 +368,9 @@ void UsartDriver ::dmaReplyRxIsr(const Samd21::Dma::Reply& reply) {
             //              Maybe a better thing to do is to drop this buffer?
             FW_ASSERT(status == Fw::Success::SUCCESS, status);
             break;
-        case Dma::Status::BUS_ERROR: {
-            CriticalSection cs;
-            status = this->m_queue.enqueue(
-                Signal(SignalKind::RX_CHANNEL_ERROR, static_cast<U16>(reply.get_remainingBytes())));
-        }
-            FW_ASSERT(status == Fw::Success::SUCCESS, status);
+        case Dma::Status::BUS_ERROR:
+            // We tried to receive to a buffer on an invalid address
+            FW_ASSERT(false, this->m_sercom);
             break;
         default:
             FW_ASSERT(false, static_cast<FwAssertArgType>(reply.get_status()));
