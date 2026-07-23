@@ -149,6 +149,25 @@ static Samd21::Dma::TriggerSource getReadTriggerSource(SercomKind sercom) {
     }
 }
 
+static Samd21::Dma::TriggerSource getWriteTriggerSource(SercomKind sercom) {
+    switch (sercom) {
+        case SercomKind::SERCOM_0:
+            return Samd21::Dma::TriggerSource::SERCOM0_TX;
+        case SercomKind::SERCOM_1:
+            return Samd21::Dma::TriggerSource::SERCOM1_TX;
+        case SercomKind::SERCOM_2:
+            return Samd21::Dma::TriggerSource::SERCOM2_TX;
+        case SercomKind::SERCOM_3:
+            return Samd21::Dma::TriggerSource::SERCOM3_TX;
+        case SercomKind::SERCOM_4:
+            return Samd21::Dma::TriggerSource::SERCOM4_TX;
+        case SercomKind::SERCOM_5:
+            return Samd21::Dma::TriggerSource::SERCOM5_TX;
+        default:
+            FW_ASSERT(false, sercom);
+    }
+}
+
 static ::IRQn_Type getSercomIrq(SercomKind sercom) {
     switch (sercom) {
         case SercomKind::SERCOM_0:
@@ -182,6 +201,7 @@ I2cDriver ::I2cDriver(const char* const compName)
       m_sercom(SercomKind::SERCOM_0),
       m_configured(false),
       m_state(I2cDriver::State::IDLE),
+      m_portNum(),
       m_read(),
       m_pending_read_address(0),
       m_write() {}
@@ -442,22 +462,75 @@ void I2cDriver ::isrHandler() {
     FW_ASSERT(sercom_hw->I2CM.INTFLAG.reg == SERCOM_I2CM_INTENSET_ERROR,
               static_cast<FwAssertArgType>(sercom_hw->I2CM.INTFLAG.reg));
 
-    // Clear the interrupt flag
+    // Look up the error
+    if (sercom_hw->I2CM.STATUS.bit.BUSERR) {
+        this->log_WARNING_LO_I2cBusError(this->m_sercom, Samd21::I2cDriver_I2cHostError::BusError);
+        sercom_hw->I2CM.STATUS.bit.BUSERR = 1;  // ack the error
+    }
+
+    if (sercom_hw->I2CM.STATUS.bit.ARBLOST) {
+        this->log_WARNING_LO_I2cBusError(this->m_sercom, Samd21::I2cDriver_I2cHostError::ArbitrationLost);
+        sercom_hw->I2CM.STATUS.bit.ARBLOST = 1;  // ack the error
+    }
+
+    if (sercom_hw->I2CM.STATUS.bit.LOWTOUT) {
+        this->log_WARNING_LO_I2cBusError(this->m_sercom, Samd21::I2cDriver_I2cHostError::SclLowTimeout);
+        sercom_hw->I2CM.STATUS.bit.LOWTOUT = 1;  // ack the error
+    }
+
+    if (sercom_hw->I2CM.STATUS.bit.MEXTTOUT) {
+        this->log_WARNING_LO_I2cBusError(this->m_sercom, Samd21::I2cDriver_I2cHostError::MasterSclExtendTimeout);
+        sercom_hw->I2CM.STATUS.bit.MEXTTOUT = 1;  // ack the error
+    }
+
+    if (sercom_hw->I2CM.STATUS.bit.SEXTTOUT) {
+        this->log_WARNING_LO_I2cBusError(this->m_sercom, Samd21::I2cDriver_I2cHostError::SlaveSclExtendTimeout);
+        sercom_hw->I2CM.STATUS.bit.SEXTTOUT = 1;  // ack the error
+    }
+
+    if (sercom_hw->I2CM.STATUS.bit.LENERR) {
+        this->log_WARNING_LO_I2cBusError(this->m_sercom, Samd21::I2cDriver_I2cHostError::LengthError);
+        sercom_hw->I2CM.STATUS.bit.LENERR = 1;  // ack the error
+    }
+
+    // Acknowledge the error flag
+    sercom_hw->I2CM.INTFLAG.bit.ERROR = 1;
 
     switch (this->m_state) {
         case State::IDLE:
             // We got an interrupt when we were not expecting to
             FW_ASSERT(false, this->m_sercom);
             break;
-        case State::READ:
-
+        case State::READ: {
+            auto buf = this->m_read.getBuffer();
+            this->m_state = State::IDLE;
+            this->dmaTransactionAbortOut_out(0);
+            this->readComplete_out(this->m_portNum, buf, Drv::I2cStatus::I2C_READ_ERR);
             break;
-        case State::WRITE:
+        }
+        case State::WRITE: {
+            auto buf = this->m_write.getBuffer();
+            this->m_state = State::IDLE;
+            this->dmaTransactionAbortOut_out(0);
+            this->writeComplete_out(this->m_portNum, buf, Drv::I2cStatus::I2C_WRITE_ERR);
             break;
-        case State::WRITE_READ_WRITING:
+        }
+        case State::WRITE_READ_WRITING: {
+            auto w_buf = this->m_write.getBuffer();
+            auto r_buf = this->m_read.getBuffer();
+            this->m_state = State::IDLE;
+            this->dmaTransactionAbortOut_out(0);
+            this->writeReadComplete_out(this->m_portNum, w_buf, r_buf, Drv::I2cStatus::I2C_WRITE_ERR);
             break;
-        case State::WRITE_READ_READING:
+        }
+        case State::WRITE_READ_READING: {
+            auto w_buf = this->m_write.getBuffer();
+            auto r_buf = this->m_read.getBuffer();
+            this->m_state = State::IDLE;
+            this->dmaTransactionAbortOut_out(0);
+            this->writeReadComplete_out(this->m_portNum, w_buf, r_buf, Drv::I2cStatus::I2C_READ_ERR);
             break;
+        }
         default:
             FW_ASSERT(false, this->m_sercom, static_cast<FwAssertArgType>(this->m_state));
     }
@@ -468,7 +541,48 @@ void I2cDriver ::isrHandler() {
 // ----------------------------------------------------------------------
 
 void I2cDriver ::dmaReplyIn_handler(FwIndexType portNum, const Samd21::Dma::Reply& reply) {
-    // TODO
+    switch (this->m_state) {
+        case State::IDLE:
+            // We got a DMA response when we were not expecting it
+            FW_ASSERT(false, this->m_sercom);
+            break;
+        case State::READ: {
+            FW_ASSERT(reply.get_status() == Samd21::Dma::Status::OK);
+            auto buf = this->m_read.getBuffer();
+            this->m_state = State::IDLE;
+            this->readComplete_out(this->m_portNum, buf, Drv::I2cStatus::I2C_OK);
+            break;
+        }
+        case State::WRITE: {
+            FW_ASSERT(reply.get_status() == Samd21::Dma::Status::OK);
+            auto buf = this->m_write.getBuffer();
+            this->m_state = State::IDLE;
+            this->writeComplete_out(this->m_portNum, buf, Drv::I2cStatus::I2C_OK);
+            break;
+        }
+        case State::WRITE_READ_WRITING: {
+            FW_ASSERT(reply.get_status() == Samd21::Dma::Status::OK);
+
+            // The write of the write/read chain finished
+            // Proceed to read.
+            this->m_state = State::WRITE_READ_READING;
+
+            auto buf = this->m_read.getBuffer();
+            this->readImpl(this->m_pending_read_address, buf);
+            break;
+        }
+        case State::WRITE_READ_READING: {
+            FW_ASSERT(reply.get_status() == Samd21::Dma::Status::OK);
+            auto w_buf = this->m_write.getBuffer();
+            auto r_buf = this->m_read.getBuffer();
+            this->m_state = State::IDLE;
+
+            this->writeReadComplete_out(this->m_portNum, w_buf, r_buf, Drv::I2cStatus::I2C_OK);
+            break;
+        }
+        default:
+            FW_ASSERT(false, this->m_sercom, static_cast<FwAssertArgType>(this->m_state));
+    }
 }
 
 void I2cDriver ::read_handler(FwIndexType portNum, U32 addr, Fw::Buffer& buffer) {
@@ -480,7 +594,12 @@ void I2cDriver ::read_handler(FwIndexType portNum, U32 addr, Fw::Buffer& buffer)
 
     this->m_state = State::READ;
     this->m_read = ThinBuffer(buffer);
+    this->m_portNum = portNum;
 
+    this->readImpl(addr, buffer);
+}
+
+void I2cDriver::readImpl(U32 addr, Fw::Buffer& buffer) {
     Sercom* sercom_hw = getSercomHw(this->m_sercom);
     FW_ASSERT(sercom_hw != nullptr, this->m_sercom);
 
@@ -492,7 +611,6 @@ void I2cDriver ::read_handler(FwIndexType portNum, U32 addr, Fw::Buffer& buffer)
 
     // Send ACK to data coming back from the peripheral
     sercom_hw->I2CM.CTRLB.bit.ACKACT = 0;
-    waitForI2cSync(sercom_hw, SERCOM_I2CM_SYNCBUSY_SYSOP);
 
     // Queue up a DMA operation to read the data from the device
     this->dmaTransactionOut_out(0, getReadTriggerSource(this->m_sercom), Samd21::Dma::TransactionType::BEAT,
@@ -511,16 +629,64 @@ void I2cDriver ::read_handler(FwIndexType portNum, U32 addr, Fw::Buffer& buffer)
     sercom_hw->I2CM.ADDR.reg = addrReg.reg;
 }
 
-void I2cDriver ::write_handler(FwIndexType portNum, U32 addr, Fw::Buffer& buffer) {
+void I2cDriver::writeImpl(U32 addr, Fw::Buffer& buffer) {
     Sercom* sercom_hw = getSercomHw(this->m_sercom);
     FW_ASSERT(sercom_hw != nullptr, this->m_sercom);
 
+    // I2C DMA is limited to 255 bytes
+    FW_ASSERT(buffer.getSize() <= 255, buffer.getSize());
+
+    // TODO(tumbar) We currently only support 7-bit address mode
+    FW_ASSERT((addr & ~0x7F) == 0, addr);
+
     // Send NACK if anyone tries to send data to us
     sercom_hw->I2CM.CTRLB.bit.ACKACT = 1;
+
+    // Queue up a DMA operation to read the data from the device
+    this->dmaTransactionOut_out(0, getWriteTriggerSource(this->m_sercom), Samd21::Dma::TransactionType::BEAT,
+                                Samd21::Dma::Priority::PRIORITY_1, reinterpret_cast<U32>(buffer.getData()),
+                                reinterpret_cast<U32>(&sercom_hw->I2CM.DATA), buffer.getSize(),
+                                Samd21::Dma::BeatSize::BYTE,
+                                /* incrementSource */ true, /* incrementDestination */ false,
+                                Samd21::Dma::AddressIncrementStepSize::SIZE_1, Samd21::Dma::StepSelection::SOURCE);
+
+    SERCOM_I2CM_ADDR_Type addrReg = {};
+    addrReg.bit.HS = 0;     // We do not currently support high speed mode
+    addrReg.bit.LENEN = 1;  // Enable length mode to generate DMA requests
+    addrReg.bit.LEN = static_cast<U8>(buffer.getSize());
+    addrReg.bit.ADDR = (addr << 1) | 0x0;  // send a write request
+
+    // Kick off the I2C job by writing the address
+    sercom_hw->I2CM.ADDR.reg = addrReg.reg;
+}
+
+void I2cDriver ::write_handler(FwIndexType portNum, U32 addr, Fw::Buffer& buffer) {
+    if (this->m_state != State::IDLE) {
+        // TODO(tumbar) Technically this is a programming error... maybe we should assert?
+        this->readComplete_out(portNum, buffer, Drv::I2cStatus::I2C_OTHER_ERR);
+        return;
+    }
+
+    this->m_state = State::WRITE;
+    this->m_write = ThinBuffer(buffer);
+    this->m_portNum = portNum;
+
+    this->writeImpl(addr, buffer);
 }
 
 void I2cDriver ::writeRead_handler(FwIndexType portNum, U32 addr, Fw::Buffer& writeBuffer, Fw::Buffer& readBuffer) {
-    // TODO
+    if (this->m_state != State::IDLE) {
+        // TODO(tumbar) Technically this is a programming error... maybe we should assert?
+        this->writeReadComplete_out(portNum, writeBuffer, readBuffer, Drv::I2cStatus::I2C_OTHER_ERR);
+        return;
+    }
+
+    this->m_state = State::WRITE_READ_WRITING;
+    this->m_read = ThinBuffer(readBuffer);
+    this->m_write = ThinBuffer(writeBuffer);
+    this->m_portNum = portNum;
+
+    this->writeImpl(addr, writeBuffer);
 }
 
 }  // namespace Samd21

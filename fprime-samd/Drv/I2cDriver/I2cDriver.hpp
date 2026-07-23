@@ -183,6 +183,8 @@ class I2cDriver final : public I2cDriverComponentBase {
     //! Current peripheral state/executing transaction
     State m_state;
 
+    FwIndexType m_portNum;
+
     //! Current/pending read buffer
     Samd21::ThinBuffer m_read;
 
@@ -199,6 +201,12 @@ class I2cDriver final : public I2cDriverComponentBase {
     // Allow the isr handler call into a private function in this class
     friend void Samd21::i2cDriverIsrHandler(SercomKind, void*);
     void isrHandler();
+
+    //! Implements the write operation but doesn't handle the state updates
+    void writeImpl(U32 addr, Fw::Buffer& buffer);
+
+    //! Implements the read operation but doesn't handle the state updates
+    void readImpl(U32 addr, Fw::Buffer& buffer);
 };
 
 }  // namespace Samd21
