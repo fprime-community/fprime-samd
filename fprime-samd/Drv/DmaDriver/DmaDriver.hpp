@@ -7,7 +7,7 @@
 #ifndef Samd21_DmaDriver_HPP
 #define Samd21_DmaDriver_HPP
 
-#include "config/DmaDriverConfig.hpp"
+#include "config-samd/DmaDriverConfig.hpp"
 #include "fprime-samd/Drv/DmaDriver/DmaChannel.hpp"
 #include "fprime-samd/Drv/DmaDriver/DmaDriverComponentAc.hpp"
 
