@@ -20,6 +20,7 @@ include("${CMAKE_CURRENT_LIST_DIR}/samd21-bare-toolchain.cmake")
 
 # Additional F' specific flags
 set(SAMD21_COMMON_FLAGS "\
+    -D__SAMD21__\
     -DNDEBUG \
     -Wall \
     -Wextra \

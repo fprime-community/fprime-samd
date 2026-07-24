@@ -13,8 +13,8 @@
 #include "config/UsartDriverConfig.hpp"
 #include "fprime-samd/Drv/Types/CriticalSection.hpp"
 #include "fprime-samd/Drv/Types/PriorityEnumAc.hpp"
+#include "fprime-samd/Drv/Types/Sercom.hpp"
 #include "fprime-samd/Drv/Types/ThinBuffer.hpp"
-#include "fprime-samd/Drv/Types/TriggerSourceEnumAc.hpp"
 #include "fprime-samd/Drv/UsartDriver/UsartDriverHardware.hpp"
 #include "fprime-samd/Drv/UsartDriver/UsartDriver_DmaChannelEnumAc.hpp"
 #include "fprime-samd/config/UsartDriverConfig.hpp"
@@ -75,50 +75,6 @@ void UsartDriver ::configure(SercomKind sercom,
         this->dmaQueueRxSend(ThinBuffer(this->m_rx[0].data, USART_RX_BUFFER_SIZE));
         this->dmaQueueRxSend(ThinBuffer(this->m_rx[1].data, USART_RX_BUFFER_SIZE));
         this->dmaRxCircular_out(0);
-    }
-}
-
-// ----------------------------------------------------------------------
-// Helper function implementations
-// ----------------------------------------------------------------------
-
-Dma::TriggerSource UsartDriver ::getSercomTxTrigger(SercomKind sercom) {
-    switch (sercom) {
-        case SercomKind::SERCOM_0:
-            return Dma::TriggerSource::SERCOM0_TX;
-        case SercomKind::SERCOM_1:
-            return Dma::TriggerSource::SERCOM1_TX;
-        case SercomKind::SERCOM_2:
-            return Dma::TriggerSource::SERCOM2_TX;
-        case SercomKind::SERCOM_3:
-            return Dma::TriggerSource::SERCOM3_TX;
-        case SercomKind::SERCOM_4:
-            return Dma::TriggerSource::SERCOM4_TX;
-        case SercomKind::SERCOM_5:
-            return Dma::TriggerSource::SERCOM5_TX;
-        default:
-            FW_ASSERT(false, static_cast<FwAssertArgType>(sercom));
-            return Dma::TriggerSource::SERCOM0_TX;
-    }
-}
-
-Dma::TriggerSource UsartDriver ::getSercomRxTrigger(SercomKind sercom) {
-    switch (sercom) {
-        case SercomKind::SERCOM_0:
-            return Dma::TriggerSource::SERCOM0_RX;
-        case SercomKind::SERCOM_1:
-            return Dma::TriggerSource::SERCOM1_RX;
-        case SercomKind::SERCOM_2:
-            return Dma::TriggerSource::SERCOM2_RX;
-        case SercomKind::SERCOM_3:
-            return Dma::TriggerSource::SERCOM3_RX;
-        case SercomKind::SERCOM_4:
-            return Dma::TriggerSource::SERCOM4_RX;
-        case SercomKind::SERCOM_5:
-            return Dma::TriggerSource::SERCOM5_RX;
-        default:
-            FW_ASSERT(false, static_cast<FwAssertArgType>(sercom));
-            return Dma::TriggerSource::SERCOM0_RX;
     }
 }
 
@@ -300,7 +256,7 @@ void UsartDriver ::send_handler(FwIndexType portNum, Fw::Buffer& fwBuffer) {
         // This job has been added to the queue, send it to the DMA
         // Note: Use DATA.reg to get the actual register address, not the structure address
         this->dmaQueueOut_out(
-            UsartDriver_DmaChannel::TX, getSercomTxTrigger(m_sercom), Dma::TransactionType::BEAT,
+            UsartDriver_DmaChannel::TX, SercomUtil::txDmaTrigger(m_sercom), Dma::TransactionType::BEAT,
             Dma::Priority::PRIORITY_0, static_cast<U32>(reinterpret_cast<uintptr_t>(fwBuffer.getData())),
             UsartHardware::UsartHal::getDataRegisterAddress(m_sercom), fwBuffer.getSize(), Dma::BeatSize::BYTE,
             /* increment source */ true,
@@ -319,8 +275,8 @@ Drv::ByteStreamStatus UsartDriver ::sendSync_handler(FwIndexType portNum, Fw::Bu
 
 void UsartDriver ::dmaQueueRxSend(const ThinBuffer& buffer) {
     this->dmaQueueOut_out(
-        UsartDriver_DmaChannel::RX, getSercomRxTrigger(m_sercom), Dma::TransactionType::BEAT, Dma::Priority::PRIORITY_0,
-        UsartHardware::UsartHal::getDataRegisterAddress(m_sercom),
+        UsartDriver_DmaChannel::RX, SercomUtil::rxDmaTrigger(m_sercom), Dma::TransactionType::BEAT,
+        Dma::Priority::PRIORITY_0, UsartHardware::UsartHal::getDataRegisterAddress(m_sercom),
         static_cast<U32>(reinterpret_cast<uintptr_t>(buffer.getData())), buffer.getSize(), Dma::BeatSize::BYTE,
         /* increment source */ false,
         /* incrementDestination */ true, Dma::AddressIncrementStepSize::SIZE_1, Dma::StepSelection::DESTINATION);

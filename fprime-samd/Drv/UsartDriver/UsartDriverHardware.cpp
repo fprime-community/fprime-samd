@@ -10,7 +10,7 @@
 #include "fprime-samd/Drv/UsartDriver/UsartDriverHardware.hpp"
 #include "Fw/Types/Assert.hpp"
 #include "config/FwAssertArgTypeAliasAc.h"
-#include "samd.h"
+#include "fprime-samd/Drv/Types/Sercom.hpp"
 
 namespace Samd21 {
 namespace UsartHardware {
@@ -18,32 +18,6 @@ namespace UsartHardware {
 // ----------------------------------------------------------------------
 // File-local helpers
 // ----------------------------------------------------------------------
-
-//! Map a SercomKind to its hardware register base
-static Sercom* getSercomHw(SercomKind sercom) {
-    switch (sercom.e) {
-        case SercomKind::SERCOM_0:
-            return SERCOM0;
-        case SercomKind::SERCOM_1:
-            return SERCOM1;
-        case SercomKind::SERCOM_2:
-            return SERCOM2;
-        case SercomKind::SERCOM_3:
-            return SERCOM3;
-            // Some SAMD21 devices don't have these SERCOM ports
-#ifdef SERCOM4
-        case SercomKind::SERCOM_4:
-            return SERCOM4;
-#endif
-#ifdef SERCOM5
-        case SercomKind::SERCOM_5:
-            return SERCOM5;
-#endif
-        default:
-            FW_ASSERT(false, sercom.e);
-            return nullptr;
-    }
-}
 
 // Bound hardware synchronization waits to ~1s (F_CPU cycles), matching the
 // pattern used in RtcDriver/DmaDriver. A stuck sync flag asserts rather than
@@ -124,7 +98,7 @@ void UsartHal::configure(SercomKind sercom,
                          UsartDriver::StopBits stop_bits,
                          UsartDriver::Parity parity) {
     // Get SERCOM hardware register base
-    Sercom* sercom_hw = getSercomHw(sercom);
+    Sercom* sercom_hw = SercomUtil::getHardware(sercom);
     FW_ASSERT(sercom_hw != nullptr, sercom);
 
     // Enable SERCOM peripheral clock (APBC bus)
@@ -338,7 +312,7 @@ void UsartHal::configure(SercomKind sercom,
 }
 
 void UsartHal::sendSync(SercomKind sercom, const U8* data, U32 size) {
-    Sercom* sercom_hw = getSercomHw(sercom);
+    Sercom* sercom_hw = SercomUtil::getHardware(sercom);
     for (U32 i = 0; i < size; i++) {
         waitForUsartFlag(sercom_hw, SERCOM_USART_INTFLAG_DRE);
         sercom_hw->USART.DATA.reg = data[i];
@@ -350,11 +324,11 @@ void UsartHal::sendSync(SercomKind sercom, const U8* data, U32 size) {
 
 U32 UsartHal::getDataRegisterAddress(SercomKind sercom) {
     // Note: Use DATA.reg to get the actual register address, not the structure address
-    return reinterpret_cast<U32>(&getSercomHw(sercom)->USART.DATA.reg);
+    return reinterpret_cast<U32>(&SercomUtil::getHardware(sercom)->USART.DATA.reg);
 }
 
 bool UsartHal::checkAndClearRxOverflow(SercomKind sercom) {
-    Sercom* sercom_hw = getSercomHw(sercom);
+    Sercom* sercom_hw = SercomUtil::getHardware(sercom);
 
     // STATUS.BUFOVF is a sticky, write-1-to-clear flag (§27.8.5). Read it, then
     // clear it by writing the bit back so the next check reports fresh overflows.

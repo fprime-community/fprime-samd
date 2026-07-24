@@ -19,10 +19,3 @@ register_fprime_library(
       Drv_Interfaces
       fprime-samd_Drv_Types
 )
-
-if (SAMD21_LTO)
-    set_source_files_properties(
-        "${CMAKE_CURRENT_LIST_DIR}/I2cDriverIsr.cpp"
-        PROPERTIES COMPILE_FLAGS "-fno-lto"
-    )
-endif()

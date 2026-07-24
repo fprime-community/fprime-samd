@@ -7,40 +7,12 @@
 #include "fprime-samd/Drv/I2cDriver/I2cDriver.hpp"
 #include <samd21/include/samd21g17a.h>
 #include "Drv/Types/SercomKindEnumAc.hpp"
-#include "Drv/Types/TriggerSourceEnumAc.hpp"
 #include "Fw/Types/Assert.hpp"
 #include "config/FwAssertArgTypeAliasAc.h"
-#include "fprime-samd/Drv/Types/SercomIsr.hpp"
+#include "fprime-samd/Drv/Types/Sercom.hpp"
 #include "fprime-samd/Drv/Types/ThinBuffer.hpp"
-#include "samd.h"
 
 namespace Samd21 {
-
-//! Map a SercomKind to its hardware register base
-static Sercom* getSercomHw(SercomKind sercom) {
-    switch (sercom.e) {
-        case SercomKind::SERCOM_0:
-            return SERCOM0;
-        case SercomKind::SERCOM_1:
-            return SERCOM1;
-        case SercomKind::SERCOM_2:
-            return SERCOM2;
-        case SercomKind::SERCOM_3:
-            return SERCOM3;
-            // Some SAMD21 devices don't have these SERCOM ports
-#ifdef SERCOM4
-        case SercomKind::SERCOM_4:
-            return SERCOM4;
-#endif
-#ifdef SERCOM5
-        case SercomKind::SERCOM_5:
-            return SERCOM5;
-#endif
-        default:
-            FW_ASSERT(false, sercom.e);
-            return nullptr;
-    }
-}
 
 // Bound hardware synchronization waits to ~1s (F_CPU cycles), matching the
 // pattern used in RtcDriver/DmaDriver/UsartDriver. A stuck sync flag asserts
@@ -130,44 +102,6 @@ static U8 calculateHsBaud(I2cDriver::Frequency frequency) {
     return static_cast<U8>(hsbaud);
 }
 
-static Samd21::Dma::TriggerSource getReadTriggerSource(SercomKind sercom) {
-    switch (sercom) {
-        case SercomKind::SERCOM_0:
-            return Samd21::Dma::TriggerSource::SERCOM0_RX;
-        case SercomKind::SERCOM_1:
-            return Samd21::Dma::TriggerSource::SERCOM1_RX;
-        case SercomKind::SERCOM_2:
-            return Samd21::Dma::TriggerSource::SERCOM2_RX;
-        case SercomKind::SERCOM_3:
-            return Samd21::Dma::TriggerSource::SERCOM3_RX;
-        case SercomKind::SERCOM_4:
-            return Samd21::Dma::TriggerSource::SERCOM4_RX;
-        case SercomKind::SERCOM_5:
-            return Samd21::Dma::TriggerSource::SERCOM5_RX;
-        default:
-            FW_ASSERT(false, sercom);
-    }
-}
-
-static Samd21::Dma::TriggerSource getWriteTriggerSource(SercomKind sercom) {
-    switch (sercom) {
-        case SercomKind::SERCOM_0:
-            return Samd21::Dma::TriggerSource::SERCOM0_TX;
-        case SercomKind::SERCOM_1:
-            return Samd21::Dma::TriggerSource::SERCOM1_TX;
-        case SercomKind::SERCOM_2:
-            return Samd21::Dma::TriggerSource::SERCOM2_TX;
-        case SercomKind::SERCOM_3:
-            return Samd21::Dma::TriggerSource::SERCOM3_TX;
-        case SercomKind::SERCOM_4:
-            return Samd21::Dma::TriggerSource::SERCOM4_TX;
-        case SercomKind::SERCOM_5:
-            return Samd21::Dma::TriggerSource::SERCOM5_TX;
-        default:
-            FW_ASSERT(false, sercom);
-    }
-}
-
 static ::IRQn_Type getSercomIrq(SercomKind sercom) {
     switch (sercom) {
         case SercomKind::SERCOM_0:
@@ -225,10 +159,10 @@ void I2cDriver::configure(SercomKind sercom,
     this->m_sercom = sercom;
 
     // Register with the ISR callback table
-    Samd21::SercomIsr::registerHandler(sercom, i2cDriverIsrHandler, this);
+    SercomUtil::registerIsrHandler(sercom, i2cDriverIsrHandler, this);
 
     // Get SERCOM hardware register base
-    Sercom* sercom_hw = getSercomHw(sercom);
+    Sercom* sercom_hw = SercomUtil::getHardware(sercom);
     FW_ASSERT(sercom_hw != nullptr, sercom);
 
     // Enable SERCOM peripheral clock (APBC bus)
@@ -455,7 +389,7 @@ void i2cDriverIsrHandler(SercomKind sercom, void* i2cDriverRaw) {
 }
 
 void I2cDriver ::isrHandler() {
-    auto sercom_hw = getSercomHw(this->m_sercom);
+    auto sercom_hw = SercomUtil::getHardware(this->m_sercom);
 
     // Check the source of the SERCOM ISR
     // _Only_ the error interrupt should have triggered us...
@@ -615,7 +549,7 @@ void I2cDriver ::read_handler(FwIndexType portNum, U32 addr, Fw::Buffer& buffer)
 }
 
 void I2cDriver::readImpl(U32 addr, Fw::Buffer& buffer) {
-    Sercom* sercom_hw = getSercomHw(this->m_sercom);
+    Sercom* sercom_hw = SercomUtil::getHardware(this->m_sercom);
     FW_ASSERT(sercom_hw != nullptr, this->m_sercom);
 
     // I2C DMA is limited to 255 bytes
@@ -628,7 +562,7 @@ void I2cDriver::readImpl(U32 addr, Fw::Buffer& buffer) {
     sercom_hw->I2CM.CTRLB.bit.ACKACT = 0;
 
     // Queue up a DMA operation to read the data from the device
-    this->dmaTransactionOut_out(0, getReadTriggerSource(this->m_sercom), Samd21::Dma::TransactionType::BEAT,
+    this->dmaTransactionOut_out(0, SercomUtil::rxDmaTrigger(this->m_sercom), Samd21::Dma::TransactionType::BEAT,
                                 Samd21::Dma::Priority::PRIORITY_1, reinterpret_cast<U32>(&sercom_hw->I2CM.DATA),
                                 reinterpret_cast<U32>(buffer.getData()), buffer.getSize(), Samd21::Dma::BeatSize::BYTE,
                                 /* incrementSource */ false, /* incrementDestination */ true,
@@ -645,7 +579,7 @@ void I2cDriver::readImpl(U32 addr, Fw::Buffer& buffer) {
 }
 
 void I2cDriver::writeImpl(U32 addr, Fw::Buffer& buffer) {
-    Sercom* sercom_hw = getSercomHw(this->m_sercom);
+    Sercom* sercom_hw = SercomUtil::getHardware(this->m_sercom);
     FW_ASSERT(sercom_hw != nullptr, this->m_sercom);
 
     // I2C DMA is limited to 255 bytes
@@ -657,8 +591,8 @@ void I2cDriver::writeImpl(U32 addr, Fw::Buffer& buffer) {
     // Send NACK if anyone tries to send data to us
     sercom_hw->I2CM.CTRLB.bit.ACKACT = 1;
 
-    // Queue up a DMA operation to read the data from the device
-    this->dmaTransactionOut_out(0, getWriteTriggerSource(this->m_sercom), Samd21::Dma::TransactionType::BEAT,
+    // Queue up a DMA operation to write the data to the device
+    this->dmaTransactionOut_out(0, SercomUtil::txDmaTrigger(this->m_sercom), Samd21::Dma::TransactionType::BEAT,
                                 Samd21::Dma::Priority::PRIORITY_1, reinterpret_cast<U32>(buffer.getData()),
                                 reinterpret_cast<U32>(&sercom_hw->I2CM.DATA), buffer.getSize(),
                                 Samd21::Dma::BeatSize::BYTE,

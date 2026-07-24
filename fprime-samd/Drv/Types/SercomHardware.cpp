@@ -4,9 +4,9 @@
 // \brief  cpp file for SERCOM ISR utilities
 // ======================================================================
 
-#include "fprime-samd/Drv/Types/SercomIsr.hpp"
 #include "Drv/Types/SercomKindEnumAc.hpp"
 #include "Fw/Types/Assert.hpp"
+#include "fprime-samd/Drv/Types/Sercom.hpp"
 #include "samd.h"
 
 namespace Samd21 {
@@ -17,9 +17,34 @@ struct SercomCallback {
 
 static SercomCallback sercomCallbacks[6] = {};
 
-void SercomIsr::registerHandler(SercomKind sercom, void (*callback)(SercomKind, void*), void* data) {
+void SercomUtil::registerIsrHandler(SercomKind sercom, void (*callback)(SercomKind, void*), void* data) {
     FW_ASSERT(sercom.isValid());
     FW_ASSERT(sercomCallbacks[sercom.e].callback == nullptr);
+}
+
+Sercom* SercomUtil ::getHardware(SercomKind sercom) {
+    switch (sercom.e) {
+        case SercomKind::SERCOM_0:
+            return SERCOM0;
+        case SercomKind::SERCOM_1:
+            return SERCOM1;
+        case SercomKind::SERCOM_2:
+            return SERCOM2;
+        case SercomKind::SERCOM_3:
+            return SERCOM3;
+            // Some SAMD21 devices don't have these SERCOM ports
+#ifdef SERCOM4
+        case SercomKind::SERCOM_4:
+            return SERCOM4;
+#endif
+#ifdef SERCOM5
+        case SercomKind::SERCOM_5:
+            return SERCOM5;
+#endif
+        default:
+            FW_ASSERT(false, sercom.e);
+            return nullptr;
+    }
 }
 
 }  // namespace Samd21
