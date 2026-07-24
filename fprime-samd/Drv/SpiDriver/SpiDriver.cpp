@@ -294,7 +294,7 @@ void SpiDriver ::SpiWriteRead_handler(FwIndexType portNum, Fw::Buffer& writeBuff
     FW_ASSERT(writeBuffer.getSize() == readBuffer.getSize(), writeBuffer.getSize(), readBuffer.getSize());
     FW_ASSERT(writeBuffer.getSize() <= 0xFFFF);  // We don't actually have this much memory but I'll check it anyway...
 
-    if (this->m_busy) {
+    if (this->m_busy != 0) {
         if (this->isConnected_SpiReply_OutputPort(portNum)) {
             this->SpiReply_out(portNum, writeBuffer, readBuffer, Drv::SpiStatus::SPI_OTHER_ERR);
         }
@@ -302,13 +302,9 @@ void SpiDriver ::SpiWriteRead_handler(FwIndexType portNum, Fw::Buffer& writeBuff
         return;
     }
 
-    FW_ASSERT(!this->m_rx_busy);
-    FW_ASSERT(!this->m_tx_busy);
-
     this->m_busy = true;
     this->m_portNum = portNum;
-    this->m_rx_busy = true;
-    this->m_tx_busy = true;
+    this->m_busy = BusyBit::RX_BUSY | BusyBit::TX_BUSY;
     this->m_read = Samd21::ThinBuffer(readBuffer);
     this->m_write = Samd21::ThinBuffer(writeBuffer);
 
@@ -342,18 +338,18 @@ void SpiDriver ::dmaReplyIn_handler(FwIndexType portNum, const Samd21::Dma::Repl
     FW_ASSERT(this->m_busy, this->m_sercom, this->m_portNum);
 
     if (portNum == SpiDriver_DmaChannel::MISO) {
-        FW_ASSERT(this->m_rx_busy, this->m_sercom, portNum);
-        this->m_rx_busy = false;
+        FW_ASSERT(this->m_busy & BusyBit::RX_BUSY, this->m_sercom, portNum);
+        this->m_busy &= ~BusyBit::RX_BUSY;
     } else if (portNum == SpiDriver_DmaChannel::MOSI) {
-        FW_ASSERT(this->m_tx_busy, this->m_sercom, portNum);
-        this->m_tx_busy = false;
+        FW_ASSERT(this->m_busy & BusyBit::TX_BUSY, this->m_sercom, portNum);
+        this->m_busy &= ~BusyBit::TX_BUSY;
     } else {
         // What is this port?
         FW_ASSERT(false, this->m_sercom, portNum);
     }
 
     // Reply if both bufferrs were received
-    if (!this->m_rx_busy && !this->m_tx_busy) {
+    if (!this->m_busy) {
         auto read = this->m_read.getBuffer();
         auto write = this->m_write.getBuffer();
 
@@ -363,7 +359,6 @@ void SpiDriver ::dmaReplyIn_handler(FwIndexType portNum, const Samd21::Dma::Repl
             }
         }
 
-        this->m_busy = false;
         this->SpiReply_out(this->m_portNum, write, read, Drv::SpiStatus::SPI_OK);
     }
 }
