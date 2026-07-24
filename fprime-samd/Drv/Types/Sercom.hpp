@@ -7,7 +7,7 @@
 #ifndef Samd21_SercomIsr_HPP
 #define Samd21_SercomIsr_HPP
 
-#include "Drv/Types/TriggerSourceEnumAc.hpp"
+#include "fprime-samd/Drv/Types/TriggerSourceEnumAc.hpp"
 #include "fprime-samd/Drv/Types/SercomKindEnumAc.hpp"
 
 #ifdef __SAMD21__

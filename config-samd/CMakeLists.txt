@@ -1,5 +1,7 @@
 register_fprime_config(
-    fprime-samd-config
+        config-fprime-samd
+    AUTOCODER_INPUTS
+        "${CMAKE_CURRENT_LIST_DIR}/Samd21SpiConfig.fpp"
     HEADERS
         "${CMAKE_CURRENT_LIST_DIR}/RtcDriverConfig.hpp"
         "${CMAKE_CURRENT_LIST_DIR}/DmaDriverConfig.hpp"

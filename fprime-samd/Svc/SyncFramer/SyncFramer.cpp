@@ -8,7 +8,6 @@
 #include "Svc/FprimeProtocol/FrameHeaderSerializableAc.hpp"
 #include "Svc/FprimeProtocol/FrameTrailerSerializableAc.hpp"
 #include "Utils/Hash/Hash.hpp"
-#include "fprime-samd/config/FramerConfig.hpp"
 
 namespace Samd21 {
 
