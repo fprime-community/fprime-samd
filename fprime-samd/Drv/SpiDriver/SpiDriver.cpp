@@ -8,6 +8,7 @@
 #include <samd21/include/samd21g17a.h>
 #include "Fw/Types/Assert.hpp"
 #include "config/FwAssertArgTypeAliasAc.h"
+#include "config/FwIndexTypeAliasAc.h"
 #include "fprime-samd/Drv/SpiDriver/SpiDriver_DmaChannelEnumAc.hpp"
 #include "fprime-samd/Drv/Types/Sercom.hpp"
 #include "fprime-samd/Drv/Types/SercomKindEnumAc.hpp"
@@ -239,9 +240,11 @@ void SpiDriver ::configure(SercomKind sercom,
     // GPIO.
     switch (hardware_chipselect) {
         case SpiDriver::HardwareChipSelect::DISABLED:
+            this->m_hardware_chip_select = false;
             ctrlb.bit.MSSEN = 0;
             break;
         case SpiDriver::HardwareChipSelect::ENABLED:
+            this->m_hardware_chip_select = true;
             ctrlb.bit.MSSEN = 1;
             break;
         default:
@@ -267,6 +270,15 @@ void SpiDriver ::configure(SercomKind sercom,
 
     // Program the baud rate to generate the target SCK.
     sercom_hw->SPI.BAUD.reg = SERCOM_SPI_BAUD_BAUD(calculateBaud(baud_rate_khz));
+
+    // Set all software chip selects to high to disable all SPI chips
+    if (!this->m_hardware_chip_select) {
+        for (FwIndexType i = 0; i < this->getNum_chipSelectGpioOut_OutputPorts(); i++) {
+            if (this->isConnected_chipSelectGpioOut_OutputPort(i)) {
+                this->chipSelectGpioOut_out(i, Fw::Logic::HIGH);
+            }
+        }
+    }
 
     // Enable the peripheral.
     sercom_hw->SPI.CTRLA.reg |= SERCOM_SPI_CTRLA_ENABLE;
@@ -299,6 +311,12 @@ void SpiDriver ::SpiWriteRead_handler(FwIndexType portNum, Fw::Buffer& writeBuff
     this->m_tx_busy = true;
     this->m_read = Samd21::ThinBuffer(readBuffer);
     this->m_write = Samd21::ThinBuffer(writeBuffer);
+
+    if (!this->m_hardware_chip_select) {
+        if (this->isConnected_chipSelectGpioOut_OutputPort(this->m_portNum)) {
+            this->chipSelectGpioOut_out(this->m_portNum, Fw::Logic::LOW);
+        }
+    }
 
     // Queue up both Rx and Tx jobs
     // We need to do Rx first so that the job does kick off
@@ -338,6 +356,12 @@ void SpiDriver ::dmaReplyIn_handler(FwIndexType portNum, const Samd21::Dma::Repl
     if (!this->m_rx_busy && !this->m_tx_busy) {
         auto read = this->m_read.getBuffer();
         auto write = this->m_write.getBuffer();
+
+        if (!this->m_hardware_chip_select) {
+            if (this->isConnected_chipSelectGpioOut_OutputPort(this->m_portNum)) {
+                this->chipSelectGpioOut_out(this->m_portNum, Fw::Logic::HIGH);
+            }
+        }
 
         this->m_busy = false;
         this->SpiReply_out(this->m_portNum, write, read, Drv::SpiStatus::SPI_OK);
