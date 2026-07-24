@@ -7,9 +7,9 @@
 #ifndef Samd21_SpiDriver_HPP
 #define Samd21_SpiDriver_HPP
 
-#include "Drv/Types/SercomKindEnumAc.hpp"
 #include "config/FwIndexTypeAliasAc.h"
 #include "fprime-samd/Drv/SpiDriver/SpiDriverComponentAc.hpp"
+#include "fprime-samd/Drv/Types/SercomKindEnumAc.hpp"
 #include "fprime-samd/Drv/Types/ThinBuffer.hpp"
 
 namespace Samd21 {
