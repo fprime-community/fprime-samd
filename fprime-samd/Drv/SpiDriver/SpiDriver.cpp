@@ -302,7 +302,6 @@ void SpiDriver ::SpiWriteRead_handler(FwIndexType portNum, Fw::Buffer& writeBuff
         return;
     }
 
-    this->m_busy = true;
     this->m_portNum = portNum;
     this->m_busy = BusyBit::RX_BUSY | BusyBit::TX_BUSY;
     this->m_read = Samd21::ThinBuffer(readBuffer);
@@ -335,7 +334,7 @@ void SpiDriver ::dmaReplyIn_handler(FwIndexType portNum, const Samd21::Dma::Repl
     // We will get two replies (Tx, Rx) but the order is not guarenteed since they should finish at the same time.
     // We should reply to the transaction after we got both of the replies back
     FW_ASSERT(this->m_configured, this->m_sercom, this->m_portNum);
-    FW_ASSERT(this->m_busy, this->m_sercom, this->m_portNum);
+    FW_ASSERT(this->m_busy != 0, this->m_sercom, this->m_portNum);
 
     if (portNum == SpiDriver_DmaChannel::MISO) {
         FW_ASSERT(this->m_busy & BusyBit::RX_BUSY, this->m_sercom, portNum);
