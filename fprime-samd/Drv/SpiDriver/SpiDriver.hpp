@@ -124,14 +124,13 @@ class SpiDriver final : public SpiDriverComponentBase {
     //! Flag tracking if this driver has been configured
     bool m_configured;
 
-    //! Status flag that tracks if there is an active SPI transaction
-    bool m_busy;
+    enum BusyBit {
+        RX_BUSY = (1 << 0),
+        TX_BUSY = (1 << 1),
+    };
 
-    //! Flag indicating if we got the Rx buffer back from the DMA
-    bool m_rx_busy;
-
-    //! Flag indicating if we got the Tx buffer back from the DMA
-    bool m_tx_busy;
+    //! Status flag that tracks while SPI transactions are still active
+    U8 m_busy;
 
     bool m_hardware_chip_select;
 };
