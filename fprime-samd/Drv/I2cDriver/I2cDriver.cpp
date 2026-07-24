@@ -6,10 +6,10 @@
 
 #include "fprime-samd/Drv/I2cDriver/I2cDriver.hpp"
 #include <samd21/include/samd21g17a.h>
-#include "Drv/Types/SercomKindEnumAc.hpp"
 #include "Fw/Types/Assert.hpp"
 #include "config/FwAssertArgTypeAliasAc.h"
 #include "fprime-samd/Drv/Types/Sercom.hpp"
+#include "fprime-samd/Drv/Types/SercomKindEnumAc.hpp"
 #include "fprime-samd/Drv/Types/ThinBuffer.hpp"
 
 namespace Samd21 {
