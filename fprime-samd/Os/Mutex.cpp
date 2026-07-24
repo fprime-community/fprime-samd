@@ -10,26 +10,15 @@ namespace Os {
 namespace Samd21 {
 
 Os::MutexInterface::Status Mutex::take() {
-    // Spin-lock: keep trying until we acquire the mutex
-    U32 spin_n = 0;
-    while (spin_n < 100) {
-        __disable_irq();
-        if (!this->m_handle.m_mutex_taken) {
-            // Mutex is available, acquire it
-            this->m_handle.m_mutex_taken = true;
-            __enable_irq();
-            break;
-        }
-        __enable_irq();
-
-        spin_n++;
+    Os::MutexInterface::Status status;
+    if (this->m_handle.m_mutex_taken) {
+        status = Os::MutexInterface::Status::ERROR_BUSY;
+    } else {
+        this->m_handle.m_mutex_taken = true;
+        status = Os::MutexInterface::Status::OP_OK;
     }
 
-    if (spin_n >= 100) {
-        return Os::MutexInterface::Status::ERROR_BUSY;
-    }
-
-    return Os::MutexInterface::Status::OP_OK;
+    return status;
 }
 
 Os::MutexInterface::Status Mutex::release() {

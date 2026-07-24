@@ -156,12 +156,6 @@ class UsartDriver final : public UsartDriverComponentBase {
         INVALID,
     };
 
-    //! Get SERCOM TX DMA trigger source
-    Dma::TriggerSource getSercomTxTrigger(SercomKind sercom);
-
-    //! Get SERCOM RX DMA trigger source
-    Dma::TriggerSource getSercomRxTrigger(SercomKind sercom);
-
     //! Handle a reply on the TX DMA channel
     void dmaReplyTxIsr(const Samd21::Dma::Reply& reply);
 

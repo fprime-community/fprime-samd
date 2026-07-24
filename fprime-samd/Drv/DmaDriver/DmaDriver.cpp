@@ -370,6 +370,40 @@ void DmaDriver::handleInterrupt() {
 // Handler implementations for typed input ports
 // ----------------------------------------------------------------------
 
+void DmaDriver ::abortTransactionIn_handler(FwIndexType portNum) {
+    FW_ASSERT(m_initialized);
+    FW_ASSERT(portNum < NUM_ABORTTRANSACTIONIN_INPUT_PORTS, portNum);
+
+    Samd21::CriticalSection cs;
+
+    // Nothing to abort on an idle channel.
+    if (!m_channels[portNum].isBusy()) {
+        return;
+    }
+
+    // Disable the channel: the active beat finishes, the write-back captures its
+    // final progress, and all queued descriptors are dropped. No DMAC interrupt is
+    // raised, so we free the chain.
+    U16 remainingBeats = 0;
+    m_channels[portNum].abort(remainingBeats);
+
+    // Free every descriptor still linked from the anchor (active + dropped chain).
+    ::DmacDescriptor* cur = reinterpret_cast<::DmacDescriptor*>(m_currentExecutingDesc[portNum]);
+    U32 bound = 0;
+    while (cur != nullptr && bound <= DmaDriverConfig::DMA_DESCRIPTOR_N) {
+        ::DmacDescriptor* next = reinterpret_cast<::DmacDescriptor*>(cur->DESCADDR.reg);
+        freeDescriptor(reinterpret_cast<DmacDescriptor*>(cur));
+        cur = next;
+        bound++;
+    }
+
+    FW_ASSERT(bound <= DmaDriverConfig::DMA_DESCRIPTOR_N, portNum);
+
+    // Detach the freed chain from the anchor.
+    dmac_base[portNum].DESCADDR.reg = 0;
+    m_currentExecutingDesc[portNum] = nullptr;
+}
+
 void DmaDriver::sendTransactionIn_handler(FwIndexType portNum,
                                           const Samd21::Dma::TriggerSource& trigger,
                                           const Samd21::Dma::TransactionType& action,

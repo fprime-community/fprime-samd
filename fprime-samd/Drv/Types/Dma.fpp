@@ -130,7 +130,7 @@ module Samd21 {
 
         @ DMA transaction completion reply from ISR
         struct Reply {
-            $status: Dma.Status,          @< Whether transaction completed successfully or had an error
+            $status: Dma.Status,        @< Whether transaction completed successfully or had an error
             remainingBytes: U32,        @< Bytes NOT transferred (0 if OK, >0 if BUS_ERROR)
         }
 
