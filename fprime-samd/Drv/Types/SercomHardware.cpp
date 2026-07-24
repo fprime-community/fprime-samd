@@ -4,7 +4,7 @@
 // \brief  cpp file for SERCOM ISR utilities
 // ======================================================================
 
-#include "Drv/Types/SercomKindEnumAc.hpp"
+#include "fprime-samd/Drv/Types/SercomKindEnumAc.hpp"
 #include "Fw/Types/Assert.hpp"
 #include "fprime-samd/Drv/Types/Sercom.hpp"
 #include "samd.h"

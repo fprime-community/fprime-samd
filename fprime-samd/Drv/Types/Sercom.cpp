@@ -5,7 +5,7 @@
 // ======================================================================
 
 #include "fprime-samd/Drv/Types/Sercom.hpp"
-#include "Drv/Types/SercomKindEnumAc.hpp"
+#include "fprime-samd/Drv/Types/SercomKindEnumAc.hpp"
 #include "Fw/Types/Assert.hpp"
 
 namespace Samd21 {
