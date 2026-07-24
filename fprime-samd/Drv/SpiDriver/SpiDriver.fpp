@@ -19,5 +19,10 @@ module Samd21 {
         @ This signal comes inside an ISR!
         sync input port dmaReplyIn: [DmaChannel.N] Dma.TransactionReply
 
+        @ When the hardware chip select is disabled on this driver, this port controls
+        @ the chip select pin through software. The port number corresponds to the port
+        @ from the AsyncSpi interface.
+        output port chipSelectGpioOut: [Samd21.SpiPorts] Drv.GpioWrite
+
     }
 }
