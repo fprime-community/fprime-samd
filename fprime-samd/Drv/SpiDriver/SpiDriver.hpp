@@ -132,6 +132,8 @@ class SpiDriver final : public SpiDriverComponentBase {
 
     //! Flag indicating if we got the Tx buffer back from the DMA
     bool m_tx_busy;
+
+    bool m_hardware_chip_select;
 };
 
 }  // namespace Samd21
