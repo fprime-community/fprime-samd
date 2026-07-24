@@ -6,13 +6,13 @@
 
 #include "fprime-samd/Drv/SpiDriver/SpiDriver.hpp"
 #include <samd21/include/samd21g17a.h>
-#include "Drv/SpiDriver/SpiDriver_DmaChannelEnumAc.hpp"
-#include "Drv/Types/SercomKindEnumAc.hpp"
-#include "Drv/Types/TransactionTypeEnumAc.hpp"
 #include "Fw/Types/Assert.hpp"
 #include "config/FwAssertArgTypeAliasAc.h"
+#include "fprime-samd/Drv/SpiDriver/SpiDriver_DmaChannelEnumAc.hpp"
 #include "fprime-samd/Drv/Types/Sercom.hpp"
+#include "fprime-samd/Drv/Types/SercomKindEnumAc.hpp"
 #include "fprime-samd/Drv/Types/ThinBuffer.hpp"
+#include "fprime-samd/Drv/Types/TransactionTypeEnumAc.hpp"
 
 namespace Samd21 {
 
