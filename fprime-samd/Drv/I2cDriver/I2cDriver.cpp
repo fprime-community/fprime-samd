@@ -464,32 +464,32 @@ void I2cDriver ::isrHandler() {
 
     // Look up the error
     if (sercom_hw->I2CM.STATUS.bit.BUSERR) {
-        this->log_WARNING_LO_I2cBusError(this->m_sercom, Samd21::I2cDriver_I2cHostError::BusError);
+        this->log_WARNING_LO_I2cBusError(this->m_sercom, Samd21::I2cDriver_I2cError::BusError);
         sercom_hw->I2CM.STATUS.bit.BUSERR = 1;  // ack the error
     }
 
     if (sercom_hw->I2CM.STATUS.bit.ARBLOST) {
-        this->log_WARNING_LO_I2cBusError(this->m_sercom, Samd21::I2cDriver_I2cHostError::ArbitrationLost);
+        this->log_WARNING_LO_I2cBusError(this->m_sercom, Samd21::I2cDriver_I2cError::ArbitrationLost);
         sercom_hw->I2CM.STATUS.bit.ARBLOST = 1;  // ack the error
     }
 
     if (sercom_hw->I2CM.STATUS.bit.LOWTOUT) {
-        this->log_WARNING_LO_I2cBusError(this->m_sercom, Samd21::I2cDriver_I2cHostError::SclLowTimeout);
+        this->log_WARNING_LO_I2cBusError(this->m_sercom, Samd21::I2cDriver_I2cError::SclLowTimeout);
         sercom_hw->I2CM.STATUS.bit.LOWTOUT = 1;  // ack the error
     }
 
     if (sercom_hw->I2CM.STATUS.bit.MEXTTOUT) {
-        this->log_WARNING_LO_I2cBusError(this->m_sercom, Samd21::I2cDriver_I2cHostError::MasterSclExtendTimeout);
+        this->log_WARNING_LO_I2cBusError(this->m_sercom, Samd21::I2cDriver_I2cError::MasterSclExtendTimeout);
         sercom_hw->I2CM.STATUS.bit.MEXTTOUT = 1;  // ack the error
     }
 
     if (sercom_hw->I2CM.STATUS.bit.SEXTTOUT) {
-        this->log_WARNING_LO_I2cBusError(this->m_sercom, Samd21::I2cDriver_I2cHostError::SlaveSclExtendTimeout);
+        this->log_WARNING_LO_I2cBusError(this->m_sercom, Samd21::I2cDriver_I2cError::SlaveSclExtendTimeout);
         sercom_hw->I2CM.STATUS.bit.SEXTTOUT = 1;  // ack the error
     }
 
     if (sercom_hw->I2CM.STATUS.bit.LENERR) {
-        this->log_WARNING_LO_I2cBusError(this->m_sercom, Samd21::I2cDriver_I2cHostError::LengthError);
+        this->log_WARNING_LO_I2cBusError(this->m_sercom, Samd21::I2cDriver_I2cError::LengthError);
         sercom_hw->I2CM.STATUS.bit.LENERR = 1;  // ack the error
     }
 

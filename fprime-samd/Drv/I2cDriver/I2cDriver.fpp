@@ -50,7 +50,7 @@ module Samd21 {
         @ This signal comes inside an ISR!
         sync input port dmaReplyIn: Dma.TransactionReply
 
-        enum I2cHostError : U8 {
+        enum I2cError : U8 {
             @ Automatic length that is used for a DMA transaction and the client sends a NACK
             @ before ADDR.LEN bytes have been written by the host.
             LengthError,
@@ -77,7 +77,7 @@ module Samd21 {
             BusError
         }
 
-        event I2cBusError(sercom: SercomKind, err: I2cHostError) severity warning low \
+        event I2cBusError(sercom: SercomKind, err: I2cError) severity warning low \
             id 0 \
             format "{} I2C Master error: {}"
     }
