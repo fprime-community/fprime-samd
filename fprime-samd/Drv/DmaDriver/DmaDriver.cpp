@@ -6,13 +6,13 @@
 
 #include "fprime-samd/Drv/DmaDriver/DmaDriver.hpp"
 #include <cstring>
-#include "Drv/Types/AddressIncrementStepSizeEnumAc.hpp"
-#include "Drv/Types/BeatSizeEnumAc.hpp"
 #include "Fw/Types/Assert.hpp"
-#include "config/DmaDriverConfig.hpp"
+#include "config-samd/DmaDriverConfig.hpp"
 #include "config/FwAssertArgTypeAliasAc.h"
 #include "config/FwIndexTypeAliasAc.h"
 #include "fprime-samd/Drv/DmaDriver/DmaChannel.hpp"
+#include "fprime-samd/Drv/Types/AddressIncrementStepSizeEnumAc.hpp"
+#include "fprime-samd/Drv/Types/BeatSizeEnumAc.hpp"
 #include "fprime-samd/Drv/Types/CriticalSection.hpp"
 #include "sam.h"
 
