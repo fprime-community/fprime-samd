@@ -8,16 +8,15 @@
 #include "Drv/ByteStreamDriverModel/ByteStreamStatusEnumAc.hpp"
 #include "Fw/Types/Assert.hpp"
 #include "Fw/Types/SuccessEnumAc.hpp"
+#include "config-samd/UsartDriverConfig.hpp"
 #include "config/FwAssertArgTypeAliasAc.h"
 #include "config/FwIndexTypeAliasAc.h"
-#include "config/UsartDriverConfig.hpp"
 #include "fprime-samd/Drv/Types/CriticalSection.hpp"
 #include "fprime-samd/Drv/Types/PriorityEnumAc.hpp"
 #include "fprime-samd/Drv/Types/ThinBuffer.hpp"
 #include "fprime-samd/Drv/Types/TriggerSourceEnumAc.hpp"
 #include "fprime-samd/Drv/UsartDriver/UsartDriverHardware.hpp"
 #include "fprime-samd/Drv/UsartDriver/UsartDriver_DmaChannelEnumAc.hpp"
-#include "fprime-samd/config/UsartDriverConfig.hpp"
 
 namespace Samd21 {
 

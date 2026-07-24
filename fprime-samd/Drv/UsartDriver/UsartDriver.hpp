@@ -8,11 +8,10 @@
 #define Samd21_UsartDriver_HPP
 
 #include "Fw/DataStructures/FifoQueue.hpp"
-#include "config/UsartDriverConfig.hpp"
+#include "config-samd/UsartDriverConfig.hpp"
 #include "fprime-samd/Drv/Types/SercomKindEnumAc.hpp"
 #include "fprime-samd/Drv/Types/ThinBuffer.hpp"
 #include "fprime-samd/Drv/UsartDriver/UsartDriverComponentAc.hpp"
-#include "fprime-samd/config/UsartDriverConfig.hpp"
 
 namespace Samd21 {
 
