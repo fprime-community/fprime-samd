@@ -555,7 +555,7 @@ void I2cDriver::readImpl(U32 addr, Fw::Buffer& buffer) {
     // I2C DMA is limited to 255 bytes
     FW_ASSERT(buffer.getSize() <= 255, buffer.getSize());
 
-    // TODO(tumbar) We currently only support 7-bit address mode
+    // We only support 7-bit address mode
     FW_ASSERT((addr & ~0x7F) == 0, addr);
 
     // Send ACK to data coming back from the peripheral
@@ -585,7 +585,7 @@ void I2cDriver::writeImpl(U32 addr, Fw::Buffer& buffer) {
     // I2C DMA is limited to 255 bytes
     FW_ASSERT(buffer.getSize() <= 255, buffer.getSize());
 
-    // TODO(tumbar) We currently only support 7-bit address mode
+    // We only support 7-bit address mode
     FW_ASSERT((addr & ~0x7F) == 0, addr);
 
     // Send NACK if anyone tries to send data to us
