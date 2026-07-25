@@ -6,6 +6,7 @@ register_fprime_config(
         "${CMAKE_CURRENT_LIST_DIR}/RtcDriverConfig.hpp"
         "${CMAKE_CURRENT_LIST_DIR}/DmaDriverConfig.hpp"
         "${CMAKE_CURRENT_LIST_DIR}/UsartDriverConfig.hpp"
+        "${CMAKE_CURRENT_LIST_DIR}/FramerConfig.hpp"
     INTERFACE
     BASE_CONFIG
 )

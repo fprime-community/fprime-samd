@@ -7,7 +7,7 @@
 #include "fprime-samd/Drv/DmaDriver/DmaChannel.hpp"
 #include <cstring>
 #include "Fw/Types/Assert.hpp"
-#include "config-samd/DmaDriverConfig.hpp"
+#include "samd-config/DmaDriverConfig.hpp"
 #include "sam.h"
 
 namespace Samd21 {
