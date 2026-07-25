@@ -380,7 +380,7 @@ void I2cDriver::configure(SercomKind sercom,
     this->m_configured = true;
 }
 
-void i2cDriverIsrHandler(SercomKind sercom, void* i2cDriverRaw) {
+void I2cDriver::i2cDriverIsrHandler(SercomKind sercom, void* i2cDriverRaw) {
     auto i2cDriver = reinterpret_cast<I2cDriver*>(i2cDriverRaw);
 
     FW_ASSERT(i2cDriver != nullptr);

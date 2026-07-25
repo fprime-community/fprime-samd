@@ -13,8 +13,6 @@
 
 namespace Samd21 {
 
-void i2cDriverIsrHandler(SercomKind, void*);
-
 class I2cDriver final : public I2cDriverComponentBase {
   public:
     // ----------------------------------------------------------------------
@@ -198,8 +196,7 @@ class I2cDriver final : public I2cDriverComponentBase {
     // Helper functions
     // ----------------------------------------------------------------------
 
-    // Allow the isr handler call into a private function in this class
-    friend void Samd21::i2cDriverIsrHandler(SercomKind, void*);
+    static void i2cDriverIsrHandler(SercomKind, void*);
     void isrHandler();
 
     //! Implements the write operation but doesn't handle the state updates
