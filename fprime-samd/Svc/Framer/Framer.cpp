@@ -11,7 +11,7 @@
 #include "Svc/FprimeProtocol/FrameHeaderSerializableAc.hpp"
 #include "Svc/FprimeProtocol/FrameTrailerSerializableAc.hpp"
 #include "Utils/Hash/Hash.hpp"
-#include "config-samd/FramerConfig.hpp"
+#include "samd-config/FramerConfig.hpp"
 
 namespace Samd21 {
 
