@@ -9,7 +9,7 @@
 
 #include "Fw/Com/ComBuffer.hpp"
 #include "fprime-samd/Svc/Framer/FramerComponentAc.hpp"
-#include "config-samd/FramerConfig.hpp"
+#include "samd-config/FramerConfig.hpp"
 
 namespace Samd21 {
 

@@ -8,9 +8,9 @@
 #include "Fw/Types/Assert.hpp"
 #include "Os/RawTime.hpp"
 #include "config/FwAssertArgTypeAliasAc.h"
-#include "config-samd/RtcDriverConfig.hpp"
 #include "fprime-samd/Drv/RtcDriver/RawTime.hpp"
 #include "fprime-samd/Drv/RtcDriver/RtcDriverHardware.hpp"
+#include "samd-config/RtcDriverConfig.hpp"
 
 namespace Os {
 namespace Samd21 {
