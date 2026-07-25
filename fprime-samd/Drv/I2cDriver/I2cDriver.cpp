@@ -159,7 +159,7 @@ void I2cDriver::configure(SercomKind sercom,
     this->m_sercom = sercom;
 
     // Register with the ISR callback table
-    SercomUtil::registerIsrHandler(sercom, i2cDriverIsrHandler, this);
+    SercomUtil::registerIsrHandler(sercom, I2cDriver::i2cDriverIsrHandler, this);
 
     // Get SERCOM hardware register base
     Sercom* sercom_hw = SercomUtil::getHardware(sercom);
