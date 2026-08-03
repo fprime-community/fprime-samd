@@ -5,8 +5,7 @@
 // ======================================================================
 
 #include "fprime-samd/Drv/GpioDriver/GpioDriver.hpp"
-#include "Fw/Types/Assert.hpp"
-#include "samd.h"
+#include "fprime-samd/Drv/GpioDriver/GpioDriverHardware.hpp"
 
 namespace Samd21 {
 
@@ -23,7 +22,7 @@ GpioDriver ::GpioDriver(const char* const compName)
 
 GpioDriver ::~GpioDriver() {}
 
-void GpioDriver ::configure(Group group, Pin pin, Mode mode, bool enable_pull, InputPullMode input_pull_mode) {
+void GpioDriver ::configure(Group group, Pin pin, Mode mode, InputPullMode input_pull_mode) {
     FW_ASSERT(!this->m_configured);
 
     this->m_group = group;
@@ -32,33 +31,7 @@ void GpioDriver ::configure(Group group, Pin pin, Mode mode, bool enable_pull, I
 
     const U8 groupIdx = static_cast<U8>(group);
     const U8 pinIdx = static_cast<U8>(pin);
-    const U32 pinMask = static_cast<U32>(1) << pinIdx;
-
-    PortGroup& portGroup = PORT->Group[groupIdx];
-
-    uint8_t pinCfg = static_cast<uint8_t>(PORT_PINCFG_INEN);
-
-    if (mode == Mode::OUTPUT) {
-        portGroup.PINCFG[pinIdx].reg = pinCfg;
-        portGroup.OUTCLR.reg = pinMask;
-        portGroup.DIRSET.reg = pinMask;
-    } else {
-        // Configure as an input.
-        portGroup.DIRCLR.reg = pinMask;
-
-        if (enable_pull) {
-            // With PULLEN set, the OUT register bit selects the pull direction:
-            // OUT=1 -> pull-up, OUT=0 -> pull-down. Set the direction before
-            // enabling the pull so the pad never briefly pulls the wrong way.
-            if (input_pull_mode == InputPullMode::PULL_UP) {
-                portGroup.OUTSET.reg = pinMask;
-            } else {
-                portGroup.OUTCLR.reg = pinMask;
-            }
-            pinCfg |= static_cast<uint8_t>(PORT_PINCFG_PULLEN);
-        }
-        portGroup.PINCFG[pinIdx].reg = pinCfg;
-    }
+    GpioHardware::GpioHal::configure(groupIdx, pinIdx, mode, input_pull_mode);
 
     this->m_configured = true;
 }
@@ -72,16 +45,11 @@ Drv::GpioStatus GpioDriver ::gpioRead_handler(FwIndexType portNum, Fw::Logic& st
         return Drv::GpioStatus::NOT_OPENED;
     }
 
-    const U32 pinMask = static_cast<U32>(1) << static_cast<U8>(this->m_pin);
-    const PortGroup& portGroup = PORT->Group[static_cast<U8>(this->m_group)];
-    const bool high = (portGroup.IN.reg & pinMask) != 0;
-
-    if (high) {
-        state = Fw::Logic::HIGH;
-    } else {
-        state = Fw::Logic::LOW;
+    if (this->m_mode != Mode::INPUT) {
+        return Drv::GpioStatus::INVALID_MODE;
     }
 
+    state = GpioHardware::GpioHal::read(static_cast<U8>(this->m_group), static_cast<U8>(this->m_pin));
     return Drv::GpioStatus::OP_OK;
 }
 
@@ -94,14 +62,7 @@ Drv::GpioStatus GpioDriver ::gpioWrite_handler(FwIndexType portNum, const Fw::Lo
         return Drv::GpioStatus::INVALID_MODE;
     }
 
-    const U32 pinMask = static_cast<U32>(1) << static_cast<U8>(this->m_pin);
-    PortGroup& portGroup = PORT->Group[static_cast<U8>(this->m_group)];
-    if (state == Fw::Logic::HIGH) {
-        portGroup.OUTSET.reg = pinMask;
-    } else {
-        portGroup.OUTCLR.reg = pinMask;
-    }
-
+    GpioHardware::GpioHal::write(static_cast<U8>(this->m_group), static_cast<U8>(this->m_pin), state);
     return Drv::GpioStatus::OP_OK;
 }
 

@@ -24,11 +24,13 @@ class GpioDriver final : public GpioDriverComponentBase {
     //! Destroy GpioDriver object
     ~GpioDriver();
 
+    //! Pin group
     enum class Group : U8 {
         PA = 0,
         PB = 1,
     };
 
+    //! Pin number in group
     enum class Pin : U8 {
         PIN_0,
         PIN_1,
@@ -64,6 +66,7 @@ class GpioDriver final : public GpioDriverComponentBase {
         PIN_31,
     };
 
+    //! Pin I/O mode
     enum class Mode : U8 {
         INPUT,
         OUTPUT,
@@ -71,12 +74,13 @@ class GpioDriver final : public GpioDriverComponentBase {
 
     //! Selects the pull up/down resistor on an input line
     enum class InputPullMode : U8 {
+        NO_PULL,    //!< The pull up/down resistors are not connected
         PULL_DOWN,  //!< Pull down a floating input line
         PULL_UP,    //!< Pull up a floating input line
     };
 
     //! Configure this component to control a pin in a certain mode
-    void configure(Group group, Pin pin, Mode mode, bool enable_pull, InputPullMode input_pull_mode);
+    void configure(Group group, Pin pin, Mode mode, InputPullMode input_pull_mode);
 
   private:
     // ----------------------------------------------------------------------
@@ -95,9 +99,16 @@ class GpioDriver final : public GpioDriverComponentBase {
     Drv::GpioStatus gpioWrite_handler(FwIndexType portNum,  //!< The port number
                                       const Fw::Logic& state) override;
 
+    //! Flag indicating whether pin has been configured
     bool m_configured;
+
+    //! Pin's input/output mode
     Mode m_mode;
+
+    //! Configured pin group
     Group m_group;
+
+    //! Configured pin number in group
     Pin m_pin;
 };
 
