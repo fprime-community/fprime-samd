@@ -196,7 +196,7 @@ class I2cDriver final : public I2cDriverComponentBase {
     // Helper functions
     // ----------------------------------------------------------------------
 
-    static void i2cDriverIsrHandler(SercomKind, void*);
+    static void s_i2cDriverIsrHandler(Fw::PassiveComponentBase*, SercomKind);
     void isrHandler();
 
     //! Implements the write operation but doesn't handle the state updates

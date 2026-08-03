@@ -7,8 +7,9 @@
 #ifndef Samd21_SercomIsr_HPP
 #define Samd21_SercomIsr_HPP
 
-#include "fprime-samd/Drv/Types/TriggerSourceEnumAc.hpp"
+#include "Fw/Comp/PassiveComponentBase.hpp"
 #include "fprime-samd/Drv/Types/SercomKindEnumAc.hpp"
+#include "fprime-samd/Drv/Types/TriggerSourceEnumAc.hpp"
 
 #ifdef __SAMD21__
 #include "samd.h"
@@ -28,7 +29,9 @@ class SercomUtil {
     //! Register a function handler for the a SERCOM interrupt
     //! Only one handler can be registered per SERCOM device.
     //! If a handler has already been registered, this function will assert.
-    static void registerIsrHandler(SercomKind sercom, void (*callback)(SercomKind, void*), void* data);
+    static void registerIsrHandler(SercomKind sercom,
+                                   void (*callback)(Fw::PassiveComponentBase*, SercomKind),
+                                   Fw::PassiveComponentBase* data);
 
     //! Get the pointer to the base register of this SERCOM device
     static ::Sercom* getHardware(SercomKind sercom);

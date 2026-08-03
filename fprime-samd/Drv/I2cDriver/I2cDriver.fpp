@@ -53,32 +53,36 @@ module Samd21 {
         enum I2cError : U8 {
             @ Automatic length that is used for a DMA transaction and the client sends a NACK
             @ before ADDR.LEN bytes have been written by the host.
-            LengthError,
+            LENGTH_ERROR,
 
             @ Slave SCL low extend time-out occured.
-            SlaveSclExtendTimeout,
+            SLAVE_SCL_EXTEND_TIMEOUT,
 
             @ Master SCL low extend time-out occured.
-            MasterSclExtendTimeout,
+            MASTER_SCL_EXTEND_TIMEOUT,
 
             @ SCL low time-out occured.
-            SclLowTimeout,
+            SCL_LOW_TIMEOUT,
 
             @ Arbitration was lost while transmitting a high data bit or a NACK bit, or while issuing a
             @ Start or Repeated Start condition on the bus. The Host on Bus Interrupt flag (INTFLAG.MB) will be set
             @ when STATUS.ARBLOST is set.
-            ArbitrationLost,
+            ARBITRATION_LOST,
 
             @ This bit indicates that an illegal Bus condition has occurred on the bus, regardless of bus ownership.
             @ An illegal Bus condition is detected if a protocol violating start, repeated start or stop is detected on
             @ the I2C bus lines. A Start condition directly followed by a Stop condition is one example of a protocol
             @ violation. If a time-out occurs during a frame, this is also considered a protocol violation, and will set
             @ BUSERR.
-            BusError
+            BUS_ERROR,
         }
 
         event I2cBusError(sercom: SercomKind, err: I2cError) severity warning low \
             id 0 \
             format "{} I2C Master error: {}"
+
+        telemetry I2cBusErrorFlags: U8
+
+        sync command CLEAR_ERRORS
     }
 }

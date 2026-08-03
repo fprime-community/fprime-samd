@@ -159,7 +159,7 @@ void I2cDriver::configure(SercomKind sercom,
     this->m_sercom = sercom;
 
     // Register with the ISR callback table
-    SercomUtil::registerIsrHandler(sercom, I2cDriver::i2cDriverIsrHandler, this);
+    SercomUtil::registerIsrHandler(sercom, I2cDriver::s_i2cDriverIsrHandler, this);
 
     // Get SERCOM hardware register base
     Sercom* sercom_hw = SercomUtil::getHardware(sercom);
@@ -380,7 +380,7 @@ void I2cDriver::configure(SercomKind sercom,
     this->m_configured = true;
 }
 
-void I2cDriver::i2cDriverIsrHandler(SercomKind sercom, void* i2cDriverRaw) {
+void I2cDriver::s_i2cDriverIsrHandler(Fw::PassiveComponentBase* i2cDriverRaw, SercomKind sercom) {
     auto i2cDriver = reinterpret_cast<I2cDriver*>(i2cDriverRaw);
 
     FW_ASSERT(i2cDriver != nullptr);
@@ -548,12 +548,15 @@ void I2cDriver ::read_handler(FwIndexType portNum, U32 addr, Fw::Buffer& buffer)
     this->readImpl(addr, buffer);
 }
 
+// I2C DMA is limited to 255 bytes
+constexpr U32 SAMD21_I2C_MAX_DMA_PAYLOAD_SIZE = 255;
+
 void I2cDriver::readImpl(U32 addr, Fw::Buffer& buffer) {
     Sercom* sercom_hw = SercomUtil::getHardware(this->m_sercom);
     FW_ASSERT(sercom_hw != nullptr, this->m_sercom);
 
-    // I2C DMA is limited to 255 bytes
-    FW_ASSERT(buffer.getSize() <= 255, buffer.getSize());
+    FW_ASSERT(buffer.getData() != nullptr);
+    FW_ASSERT(buffer.getSize() <= SAMD21_I2C_MAX_DMA_PAYLOAD_SIZE, buffer.getSize());
 
     // We only support 7-bit address mode
     FW_ASSERT((addr & ~0x7F) == 0, addr);
@@ -583,7 +586,8 @@ void I2cDriver::writeImpl(U32 addr, Fw::Buffer& buffer) {
     FW_ASSERT(sercom_hw != nullptr, this->m_sercom);
 
     // I2C DMA is limited to 255 bytes
-    FW_ASSERT(buffer.getSize() <= 255, buffer.getSize());
+    FW_ASSERT(buffer.getData() != nullptr);
+    FW_ASSERT(buffer.getSize() <= SAMD21_I2C_MAX_DMA_PAYLOAD_SIZE, buffer.getSize());
 
     // We only support 7-bit address mode
     FW_ASSERT((addr & ~0x7F) == 0, addr);

@@ -4,22 +4,27 @@
 // \brief  cpp file for SERCOM ISR utilities
 // ======================================================================
 
-#include "fprime-samd/Drv/Types/SercomKindEnumAc.hpp"
+#include "Fw/Comp/PassiveComponentBase.hpp"
 #include "Fw/Types/Assert.hpp"
 #include "fprime-samd/Drv/Types/Sercom.hpp"
+#include "fprime-samd/Drv/Types/SercomKindEnumAc.hpp"
 #include "samd.h"
 
 namespace Samd21 {
 struct SercomCallback {
-    void (*callback)(SercomKind, void*);
-    void* data;
+    void (*callback)(Fw::PassiveComponentBase*, SercomKind);
+    Fw::PassiveComponentBase* data;
 };
 
 static SercomCallback sercomCallbacks[6] = {};
 
-void SercomUtil::registerIsrHandler(SercomKind sercom, void (*callback)(SercomKind, void*), void* data) {
+void SercomUtil::registerIsrHandler(SercomKind sercom,
+                                    void (*callback)(Fw::PassiveComponentBase*, SercomKind),
+                                    Fw::PassiveComponentBase* data) {
     FW_ASSERT(sercom.isValid());
     FW_ASSERT(sercomCallbacks[sercom.e].callback == nullptr);
+    sercomCallbacks[sercom.e].callback = callback;
+    sercomCallbacks[sercom.e].data = data;
 }
 
 Sercom* SercomUtil ::getHardware(SercomKind sercom) {
@@ -51,36 +56,36 @@ Sercom* SercomUtil ::getHardware(SercomKind sercom) {
 
 extern "C" __attribute__((used)) void SERCOM0_Handler(void) {
     if (Samd21::sercomCallbacks[0].callback) {
-        Samd21::sercomCallbacks[0].callback(Samd21::SercomKind::SERCOM_0, Samd21::sercomCallbacks[0].data);
+        Samd21::sercomCallbacks[0].callback(Samd21::sercomCallbacks[0].data, Samd21::SercomKind::SERCOM_0);
     }
 }
 
 extern "C" __attribute__((used)) void SERCOM1_Handler(void) {
     if (Samd21::sercomCallbacks[1].callback) {
-        Samd21::sercomCallbacks[1].callback(Samd21::SercomKind::SERCOM_1, Samd21::sercomCallbacks[1].data);
+        Samd21::sercomCallbacks[1].callback(Samd21::sercomCallbacks[1].data, Samd21::SercomKind::SERCOM_1);
     }
 }
 
 extern "C" __attribute__((used)) void SERCOM2_Handler(void) {
     if (Samd21::sercomCallbacks[2].callback) {
-        Samd21::sercomCallbacks[2].callback(Samd21::SercomKind::SERCOM_2, Samd21::sercomCallbacks[2].data);
+        Samd21::sercomCallbacks[2].callback(Samd21::sercomCallbacks[2].data, Samd21::SercomKind::SERCOM_2);
     }
 }
 
 extern "C" __attribute__((used)) void SERCOM3_Handler(void) {
     if (Samd21::sercomCallbacks[3].callback) {
-        Samd21::sercomCallbacks[3].callback(Samd21::SercomKind::SERCOM_3, Samd21::sercomCallbacks[3].data);
+        Samd21::sercomCallbacks[3].callback(Samd21::sercomCallbacks[3].data, Samd21::SercomKind::SERCOM_3);
     }
 }
 
 extern "C" __attribute__((used)) void SERCOM4_Handler(void) {
     if (Samd21::sercomCallbacks[4].callback) {
-        Samd21::sercomCallbacks[4].callback(Samd21::SercomKind::SERCOM_4, Samd21::sercomCallbacks[4].data);
+        Samd21::sercomCallbacks[4].callback(Samd21::sercomCallbacks[4].data, Samd21::SercomKind::SERCOM_4);
     }
 }
 
 extern "C" __attribute__((used)) void SERCOM5_Handler(void) {
     if (Samd21::sercomCallbacks[5].callback) {
-        Samd21::sercomCallbacks[5].callback(Samd21::SercomKind::SERCOM_5, Samd21::sercomCallbacks[5].data);
+        Samd21::sercomCallbacks[5].callback(Samd21::sercomCallbacks[5].data, Samd21::SercomKind::SERCOM_5);
     }
 }
