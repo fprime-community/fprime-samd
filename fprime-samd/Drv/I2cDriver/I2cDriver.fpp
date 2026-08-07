@@ -5,31 +5,41 @@ module Samd21 {
         # ----------------------------------------------------------------------
 
         @ Port for asynchronous write transaction
-        sync input port write: Drv.I2cRequest
+        sync input port write: [2] Drv.I2cRequest
 
         @ Port for asynchronous read transaction
-        sync input port read: Drv.I2cRequest
+        sync input port read: [2] Drv.I2cRequest
 
         @ Port for asynchronous write-read transaction
-        sync input port writeRead: Drv.I2cWriteReadRequest
+        sync input port writeRead: [2] Drv.I2cWriteReadRequest
 
         ###### Ports below must be connected if buffers are being passed to/from i2c drv ######
 
         @ Port invoked when write transaction completes
-        output port writeComplete: Drv.I2cCallback
+        output port writeComplete: [2] Drv.I2cCallback
 
         @ Port invoked when read transaction completes
-        output port readComplete: Drv.I2cCallback
+        output port readComplete: [2] Drv.I2cCallback
 
         @ Port invoked when write-read transaction completes
-        output port writeReadComplete: Drv.I2cWriteReadCallback
+        output port writeReadComplete: [2] Drv.I2cWriteReadCallback
     }
 
     @ Driver for the SAMD21 I2C Peripheral
     passive component I2cDriver {
+        @ An enum for selecting the two DMA channels on the USART
+        enum DmaChannel: U8 {
+            WRITE @< DMA channel for write transactions
+            READ  @< DMA channel for read transactions
+            N
+        }
 
-        @ Note: All complete replies come back either on the SERCOM ISR Handler for 
+        @ Note: All complete replies come back either on the SERCOM ISR Handler for
         import AsyncSyncI2c
+
+        match writeComplete with write
+        match readComplete with read
+        match writeReadComplete with writeRead
 
         ###############################################################################
         # Standard AC Ports: Required for Channels, Events, Commands, and Parameters  #
@@ -40,49 +50,120 @@ module Samd21 {
         @ Enables event handling
         import Fw.Event
 
+        @ Enables telemetry handling
+        import Fw.Channel
+
+        @ Enables command handling
+        import Fw.Command
+
+        @ Port for periodically writing telemetry
+        sync input port reportTelemetryIn: Svc.Sched
+
         @ Port to send a DMA transaction to the DMA driver
-        output port dmaTransactionOut: Dma.Transaction
+        output port dmaTransactionOut: [DmaChannel.N] Dma.Transaction
 
         @ Port to abort DMA transactions on a specific DMA channel
-        output port dmaTransactionAbortOut: Fw.Signal
+        output port dmaTransactionAbortOut: [DmaChannel.N] Fw.Signal
 
         @ A signal from the DMAC that a request has finished.
         @ This signal comes inside an ISR!
-        sync input port dmaReplyIn: Dma.TransactionReply
+        sync input port dmaReplyIn: [DmaChannel.N] Dma.TransactionReply
 
-        enum I2cError : U8 {
+        enum I2cError: U8 {
             @ Automatic length that is used for a DMA transaction and the client sends a NACK
             @ before ADDR.LEN bytes have been written by the host.
-            LENGTH_ERROR,
+            LENGTH_ERROR
 
             @ Slave SCL low extend time-out occured.
-            SLAVE_SCL_EXTEND_TIMEOUT,
+            SLAVE_SCL_EXTEND_TIMEOUT
 
             @ Master SCL low extend time-out occured.
-            MASTER_SCL_EXTEND_TIMEOUT,
+            MASTER_SCL_EXTEND_TIMEOUT
 
             @ SCL low time-out occured.
-            SCL_LOW_TIMEOUT,
+            SCL_LOW_TIMEOUT
 
             @ Arbitration was lost while transmitting a high data bit or a NACK bit, or while issuing a
             @ Start or Repeated Start condition on the bus. The Host on Bus Interrupt flag (INTFLAG.MB) will be set
             @ when STATUS.ARBLOST is set.
-            ARBITRATION_LOST,
+            ARBITRATION_LOST
 
             @ This bit indicates that an illegal Bus condition has occurred on the bus, regardless of bus ownership.
             @ An illegal Bus condition is detected if a protocol violating start, repeated start or stop is detected on
             @ the I2C bus lines. A Start condition directly followed by a Stop condition is one example of a protocol
             @ violation. If a time-out occurs during a frame, this is also considered a protocol violation, and will set
             @ BUSERR.
-            BUS_ERROR,
+            BUS_ERROR
         }
 
-        event I2cBusError(sercom: SercomKind, err: I2cError) severity warning low \
+        event I2cBusError(sercom: SercomKind, err: I2cError) \
+            severity warning low \
             id 0 \
             format "{} I2C Master error: {}"
 
-        telemetry I2cBusErrorFlags: U8
+        enum I2CTransactionKind: U8 {
+            READ
+            WRITE
+        }
 
-        sync command CLEAR_ERRORS
+        event Transaction(
+            sercom: SercomKind
+            kind: I2CTransactionKind
+            addr: U8
+        ) \
+            severity activity low \
+            id 1 \
+            format "SERCOM {} I2C transaction {} on address: {}"
+
+        enum I2CInterrupt: U8 {
+            MASTER_ON_BUS
+            BUS_ERROR
+        }
+
+        event UnexpectedInterrupt(sercom: SercomKind, err: I2CInterrupt) \
+            severity warning high \
+            id 2 \
+            format "I2C {} raised a {} interrupt in an expected IDLE state"
+
+        event InvalidDmaReply(
+            sercom: SercomKind
+            $channel: DmaChannel
+            expected: DmaChannel
+        ) \
+            severity warning high \
+            id 3 \
+            format "I2C {} got a DMA reply from {} while expecting a reply from {}"
+
+        @ Indicates the number of errors reported by this I2C peripheral
+        telemetry I2cBusErrorFlags: U32 id 0
+
+        enum I2cBusState: U8 {
+            UNKNOWN = 0
+            IDLE    = 1
+            OWNER   = 2
+            BUSY    = 3
+        } default UNKNOWN
+
+        @ Current I2c bus state
+        telemetry BusState: I2cBusState id 1
+
+        @ Is the host holding the SCL waiting on the software/DMA
+        telemetry ClockHold: bool id 2
+
+        @ Did the client ACK the read address or NACK?
+        telemetry ReceiveNotAcknowledged: bool id 3
+
+        enum DeviceOnBusFlag: U8 {
+            NONE
+            MASTER_ON_BUS
+            SLAVE_ON_BUS
+            MASTER_AND_SLAVE_ON_BUS
+        }
+
+        @ I2C Bus interrupt bit flags
+        telemetry DeviceOnBus: DeviceOnBusFlag id 4
+
+        @ Clear the [I2cBusErrorFlags] channel
+        sync command CLEAR_ERRORS opcode 0
     }
 }

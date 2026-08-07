@@ -142,6 +142,13 @@ class I2cDriver final : public I2cDriverComponentBase {
                       Fw::Buffer& buffer    //!< Buffer with data to write or space for read data
                       ) override;
 
+    //! Handler implementation for reportTelemetryIn
+    //!
+    //! Port for periodically writing telemetry
+    void reportTelemetryIn_handler(FwIndexType portNum,  //!< The port number
+                                   U32 context           //!< The call order
+                                   ) override;
+
     //! Handler implementation for write
     //!
     //! Port for asynchronous write transaction
@@ -159,6 +166,19 @@ class I2cDriver final : public I2cDriverComponentBase {
                            Fw::Buffer& readBuffer    //!< Buffer to read into
                            ) override;
 
+  private:
+    // ----------------------------------------------------------------------
+    // Command handler implementations
+    // ----------------------------------------------------------------------
+
+    //! Handler for command CLEAR_ERRORS
+    //!
+    //! Clear the [I2cBusErrorFlags] channel
+    void CLEAR_ERRORS_cmdHandler(FwOpcodeType opCode,  //!< The opcode
+                                 U32 cmdSeq            //!< The command sequence number
+                                 ) override;
+
+  private:
     // ----------------------------------------------------------------------
     // Member variables
     // ----------------------------------------------------------------------
@@ -175,12 +195,14 @@ class I2cDriver final : public I2cDriverComponentBase {
         READ,
         WRITE,
         WRITE_READ_WRITING,
+        WRITE_READ_WRITING_WAIT,
         WRITE_READ_READING,
     };
 
     //! Current peripheral state/executing transaction
     State m_state;
 
+    //! Currently pending port number to reply to
     FwIndexType m_portNum;
 
     //! Current/pending read buffer
@@ -192,6 +214,9 @@ class I2cDriver final : public I2cDriverComponentBase {
     //! Current/finished write buffer
     Samd21::ThinBuffer m_write;
 
+    //! Number of errors that occured on this device, emitted as telemetry
+    U32 m_tlmErrors;
+
     // ----------------------------------------------------------------------
     // Helper functions
     // ----------------------------------------------------------------------
@@ -200,10 +225,18 @@ class I2cDriver final : public I2cDriverComponentBase {
     void isrHandler();
 
     //! Implements the write operation but doesn't handle the state updates
-    void writeImpl(U32 addr, Fw::Buffer& buffer);
+    void writeImpl(U32 addr, Fw::Buffer& buffer, bool generateStopCondition, bool queueReadDma);
 
     //! Implements the read operation but doesn't handle the state updates
-    void readImpl(U32 addr, Fw::Buffer& buffer);
+    void readImpl(U32 addr, Fw::Buffer& buffer, bool queueDma);
+
+    //! Queues a DMA transaction for reading from the I2C peripheral
+    //! m_read must be populated
+    void queueReadDma();
+
+    //! Queued a DMA transaction for writing to the I2C peripheral
+    //! m_write must be populated
+    void queueWriteDma();
 };
 
 }  // namespace Samd21
