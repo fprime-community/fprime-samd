@@ -7,123 +7,12 @@
 #include "fprime-samd/Drv/I2cDriver/I2cDriver.hpp"
 #include "Fw/Types/Assert.hpp"
 #include "config/FwAssertArgTypeAliasAc.h"
+#include "fprime-samd/Drv/I2cDriver/I2cDriverHardware.hpp"
 #include "fprime-samd/Drv/Types/Sercom.hpp"
 #include "fprime-samd/Drv/Types/StatusEnumAc.hpp"
 #include "fprime-samd/Drv/Types/ThinBuffer.hpp"
 
 namespace Samd21 {
-
-// Bound hardware synchronization waits to ~1s (F_CPU cycles), matching the
-// pattern used in RtcDriver/DmaDriver/UsartDriver. A stuck sync flag asserts
-// rather than hanging the CPU forever.
-static void waitForGclkSync() {
-    volatile U32 limit = F_CPU;
-    while (limit > 0 && GCLK->STATUS.bit.SYNCBUSY) {
-        limit--;
-    }
-
-    // Check if we timed out
-    FW_ASSERT(limit != 0);
-}
-
-static void waitForI2cSync(Sercom* sercom_hw, U32 mask) {
-    volatile U32 limit = F_CPU;
-    while (limit > 0 && (sercom_hw->I2CM.SYNCBUSY.reg & mask)) {
-        limit--;
-    }
-
-    // Check if we timed out
-    FW_ASSERT(limit != 0);
-}
-
-//! Map the target SCL Frequency to the CTRLA.SPEED transfer-mode field.
-//!
-//! CTRLA.SPEED only selects the electrical/protocol timing mode; the actual
-//! SCL rate comes from the BAUD register. See §29.10.1 (CTRLA.SPEED).
-static U8 speedFieldFor(I2cDriver::Frequency frequency) {
-    switch (frequency) {
-        case I2cDriver::Frequency::STANDARD_100KHZ:
-        case I2cDriver::Frequency::FAST_400KHZ:
-            return 0x0;  // Sm/Fm up to 400 kHz
-        case I2cDriver::Frequency::FAST_PLUS_1MHZ:
-            return 0x1;  // Fm+ up to 1 MHz
-        case I2cDriver::Frequency::HIGH_SPEED_3400KHZ:
-            return 0x2;  // Hs up to 3.4 MHz
-        default:
-            FW_ASSERT(false, static_cast<FwAssertArgType>(frequency));
-            return 0x0;
-    }
-}
-
-//! Compute the BAUD register value for Sm/Fm/Fm+ modes.
-//!
-//! From §29.6.2.4.1, with BAUD.BAUDLOW = 0 the BAUD field times both the SCL
-//! high and low periods:
-//!
-//!     fSCL = fGCLK / (10 + 2*BAUD + fGCLK*Trise)
-//!
-//! Solving for BAUD and assuming Trise = 0 (conservative -- ignoring rise time
-//! only makes the divisor smaller, i.e. the computed BAUD larger, so the real
-//! SCL comes out slightly SLOWER than target and never overclocks the bus):
-//!
-//!     BAUD = (fGCLK / (2*fSCL)) - 5
-//!
-//! The result is clamped to the 8-bit BAUD field.
-static U8 calculateBaud(I2cDriver::Frequency frequency) {
-    const U32 f_gclk = F_CPU;
-    const U32 f_scl = static_cast<U32>(frequency);
-
-    // BAUD = fGCLK / (2*fSCL) - 5
-    const U32 half = f_gclk / (2 * f_scl);
-    // Guard against the subtraction underflowing for very slow GCLK / fast SCL
-    FW_ASSERT(half > 5, half);
-    const U32 baud = half - 5;
-
-    // BAUD is an 8-bit field
-    FW_ASSERT(baud <= 255, baud);
-    return static_cast<U8>(baud);
-}
-
-//! Compute the HSBAUD register value for High-speed mode.
-//!
-//! From §29.6.2.4.1, with HSBAUDLOW = 0:
-//!
-//!     fSCL = fGCLK / (2 + 2*HSBAUD)   =>   HSBAUD = fGCLK/(2*fSCL) - 1
-static U8 calculateHsBaud(I2cDriver::Frequency frequency) {
-    const U32 f_gclk = F_CPU;
-    const U32 f_scl = static_cast<U32>(frequency);
-
-    const U32 half = f_gclk / (2 * f_scl);
-    FW_ASSERT(half > 1, half);
-    const U32 hsbaud = half - 1;
-
-    FW_ASSERT(hsbaud <= 255, hsbaud);
-    return static_cast<U8>(hsbaud);
-}
-
-static ::IRQn_Type getSercomIrq(SercomKind sercom) {
-    switch (sercom) {
-        case SercomKind::SERCOM_0:
-            return IRQn_Type::SERCOM0_IRQn;
-        case SercomKind::SERCOM_1:
-            return IRQn_Type::SERCOM1_IRQn;
-        case SercomKind::SERCOM_2:
-            return IRQn_Type::SERCOM2_IRQn;
-        case SercomKind::SERCOM_3:
-            return IRQn_Type::SERCOM3_IRQn;
-#ifdef SERCOM4
-        case SercomKind::SERCOM_4:
-            return IRQn_Type::SERCOM4_IRQn;
-#endif
-#ifdef SERCOM5
-        case SercomKind::SERCOM_5:
-            return IRQn_Type::SERCOM5_IRQn;
-#endif
-        default:
-            FW_ASSERT(false, sercom.e);
-            return IRQn_Type::SERCOM0_IRQn;
-    }
-}
 
 // ----------------------------------------------------------------------
 // Component construction and destruction
@@ -159,235 +48,11 @@ void I2cDriver::configure(SercomKind sercom,
     this->m_sercom = sercom;
 
     // Register with the ISR callback table
-    SercomUtil::registerIsrHandler(sercom, I2cDriver::s_i2cDriverIsrHandler, this);
+    I2cHardware::I2cHal::registerIsr(sercom, I2cDriver::s_i2cDriverIsrHandler, this);
 
-    // Get SERCOM hardware register base
-    Sercom* sercom_hw = SercomUtil::getHardware(sercom);
-    FW_ASSERT(sercom_hw != nullptr, sercom);
-
-    // Enable SERCOM peripheral clock (APBC bus)
-    // Per §8.6 PM – Power Manager and datasheet Table 14-2
-    switch (sercom.e) {
-        case SercomKind::SERCOM_0:
-            PM->APBCMASK.reg |= PM_APBCMASK_SERCOM0;
-            break;
-        case SercomKind::SERCOM_1:
-            PM->APBCMASK.reg |= PM_APBCMASK_SERCOM1;
-            break;
-        case SercomKind::SERCOM_2:
-            PM->APBCMASK.reg |= PM_APBCMASK_SERCOM2;
-            break;
-        case SercomKind::SERCOM_3:
-            PM->APBCMASK.reg |= PM_APBCMASK_SERCOM3;
-            break;
-#ifdef SERCOM4
-        case SercomKind::SERCOM_4:
-            PM->APBCMASK.reg |= PM_APBCMASK_SERCOM4;
-            break;
-#endif
-#ifdef SERCOM5
-        case SercomKind::SERCOM_5:
-            PM->APBCMASK.reg |= PM_APBCMASK_SERCOM5;
-            break;
-#endif
-        default:
-            FW_ASSERT(false, static_cast<FwAssertArgType>(sercom));
-    }
-
-    waitForGclkSync();
-
-    // Assign a 32kHz generator to the shared SERCOMx_SLOW clock. This clock drives
-    // the SMBus SCL-low / bus-inactive / SCL-extend time-out counters (§28.6.3.1:
-    // "These time-outs are driven by the GCLK_SERCOM_SLOW clock ... must be
-    // configured to use a 32KHz oscillator"). Without it, every time-out we enable
-    // in CTRLA is dead -- including the SCL-low time-out that is supposed to auto-
-    // recover a bus a client is holding low, so a stuck bus would hang forever.
-    //
-    // SERCOMX_SLOW is a SINGLE clock shared by all SERCOM instances, so this is set
-    // once for the whole peripheral (writing it again per-instance is harmless).
-    GCLK->CLKCTRL.reg = GCLK_CLKCTRL_ID_SERCOMX_SLOW | GCLK_CLKCTRL_GEN_GCLK1 | GCLK_CLKCTRL_CLKEN;
-    waitForGclkSync();
-
-    // Assign Generic Clock Generator 0 (48MHz) to the SERCOM core clock.
-    // GCLK_SERCOMx_CORE clocks the I2C host baud-rate generator (§29.5.3).
-    // Per §14.8.3 GCLK_CLKCTRL – Generic Clock Control
-    U8 gclk_id = static_cast<U8>(GCLK_CLKCTRL_ID_SERCOM0_CORE_Val) + sercom.e;
-    GCLK->CLKCTRL.reg = GCLK_CLKCTRL_ID(gclk_id) |
-                        GCLK_CLKCTRL_GEN_GCLK0 |  // Use Generic Clock Generator 0 (48MHz main clock)
-                        GCLK_CLKCTRL_CLKEN;
-    waitForGclkSync();
-
-    // Build CTRLA and CTRLB registers per §29.6.2.1 initialization sequence.
-    // These registers are enable-protected: they can only be written while
-    // CTRLA.ENABLE=0.
-    SERCOM_I2CM_CTRLA_Type ctrla = {.reg = 0};
-    SERCOM_I2CM_CTRLB_Type ctrlb = {.reg = 0};
-
-    // Step 1: Select I2C Host (master) operating mode (CTRLA.MODE = 0x5)
-    ctrla.bit.MODE = SERCOM_I2CM_CTRLA_MODE_I2C_MASTER_Val;
-
-    // Step 2: SDA hold time (CTRLA.SDAHOLD)
-    switch (sda_hold) {
-        case I2cDriver::SdaHold::DISABLED:
-            ctrla.bit.SDAHOLD = 0x0;
-            break;
-        case I2cDriver::SdaHold::HOLD_75_NS:
-            ctrla.bit.SDAHOLD = 0x1;
-            break;
-        case I2cDriver::SdaHold::HOLD_450_NS:
-            ctrla.bit.SDAHOLD = 0x2;
-            break;
-        case I2cDriver::SdaHold::HOLD_600_NS:
-            ctrla.bit.SDAHOLD = 0x3;
-            break;
-        default:
-            FW_ASSERT(false, static_cast<FwAssertArgType>(sda_hold));
-    }
-
-    // Step 4: SCL low time-out (CTRLA.LOWTOUTEN)
-    switch (scl_low_timeout) {
-        case I2cDriver::SclLowTimeout::DISABLED:
-            ctrla.bit.LOWTOUTEN = 0;
-            break;
-        case I2cDriver::SclLowTimeout::ENABLED:
-            ctrla.bit.LOWTOUTEN = 1;
-            break;
-        default:
-            FW_ASSERT(false, static_cast<FwAssertArgType>(scl_low_timeout));
-    }
-
-    // Step 5a (Host mode): Inactive bus time-out (CTRLA.INACTOUT)
-    switch (inactive_timeout) {
-        case I2cDriver::InactiveTimeout::DISABLED:
-            ctrla.bit.INACTOUT = 0x0;
-            break;
-        case I2cDriver::InactiveTimeout::TIMEOUT_55_US:
-            ctrla.bit.INACTOUT = 0x1;
-            break;
-        case I2cDriver::InactiveTimeout::TIMEOUT_105_US:
-            ctrla.bit.INACTOUT = 0x2;
-            break;
-        case I2cDriver::InactiveTimeout::TIMEOUT_205_US:
-            ctrla.bit.INACTOUT = 0x3;
-            break;
-        default:
-            FW_ASSERT(false, static_cast<FwAssertArgType>(inactive_timeout));
-    }
-
-    // Transfer speed / clock-stretch mode (CTRLA.SPEED, CTRLA.SCLSM).
-    // High-speed mode requires CTRLA.SCLSM=1 (§29.6.2.4, Note).
-    const U8 speed_field = speedFieldFor(frequency);
-    ctrla.bit.SPEED = speed_field;
-
-    switch (clock_stretch_mode) {
-        case I2cDriver::ClockStretchMode::ALWAYS:
-            ctrla.bit.SCLSM = 0;
-            break;
-        case I2cDriver::ClockStretchMode::AFTER_ACK:
-            ctrla.bit.SCLSM = 1;
-            break;
-        default:
-            FW_ASSERT(false, static_cast<FwAssertArgType>(clock_stretch_mode));
-    }
-
-    if (frequency == I2cDriver::Frequency::HIGH_SPEED_3400KHZ) {
-        // Hs mode mandates SCL stretch only after ACK regardless of request.
-        ctrla.bit.SCLSM = 1;
-    }
-
-    // Client/Host SCL low extend time-outs (CTRLA.SEXTTOEN / CTRLA.MEXTTOEN)
-    switch (client_scl_low_timeout) {
-        case I2cDriver::ClientSclLowTimeout::DISABLED:
-            ctrla.bit.SEXTTOEN = 0;
-            break;
-        case I2cDriver::ClientSclLowTimeout::ENABLED:
-            ctrla.bit.SEXTTOEN = 1;
-            break;
-        default:
-            FW_ASSERT(false, static_cast<FwAssertArgType>(client_scl_low_timeout));
-    }
-
-    switch (host_scl_low_timeout) {
-        case I2cDriver::HostSclLowTimeout::DISABLED:
-            ctrla.bit.MEXTTOEN = 0;
-            break;
-        case I2cDriver::HostSclLowTimeout::ENABLED:
-            ctrla.bit.MEXTTOEN = 1;
-            break;
-        default:
-            FW_ASSERT(false, static_cast<FwAssertArgType>(host_scl_low_timeout));
-    }
-
-    // Pin usage: two- or four-wire operation (CTRLA.PINOUT)
-    switch (pin_usage) {
-        case I2cDriver::PinUsage::TWO_WIRE:
-            ctrla.bit.PINOUT = 0;
-            break;
-        case I2cDriver::PinUsage::FOUR_WIRE:
-            ctrla.bit.PINOUT = 1;
-            break;
-        default:
-            FW_ASSERT(false, static_cast<FwAssertArgType>(pin_usage));
-    }
-
-    // Run in standby (CTRLA.RUNSTDBY)
-    switch (run_in_standby) {
-        case I2cDriver::RunInStandby::DISABLED:
-            ctrla.bit.RUNSTDBY = 0;
-            break;
-        case I2cDriver::RunInStandby::ENABLED:
-            ctrla.bit.RUNSTDBY = 1;
-            break;
-        default:
-            FW_ASSERT(false, static_cast<FwAssertArgType>(run_in_standby));
-    }
-
-    // CTRLB: enable smart mode so the host auto-ACKs during reads (§29.6.2.4).
-    ctrlb.bit.SMEN = 1;
-
-    // §29.6.2.1 Initialization: enable-protected registers require ENABLE=0.
-
-    // Reset the peripheral to a known state before configuring.
-    sercom_hw->I2CM.CTRLA.bit.ENABLE = 0;
-    waitForI2cSync(sercom_hw, SERCOM_I2CM_SYNCBUSY_ENABLE);
-
-    sercom_hw->I2CM.CTRLA.reg |= SERCOM_I2CM_CTRLA_SWRST;
-    waitForI2cSync(sercom_hw, SERCOM_I2CM_SYNCBUSY_SWRST);
-
-    // Write CTRLA (mode, timeouts, speed, pinout, sda hold, standby)
-    sercom_hw->I2CM.CTRLA.reg = ctrla.reg;
-
-    // Write CTRLB (smart mode). ACKACT/CMD are not enable-protected.
-    sercom_hw->I2CM.CTRLB.reg = ctrlb.reg;
-    waitForI2cSync(sercom_hw, SERCOM_I2CM_SYNCBUSY_SYSOP);
-
-    // Step 5b (Host mode): program the baud rate to generate the target SCL.
-    if (frequency == I2cDriver::Frequency::HIGH_SPEED_3400KHZ) {
-        // Hs uses the HSBAUD field; leave BAUD/BAUDLOW for the Fs (arbitration)
-        // phase and HSBAUDLOW=0 so HSBAUD times both high and low.
-        sercom_hw->I2CM.BAUD.reg = SERCOM_I2CM_BAUD_HSBAUD(calculateHsBaud(frequency));
-    } else {
-        // Sm/Fm/Fm+: BAUDLOW=0 so BAUD times both high and low periods.
-        sercom_hw->I2CM.BAUD.reg = SERCOM_I2CM_BAUD_BAUD(calculateBaud(frequency));
-    }
-
-    // Enable only the ERROR interrupt for this sercom device
-    sercom_hw->I2CM.INTENSET.reg = SERCOM_I2CM_INTENSET_ERROR;
-
-    // Enable I2C interrupt at lowest priority
-    static constexpr U32 LOWEST_PRIORITY = (1U << __NVIC_PRIO_BITS) - 1;
-    auto irqn = getSercomIrq(sercom);
-    NVIC_EnableIRQ(irqn);
-    NVIC_SetPriority(irqn, LOWEST_PRIORITY);
-
-    // Enable the peripheral.
-    sercom_hw->I2CM.CTRLA.reg |= SERCOM_I2CM_CTRLA_ENABLE;
-    waitForI2cSync(sercom_hw, SERCOM_I2CM_SYNCBUSY_ENABLE);
-
-    // After enable the bus state is UNKNOWN (0b00). Force it to IDLE (0b01) so
-    // the host is ready to start a transaction (§29.6.2.3).
-    sercom_hw->I2CM.STATUS.bit.BUSSTATE = 0x1;
-    waitForI2cSync(sercom_hw, SERCOM_I2CM_SYNCBUSY_SYSOP);
+    // Configure and enable the SERCOM I2C host peripheral.
+    I2cHardware::I2cHal::configure(sercom, scl_low_timeout, inactive_timeout, clock_stretch_mode, frequency,
+                                   client_scl_low_timeout, host_scl_low_timeout, sda_hold, pin_usage, run_in_standby);
 
     this->m_configured = true;
 }
@@ -401,62 +66,50 @@ void I2cDriver::s_i2cDriverIsrHandler(Fw::PassiveComponentBase* i2cDriverRaw, Se
 }
 
 void I2cDriver ::isrHandler() {
-    auto sercom_hw = SercomUtil::getHardware(this->m_sercom);
-
     // There are two interrupt sources:
     // 1. Errors on the I2C bus
     // 2. Post-Tx ACK from the slave during a writeRead
     //
     // We need to handle both cases in the same handler
+    const I2cHardware::I2cInterruptStatus status = I2cHardware::I2cHal::readInterruptStatus(this->m_sercom);
 
-    if (sercom_hw->I2CM.INTFLAG.reg & SERCOM_I2CM_INTFLAG_ERROR) {
+    if (status.error) {
         // The interrupt source was an error
         // The other interrupt source _could_ still be set but we should ack it and ignore it
 
-        if (sercom_hw->I2CM.INTFLAG.reg & SERCOM_I2CM_INTFLAG_MB) {
-            // Acknowledge the master on bus
-            sercom_hw->I2CM.INTFLAG.bit.MB = 1;
-        }
-
-        // Look up the error
-        if (sercom_hw->I2CM.STATUS.bit.BUSERR) {
+        // Look up the error(s)
+        if (status.busError) {
             this->m_tlmErrors++;
             this->log_WARNING_LO_I2cBusError(this->m_sercom, Samd21::I2cDriver_I2cError::BUS_ERROR);
-            sercom_hw->I2CM.STATUS.bit.BUSERR = 1;  // ack the error
         }
 
-        if (sercom_hw->I2CM.STATUS.bit.ARBLOST) {
+        if (status.arbLost) {
             this->m_tlmErrors++;
             this->log_WARNING_LO_I2cBusError(this->m_sercom, Samd21::I2cDriver_I2cError::ARBITRATION_LOST);
-            sercom_hw->I2CM.STATUS.bit.ARBLOST = 1;  // ack the error
         }
 
-        if (sercom_hw->I2CM.STATUS.bit.LOWTOUT) {
+        if (status.lowTimeout) {
             this->m_tlmErrors++;
             this->log_WARNING_LO_I2cBusError(this->m_sercom, Samd21::I2cDriver_I2cError::SCL_LOW_TIMEOUT);
-            sercom_hw->I2CM.STATUS.bit.LOWTOUT = 1;  // ack the error
         }
 
-        if (sercom_hw->I2CM.STATUS.bit.MEXTTOUT) {
+        if (status.masterExtTimeout) {
             this->m_tlmErrors++;
             this->log_WARNING_LO_I2cBusError(this->m_sercom, Samd21::I2cDriver_I2cError::MASTER_SCL_EXTEND_TIMEOUT);
-            sercom_hw->I2CM.STATUS.bit.MEXTTOUT = 1;  // ack the error
         }
 
-        if (sercom_hw->I2CM.STATUS.bit.SEXTTOUT) {
+        if (status.slaveExtTimeout) {
             this->m_tlmErrors++;
             this->log_WARNING_LO_I2cBusError(this->m_sercom, Samd21::I2cDriver_I2cError::SLAVE_SCL_EXTEND_TIMEOUT);
-            sercom_hw->I2CM.STATUS.bit.SEXTTOUT = 1;  // ack the error
         }
 
-        if (sercom_hw->I2CM.STATUS.bit.LENERR) {
+        if (status.lengthError) {
             this->m_tlmErrors++;
             this->log_WARNING_LO_I2cBusError(this->m_sercom, Samd21::I2cDriver_I2cError::LENGTH_ERROR);
-            sercom_hw->I2CM.STATUS.bit.LENERR = 1;  // ack the error
         }
 
-        // Acknowledge the error flag
-        sercom_hw->I2CM.INTFLAG.bit.ERROR = 1;
+        // Acknowledge the master-on-bus flag (if set) and all error flags.
+        I2cHardware::I2cHal::acknowledgeErrors(this->m_sercom);
 
         // Handle the error
         switch (this->m_state) {
@@ -513,17 +166,33 @@ void I2cDriver ::isrHandler() {
         }
     } else {
         // The only other interrupt source should be master on bus
-        FW_ASSERT(sercom_hw->I2CM.INTFLAG.reg & SERCOM_I2CM_INTFLAG_MB,
-                  static_cast<FwAssertArgType>(sercom_hw->I2CM.INTFLAG.reg));
+        FW_ASSERT(status.masterOnBus, static_cast<FwAssertArgType>(this->m_state));
 
         // Ack the interrupt
-        sercom_hw->I2CM.INTFLAG.bit.MB = 1;
+        I2cHardware::I2cHal::acknowledgeMasterOnBus(this->m_sercom);
 
         switch (this->m_state) {
             case State::WRITE_READ_WRITING_WAIT: {
                 // We have finished transfering the Tx bytes via DMA and the i2c peripheral
                 // entered a MASTER_ON_BUS mode where it is ready to read from the slave.
-                sercom_hw->I2CM.INTENCLR.bit.MB = 1;
+                // Either way the master-on-bus interrupt has served its purpose.
+                I2cHardware::I2cHal::disableMasterOnBusInterrupt(this->m_sercom);
+
+                // The write phase of the write-read uses LENEN=0, so a client NACK of
+                // the address or register-pointer byte does not raise LENERR/ERROR. Check
+                // RXNACK here: if the client did not ACK, the write half failed, so abort
+                // the pre-armed read DMA and report the write-read as a write error rather
+                // than issuing a repeated START into a device that never accepted the pointer.
+                if (status.rxNack) {
+                    auto w_buf = this->m_write.getBuffer();
+                    auto r_buf = this->m_read.getBuffer();
+                    this->m_state = State::IDLE;
+                    this->dmaTransactionAbortOut_out(I2cDriver_DmaChannel::READ);
+                    if (this->isConnected_writeReadComplete_OutputPort(0)) {
+                        this->writeReadComplete_out(this->m_portNum, w_buf, r_buf, Drv::I2cStatus::I2C_WRITE_ERR);
+                    }
+                    break;
+                }
 
                 // The write of the write/read chain finished
                 // Proceed to read.
@@ -637,9 +306,7 @@ void I2cDriver ::dmaReplyIn_handler(FwIndexType portNum, const Samd21::Dma::Repl
 
             // Enable the master on bus interrupt which should trigger once the I2C
             // master is ready to begin the read operation during the clock hold.
-            Sercom* sercom_hw = SercomUtil::getHardware(this->m_sercom);
-            FW_ASSERT(sercom_hw != nullptr, this->m_sercom);
-            sercom_hw->I2CM.INTENSET.bit.MB = 1;
+            I2cHardware::I2cHal::enableMasterOnBusInterrupt(this->m_sercom);
             break;
         }
         case State::WRITE_READ_READING: {
@@ -675,19 +342,13 @@ void I2cDriver ::read_handler(FwIndexType portNum, U32 addr, Fw::Buffer& buffer)
 
 void I2cDriver ::reportTelemetryIn_handler(FwIndexType portNum, U32 context) {
     auto now = this->getTime();
-    Sercom* sercom_hw = SercomUtil::getHardware(this->m_sercom);
-    FW_ASSERT(sercom_hw != nullptr, this->m_sercom);
 
-    U8 busStateRaw = sercom_hw->I2CM.STATUS.bit.BUSSTATE;
-    U8 clkHoldRaw = sercom_hw->I2CM.STATUS.bit.CLKHOLD;
-    U8 rxNackRaw = sercom_hw->I2CM.STATUS.bit.RXNACK;
-    U8 slaveOnBusRaw = sercom_hw->I2CM.INTFLAG.bit.SB;
-    U8 masterOnBusRaw = sercom_hw->I2CM.INTFLAG.bit.MB;
+    const I2cHardware::I2cBusStatus status = I2cHardware::I2cHal::readBusStatus(this->m_sercom);
 
     I2cDriver_I2cBusState busState;
     I2cDriver_DeviceOnBusFlag deviceOnBus;
 
-    switch (busStateRaw) {  // 2-bits
+    switch (status.busState) {  // 2-bits
         case 0x0:
             busState = I2cDriver_I2cBusState::UNKNOWN;
             break;
@@ -701,14 +362,14 @@ void I2cDriver ::reportTelemetryIn_handler(FwIndexType portNum, U32 context) {
             busState = I2cDriver_I2cBusState::BUSY;
             break;
         default:
-            FW_ASSERT(false, busStateRaw);
+            FW_ASSERT(false, status.busState);
     }
 
-    if (slaveOnBusRaw != 0 && masterOnBusRaw != 0) {
+    if (status.slaveOnBus && status.masterOnBus) {
         deviceOnBus = I2cDriver_DeviceOnBusFlag::MASTER_AND_SLAVE_ON_BUS;
-    } else if (slaveOnBusRaw != 0) {
+    } else if (status.slaveOnBus) {
         deviceOnBus = I2cDriver_DeviceOnBusFlag::SLAVE_ON_BUS;
-    } else if (masterOnBusRaw != 0) {
+    } else if (status.masterOnBus) {
         deviceOnBus = I2cDriver_DeviceOnBusFlag::MASTER_ON_BUS;
     } else {
         deviceOnBus = I2cDriver_DeviceOnBusFlag::NONE;
@@ -716,8 +377,8 @@ void I2cDriver ::reportTelemetryIn_handler(FwIndexType portNum, U32 context) {
 
     this->tlmWrite_I2cBusErrorFlags(this->m_tlmErrors, now);
     this->tlmWrite_BusState(busState, now);
-    this->tlmWrite_ClockHold(clkHoldRaw != 0, now);
-    this->tlmWrite_ReceiveNotAcknowledged(rxNackRaw != 0, now);
+    this->tlmWrite_ClockHold(status.clockHold, now);
+    this->tlmWrite_ReceiveNotAcknowledged(status.rxNack, now);
     this->tlmWrite_DeviceOnBus(deviceOnBus, now);
 }
 
@@ -725,35 +386,28 @@ void I2cDriver ::reportTelemetryIn_handler(FwIndexType portNum, U32 context) {
 constexpr U32 SAMD21_I2C_MAX_DMA_PAYLOAD_SIZE = 255;
 
 void I2cDriver::queueReadDma() {
-    Sercom* sercom_hw = SercomUtil::getHardware(this->m_sercom);
-    FW_ASSERT(sercom_hw != nullptr, this->m_sercom);
-
     // Queue up a DMA operation to read the data from the device
-    this->dmaTransactionOut_out(
-        I2cDriver_DmaChannel::READ, SercomUtil::rxDmaTrigger(this->m_sercom), Samd21::Dma::TransactionType::BEAT,
-        Samd21::Dma::Priority::PRIORITY_1, reinterpret_cast<U32>(&sercom_hw->I2CM.DATA),
-        reinterpret_cast<U32>(this->m_read.getData()), this->m_read.getSize(), Samd21::Dma::BeatSize::BYTE,
-        /* incrementSource */ false, /* incrementDestination */ true, Samd21::Dma::AddressIncrementStepSize::SIZE_1,
-        Samd21::Dma::StepSelection::DESTINATION);
+    this->dmaTransactionOut_out(I2cDriver_DmaChannel::READ, SercomUtil::rxDmaTrigger(this->m_sercom),
+                                Samd21::Dma::TransactionType::BEAT, Samd21::Dma::Priority::PRIORITY_1,
+                                I2cHardware::I2cHal::getDataRegisterAddress(this->m_sercom),
+                                static_cast<U32>(reinterpret_cast<uintptr_t>(this->m_read.getData())),
+                                this->m_read.getSize(), Samd21::Dma::BeatSize::BYTE,
+                                /* incrementSource */ false, /* incrementDestination */ true,
+                                Samd21::Dma::AddressIncrementStepSize::SIZE_1, Samd21::Dma::StepSelection::DESTINATION);
 }
 
 void I2cDriver::queueWriteDma() {
-    Sercom* sercom_hw = SercomUtil::getHardware(this->m_sercom);
-    FW_ASSERT(sercom_hw != nullptr, this->m_sercom);
-
-    this->dmaTransactionOut_out(
-        I2cDriver_DmaChannel::WRITE, SercomUtil::txDmaTrigger(this->m_sercom), Samd21::Dma::TransactionType::BEAT,
-        Samd21::Dma::Priority::PRIORITY_1, reinterpret_cast<U32>(this->m_write.getData()),
-        reinterpret_cast<U32>(&sercom_hw->I2CM.DATA), this->m_write.getSize(), Samd21::Dma::BeatSize::BYTE,
-        /* incrementSource */ true, /* incrementDestination */ false, Samd21::Dma::AddressIncrementStepSize::SIZE_1,
-        Samd21::Dma::StepSelection::SOURCE);
+    this->dmaTransactionOut_out(I2cDriver_DmaChannel::WRITE, SercomUtil::txDmaTrigger(this->m_sercom),
+                                Samd21::Dma::TransactionType::BEAT, Samd21::Dma::Priority::PRIORITY_1,
+                                static_cast<U32>(reinterpret_cast<uintptr_t>(this->m_write.getData())),
+                                I2cHardware::I2cHal::getDataRegisterAddress(this->m_sercom), this->m_write.getSize(),
+                                Samd21::Dma::BeatSize::BYTE,
+                                /* incrementSource */ true, /* incrementDestination */ false,
+                                Samd21::Dma::AddressIncrementStepSize::SIZE_1, Samd21::Dma::StepSelection::SOURCE);
 }
 
 void I2cDriver::readImpl(U32 addr, Fw::Buffer& buffer, bool queueDma) {
     FW_ASSERT(this->m_configured);
-
-    Sercom* sercom_hw = SercomUtil::getHardware(this->m_sercom);
-    FW_ASSERT(sercom_hw != nullptr, this->m_sercom);
 
     FW_ASSERT(buffer.getData() != nullptr);
     FW_ASSERT(buffer.getSize() <= SAMD21_I2C_MAX_DMA_PAYLOAD_SIZE, buffer.getSize());
@@ -764,28 +418,17 @@ void I2cDriver::readImpl(U32 addr, Fw::Buffer& buffer, bool queueDma) {
     this->log_ACTIVITY_LO_Transaction(this->m_sercom, Samd21::I2cDriver_I2CTransactionKind::READ,
                                       static_cast<U8>(addr));
 
-    // Send ACK to data coming back from the peripheral
-    sercom_hw->I2CM.CTRLB.bit.ACKACT = 0;
-
     if (queueDma) {
         this->queueReadDma();
     }
 
-    SERCOM_I2CM_ADDR_Type addrReg = {};
-    addrReg.bit.HS = 0;     // We do not currently support high speed mode
-    addrReg.bit.LENEN = 1;  // Enable length mode to generate DMA requests
-    addrReg.bit.LEN = static_cast<U8>(buffer.getSize());
-    addrReg.bit.ADDR = (addr << 1) | 0x1;  // send a read request
-
-    // Kick off the I2C job by writing the address
-    sercom_hw->I2CM.ADDR.reg = addrReg.reg;
+    // Kick off the I2C read: sets the read ACK action and writes ADDR with
+    // length mode enabled so the DMA drives the transfer.
+    I2cHardware::I2cHal::beginRead(this->m_sercom, addr, static_cast<U8>(buffer.getSize()));
 }
 
 void I2cDriver::writeImpl(U32 addr, Fw::Buffer& buffer, bool generateStopCondition, bool queueReadDma) {
     FW_ASSERT(this->m_configured);
-
-    Sercom* sercom_hw = SercomUtil::getHardware(this->m_sercom);
-    FW_ASSERT(sercom_hw != nullptr, this->m_sercom);
 
     // I2C DMA is limited to 255 bytes
     FW_ASSERT(buffer.getData() != nullptr);
@@ -810,25 +453,10 @@ void I2cDriver::writeImpl(U32 addr, Fw::Buffer& buffer, bool generateStopConditi
         this->queueReadDma();
     }
 
-    SERCOM_I2CM_ADDR_Type addrReg = {};
-    addrReg.bit.HS = 0;  // We do not currently support high speed mode
-    if (generateStopCondition) {
-        // Enable length mode to generate an automatic stop condition after
-        // the DMA writes all the bytes into DATA
-        addrReg.bit.LENEN = 1;
-        addrReg.bit.LEN = static_cast<U8>(buffer.getSize());
-    } else {
-        // Disable length mode to not generate an automatic stop condition
-        addrReg.bit.LENEN = 0;
-    }
-
-    addrReg.bit.ADDR = (addr << 1) | 0x0;  // send a write request
-
-    // Send NACK if anyone tries to send data to us
-    sercom_hw->I2CM.CTRLB.bit.ACKACT = 1;
-
-    // Kick off the I2C job by writing the address
-    sercom_hw->I2CM.ADDR.reg = addrReg.reg;
+    // Kick off the I2C write. When generateStopCondition is set the peripheral
+    // emits an automatic STOP after the DMA writes all the bytes; otherwise the
+    // clock is held for a repeated START (write-read).
+    I2cHardware::I2cHal::beginWrite(this->m_sercom, addr, static_cast<U8>(buffer.getSize()), generateStopCondition);
 }
 
 void I2cDriver ::write_handler(FwIndexType portNum, U32 addr, Fw::Buffer& buffer) {
