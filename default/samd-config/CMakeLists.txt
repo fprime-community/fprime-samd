@@ -2,10 +2,12 @@ register_fprime_config(
         config-fprime-samd
     AUTOCODER_INPUTS
         "${CMAKE_CURRENT_LIST_DIR}/Samd21SpiConfig.fpp"
+        "${CMAKE_CURRENT_LIST_DIR}/Samd21I2cConfig.fpp"
     HEADERS
         "${CMAKE_CURRENT_LIST_DIR}/RtcDriverConfig.hpp"
         "${CMAKE_CURRENT_LIST_DIR}/DmaDriverConfig.hpp"
         "${CMAKE_CURRENT_LIST_DIR}/UsartDriverConfig.hpp"
+        "${CMAKE_CURRENT_LIST_DIR}/I2cDriverConfig.hpp"
         "${CMAKE_CURRENT_LIST_DIR}/FramerConfig.hpp"
     INTERFACE
     BASE_CONFIG

@@ -5,24 +5,24 @@ module Samd21 {
         # ----------------------------------------------------------------------
 
         @ Port for asynchronous write transaction
-        sync input port write: [2] Drv.I2cRequest
+        sync input port write: [Samd21.I2cClientPorts] Drv.I2cRequest
 
         @ Port for asynchronous read transaction
-        sync input port read: [2] Drv.I2cRequest
+        sync input port read: [Samd21.I2cClientPorts] Drv.I2cRequest
 
         @ Port for asynchronous write-read transaction
-        sync input port writeRead: [2] Drv.I2cWriteReadRequest
+        sync input port writeRead: [Samd21.I2cClientPorts] Drv.I2cWriteReadRequest
 
         ###### Ports below must be connected if buffers are being passed to/from i2c drv ######
 
         @ Port invoked when write transaction completes
-        output port writeComplete: [2] Drv.I2cCallback
+        output port writeComplete: [Samd21.I2cClientPorts] Drv.I2cCallback
 
         @ Port invoked when read transaction completes
-        output port readComplete: [2] Drv.I2cCallback
+        output port readComplete: [Samd21.I2cClientPorts] Drv.I2cCallback
 
         @ Port invoked when write-read transaction completes
-        output port writeReadComplete: [2] Drv.I2cWriteReadCallback
+        output port writeReadComplete: [Samd21.I2cClientPorts] Drv.I2cWriteReadCallback
     }
 
     @ Driver for the SAMD21 I2C Peripheral
@@ -134,8 +134,8 @@ module Samd21 {
             id 3 \
             format "I2C {} got a DMA reply from {} while expecting a reply from {}"
 
-        @ Indicates the number of errors reported by this I2C peripheral
-        telemetry I2cBusErrorFlags: U32 id 0
+        @ Running count of bus errors reported by this I2C peripheral
+        telemetry BusErrorCount: U32 id 0
 
         enum I2cBusState: U8 {
             UNKNOWN = 0
@@ -163,7 +163,7 @@ module Samd21 {
         @ I2C Bus interrupt bit flags
         telemetry DeviceOnBus: DeviceOnBusFlag id 4
 
-        @ Clear the [I2cBusErrorFlags] channel
+        @ Clear the [BusErrorCount] channel
         sync command CLEAR_ERRORS opcode 0
     }
 }

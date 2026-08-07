@@ -21,13 +21,13 @@ context; there is no cycler or main-loop tick in the driver's critical path.
 
 ## 2. Requirements
 
-| Name           | Description                                                                                                                                                            | Validation    |
+| Name           | Description                                                                                                                                                          | Validation    |
 | -------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------- |
-| SAMD21-I2C-001 | The I2cDriver shall configure a SERCOM peripheral for I2C host operation with configurable SCL frequency (100kHz / 400kHz / 1MHz / 3.4MHz), SDA hold, and pin usage.  | Hardware Test |
-| SAMD21-I2C-002 | The I2cDriver shall perform 7-bit-addressed write, read, and combined write-read transactions using DMA for the data payload.                                          | Hardware Test |
-| SAMD21-I2C-003 | The I2cDriver shall implement `writeRead` as a repeated START with no intervening STOP.                                                                                | Hardware Test |
-| SAMD21-I2C-004 | The I2cDriver shall report bus errors as events, count them in telemetry, and fail the in-flight transaction with the appropriate status.                              | Hardware Test |
-| SAMD21-I2C-005 | The I2cDriver shall reject a new request that arrives while a transaction is in progress, returning `I2C_OTHER_ERR` on the matching completion callback.               | Hardware Test |
+| SAMD21-I2C-001 | The I2cDriver shall configure a SERCOM peripheral for I2C host operation with configurable SCL frequency (100kHz / 400kHz / 1MHz / 3.4MHz), SDA hold, and pin usage. | Hardware Test |
+| SAMD21-I2C-002 | The I2cDriver shall perform 7-bit-addressed write, read, and combined write-read transactions using DMA for the data payload.                                        | Hardware Test |
+| SAMD21-I2C-003 | The I2cDriver shall implement `writeRead` as a repeated START with no intervening STOP.                                                                              | Hardware Test |
+| SAMD21-I2C-004 | The I2cDriver shall report bus errors as events, count them in telemetry, and fail the in-flight transaction with the appropriate status.                            | Hardware Test |
+| SAMD21-I2C-005 | The I2cDriver shall reject a new request that arrives while a transaction is in progress, returning `I2C_OTHER_ERR` on the matching completion callback.             | Hardware Test |
 
 ## 3. Design
 
@@ -53,36 +53,43 @@ callbacks run in ISR context** — consumers must keep those handlers short.
 
 ### 3.2 Ports
 
-| Kind         | Name                        | Port Type                  | Usage                                                      |
-| ------------ | --------------------------- | -------------------------- | ---------------------------------------------------------- |
-| `sync input` | `write[2]`                  | `Drv.I2cRequest`           | Start a write transaction                                  |
-| `sync input` | `read[2]`                   | `Drv.I2cRequest`           | Start a read transaction                                   |
-| `sync input` | `writeRead[2]`              | `Drv.I2cWriteReadRequest`  | Start a combined write-then-read (repeated START)          |
-| `output`     | `writeComplete[2]`          | `Drv.I2cCallback`          | Write completion + status                                  |
-| `output`     | `readComplete[2]`           | `Drv.I2cCallback`          | Read completion + status                                   |
-| `output`     | `writeReadComplete[2]`      | `Drv.I2cWriteReadCallback` | Write-read completion + status                             |
-| `output`     | `dmaTransactionOut[N]`      | `Dma.Transaction`          | Queue a DMA transfer on the WRITE or READ channel          |
-| `output`     | `dmaTransactionAbortOut[N]` | `Fw.Signal`                | Abort a channel's DMA transfer (error teardown)            |
-| `sync input` | `dmaReplyIn[N]`             | `Dma.TransactionReply`     | DMA completion from the DMAC (ISR context)                 |
-| `sync input` | `reportTelemetryIn`         | `Svc.Sched`                | Periodic tick that emits bus-state / error telemetry       |
-| `time get`   | `timeCaller`                | —                          | Timestamp source for telemetry                             |
+| Kind         | Name                                | Port Type                  | Usage                                                |
+| ------------ | ----------------------------------- | -------------------------- | ---------------------------------------------------- |
+| `sync input` | `write[I2cClientPorts]`             | `Drv.I2cRequest`           | Start a write transaction                            |
+| `sync input` | `read[I2cClientPorts]`              | `Drv.I2cRequest`           | Start a read transaction                             |
+| `sync input` | `writeRead[I2cClientPorts]`         | `Drv.I2cWriteReadRequest`  | Start a combined write-then-read (repeated START)    |
+| `output`     | `writeComplete[I2cClientPorts]`     | `Drv.I2cCallback`          | Write completion + status                            |
+| `output`     | `readComplete[I2cClientPorts]`      | `Drv.I2cCallback`          | Read completion + status                             |
+| `output`     | `writeReadComplete[I2cClientPorts]` | `Drv.I2cWriteReadCallback` | Write-read completion + status                       |
+| `output`     | `dmaTransactionOut[N]`              | `Dma.Transaction`          | Queue a DMA transfer on the WRITE or READ channel    |
+| `output`     | `dmaTransactionAbortOut[N]`         | `Fw.Signal`                | Abort a channel's DMA transfer (error teardown)      |
+| `sync input` | `dmaReplyIn[N]`                     | `Dma.TransactionReply`     | DMA completion from the DMAC (ISR context)           |
+| `sync input` | `reportTelemetryIn`                 | `Svc.Sched`                | Periodic tick that emits bus-state / error telemetry |
+| `time get`   | `timeCaller`                        | —                          | Timestamp source for telemetry                       |
+
+The client-facing request/callback ports are arrayed by the `Samd21.I2cClientPorts`
+config constant, so one driver instance can be shared by several components on the
+same bus. A completion is always returned on the same port index the request
+arrived on.
 
 The DMA ports are arrayed and indexed by a `DmaChannel` enum (`WRITE`, `READ`).
 Each index must be wired to a distinct physical DMA channel in the topology.
 
-### 3.3 Configuration Options
+### 3.3 Configuration
+
+#### 3.3.1 Runtime (`configure()`)
 
 `configure()` sets up the SERCOM once at startup. The caller selects:
 
-| Option              | Choices                                                              |
-| ------------------- | -------------------------------------------------------------------- |
-| SERCOM instance     | `SERCOM_0` … `SERCOM_5` (device-dependent)                           |
-| SCL frequency       | 100 kHz, 400 kHz, 1 MHz, or 3.4 MHz                                  |
-| SDA hold time       | Disabled, 75 ns, 450 ns, or 600 ns                                   |
-| Pin usage           | Two-wire (SCL/SDA) or four-wire                                      |
-| Clock stretch mode  | Always, or only after ACK                                            |
-| SMBus time-outs     | SCL-low, inactive-bus, host SCL-extend, client SCL-extend (each on/off) |
-| Run in standby      | Enabled or disabled                                                 |
+| Option             | Choices                                                                 |
+| ------------------ | ----------------------------------------------------------------------- |
+| SERCOM instance    | `SERCOM_0` … `SERCOM_5` (device-dependent)                              |
+| SCL frequency      | 100 kHz, 400 kHz, 1 MHz, or 3.4 MHz                                     |
+| SDA hold time      | Disabled, 75 ns, 450 ns, or 600 ns                                      |
+| Pin usage          | Two-wire (SCL/SDA) or four-wire                                         |
+| Clock stretch mode | Always, or only after ACK                                               |
+| SMBus time-outs    | SCL-low, inactive-bus, host SCL-extend, client SCL-extend (each on/off) |
+| Run in standby     | Enabled or disabled                                                     |
 
 The driver uses 7-bit addressing and transfers up to 255 bytes per transaction.
 
@@ -94,6 +101,15 @@ always configures it during `configure()`. On this project that 32.768 kHz
 generator is sourced from the internal oscillator on bench (crystal-less) builds
 and from the external crystal on flight builds; the driver does not need to know
 which.
+
+#### 3.3.2 Compile-time
+
+Two settings are fixed at build time through the project's `samd-config` module:
+
+| Setting                                               | Where                 | Default | Effect                                                                                                          |
+| ----------------------------------------------------- | --------------------- | ------- | --------------------------------------------------------------------------------------------------------------- |
+| `Samd21.I2cClientPorts`                               | `Samd21I2cConfig.fpp` | 2       | Number of client ports on the request/callback arrays (how many components share the driver)                    |
+| `Samd21::I2cDriverConfig::I2C_ENABLE_DEBUG_TELEMETRY` | `I2cDriverConfig.hpp` | 0       | When 0, only `BusErrorCount` is emitted; the diagnostic channels and their per-tick bus-status read are skipped |
 
 ### 3.4 Transaction Behavior
 
@@ -138,18 +154,20 @@ rather than asserting.
 
 ### 3.6 Telemetry, Events, and Commands
 
-| Kind      | Name                     | Description                                              |
-| --------- | ------------------------ | -------------------------------------------------------- |
-| Telemetry | `I2cBusErrorFlags`       | Running count of detected bus errors                     |
-| Telemetry | `BusState`               | Current bus state (unknown / idle / owner / busy)        |
-| Telemetry | `ClockHold`              | Host is holding SCL waiting on software/DMA              |
-| Telemetry | `ReceiveNotAcknowledged` | Last address/data byte was NACKed                        |
-| Telemetry | `DeviceOnBus`            | Master/client on-bus status                              |
-| Event     | `I2cBusError`            | A bus error was detected (warning/low)                   |
-| Event     | `Transaction`            | Trace of each read/write kick-off (activity/low)         |
-| Event     | `UnexpectedInterrupt`    | Interrupt taken in an unexpected state (warning/high)    |
-| Event     | `InvalidDmaReply`        | DMA reply for the wrong channel/state (warning/high)     |
-| Command   | `CLEAR_ERRORS`           | Reset the bus-error telemetry counter                    |
+| Kind      | Name                     | Description                                           |
+| --------- | ------------------------ | ----------------------------------------------------- |
+| Telemetry | `BusErrorCount`          | Running count of detected bus errors (always emitted) |
+| Telemetry | `BusState`               | Current bus state (unknown / idle / owner / busy) †   |
+| Telemetry | `ClockHold`              | Host is holding SCL waiting on software/DMA †         |
+| Telemetry | `ReceiveNotAcknowledged` | Last address/data byte was NACKed †                   |
+| Telemetry | `DeviceOnBus`            | Master/client on-bus status †                         |
+| Event     | `I2cBusError`            | A bus error was detected (warning/low)                |
+| Event     | `Transaction`            | Trace of each read/write kick-off (activity/low)      |
+| Event     | `UnexpectedInterrupt`    | Interrupt taken in an unexpected state (warning/high) |
+| Event     | `InvalidDmaReply`        | DMA reply for the wrong channel/state (warning/high)  |
+| Command   | `CLEAR_ERRORS`           | Reset the `BusErrorCount` counter                     |
+
+† Diagnostic channels, emitted only when `I2C_ENABLE_TELEMETRY` is set (see §3.3.2).
 
 ## 4. Integration
 

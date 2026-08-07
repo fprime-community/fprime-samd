@@ -11,6 +11,7 @@
 #include "fprime-samd/Drv/Types/Sercom.hpp"
 #include "fprime-samd/Drv/Types/StatusEnumAc.hpp"
 #include "fprime-samd/Drv/Types/ThinBuffer.hpp"
+#include "samd-config/I2cDriverConfig.hpp"
 
 namespace Samd21 {
 
@@ -121,7 +122,7 @@ void I2cDriver ::isrHandler() {
                 auto buf = this->m_read.getBuffer();
                 this->m_state = State::IDLE;
                 this->dmaTransactionAbortOut_out(I2cDriver_DmaChannel::READ);
-                if (this->isConnected_readComplete_OutputPort(0)) {
+                if (this->isConnected_readComplete_OutputPort(this->m_portNum)) {
                     this->readComplete_out(this->m_portNum, buf, Drv::I2cStatus::I2C_READ_ERR);
                 }
                 break;
@@ -130,7 +131,7 @@ void I2cDriver ::isrHandler() {
                 auto buf = this->m_write.getBuffer();
                 this->m_state = State::IDLE;
                 this->dmaTransactionAbortOut_out(I2cDriver_DmaChannel::WRITE);
-                if (this->isConnected_writeComplete_OutputPort(0)) {
+                if (this->isConnected_writeComplete_OutputPort(this->m_portNum)) {
                     this->writeComplete_out(this->m_portNum, buf, Drv::I2cStatus::I2C_WRITE_ERR);
                 }
                 break;
@@ -143,7 +144,7 @@ void I2cDriver ::isrHandler() {
                 this->dmaTransactionAbortOut_out(I2cDriver_DmaChannel::WRITE);
                 this->dmaTransactionAbortOut_out(I2cDriver_DmaChannel::READ);
 
-                if (this->isConnected_writeReadComplete_OutputPort(0)) {
+                if (this->isConnected_writeReadComplete_OutputPort(this->m_portNum)) {
                     this->writeReadComplete_out(this->m_portNum, w_buf, r_buf, Drv::I2cStatus::I2C_WRITE_ERR);
                 }
                 break;
@@ -156,7 +157,7 @@ void I2cDriver ::isrHandler() {
                 // Write already finished, no need to abort
                 this->dmaTransactionAbortOut_out(I2cDriver_DmaChannel::READ);
 
-                if (this->isConnected_writeReadComplete_OutputPort(0)) {
+                if (this->isConnected_writeReadComplete_OutputPort(this->m_portNum)) {
                     this->writeReadComplete_out(this->m_portNum, w_buf, r_buf, Drv::I2cStatus::I2C_READ_ERR);
                 }
                 break;
@@ -188,7 +189,7 @@ void I2cDriver ::isrHandler() {
                     auto r_buf = this->m_read.getBuffer();
                     this->m_state = State::IDLE;
                     this->dmaTransactionAbortOut_out(I2cDriver_DmaChannel::READ);
-                    if (this->isConnected_writeReadComplete_OutputPort(0)) {
+                    if (this->isConnected_writeReadComplete_OutputPort(this->m_portNum)) {
                         this->writeReadComplete_out(this->m_portNum, w_buf, r_buf, Drv::I2cStatus::I2C_WRITE_ERR);
                     }
                     break;
@@ -277,7 +278,7 @@ void I2cDriver ::dmaReplyIn_handler(FwIndexType portNum, const Samd21::Dma::Repl
             FW_ASSERT(reply.get_status() == Samd21::Dma::Status::OK);
             auto buf = this->m_read.getBuffer();
             this->m_state = State::IDLE;
-            if (this->isConnected_readComplete_OutputPort(0)) {
+            if (this->isConnected_readComplete_OutputPort(this->m_portNum)) {
                 this->readComplete_out(this->m_portNum, buf, Drv::I2cStatus::I2C_OK);
             }
             break;
@@ -286,7 +287,7 @@ void I2cDriver ::dmaReplyIn_handler(FwIndexType portNum, const Samd21::Dma::Repl
             FW_ASSERT(reply.get_status() == Samd21::Dma::Status::OK);
             auto buf = this->m_write.getBuffer();
             this->m_state = State::IDLE;
-            if (this->isConnected_writeComplete_OutputPort(0)) {
+            if (this->isConnected_writeComplete_OutputPort(this->m_portNum)) {
                 this->writeComplete_out(this->m_portNum, buf, Drv::I2cStatus::I2C_OK);
             }
             break;
@@ -315,7 +316,7 @@ void I2cDriver ::dmaReplyIn_handler(FwIndexType portNum, const Samd21::Dma::Repl
             auto r_buf = this->m_read.getBuffer();
             this->m_state = State::IDLE;
 
-            if (this->isConnected_writeReadComplete_OutputPort(0)) {
+            if (this->isConnected_writeReadComplete_OutputPort(this->m_portNum)) {
                 this->writeReadComplete_out(this->m_portNum, w_buf, r_buf, Drv::I2cStatus::I2C_OK);
             }
             break;
@@ -342,6 +343,15 @@ void I2cDriver ::read_handler(FwIndexType portNum, U32 addr, Fw::Buffer& buffer)
 
 void I2cDriver ::reportTelemetryIn_handler(FwIndexType portNum, U32 context) {
     auto now = this->getTime();
+
+    // The bus-error counter is always emitted -- it is the driver's health signal.
+    this->tlmWrite_BusErrorCount(this->m_tlmErrors, now);
+
+    // The remaining diagnostic channels are compile-time gated. When disabled we
+    // also skip the hardware bus-status read they depend on.
+    if (!I2cDriverConfig::I2C_ENABLE_DEBUG_TELEMETRY) {
+        return;
+    }
 
     const I2cHardware::I2cBusStatus status = I2cHardware::I2cHal::readBusStatus(this->m_sercom);
 
@@ -375,7 +385,6 @@ void I2cDriver ::reportTelemetryIn_handler(FwIndexType portNum, U32 context) {
         deviceOnBus = I2cDriver_DeviceOnBusFlag::NONE;
     }
 
-    this->tlmWrite_I2cBusErrorFlags(this->m_tlmErrors, now);
     this->tlmWrite_BusState(busState, now);
     this->tlmWrite_ClockHold(status.clockHold, now);
     this->tlmWrite_ReceiveNotAcknowledged(status.rxNack, now);

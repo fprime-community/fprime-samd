@@ -6,6 +6,7 @@
 
 #include "fprime-samd/Drv/I2cDriver/test/ut/I2cDriverTester.hpp"
 #include "fprime-samd/Drv/Types/StatusEnumAc.hpp"
+#include "samd-config/I2cDriverConfig.hpp"
 
 namespace Samd21 {
 
@@ -531,8 +532,8 @@ void I2cDriverTester::testIsrAllErrorFlags() {
 
     // Reported error count surfaces as telemetry on the next report tick
     this->invoke_to_reportTelemetryIn(0, 0);
-    ASSERT_TLM_I2cBusErrorFlags_SIZE(1);
-    ASSERT_TLM_I2cBusErrorFlags(0, 6U);
+    ASSERT_TLM_BusErrorCount_SIZE(1);
+    ASSERT_TLM_BusErrorCount(0, 6U);
 }
 
 // ----------------------------------------------------------------------
@@ -625,19 +626,36 @@ void I2cDriverTester::testReportTelemetry() {
 
     this->invoke_to_reportTelemetryIn(0, 0);
 
-    ASSERT_TLM_BusState_SIZE(1);
-    ASSERT_TLM_BusState(0, I2cDriver_I2cBusState::OWNER);
-    ASSERT_TLM_ClockHold_SIZE(1);
-    ASSERT_TLM_ClockHold(0, true);
-    ASSERT_TLM_ReceiveNotAcknowledged_SIZE(1);
-    ASSERT_TLM_ReceiveNotAcknowledged(0, true);
-    ASSERT_TLM_DeviceOnBus(0, I2cDriver_DeviceOnBusFlag::NONE);
+    // The bus-error counter is always emitted, regardless of the telemetry gate.
+    ASSERT_TLM_BusErrorCount_SIZE(1);
+
+    if (Samd21::I2cDriverConfig::I2C_ENABLE_TELEMETRY) {
+        ASSERT_TLM_BusState_SIZE(1);
+        ASSERT_TLM_BusState(0, I2cDriver_I2cBusState::OWNER);
+        ASSERT_TLM_ClockHold_SIZE(1);
+        ASSERT_TLM_ClockHold(0, true);
+        ASSERT_TLM_ReceiveNotAcknowledged_SIZE(1);
+        ASSERT_TLM_ReceiveNotAcknowledged(0, true);
+        ASSERT_TLM_DeviceOnBus(0, I2cDriver_DeviceOnBusFlag::NONE);
+    } else {
+        // Diagnostics suppressed: only the error counter goes out.
+        ASSERT_TLM_BusState_SIZE(0);
+        ASSERT_TLM_ClockHold_SIZE(0);
+        ASSERT_TLM_ReceiveNotAcknowledged_SIZE(0);
+        ASSERT_TLM_DeviceOnBus_SIZE(0);
+    }
 }
 
 void I2cDriverTester::testReportTelemetryDeviceOnBus() {
     this->resetTest();
     this->configureStandard();
     this->clearHistory();
+
+    // This case only exercises the diagnostic device-on-bus decode, which is
+    // compile-time gated; skip it when telemetry is disabled.
+    if (!Samd21::I2cDriverConfig::I2C_ENABLE_TELEMETRY) {
+        return;
+    }
 
     // Both master and slave flagged on the bus.
     this->stub().bus_status.busState = 0x1;  // IDLE
@@ -665,7 +683,7 @@ void I2cDriverTester::testClearErrors() {
     this->stub().interrupt_status.busError = true;
     this->fireIsr();
     this->invoke_to_reportTelemetryIn(0, 0);
-    ASSERT_TLM_I2cBusErrorFlags(0, 1U);
+    ASSERT_TLM_BusErrorCount(0, 1U);
     this->clearHistory();
 
     // CLEAR_ERRORS resets the counter and responds OK.
@@ -675,7 +693,7 @@ void I2cDriverTester::testClearErrors() {
 
     // Telemetry now reports zero errors.
     this->invoke_to_reportTelemetryIn(0, 0);
-    ASSERT_TLM_I2cBusErrorFlags(0, 0U);
+    ASSERT_TLM_BusErrorCount(0, 0U);
 }
 
 }  // namespace Samd21
