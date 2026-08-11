@@ -32,8 +32,8 @@ register_fprime_library(
     SOURCES
         "${CMAKE_CURRENT_LIST_DIR}/RtcDriver.cpp"
         ${RTC_HARDWARE_SOURCE}
-#   DEPENDS
-#       MyPackage_MyOtherModule
+   DEPENDS
+       config-fprime-samd
 )
 
 # Disable LTO for ISR file to ensure RTC_Handler ISR is not optimized away
