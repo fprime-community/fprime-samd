@@ -14,9 +14,22 @@
 
 cmake_minimum_required(VERSION 3.19)
 
-# Toolchain paths - using Arduino-installed arm-none-eabi-gcc
+# Toolchain paths - check multiple locations for arm-none-eabi-gcc
 set(TOOLCHAIN_PREFIX "arm-none-eabi-")
-set(TOOLCHAIN_ROOT "$ENV{HOME}/.arduino15/packages/adafruit/tools/arm-none-eabi-gcc/9-2019q4")
+
+# Check for toolchain in various install locations
+if(EXISTS "$ENV{HOME}/Library/Arduino15/packages/adafruit/tools/arm-none-eabi-gcc/9-2019q4")
+    set(TOOLCHAIN_ROOT "$ENV{HOME}/Library/Arduino15/packages/adafruit/tools/arm-none-eabi-gcc/9-2019q4")
+elseif(EXISTS "$ENV{HOME}/.arduino15/packages/adafruit/tools/arm-none-eabi-gcc/9-2019q4")
+    set(TOOLCHAIN_ROOT "$ENV{HOME}/.arduino15/packages/adafruit/tools/arm-none-eabi-gcc/9-2019q4")
+elseif(EXISTS "/opt/homebrew/bin/arm-none-eabi-gcc")
+    set(TOOLCHAIN_ROOT "/opt/homebrew")
+elseif(EXISTS "/usr/local/bin/arm-none-eabi-gcc")
+    set(TOOLCHAIN_ROOT "/usr/local")
+else()
+    message(FATAL_ERROR "ARM toolchain not found. Install via: arduino-cli core install adafruit:samd")
+endif()
+
 set(TOOLCHAIN_BIN "${TOOLCHAIN_ROOT}/bin")
 
 # Compilers and tools
@@ -34,8 +47,15 @@ set(CMAKE_RANLIB "${TOOLCHAIN_BIN}/${TOOLCHAIN_PREFIX}ranlib")
 # CMake needs this for try_compile to work
 set(CMAKE_TRY_COMPILE_TARGET_TYPE STATIC_LIBRARY)
 
-# CMSIS and device headers
-set(CMSIS_ROOT "$ENV{HOME}/.arduino15/packages/adafruit/tools")
+# CMSIS and device headers - check multiple Arduino install locations
+if(EXISTS "$ENV{HOME}/Library/Arduino15/packages/adafruit/tools")
+    set(CMSIS_ROOT "$ENV{HOME}/Library/Arduino15/packages/adafruit/tools")
+elseif(EXISTS "$ENV{HOME}/.arduino15/packages/adafruit/tools")
+    set(CMSIS_ROOT "$ENV{HOME}/.arduino15/packages/adafruit/tools")
+else()
+    message(FATAL_ERROR "CMSIS headers not found. Install via: arduino-cli core install adafruit:samd")
+endif()
+
 set(CMSIS_CORE_INCLUDE "${CMSIS_ROOT}/CMSIS/5.4.0/CMSIS/Core/Include")
 set(CMSIS_DEVICE_INCLUDE "${CMSIS_ROOT}/CMSIS-Atmel/1.2.2/CMSIS/Device/ATMEL")
 set(CMSIS_DSP_INCLUDE "${CMSIS_ROOT}/CMSIS/5.4.0/CMSIS/DSP/Include")

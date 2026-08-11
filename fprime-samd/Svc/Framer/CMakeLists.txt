@@ -21,6 +21,7 @@ register_fprime_library(
         "${CMAKE_CURRENT_LIST_DIR}/Framer.cpp"
   DEPENDS
       Svc_FprimeProtocol
+      config-fprime-samd
 )
 
 ### Unit Tests ###

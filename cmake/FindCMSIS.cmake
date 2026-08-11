@@ -40,6 +40,8 @@ endif()
 # Strategy 2: Search common Arduino installation locations
 if(NOT CMSIS_CORE_INCLUDE_DIR OR NOT CMSIS_DEVICE_INCLUDE_DIR)
     set(SEARCH_PATHS
+        "$ENV{HOME}/Library/Arduino15/packages/adafruit/tools"
+        "$ENV{HOME}/Library/Arduino15/packages/arduino/tools"
         "$ENV{HOME}/.arduino15/packages/adafruit/tools"
         "$ENV{HOME}/.arduino15/packages/arduino/tools"
         "/usr/share/arduino/hardware/tools"

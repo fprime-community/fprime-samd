@@ -23,6 +23,7 @@ register_fprime_library(
         "${CMAKE_CURRENT_LIST_DIR}/DmaChannel.cpp"
   DEPENDS
       fprime-samd_Drv_Types
+      config-fprime-samd
 )
 
 # Disable LTO on ISR file to avoid DMAC_Handler ISR getting optimized away
