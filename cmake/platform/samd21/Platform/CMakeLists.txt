@@ -10,6 +10,7 @@ register_fprime_config(
         "${CMAKE_CURRENT_LIST_DIR}/PlatformTypes.h"
     CHOOSES_IMPLEMENTATIONS
         Os_File_Stub
+        Os_CountingSemaphore_Stub
         Os_Generic_PriorityQueue
         Os_Mutex_Samd21
         Os_Cpu_Baremetal

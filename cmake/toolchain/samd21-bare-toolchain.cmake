@@ -142,6 +142,14 @@ function(finalize_samd21_executable)
 
     set_target_properties("${FPRIME_CURRENT_MODULE}" PROPERTIES SUFFIX ".elf")
 
+    # Link atomic stubs library (required for Cortex-M0+ which lacks atomic instructions)
+    # Use --whole-archive to prevent LTO from optimizing away the builtin implementations
+    target_link_libraries("${FPRIME_CURRENT_MODULE}" PRIVATE
+        -Wl,--whole-archive
+        samd21_atomic_stubs
+        -Wl,--no-whole-archive
+    )
+
     # Post-build commands
     set(COMMAND_SET_ARGUMENTS)
 
