@@ -27,6 +27,7 @@ void GpioHal::configure(U8 groupIdx, U8 pinIdx, GpioDriver::Mode mode, GpioDrive
     } else {
         // Configure as an input.
         portGroup.DIRCLR.reg = pinMask;
+        portGroup.PINCFG[pinIdx].reg = pinCfg;
 
         switch (input_pull_mode) {
             case GpioDriver::InputPullMode::NO_PULL:

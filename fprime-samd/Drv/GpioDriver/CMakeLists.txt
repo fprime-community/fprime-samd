@@ -19,7 +19,6 @@ if (FPRIME_PLATFORM STREQUAL "Samd21")
     # SAMD21 target build - use real hardware implementation
     set(GPIO_HARDWARE_SOURCE
         "${CMAKE_CURRENT_LIST_DIR}/GpioDriverHardware.cpp"
-        "${CMAKE_CURRENT_LIST_DIR}/GpioDriverIsr.cpp"
     )
 else()
     # Linux/test build - use stub implementation
