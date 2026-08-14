@@ -1,5 +1,5 @@
 /**
- * atomic_stubs.c:
+ * atomic.c:
  *
  * GCC atomic builtin implementations for Cortex-M0+ which lacks native atomic instructions.
  *
