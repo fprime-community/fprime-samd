@@ -11,6 +11,8 @@ module Samd21 {
         @ FATAL event announce port
         output port FatalAnnounce: Svc.FatalEvent
 
+        sync input port flush: Svc.Sched
+
         enum PacketPort {
             EVENT = 0,
             TELEMETRY = 1,
