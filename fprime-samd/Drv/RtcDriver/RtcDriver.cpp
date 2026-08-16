@@ -117,7 +117,7 @@ void RtcDriver ::enable() {
     RtcHardware::RtcHal::enableRtc();
 }
 
-void RtcDriver ::activeIn_handler(FwIndexType portNum, U32 context) {
+bool RtcDriver ::activeIn_handler(FwIndexType portNum, U32 context) {
     // Acknowledge the ISR on every cycle
     RtcHardware::RtcState& state = RtcHardware::getRtcState();
     state.deadline_reached = true;
@@ -133,7 +133,13 @@ void RtcDriver ::activeIn_handler(FwIndexType portNum, U32 context) {
 
         this->tlmWrite_CycleOverrun(state.deadline_exceeded);
         this->CycleOut_out(0, cycle_start);
+
+        // A cycle was emitted this tick, so work was done
+        return true;
     }
+
+    // No pending wakeup interrupt: nothing to do this tick
+    return false;
 }
 
 RtcDriver ::~RtcDriver() {}

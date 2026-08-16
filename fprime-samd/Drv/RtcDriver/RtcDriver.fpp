@@ -3,7 +3,7 @@ module Samd21 {
     passive component RtcDriver {
 
         @ Runs on every interrupt. Will detect whether the RTC interrupted and service the request
-        sync input port activeIn: Svc.Sched
+        sync input port activeIn: Svc.ActiveSched
 
         @ Implement tick interface for rate group timing
         import Drv.Tick

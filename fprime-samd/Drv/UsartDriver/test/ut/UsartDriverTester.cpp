@@ -224,7 +224,8 @@ void UsartDriverTester::testSendCompletion() {
     // Signal is deferred; nothing returned until activeIn processes the queue
     ASSERT_from_sendReturnOut_SIZE(0);
 
-    this->invoke_to_activeIn(0, 0);
+    // One TX completion signal is queued, so activeIn does work and returns true
+    EXPECT_TRUE(this->invoke_to_activeIn(0, 0));
 
     ASSERT_from_sendReturnOut_SIZE(1);
     ASSERT_EQ(this->fromPortHistory_sendReturnOut->at(0).status, Drv::ByteStreamStatus::OP_OK);
@@ -292,8 +293,9 @@ void UsartDriverTester::testSchedInNoData() {
     // schedIn only reads the DMA writeback; without new data no signal enqueues
     ASSERT_from_dmaRxRead_SIZE(1);
 
-    // No downstream data, no partial event
-    this->invoke_to_activeIn(0, 0);
+    // No downstream data, no partial event; the queue is empty so activeIn
+    // does no work and returns false.
+    EXPECT_FALSE(this->invoke_to_activeIn(0, 0));
     ASSERT_from_recv_SIZE(0);
 }
 
@@ -307,7 +309,8 @@ void UsartDriverTester::testSchedInPartial() {
     const U16 received = 10;
     this->setRxRemainingBytes(USART_RX_BUFFER_SIZE - received);
     this->invoke_to_schedIn(0, 0);
-    this->invoke_to_activeIn(0, 0);
+    // schedIn queued a partial-RX signal, so activeIn processes it and returns true
+    EXPECT_TRUE(this->invoke_to_activeIn(0, 0));
 
     // The 10 fresh bytes are forwarded downstream from buffer A offset 0
     ASSERT_from_recv_SIZE(1);
@@ -325,12 +328,13 @@ void UsartDriverTester::testRxMultiplePartials() {
     // First tick: 10 bytes
     this->setRxRemainingBytes(USART_RX_BUFFER_SIZE - 10);
     this->invoke_to_schedIn(0, 0);
-    this->invoke_to_activeIn(0, 0);
+    // A partial-RX signal was queued, so activeIn processes it and returns true
+    EXPECT_TRUE(this->invoke_to_activeIn(0, 0));
 
     // Second tick: total 25 bytes => 15 new bytes at offset 10
     this->setRxRemainingBytes(USART_RX_BUFFER_SIZE - 25);
     this->invoke_to_schedIn(0, 0);
-    this->invoke_to_activeIn(0, 0);
+    EXPECT_TRUE(this->invoke_to_activeIn(0, 0));
 
     ASSERT_from_recv_SIZE(2);
     ASSERT_EQ(this->recvBufferAddr(1), this->rxBufferAddr(0) + 10);
@@ -345,7 +349,8 @@ void UsartDriverTester::testRxBufferDone() {
 
     // RX DMA reports the buffer completely filled (0 remaining)
     this->injectDmaReply(UsartDriver_DmaChannel::RX, Samd21::Dma::Status::OK, 0);
-    this->invoke_to_activeIn(0, 0);
+    // A DONE signal was queued by the ISR, so activeIn processes it and returns true
+    EXPECT_TRUE(this->invoke_to_activeIn(0, 0));
 
     // Entire buffer A is forwarded downstream
     ASSERT_from_recv_SIZE(1);
@@ -361,13 +366,15 @@ void UsartDriverTester::testRxBufferFlip() {
 
     // Complete buffer A -> active flips to B
     this->injectDmaReply(UsartDriver_DmaChannel::RX, Samd21::Dma::Status::OK, 0);
-    this->invoke_to_activeIn(0, 0);
+    // A DONE signal was queued by the ISR, so activeIn processes it and returns true
+    EXPECT_TRUE(this->invoke_to_activeIn(0, 0));
 
     // A partial on buffer B should now index into m_rx[1]
     this->setRxRemainingBytes(USART_RX_BUFFER_SIZE - 4);
     this->invoke_to_schedIn(0, 0);  // service the schedIn twice to trigger the IDLE watchdog
     this->invoke_to_schedIn(0, 0);
-    this->invoke_to_activeIn(0, 0);
+    // The second schedIn tick queued a partial-RX signal, so activeIn returns true
+    EXPECT_TRUE(this->invoke_to_activeIn(0, 0));
 
     ASSERT_from_recv_SIZE(2);
     ASSERT_EQ(this->recvBufferAddr(1), this->rxBufferAddr(1));
@@ -376,7 +383,8 @@ void UsartDriverTester::testRxBufferFlip() {
     // Complete buffer B -> active flips back to A
     this->clearHistory();
     this->injectDmaReply(UsartDriver_DmaChannel::RX, Samd21::Dma::Status::OK, 0);
-    this->invoke_to_activeIn(0, 0);
+    // A DONE signal was queued by the ISR, so activeIn processes it and returns true
+    EXPECT_TRUE(this->invoke_to_activeIn(0, 0));
 
     // Remainder of B after the 4 already-processed bytes is forwarded
     ASSERT_from_recv_SIZE(1);
@@ -414,10 +422,11 @@ void UsartDriverTester::testSchedInUnconfigured() {
 }
 
 void UsartDriverTester::testActiveInUnconfigured() {
-    // activeIn before configure() is a safe no-op
+    // activeIn before configure() is a safe no-op; not configured, so it
+    // does no work and must return false.
     this->resetTest();
 
-    this->invoke_to_activeIn(0, 0);
+    EXPECT_FALSE(this->invoke_to_activeIn(0, 0));
 
     ASSERT_from_sendReturnOut_SIZE(0);
     ASSERT_from_recv_SIZE(0);

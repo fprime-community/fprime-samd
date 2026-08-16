@@ -132,7 +132,9 @@ void RtcDriverTester::testCycle() {
     this->simulateRtcInterrupt();
 
     // Call activeIn_handler - should emit the signal
-    this->invoke_to_activeIn(0, 0);
+    // A wakeup interrupt is pending, so the handler did work and should return true
+    bool didWork = this->invoke_to_activeIn(0, 0);
+    EXPECT_TRUE(didWork);
 
     // Verify cycle was emitted
     ASSERT_FROM_PORT_HISTORY_SIZE(1);
@@ -159,7 +161,9 @@ void RtcDriverTester::testCycleOverrun() {
     this->simulateRtcInterrupt();
 
     // Call activeIn_handler
-    this->invoke_to_activeIn(0, 0);
+    // A wakeup interrupt is pending, so the handler did work and should return true
+    bool didWork = this->invoke_to_activeIn(0, 0);
+    EXPECT_TRUE(didWork);
 
     // Verify overrun was detected and reported
     this->assertTlmCycleOverrun(1);
@@ -188,7 +192,9 @@ void RtcDriverTester::testMultipleCycles() {
         this->simulateRtcInterrupt();
 
         // Call activeIn_handler
-        this->invoke_to_activeIn(0, i);
+        // A wakeup interrupt is pending on every iteration, so it should always return true
+        bool didWork = this->invoke_to_activeIn(0, i);
+        EXPECT_TRUE(didWork);
 
         // Verify cycle was emitted (check total count)
         ASSERT_FROM_PORT_HISTORY_SIZE(i + 1);

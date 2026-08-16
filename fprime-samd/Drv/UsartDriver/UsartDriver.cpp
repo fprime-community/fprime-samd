@@ -130,8 +130,13 @@ void UsartDriver ::schedIn_handler(FwIndexType portNum, U32 context) {
     }
 }
 
-void UsartDriver ::activeIn_handler(FwIndexType portNum, U32 context) {
+bool UsartDriver ::activeIn_handler(FwIndexType portNum, U32 context) {
     if (this->m_configured) {
+        // Tracks whether we actually dequeued (and processed) any signal this
+        // tick. Returned to the caller so the cycler knows whether to re-invoke
+        // us (work was done) or let it go idle (queue was empty).
+        bool didWork = false;
+
         // Unload the queue
         for (;;) {
             Signal signal;
@@ -149,6 +154,7 @@ void UsartDriver ::activeIn_handler(FwIndexType portNum, U32 context) {
             }
 
             FW_ASSERT(status == Fw::Success::SUCCESS, status);
+            didWork = true;
 
             ThinBuffer thinBuffer;
             Fw::Buffer thickBuffer;
@@ -224,7 +230,12 @@ void UsartDriver ::activeIn_handler(FwIndexType portNum, U32 context) {
                     FW_ASSERT(false, static_cast<FwAssertArgType>(signal.kind));
             }
         }
+
+        return didWork;
     }
+
+    // Not configured: nothing to do this tick.
+    return false;
 }
 
 void UsartDriver ::dmaReplyIn_handler(FwIndexType portNum, const Samd21::Dma::Reply& reply) {

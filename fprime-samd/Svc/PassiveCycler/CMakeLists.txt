@@ -19,8 +19,8 @@ register_fprime_library(
         "${CMAKE_CURRENT_LIST_DIR}/PassiveCycler.fpp"
     SOURCES
         "${CMAKE_CURRENT_LIST_DIR}/PassiveCycler.cpp"
-#   DEPENDS
-#       MyPackage_MyOtherModule
+  DEPENDS
+      fprime-samd_Svc_Types
 )
 
 ### Unit Tests ###
