@@ -106,15 +106,6 @@ module Samd21 {
             WRITE
         }
 
-        event Transaction(
-            sercom: SercomKind
-            kind: I2CTransactionKind
-            addr: U8
-        ) \
-            severity activity low \
-            id 1 \
-            format "SERCOM {} I2C transaction {} on address: {}"
-
         enum I2CInterrupt: U8 {
             MASTER_ON_BUS
             BUS_ERROR
@@ -122,7 +113,7 @@ module Samd21 {
 
         event UnexpectedInterrupt(sercom: SercomKind, err: I2CInterrupt) \
             severity warning high \
-            id 2 \
+            id 1 \
             format "I2C {} raised a {} interrupt in an expected IDLE state"
 
         event InvalidDmaReply(
@@ -131,7 +122,7 @@ module Samd21 {
             expected: DmaChannel
         ) \
             severity warning high \
-            id 3 \
+            id 2 \
             format "I2C {} got a DMA reply from {} while expecting a reply from {}"
 
         @ Running count of bus errors reported by this I2C peripheral

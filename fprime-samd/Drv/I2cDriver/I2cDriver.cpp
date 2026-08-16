@@ -424,9 +424,6 @@ void I2cDriver::readImpl(U32 addr, Fw::Buffer& buffer, bool queueDma) {
     // We only support 7-bit address mode
     FW_ASSERT((addr & ~0x7F) == 0, addr);
 
-    this->log_ACTIVITY_LO_Transaction(this->m_sercom, Samd21::I2cDriver_I2CTransactionKind::READ,
-                                      static_cast<U8>(addr));
-
     if (queueDma) {
         this->queueReadDma();
     }
@@ -446,9 +443,6 @@ void I2cDriver::writeImpl(U32 addr, Fw::Buffer& buffer, bool generateStopConditi
 
     // We only support 7-bit address mode
     FW_ASSERT((addr & ~0x7F) == 0, addr);
-
-    this->log_ACTIVITY_LO_Transaction(this->m_sercom, Samd21::I2cDriver_I2CTransactionKind::WRITE,
-                                      static_cast<U8>(addr));
 
     // Queue up a DMA operation to write the data to the device
     this->queueWriteDma();
