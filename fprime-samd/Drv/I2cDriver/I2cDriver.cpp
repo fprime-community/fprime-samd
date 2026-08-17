@@ -166,9 +166,18 @@ void I2cDriver ::isrHandler() {
             default:
                 FW_ASSERT(false, this->m_sercom, static_cast<FwAssertArgType>(this->m_state));
         }
+    } else if (!status.masterOnBus) {
+        // Woke with neither ERROR nor MB set: a spurious interrupt. This is
+        // expected. When a write-read handoff is serviced inline from the write-DMA
+        // completion (dmaReplyIn WRITE_READ_WRITING), we enable INTENSET.MB while MB
+        // is already latched, which asserts the SERCOM line and latches the NVIC
+        // pending bit before we ack MB and disable the interrupt. That stale pending
+        // bit still fires one SERCOM interrupt afterwards. MB is already cleared, so
+        // there is nothing to do -- any real pending source (ERROR) is level-
+        // sensitive and would have re-latched into status above.
+        return;
     } else {
-        // The only other interrupt source should be master on bus
-        FW_ASSERT(status.masterOnBus, static_cast<FwAssertArgType>(this->m_state));
+        // Master on bus.
 
         // Ack the interrupt. MB is level-triggered and clearing it here (write-1)
         // prevents it from re-latching this handler; the transaction is advanced by
