@@ -224,6 +224,18 @@ class I2cDriver final : public I2cDriverComponentBase {
     static void s_i2cDriverIsrHandler(Fw::PassiveComponentBase*, SercomKind);
     void isrHandler();
 
+    //! Service the master-on-bus (MB) handoff of a write-read transaction.
+    //!
+    //! Precondition: m_state == WRITE_READ_WRITING_WAIT and the MB interrupt
+    //! flag has already been acknowledged by the caller. The write half is
+    //! complete and the peripheral is holding the clock ready for the repeated
+    //! START. Disables the MB interrupt, then either reports a write error (if
+    //! the client NACKed) or advances to the read phase. Called both from the MB
+    //! interrupt (isrHandler) and directly from the write-DMA completion when MB
+    //! was already latched (dmaReplyIn_handler), so MB is handled as a level, not
+    //! an edge.
+    void serviceWriteReadMasterOnBus();
+
     //! Implements the write operation but doesn't handle the state updates
     void writeImpl(U32 addr, Fw::Buffer& buffer, bool generateStopCondition, bool queueReadDma);
 

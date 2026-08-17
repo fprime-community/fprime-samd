@@ -8,6 +8,7 @@
 #include "Fw/Types/Assert.hpp"
 #include "config/FwAssertArgTypeAliasAc.h"
 #include "fprime-samd/Drv/I2cDriver/I2cDriverHardware.hpp"
+#include "fprime-samd/Drv/Types/CriticalSection.hpp"
 #include "fprime-samd/Drv/Types/Sercom.hpp"
 #include "fprime-samd/Drv/Types/StatusEnumAc.hpp"
 #include "fprime-samd/Drv/Types/ThinBuffer.hpp"
@@ -169,48 +170,61 @@ void I2cDriver ::isrHandler() {
         // The only other interrupt source should be master on bus
         FW_ASSERT(status.masterOnBus, static_cast<FwAssertArgType>(this->m_state));
 
-        // Ack the interrupt
+        // Ack the interrupt. MB is level-triggered and clearing it here (write-1)
+        // prevents it from re-latching this handler; the transaction is advanced by
+        // the actions taken below (writing ADDR/DATA), not by the ack itself.
         I2cHardware::I2cHal::acknowledgeMasterOnBus(this->m_sercom);
 
         switch (this->m_state) {
-            case State::WRITE_READ_WRITING_WAIT: {
-                // We have finished transfering the Tx bytes via DMA and the i2c peripheral
-                // entered a MASTER_ON_BUS mode where it is ready to read from the slave.
-                // Either way the master-on-bus interrupt has served its purpose.
-                I2cHardware::I2cHal::disableMasterOnBusInterrupt(this->m_sercom);
-
-                // The write phase of the write-read uses LENEN=0, so a client NACK of
-                // the address or register-pointer byte does not raise LENERR/ERROR. Check
-                // RXNACK here: if the client did not ACK, the write half failed, so abort
-                // the pre-armed read DMA and report the write-read as a write error rather
-                // than issuing a repeated START into a device that never accepted the pointer.
-                if (status.rxNack) {
-                    auto w_buf = this->m_write.getBuffer();
-                    auto r_buf = this->m_read.getBuffer();
-                    this->m_state = State::IDLE;
-                    this->dmaTransactionAbortOut_out(I2cDriver_DmaChannel::READ);
-                    if (this->isConnected_writeReadComplete_OutputPort(this->m_portNum)) {
-                        this->writeReadComplete_out(this->m_portNum, w_buf, r_buf, Drv::I2cStatus::I2C_WRITE_ERR);
-                    }
-                    break;
-                }
-
-                // The write of the write/read chain finished
-                // Proceed to read.
-                this->m_state = State::WRITE_READ_READING;
-
-                auto buf = this->m_read.getBuffer();
-
-                // Read DMA has already been queued, no need to do it again
-                this->readImpl(this->m_pending_read_address, buf, /* queueDma */ false);
+            case State::WRITE_READ_WRITING_WAIT:
+                this->serviceWriteReadMasterOnBus();
                 break;
-            }
             default:
-                // We got an interrupt when we were not expecting to
+                // MB fired in a state that does not expect it. Ack (done above) is
+                // not enough on its own: leaving the MB interrupt enabled against a
+                // stale state would let it re-fire indefinitely, so disable it here.
+                // Without this, a single mis-ordered handoff could latch MB with the
+                // bus idle and wedge every future write-read (see serviceWriteRead-
+                // MasterOnBus / dmaReplyIn WRITE_READ_WRITING).
+                I2cHardware::I2cHal::disableMasterOnBusInterrupt(this->m_sercom);
                 this->log_WARNING_HI_UnexpectedInterrupt(this->m_sercom, I2cDriver_I2CInterrupt::MASTER_ON_BUS);
                 break;
         }
     }
+}
+
+void I2cDriver ::serviceWriteReadMasterOnBus() {
+    FW_ASSERT(this->m_state == State::WRITE_READ_WRITING_WAIT, static_cast<FwAssertArgType>(this->m_state));
+
+    // We have finished transfering the Tx bytes via DMA and the i2c peripheral
+    // entered a MASTER_ON_BUS mode where it is ready to read from the slave.
+    // The master-on-bus interrupt has served its purpose; disable it.
+    I2cHardware::I2cHal::disableMasterOnBusInterrupt(this->m_sercom);
+
+    // The write phase of the write-read uses LENEN=0, so a client NACK of
+    // the address or register-pointer byte does not raise LENERR/ERROR. Check
+    // RXNACK here: if the client did not ACK, the write half failed, so abort
+    // the pre-armed read DMA and report the write-read as a write error rather
+    // than issuing a repeated START into a device that never accepted the pointer.
+    if (I2cHardware::I2cHal::readInterruptStatus(this->m_sercom).rxNack) {
+        auto w_buf = this->m_write.getBuffer();
+        auto r_buf = this->m_read.getBuffer();
+        this->m_state = State::IDLE;
+        this->dmaTransactionAbortOut_out(I2cDriver_DmaChannel::READ);
+        if (this->isConnected_writeReadComplete_OutputPort(this->m_portNum)) {
+            this->writeReadComplete_out(this->m_portNum, w_buf, r_buf, Drv::I2cStatus::I2C_WRITE_ERR);
+        }
+        return;
+    }
+
+    // The write of the write/read chain finished
+    // Proceed to read.
+    this->m_state = State::WRITE_READ_READING;
+
+    auto buf = this->m_read.getBuffer();
+
+    // Read DMA has already been queued, no need to do it again
+    this->readImpl(this->m_pending_read_address, buf, /* queueDma */ false);
 }
 // ----------------------------------------------------------------------
 // Command handler implementations
@@ -302,12 +316,27 @@ void I2cDriver ::dmaReplyIn_handler(FwIndexType portNum, const Samd21::Dma::Repl
             // In reality we may not have finished transfering the final byte so we
             // need to wait until the MB (master on bus) is set to proceed with the
             // read.
+            //
+            // MB is a LEVEL condition. it is set the moment the write
+            // address/data byte is ACKed, which may already be true by the time this
+            // DMA-completion ISR runs.
+            //
+            // The critical section keeps m_state and the MB-interrupt enable
+            // consistent as seen by the SERCOM ISR.
+            Samd21::CriticalSection cs;
 
             this->m_state = State::WRITE_READ_WRITING_WAIT;
 
             // Enable the master on bus interrupt which should trigger once the I2C
             // master is ready to begin the read operation during the clock hold.
             I2cHardware::I2cHal::enableMasterOnBusInterrupt(this->m_sercom);
+
+            // If MB is already latched, no further edge is coming: acknowledge it and
+            // service the handoff now. Otherwise the MB interrupt will drive it later.
+            if (I2cHardware::I2cHal::readInterruptStatus(this->m_sercom).masterOnBus) {
+                I2cHardware::I2cHal::acknowledgeMasterOnBus(this->m_sercom);
+                this->serviceWriteReadMasterOnBus();
+            }
             break;
         }
         case State::WRITE_READ_READING: {

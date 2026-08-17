@@ -26,8 +26,5 @@ module Samd21 {
 
         @ Signal from ISR that a DMA transaction has completed (success or error)
         output port transactionIsrOut: [Dma.CHANNEL_NUM] Dma.TransactionReply
-
-        import Fw.Channel
-        time get port timeCaller
     }
 }
