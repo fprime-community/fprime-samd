@@ -399,8 +399,7 @@ void I2cDriverTester::testWriteReadMbAlreadyLatched() {
     // (INTFLAG.MB set) by the time the write-DMA completion ISR runs. Model that by
     // arming masterOnBus BEFORE injecting the write-DMA reply. If the driver only
     // enabled the MB interrupt and waited for a fresh edge, the read half would
-    // never be kicked off and the transaction would wedge -- the exact 4.5h field
-    // hang. The driver must instead service the handoff inline.
+    // never be kicked off and the transaction would wedge.
     this->stub().interrupt_status.error = false;
     this->stub().interrupt_status.masterOnBus = true;
 
