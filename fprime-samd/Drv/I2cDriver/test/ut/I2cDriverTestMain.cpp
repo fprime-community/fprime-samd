@@ -102,6 +102,18 @@ TEST(WriteRead, PointerNack) {
     tester.testWriteReadPointerNack();
 }
 
+TEST(WriteRead, MbAlreadyLatched) {
+    COMMENT("MB already latched at write-DMA completion services the handoff inline (no lost edge)");
+    Samd21::I2cDriverTester tester;
+    tester.testWriteReadMbAlreadyLatched();
+}
+
+TEST(WriteRead, MbAlreadyLatchedSpuriousIsr) {
+    COMMENT("the stale SERCOM interrupt after an inline handoff is a benign no-op, not an assert");
+    Samd21::I2cDriverTester tester;
+    tester.testWriteReadMbAlreadyLatchedSpuriousIsr();
+}
+
 // ----------------------------------------------------------------------
 // ISR error handling
 // ----------------------------------------------------------------------

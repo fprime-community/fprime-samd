@@ -53,6 +53,8 @@ class I2cDriverTester : public I2cDriverGTestBase {
     void testWriteReadFullSequence();
     void testWriteReadBusy();
     void testWriteReadPointerNack();
+    void testWriteReadMbAlreadyLatched();
+    void testWriteReadMbAlreadyLatchedSpuriousIsr();
 
     // ISR error handling
     void testIsrErrorIdleUnexpected();

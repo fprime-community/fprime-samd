@@ -43,7 +43,7 @@ void Framer ::comPacketQueueIn_handler(FwIndexType portNum, Fw::ComBuffer& data,
 
     // If both buffers are in flight (backpressure), drop this packet
     if (activeBuf.state == TRANSMITTING) {
-        // TODO: Add telemetry to track dropped packets due to backpressure
+        this->m_droppedPackets++;
         return;
     }
 
@@ -148,6 +148,8 @@ void Framer ::schedIn_handler(FwIndexType portNum, U32 context) {
         // Only flush if the other buffer is not transmitting
         FwIndexType nextBufferIdx = (m_activeBufferIdx + 1) % 2;
         TxBuffer& nextBuf = m_buffers[nextBufferIdx];
+
+        this->tlmWrite_DroppedPackets(this->m_droppedPackets);
 
         if (nextBuf.state == TRANSMITTING) {
             // Can't flush because both buffers would be in flight

@@ -78,6 +78,7 @@ class Framer final : public FramerComponentBase {
     bool m_driverConnected;
     TxBuffer m_buffers[2];          //!< Double buffer
     FwIndexType m_activeBufferIdx;  //!< Index of currently active buffer
+    U32 m_droppedPackets;           //!< Teleemtry tracking number of dropped packets
 };
 
 }  // namespace Samd21

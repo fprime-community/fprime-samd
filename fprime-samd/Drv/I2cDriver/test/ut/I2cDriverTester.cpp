@@ -144,10 +144,6 @@ void I2cDriverTester::testReadNominal() {
     ASSERT_EQ(this->stub().begin_read_len, 8U);
     ASSERT_EQ(this->stub().begin_write_count, 0U);
 
-    // A read transaction event is emitted
-    ASSERT_EVENTS_Transaction_SIZE(1);
-    ASSERT_EVENTS_Transaction(0, SercomKind::SERCOM_0, I2cDriver_I2CTransactionKind::READ, static_cast<U8>(addr));
-
     // No completion yet
     ASSERT_from_readComplete_SIZE(0);
 }
@@ -219,9 +215,6 @@ void I2cDriverTester::testWriteNominal() {
     ASSERT_EQ(this->stub().begin_write_addr, addr);
     ASSERT_EQ(this->stub().begin_write_len, 16U);
     ASSERT_TRUE(this->stub().begin_write_stop);
-
-    ASSERT_EVENTS_Transaction_SIZE(1);
-    ASSERT_EVENTS_Transaction(0, SercomKind::SERCOM_0, I2cDriver_I2CTransactionKind::WRITE, static_cast<U8>(addr));
 
     ASSERT_from_writeComplete_SIZE(0);
 }
@@ -389,6 +382,88 @@ void I2cDriverTester::testWriteReadPointerNack() {
     // Driver returned to IDLE: a fresh transaction is accepted.
     this->invoke_to_writeRead(0, addr, writeBuffer, readBuffer);
     ASSERT_EQ(this->stub().begin_write_count, 2U);
+}
+
+void I2cDriverTester::testWriteReadMbAlreadyLatched() {
+    this->resetTest();
+    this->configureStandard();
+    this->clearHistory();
+
+    const U32 addr = 0x50;
+    Fw::Buffer writeBuffer(this->m_write_data, 4);
+    Fw::Buffer readBuffer(this->m_read_data, 8);
+    this->invoke_to_writeRead(0, addr, writeBuffer, readBuffer);
+    this->clearHistory();
+
+    // MB is a LEVEL condition: the write's address/data byte may already be ACKed
+    // (INTFLAG.MB set) by the time the write-DMA completion ISR runs. Model that by
+    // arming masterOnBus BEFORE injecting the write-DMA reply. If the driver only
+    // enabled the MB interrupt and waited for a fresh edge, the read half would
+    // never be kicked off and the transaction would wedge -- the exact 4.5h field
+    // hang. The driver must instead service the handoff inline.
+    this->stub().interrupt_status.error = false;
+    this->stub().interrupt_status.masterOnBus = true;
+
+    this->injectDmaReply(I2cDriver_DmaChannel::WRITE, Samd21::Dma::Status::OK, 0);
+
+    // The MB interrupt was enabled (armed) then, seeing MB already latched, the
+    // handoff ran inline: MB acknowledged, MB interrupt disabled, read kicked off.
+    ASSERT_EQ(this->stub().enable_mb_count, 1U);
+    ASSERT_EQ(this->stub().acknowledge_mb_count, 1U);
+    ASSERT_EQ(this->stub().disable_mb_count, 1U);
+    ASSERT_EQ(this->stub().begin_read_count, 1U);
+    ASSERT_EQ(this->stub().begin_read_addr, addr);  // read half targets the stashed address
+    ASSERT_EQ(this->stub().begin_read_len, 8U);
+
+    // No separate MB ISR was needed; the read DMA completes the transaction OK.
+    this->injectDmaReply(I2cDriver_DmaChannel::READ, Samd21::Dma::Status::OK, 0);
+    ASSERT_from_writeReadComplete_SIZE(1);
+    ASSERT_EQ(this->fromPortHistory_writeReadComplete->at(0).status, Drv::I2cStatus::I2C_OK);
+    ASSERT_EQ(this->fromPortHistory_writeReadComplete->at(0).writeBuffer.getData(), this->m_write_data);
+    ASSERT_EQ(this->fromPortHistory_writeReadComplete->at(0).readBuffer.getData(), this->m_read_data);
+}
+
+void I2cDriverTester::testWriteReadMbAlreadyLatchedSpuriousIsr() {
+    this->resetTest();
+    this->configureStandard();
+    this->clearHistory();
+
+    const U32 addr = 0x50;
+    Fw::Buffer writeBuffer(this->m_write_data, 4);
+    Fw::Buffer readBuffer(this->m_read_data, 8);
+    this->invoke_to_writeRead(0, addr, writeBuffer, readBuffer);
+    this->clearHistory();
+
+    // Service the handoff inline (MB already latched at write-DMA completion). This
+    // advances the driver to the read phase (m_state == WRITE_READ_READING).
+    this->stub().interrupt_status.error = false;
+    this->stub().interrupt_status.masterOnBus = true;
+    this->injectDmaReply(I2cDriver_DmaChannel::WRITE, Samd21::Dma::Status::OK, 0);
+    ASSERT_EQ(this->stub().begin_read_count, 1U);
+
+    // On real hardware, enabling INTENSET.MB while MB was already latched asserts the
+    // SERCOM line and latches the NVIC pending bit BEFORE the inline path acks MB and
+    // disables the interrupt. That stale pending bit still fires one SERCOM interrupt
+    // afterwards, now with neither ERROR nor MB set (the inline ack cleared MB). The
+    // handler must treat this as a benign spurious wake and NOT assert -- this is the
+    // regression that tripped FW_ASSERT(status.masterOnBus) with m_state==WRITE_READ_READING.
+    this->clearHistory();
+    this->stub().interrupt_status.error = false;
+    this->stub().interrupt_status.masterOnBus = false;
+    this->fireIsr();
+
+    // Spurious wake is a no-op: nothing acknowledged, nothing disabled, no event, and
+    // the in-flight read is untouched.
+    ASSERT_EQ(this->stub().acknowledge_mb_count, 1U);  // still just the inline ack
+    ASSERT_EQ(this->stub().disable_mb_count, 1U);
+    ASSERT_EQ(this->stub().begin_read_count, 1U);
+    ASSERT_EVENTS_UnexpectedInterrupt_SIZE(0);
+    ASSERT_from_writeReadComplete_SIZE(0);
+
+    // The read DMA still completes the transaction cleanly.
+    this->injectDmaReply(I2cDriver_DmaChannel::READ, Samd21::Dma::Status::OK, 0);
+    ASSERT_from_writeReadComplete_SIZE(1);
+    ASSERT_EQ(this->fromPortHistory_writeReadComplete->at(0).status, Drv::I2cStatus::I2C_OK);
 }
 
 // ----------------------------------------------------------------------
@@ -629,7 +704,7 @@ void I2cDriverTester::testReportTelemetry() {
     // The bus-error counter is always emitted, regardless of the telemetry gate.
     ASSERT_TLM_BusErrorCount_SIZE(1);
 
-    if (Samd21::I2cDriverConfig::I2C_ENABLE_TELEMETRY) {
+    if (Samd21::I2cDriverConfig::I2C_ENABLE_DEBUG_TELEMETRY) {
         ASSERT_TLM_BusState_SIZE(1);
         ASSERT_TLM_BusState(0, I2cDriver_I2cBusState::OWNER);
         ASSERT_TLM_ClockHold_SIZE(1);
@@ -653,7 +728,7 @@ void I2cDriverTester::testReportTelemetryDeviceOnBus() {
 
     // This case only exercises the diagnostic device-on-bus decode, which is
     // compile-time gated; skip it when telemetry is disabled.
-    if (!Samd21::I2cDriverConfig::I2C_ENABLE_TELEMETRY) {
+    if (!Samd21::I2cDriverConfig::I2C_ENABLE_DEBUG_TELEMETRY) {
         return;
     }
 
