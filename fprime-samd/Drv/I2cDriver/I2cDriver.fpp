@@ -101,11 +101,6 @@ module Samd21 {
             id 0 \
             format "{} I2C Master error: {}"
 
-        enum I2CTransactionKind: U8 {
-            READ
-            WRITE
-        }
-
         enum I2CInterrupt: U8 {
             MASTER_ON_BUS
             BUS_ERROR
