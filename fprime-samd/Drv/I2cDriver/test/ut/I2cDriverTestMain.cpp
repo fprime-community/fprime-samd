@@ -160,6 +160,58 @@ TEST(Isr, MasterOnBusUnexpected) {
     tester.testIsrMasterOnBusUnexpected();
 }
 
+TEST(Isr, ErrorDuringWriteReadWaitDisablesMb) {
+    COMMENT("an error while in WRITE_READ_WRITING_WAIT disables the armed MB interrupt (leak fix)");
+    Samd21::I2cDriverTester tester;
+    tester.testIsrErrorDuringWriteReadWaitDisablesMb();
+}
+
+// ----------------------------------------------------------------------
+// Stall watchdog
+// ----------------------------------------------------------------------
+
+TEST(StallWatchdog, NoRecoveryBeforeThreshold) {
+    COMMENT("an in-flight transaction is not recovered until the tick threshold is reached");
+    Samd21::I2cDriverTester tester;
+    tester.testStallWatchdogNoRecoveryBeforeThreshold();
+}
+
+TEST(StallWatchdog, RecoversWriteRead) {
+    COMMENT("a write-read with a lost MB completion is force-recovered after the threshold");
+    Samd21::I2cDriverTester tester;
+    tester.testStallWatchdogRecoversWriteRead();
+}
+
+TEST(StallWatchdog, RecoversRead) {
+    COMMENT("a stuck read is force-recovered and the caller gets an error reply");
+    Samd21::I2cDriverTester tester;
+    tester.testStallWatchdogRecoversRead();
+}
+
+TEST(StallWatchdog, RecoversWrite) {
+    COMMENT("a stuck write is force-recovered and the caller gets an error reply");
+    Samd21::I2cDriverTester tester;
+    tester.testStallWatchdogRecoversWrite();
+}
+
+TEST(StallWatchdog, ResetsWhenIdle) {
+    COMMENT("ticks while IDLE never trigger a recovery");
+    Samd21::I2cDriverTester tester;
+    tester.testStallWatchdogResetsWhenIdle();
+}
+
+TEST(StallWatchdog, ResetsOnCompletion) {
+    COMMENT("a normal completion resets the stall counter so it does not spuriously recover");
+    Samd21::I2cDriverTester tester;
+    tester.testStallWatchdogResetsOnCompletion();
+}
+
+TEST(StallWatchdog, RecoveryCountTelemetry) {
+    COMMENT("StallRecoveryCount telemetry tracks the number of recoveries");
+    Samd21::I2cDriverTester tester;
+    tester.testStallRecoveryCountTelemetry();
+}
+
 // ----------------------------------------------------------------------
 // dmaReplyIn channel validation
 // ----------------------------------------------------------------------

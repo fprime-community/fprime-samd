@@ -217,6 +217,16 @@ class I2cDriver final : public I2cDriverComponentBase {
     //! Number of errors that occured on this device, emitted as telemetry
     U32 m_tlmErrors;
 
+    //! Number of consecutive reportTelemetryIn ticks the driver has been non-IDLE
+    //! with the same in-flight transaction. Reset to 0 whenever the driver is
+    //! observed IDLE. Used by the stall watchdog. Written only from the telemetry
+    //! tick, so no ISR synchronization is required.
+    U8 m_stallTicks;
+
+    //! Number of stalled transactions the watchdog has force-recovered, emitted
+    //! as telemetry.
+    U32 m_stallRecoveryCount;
+
     // ----------------------------------------------------------------------
     // Helper functions
     // ----------------------------------------------------------------------
@@ -235,6 +245,18 @@ class I2cDriver final : public I2cDriverComponentBase {
     //! was already latched (dmaReplyIn_handler), so MB is handled as a level, not
     //! an edge.
     void serviceWriteReadMasterOnBus();
+
+    //! Force-recover a transaction whose completion interrupt was lost.
+    //!
+    //! Called from the telemetry-tick stall watchdog. Snapshots the frozen
+    //! INTFLAG/STATUS registers into the StalledTransactionRecovered event,
+    //! aborts both DMA channels, resets the peripheral bus state to IDLE, replies
+    //! to the pending caller with an error appropriate to the stuck state, and
+    //! returns the driver to IDLE so subsequent transactions can proceed.
+    //! \param stalledState the State the transaction was stuck in. The caller has
+    //!        already set m_state = IDLE atomically; this is the captured prior
+    //!        value. Must not be IDLE.
+    void recoverFromStall(State stalledState);
 
     //! Implements the write operation but doesn't handle the state updates
     void writeImpl(U32 addr, Fw::Buffer& buffer, bool generateStopCondition, bool queueReadDma);

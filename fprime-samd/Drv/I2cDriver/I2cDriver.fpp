@@ -120,8 +120,25 @@ module Samd21 {
             id 2 \
             format "I2C {} got a DMA reply from {} while expecting a reply from {}"
 
+        @ The stall watchdog found a transaction that never completed and force-
+        @ recovered the peripheral. The fields are the frozen INTFLAG/STATUS
+        @ registers captured before recovery, so the wedge can be diagnosed after
+        @ the fact. state is the driver State the transaction was stuck in.
+        event StalledTransactionRecovered(
+            sercom: SercomKind
+            stuckState: U8
+            intflag: U8
+            status: U16
+        ) \
+            severity warning high \
+            id 3 \
+            format "I2C {} recovered a stalled transaction in state {}: INTFLAG=0x{x} STATUS=0x{x}"
+
         @ Running count of bus errors reported by this I2C peripheral
         telemetry BusErrorCount: U32 id 0
+
+        @ Running count of stalled transactions force-recovered by the watchdog
+        telemetry StallRecoveryCount: U32 id 5
 
         enum I2cBusState: U8 {
             UNKNOWN = 0

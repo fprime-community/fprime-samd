@@ -43,6 +43,13 @@ struct I2cBusStatus {
     bool masterOnBus;  //!< INTFLAG.MB
 };
 
+//! Raw INTFLAG/STATUS register values, captured verbatim for the stall event so
+//! a wedge can be diagnosed from the downlinked bits without re-deriving them.
+struct I2cRawRegisters {
+    U8 intflag;  //!< INTFLAG (8-bit)
+    U16 status;  //!< STATUS (16-bit)
+};
+
 //! Hardware abstraction layer for the SERCOM I2C host peripheral.
 struct I2cHal {
     //! Register the component's ISR trampoline with the SERCOM dispatch table.
@@ -77,6 +84,20 @@ struct I2cHal {
 
     //! Read the bus status for periodic telemetry.
     static I2cBusStatus readBusStatus(SercomKind sercom);
+
+    //! Read the raw INTFLAG/STATUS registers for the stall-recovery event.
+    static I2cRawRegisters readRawRegisters(SercomKind sercom);
+
+    //! Recover a stuck peripheral back to a usable IDLE state.
+    //!
+    //! Used by the stall watchdog when a transaction's completion interrupt was
+    //! lost and the peripheral is wedged (classically MB latched with the bus
+    //! already auto-STOPped to IDLE by a hardware time-out). Disables the MB
+    //! interrupt, acknowledges every pending error and MB flag (write-1-clear),
+    //! and forces STATUS.BUSSTATE back to IDLE (0b01) so the next ADDR write can
+    //! start a fresh transaction. Does not touch DMA -- the caller aborts the DMA
+    //! channels separately.
+    static void recoverBusToIdle(SercomKind sercom);
 
     //! Acknowledge (write-1-clear) all error STATUS bits and INTFLAG.ERROR.
     static void acknowledgeErrors(SercomKind sercom);
@@ -136,11 +157,17 @@ struct StubState {
     I2cInterruptStatus interrupt_status;
     I2cBusStatus bus_status;
 
+    // readRawRegisters() injected values
+    I2cRawRegisters raw_registers;
+
     // ack / interrupt-enable counters
     U32 acknowledge_errors_count;
     U32 acknowledge_mb_count;
     U32 enable_mb_count;
     U32 disable_mb_count;
+
+    // recoverBusToIdle() capture
+    U32 recover_bus_count;
 
     // beginRead() capture
     U32 begin_read_count;

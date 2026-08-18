@@ -731,16 +731,30 @@ void I2cDriverTester::testReportTelemetryDeviceOnBus() {
         return;
     }
 
-    // Both master and slave flagged on the bus.
-    this->stub().bus_status.busState = 0x1;  // IDLE
+    // Both master and slave flagged on the bus, BUSY bus state.
+    this->stub().bus_status.busState = 0x3;  // BUSY
     this->stub().bus_status.slaveOnBus = true;
     this->stub().bus_status.masterOnBus = true;
 
     this->invoke_to_reportTelemetryIn(0, 0);
 
-    ASSERT_TLM_BusState(0, I2cDriver_I2cBusState::IDLE);
+    ASSERT_TLM_BusState(0, I2cDriver_I2cBusState::BUSY);
     ASSERT_TLM_DeviceOnBus_SIZE(1);
     ASSERT_TLM_DeviceOnBus(0, I2cDriver_DeviceOnBusFlag::MASTER_AND_SLAVE_ON_BUS);
+    this->clearHistory();
+
+    // Slave-only on bus.
+    this->stub().bus_status.slaveOnBus = true;
+    this->stub().bus_status.masterOnBus = false;
+    this->invoke_to_reportTelemetryIn(0, 0);
+    ASSERT_TLM_DeviceOnBus(0, I2cDriver_DeviceOnBusFlag::SLAVE_ON_BUS);
+    this->clearHistory();
+
+    // Master-only on bus.
+    this->stub().bus_status.slaveOnBus = false;
+    this->stub().bus_status.masterOnBus = true;
+    this->invoke_to_reportTelemetryIn(0, 0);
+    ASSERT_TLM_DeviceOnBus(0, I2cDriver_DeviceOnBusFlag::MASTER_ON_BUS);
 }
 
 // ----------------------------------------------------------------------
@@ -768,6 +782,216 @@ void I2cDriverTester::testClearErrors() {
     // Telemetry now reports zero errors.
     this->invoke_to_reportTelemetryIn(0, 0);
     ASSERT_TLM_BusErrorCount(0, 0U);
+}
+
+// ----------------------------------------------------------------------
+// ISR error during write-read WAIT disables the MB interrupt (leak fix)
+// ----------------------------------------------------------------------
+
+void I2cDriverTester::testIsrErrorDuringWriteReadWaitDisablesMb() {
+    this->resetTest();
+    this->configureStandard();
+    this->clearHistory();
+
+    // Drive a write-read up to WRITE_READ_WRITING_WAIT: issue the writeRead, then
+    // complete the write DMA with MB NOT yet latched so the driver arms the MB
+    // interrupt and waits.
+    Fw::Buffer writeBuffer(this->m_write_data, 4);
+    Fw::Buffer readBuffer(this->m_read_data, 8);
+    this->invoke_to_writeRead(0, 0x50, writeBuffer, readBuffer);
+    this->stub().interrupt_status.masterOnBus = false;
+    this->injectDmaReply(I2cDriver_DmaChannel::WRITE, Samd21::Dma::Status::OK, 0);
+    ASSERT_EQ(this->stub().enable_mb_count, 1U);   // MB interrupt armed
+    ASSERT_EQ(this->stub().disable_mb_count, 0U);  // not yet disabled
+    this->clearHistory();
+
+    // Now a bus error fires while in WRITE_READ_WRITING_WAIT. The error path must
+    // disable the MB interrupt that this state left enabled, otherwise the stale
+    // enable leaks into the next transaction.
+    this->stub().interrupt_status.error = true;
+    this->stub().interrupt_status.busError = true;
+    this->fireIsr();
+
+    ASSERT_EQ(this->stub().disable_mb_count, 1U);
+    // Both DMA channels aborted and the caller notified with WRITE_ERR.
+    ASSERT_from_dmaTransactionAbortOut_SIZE(2);
+    ASSERT_from_writeReadComplete_SIZE(1);
+    ASSERT_EQ(this->fromPortHistory_writeReadComplete->at(0).status, Drv::I2cStatus::I2C_WRITE_ERR);
+
+    // Driver is back to IDLE: a fresh transaction is accepted.
+    this->invoke_to_writeRead(0, 0x50, writeBuffer, readBuffer);
+    ASSERT_EQ(this->stub().begin_write_count, 2U);
+}
+
+// ----------------------------------------------------------------------
+// Stall watchdog (reportTelemetryIn)
+// ----------------------------------------------------------------------
+
+void I2cDriverTester::testStallWatchdogNoRecoveryBeforeThreshold() {
+    this->resetTest();
+    this->configureStandard();
+    this->clearHistory();
+
+    // Start a read but never complete it: the driver stays non-IDLE.
+    Fw::Buffer readBuffer(this->m_read_data, 8);
+    this->invoke_to_read(0, 0x50, readBuffer);
+    this->clearHistory();
+
+    // Tick up to (but not reaching) the recovery threshold. No recovery yet.
+    for (U8 i = 0; i < I2cDriverConfig::I2C_STALL_RECOVERY_TICKS - 1; i++) {
+        this->invoke_to_reportTelemetryIn(0, 0);
+    }
+    ASSERT_EQ(this->stub().recover_bus_count, 0U);
+    ASSERT_EVENTS_StalledTransactionRecovered_SIZE(0);
+    ASSERT_from_readComplete_SIZE(0);
+}
+
+void I2cDriverTester::testStallWatchdogRecoversRead() {
+    this->resetTest();
+    this->configureStandard();
+    this->clearHistory();
+
+    Fw::Buffer readBuffer(this->m_read_data, 8);
+    this->invoke_to_read(0, 0x50, readBuffer);
+    this->clearHistory();
+
+    // Arm a representative frozen register signature for the snapshot event.
+    this->stub().raw_registers.intflag = 0x01;  // MB
+    this->stub().raw_registers.status = 0x0010;  // (arbitrary) bus IDLE-ish
+
+    // Reaching the threshold triggers recovery.
+    for (U8 i = 0; i < I2cDriverConfig::I2C_STALL_RECOVERY_TICKS; i++) {
+        this->invoke_to_reportTelemetryIn(0, 0);
+    }
+
+    ASSERT_EQ(this->stub().recover_bus_count, 1U);
+    // The read DMA was aborted and the caller got an error reply.
+    ASSERT_from_dmaTransactionAbortOut_SIZE(1);
+    ASSERT_from_readComplete_SIZE(1);
+    ASSERT_EQ(this->fromPortHistory_readComplete->at(0).status, Drv::I2cStatus::I2C_OTHER_ERR);
+
+    // The snapshot event captured the frozen registers and the stuck state (READ = 1).
+    ASSERT_EVENTS_StalledTransactionRecovered_SIZE(1);
+    ASSERT_EVENTS_StalledTransactionRecovered(0, SercomKind::SERCOM_0, static_cast<U8>(1) /* READ */, 0x01, 0x0010);
+
+    // Driver recovered to IDLE: a fresh transaction is accepted.
+    this->invoke_to_read(0, 0x51, readBuffer);
+    ASSERT_EQ(this->stub().begin_read_count, 2U);
+}
+
+void I2cDriverTester::testStallWatchdogRecoversWrite() {
+    this->resetTest();
+    this->configureStandard();
+    this->clearHistory();
+
+    Fw::Buffer writeBuffer(this->m_write_data, 4);
+    this->invoke_to_write(0, 0x50, writeBuffer);
+    this->clearHistory();
+
+    for (U8 i = 0; i < I2cDriverConfig::I2C_STALL_RECOVERY_TICKS; i++) {
+        this->invoke_to_reportTelemetryIn(0, 0);
+    }
+
+    ASSERT_EQ(this->stub().recover_bus_count, 1U);
+    // The write DMA was aborted and the caller got a write error reply.
+    ASSERT_from_dmaTransactionAbortOut_SIZE(1);
+    ASSERT_from_writeComplete_SIZE(1);
+    ASSERT_EQ(this->fromPortHistory_writeComplete->at(0).status, Drv::I2cStatus::I2C_OTHER_ERR);
+    ASSERT_EVENTS_StalledTransactionRecovered_SIZE(1);
+}
+
+void I2cDriverTester::testStallWatchdogRecoversWriteRead() {
+    this->resetTest();
+    this->configureStandard();
+    this->clearHistory();
+
+    // Drive to WRITE_READ_WRITING_WAIT and then never let the MB interrupt fire --
+    // exactly the field wedge (MB latched, bus auto-STOPped, completion lost).
+    Fw::Buffer writeBuffer(this->m_write_data, 4);
+    Fw::Buffer readBuffer(this->m_read_data, 8);
+    this->invoke_to_writeRead(0, 0x50, writeBuffer, readBuffer);
+    this->stub().interrupt_status.masterOnBus = false;
+    this->injectDmaReply(I2cDriver_DmaChannel::WRITE, Samd21::Dma::Status::OK, 0);
+    this->clearHistory();
+
+    // The MB interrupt never arrives. The watchdog must recover after the threshold.
+    for (U8 i = 0; i < I2cDriverConfig::I2C_STALL_RECOVERY_TICKS; i++) {
+        this->invoke_to_reportTelemetryIn(0, 0);
+    }
+
+    ASSERT_EQ(this->stub().recover_bus_count, 1U);
+    // Both DMA channels aborted, MB interrupt disabled by the recovery HAL call.
+    ASSERT_from_dmaTransactionAbortOut_SIZE(2);
+    // The caller got a write-read error reply so its state machine unwinds.
+    ASSERT_from_writeReadComplete_SIZE(1);
+    ASSERT_EQ(this->fromPortHistory_writeReadComplete->at(0).status, Drv::I2cStatus::I2C_OTHER_ERR);
+    // The recovered write-read buffers are the correct ones (regression guard for
+    // the read/write buffer mix-up).
+    ASSERT_EQ(this->fromPortHistory_writeReadComplete->at(0).writeBuffer.getData(), this->m_write_data);
+    ASSERT_EQ(this->fromPortHistory_writeReadComplete->at(0).readBuffer.getData(), this->m_read_data);
+    ASSERT_EVENTS_StalledTransactionRecovered_SIZE(1);
+
+    // Fresh transaction accepted after recovery.
+    this->invoke_to_writeRead(0, 0x51, writeBuffer, readBuffer);
+    ASSERT_EQ(this->stub().begin_write_count, 2U);
+}
+
+void I2cDriverTester::testStallWatchdogResetsWhenIdle() {
+    this->resetTest();
+    this->configureStandard();
+    this->clearHistory();
+
+    // The driver is IDLE. Many ticks must never trigger a recovery.
+    for (U8 i = 0; i < I2cDriverConfig::I2C_STALL_RECOVERY_TICKS * 3; i++) {
+        this->invoke_to_reportTelemetryIn(0, 0);
+    }
+    ASSERT_EQ(this->stub().recover_bus_count, 0U);
+    ASSERT_EVENTS_StalledTransactionRecovered_SIZE(0);
+}
+
+void I2cDriverTester::testStallWatchdogResetsOnCompletion() {
+    this->resetTest();
+    this->configureStandard();
+    this->clearHistory();
+
+    // Accrue stall ticks just below the threshold on a read...
+    Fw::Buffer readBuffer(this->m_read_data, 8);
+    this->invoke_to_read(0, 0x50, readBuffer);
+    for (U8 i = 0; i < I2cDriverConfig::I2C_STALL_RECOVERY_TICKS - 1; i++) {
+        this->invoke_to_reportTelemetryIn(0, 0);
+    }
+    ASSERT_EQ(this->stub().recover_bus_count, 0U);
+
+    // ...then the read completes normally, returning the driver to IDLE.
+    this->injectDmaReply(I2cDriver_DmaChannel::READ, Samd21::Dma::Status::OK, 0);
+    this->clearHistory();
+
+    // The stall counter must have reset: a full threshold of fresh ticks with the
+    // driver IDLE triggers no recovery.
+    for (U8 i = 0; i < I2cDriverConfig::I2C_STALL_RECOVERY_TICKS; i++) {
+        this->invoke_to_reportTelemetryIn(0, 0);
+    }
+    ASSERT_EQ(this->stub().recover_bus_count, 0U);
+    ASSERT_EVENTS_StalledTransactionRecovered_SIZE(0);
+}
+
+void I2cDriverTester::testStallRecoveryCountTelemetry() {
+    this->resetTest();
+    this->configureStandard();
+    this->clearHistory();
+
+    // First stall + recovery.
+    Fw::Buffer readBuffer(this->m_read_data, 8);
+    this->invoke_to_read(0, 0x50, readBuffer);
+    for (U8 i = 0; i < I2cDriverConfig::I2C_STALL_RECOVERY_TICKS; i++) {
+        this->invoke_to_reportTelemetryIn(0, 0);
+    }
+    ASSERT_EQ(this->stub().recover_bus_count, 1U);
+
+    // The StallRecoveryCount channel is emitted every tick; the most recent value
+    // reflects the running count of recoveries.
+    const U32 lastIdx = this->tlmHistory_StallRecoveryCount->size() - 1;
+    ASSERT_TLM_StallRecoveryCount(lastIdx, 1U);
 }
 
 }  // namespace Samd21

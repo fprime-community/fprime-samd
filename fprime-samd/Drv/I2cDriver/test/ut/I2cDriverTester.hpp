@@ -67,6 +67,18 @@ class I2cDriverTester : public I2cDriverGTestBase {
     // ISR master-on-bus handling
     void testIsrMasterOnBusUnexpected();
 
+    // ISR error during write-read WAIT disables the MB interrupt (leak fix)
+    void testIsrErrorDuringWriteReadWaitDisablesMb();
+
+    // Stall watchdog (reportTelemetryIn)
+    void testStallWatchdogNoRecoveryBeforeThreshold();
+    void testStallWatchdogRecoversWriteRead();
+    void testStallWatchdogRecoversRead();
+    void testStallWatchdogRecoversWrite();
+    void testStallWatchdogResetsWhenIdle();
+    void testStallWatchdogResetsOnCompletion();
+    void testStallRecoveryCountTelemetry();
+
     // dmaReplyIn channel validation
     void testDmaReplyWrongChannelRead();
     void testDmaReplyWrongChannelWrite();

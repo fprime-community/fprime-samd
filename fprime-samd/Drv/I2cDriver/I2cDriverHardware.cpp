@@ -416,6 +416,52 @@ I2cBusStatus I2cHal::readBusStatus(SercomKind sercom) {
     return status;
 }
 
+I2cRawRegisters I2cHal::readRawRegisters(SercomKind sercom) {
+    Sercom* sercom_hw = SercomUtil::getHardware(sercom);
+    FW_ASSERT(sercom_hw != nullptr, sercom);
+
+    I2cRawRegisters regs = {};
+    regs.intflag = sercom_hw->I2CM.INTFLAG.reg;
+    regs.status = sercom_hw->I2CM.STATUS.reg;
+    return regs;
+}
+
+void I2cHal::recoverBusToIdle(SercomKind sercom) {
+    Sercom* sercom_hw = SercomUtil::getHardware(sercom);
+    FW_ASSERT(sercom_hw != nullptr, sercom);
+
+    // Disable the MB interrupt: a stalled write-read may have left it enabled.
+    sercom_hw->I2CM.INTENCLR.bit.MB = 1;
+
+    // Acknowledge every pending error STATUS bit and the ERROR/MB/SB interrupt
+    // flags (all write-1-clear) so no stale flag survives into the next
+    // transaction. This mirrors acknowledgeErrors() plus SB/MB.
+    if (sercom_hw->I2CM.STATUS.bit.BUSERR) {
+        sercom_hw->I2CM.STATUS.bit.BUSERR = 1;
+    }
+    if (sercom_hw->I2CM.STATUS.bit.ARBLOST) {
+        sercom_hw->I2CM.STATUS.bit.ARBLOST = 1;
+    }
+    if (sercom_hw->I2CM.STATUS.bit.LOWTOUT) {
+        sercom_hw->I2CM.STATUS.bit.LOWTOUT = 1;
+    }
+    if (sercom_hw->I2CM.STATUS.bit.MEXTTOUT) {
+        sercom_hw->I2CM.STATUS.bit.MEXTTOUT = 1;
+    }
+    if (sercom_hw->I2CM.STATUS.bit.SEXTTOUT) {
+        sercom_hw->I2CM.STATUS.bit.SEXTTOUT = 1;
+    }
+    if (sercom_hw->I2CM.STATUS.bit.LENERR) {
+        sercom_hw->I2CM.STATUS.bit.LENERR = 1;
+    }
+    sercom_hw->I2CM.INTFLAG.reg = SERCOM_I2CM_INTFLAG_ERROR | SERCOM_I2CM_INTFLAG_MB | SERCOM_I2CM_INTFLAG_SB;
+
+    // Force the bus state back to IDLE (0b01) so the host is ready to start a
+    // new transaction (§29.6.2.3, same as the tail of configure()).
+    sercom_hw->I2CM.STATUS.bit.BUSSTATE = 0x1;
+    waitForI2cSync(sercom_hw, SERCOM_I2CM_SYNCBUSY_SYSOP);
+}
+
 void I2cHal::acknowledgeErrors(SercomKind sercom) {
     Sercom* sercom_hw = SercomUtil::getHardware(sercom);
     FW_ASSERT(sercom_hw != nullptr, sercom);

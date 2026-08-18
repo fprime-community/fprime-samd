@@ -29,7 +29,9 @@ I2cDriver ::I2cDriver(const char* const compName)
       m_read(),
       m_pending_read_address(0),
       m_write(),
-      m_tlmErrors(0) {}
+      m_tlmErrors(0),
+      m_stallTicks(0),
+      m_stallRecoveryCount(0) {}
 
 I2cDriver ::~I2cDriver() {}
 
@@ -139,6 +141,15 @@ void I2cDriver ::isrHandler() {
             }
             case State::WRITE_READ_WRITING_WAIT:
             case State::WRITE_READ_WRITING: {
+                // WRITE_READ_WRITING_WAIT has the MB interrupt enabled (armed by the
+                // write-DMA completion). Disable it before recovering, otherwise the
+                // stale enable leaks into the next transaction and can latch MB
+                // against an unexpected state. Harmless in WRITE_READ_WRITING (not
+                // yet armed).
+                if (this->m_state == State::WRITE_READ_WRITING_WAIT) {
+                    I2cHardware::I2cHal::disableMasterOnBusInterrupt(this->m_sercom);
+                }
+
                 auto w_buf = this->m_write.getBuffer();
                 auto r_buf = this->m_read.getBuffer();
                 this->m_state = State::IDLE;
@@ -235,6 +246,71 @@ void I2cDriver ::serviceWriteReadMasterOnBus() {
     // Read DMA has already been queued, no need to do it again
     this->readImpl(this->m_pending_read_address, buf, /* queueDma */ false);
 }
+
+void I2cDriver ::recoverFromStall(State stalledState) {
+    FW_ASSERT(stalledState != State::IDLE, static_cast<FwAssertArgType>(stalledState));
+
+    // The caller has already atomically set m_state = IDLE under a critical
+    // section, so any completion ISR that races in during recovery is dropped by
+    // the IDLE guards rather than acting on half-reset state.
+
+    // Capture the frozen registers BEFORE recovery clears them, so the event
+    // records the actual wedge signature (e.g. MB latched with BUSSTATE=IDLE).
+    const I2cHardware::I2cRawRegisters regs = I2cHardware::I2cHal::readRawRegisters(this->m_sercom);
+    this->log_WARNING_HI_StalledTransactionRecovered(this->m_sercom, static_cast<U8>(stalledState), regs.intflag,
+                                                     regs.status);
+
+    // Abort whichever DMA channels this transaction could have had in flight.
+    switch (stalledState) {
+        case State::READ:
+            this->dmaTransactionAbortOut_out(I2cDriver_DmaChannel::READ);
+            break;
+        case State::WRITE:
+            this->dmaTransactionAbortOut_out(I2cDriver_DmaChannel::WRITE);
+            break;
+        case State::WRITE_READ_WRITING:
+        case State::WRITE_READ_WRITING_WAIT:
+        case State::WRITE_READ_READING:
+            this->dmaTransactionAbortOut_out(I2cDriver_DmaChannel::WRITE);
+            this->dmaTransactionAbortOut_out(I2cDriver_DmaChannel::READ);
+            break;
+        default:
+            break;
+    }
+
+    // Clear all pending flags, disable the MB interrupt, and force the bus to IDLE.
+    I2cHardware::I2cHal::recoverBusToIdle(this->m_sercom);
+
+    // Reply to the stuck caller with an error so the client's own state machine
+    // unwinds instead of waiting forever. Map to the port that matches the
+    // transaction kind, mirroring the ISR error paths.
+    Fw::Buffer read = this->m_read.getBuffer();
+    Fw::Buffer write = this->m_write.getBuffer();
+    switch (stalledState) {
+        case State::READ:
+            if (this->isConnected_readComplete_OutputPort(this->m_portNum)) {
+                this->readComplete_out(this->m_portNum, read, Drv::I2cStatus::I2C_OTHER_ERR);
+            }
+            break;
+        case State::WRITE:
+            if (this->isConnected_writeComplete_OutputPort(this->m_portNum)) {
+                this->writeComplete_out(this->m_portNum, write, Drv::I2cStatus::I2C_OTHER_ERR);
+            }
+            break;
+        case State::WRITE_READ_WRITING:
+        case State::WRITE_READ_WRITING_WAIT:
+        case State::WRITE_READ_READING:
+            if (this->isConnected_writeReadComplete_OutputPort(this->m_portNum)) {
+                this->writeReadComplete_out(this->m_portNum, write, read, Drv::I2cStatus::I2C_OTHER_ERR);
+            }
+            break;
+        default:
+            break;
+    }
+
+    this->m_stallRecoveryCount++;
+}
+
 // ----------------------------------------------------------------------
 // Command handler implementations
 // ----------------------------------------------------------------------
@@ -382,8 +458,40 @@ void I2cDriver ::read_handler(FwIndexType portNum, U32 addr, Fw::Buffer& buffer)
 void I2cDriver ::reportTelemetryIn_handler(FwIndexType portNum, U32 context) {
     auto now = this->getTime();
 
+    // Stall watchdog. A healthy transaction completes in milliseconds, well within
+    // a single telemetry tick. If the driver is still non-IDLE across
+    // I2C_STALL_RECOVERY_TICKS consecutive ticks, its completion interrupt was lost
+    // (e.g. a hardware time-out auto-STOPped the bus but the completion never
+    // propagated) and it will otherwise stay wedged forever. Force-recover it.
+    //
+    // The transaction is *claimed* under a critical section so a completion ISR
+    // cannot drive m_state to IDLE between the test and the claim: either the ISR
+    // wins and we observe IDLE (counter resets), or we win, atomically capture the
+    // stuck state and set m_state = IDLE. The actual recovery (event, DMA aborts,
+    // HAL reset, port replies -- all potentially long) then runs OUTSIDE the
+    // critical section so interrupts are not disabled across downstream calls. Any
+    // ISR that races in after the claim sees IDLE and is dropped by the IDLE guards.
+    State stalledState = State::IDLE;
+    {
+        Samd21::CriticalSection cs;
+        if (this->m_state == State::IDLE) {
+            this->m_stallTicks = 0;
+        } else {
+            this->m_stallTicks++;
+            if (this->m_stallTicks >= I2cDriverConfig::I2C_STALL_RECOVERY_TICKS) {
+                stalledState = this->m_state;
+                this->m_state = State::IDLE;
+                this->m_stallTicks = 0;
+            }
+        }
+    }
+    if (stalledState != State::IDLE) {
+        this->recoverFromStall(stalledState);
+    }
+
     // The bus-error counter is always emitted -- it is the driver's health signal.
     this->tlmWrite_BusErrorCount(this->m_tlmErrors, now);
+    this->tlmWrite_StallRecoveryCount(this->m_stallRecoveryCount, now);
 
     // The remaining diagnostic channels are compile-time gated. When disabled we
     // also skip the hardware bus-status read they depend on.

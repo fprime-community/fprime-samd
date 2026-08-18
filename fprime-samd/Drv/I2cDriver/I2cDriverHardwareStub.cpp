@@ -79,6 +79,22 @@ I2cBusStatus I2cHal::readBusStatus(SercomKind sercom) {
     return s_state.bus_status;
 }
 
+I2cRawRegisters I2cHal::readRawRegisters(SercomKind sercom) {
+    return s_state.raw_registers;
+}
+
+void I2cHal::recoverBusToIdle(SercomKind sercom) {
+    s_state.recover_bus_count++;
+
+    // Model the write-1-clear recovery: after recovery no interrupt/error flags
+    // remain pending and the bus is IDLE, so the driver can start fresh.
+    s_state.interrupt_status = I2cInterruptStatus{};
+    s_state.bus_status.busState = 0x1;  // IDLE
+    s_state.bus_status.clockHold = false;
+    s_state.bus_status.masterOnBus = false;
+    s_state.bus_status.slaveOnBus = false;
+}
+
 void I2cHal::acknowledgeErrors(SercomKind sercom) {
     s_state.acknowledge_errors_count++;
     // Model the write-1-clear: once acked, the pending error/flags go away so a
