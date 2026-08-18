@@ -215,6 +215,37 @@ void DmaChannel::readWriteback(Samd21::Dma::Writeback& result) {
     resumeChannel();
 }
 
+void DmaChannel::abort(U16& remainingBeats) {
+    FW_ASSERT(m_busy, m_channel_id);
+
+    // A circular channel has no end and its descriptors are shared/never freed;
+    // aborting one is a programming error.
+    FW_ASSERT(!m_circular, m_channel_id);
+
+    DMAC->CHID.reg = DMAC_CHID_ID(m_channel_id);
+
+    // Disable interrupts for this channel first: a software disable does not raise
+    // TERR/TCMPL/SUSP, but any error/complete flag already pending would otherwise
+    // fire against a chain we are about to tear down. The caller synthesizes the
+    // single completion reply for the aborted transaction instead.
+    DMAC->CHINTENCLR.reg = DMAC_CHINTENCLR_TCMPL | DMAC_CHINTENCLR_TERR | DMAC_CHINTENCLR_SUSP;
+
+    // Disabling lets the ongoing beat finish and updates the write-back before the
+    // channel is cleared (datasheet 20.6.3.6); queued/pending descriptors are
+    // dropped and PENDCH cleared. So the write-back reflects the final progress of
+    // the transaction that was executing.
+    DMAC->CHCTRLA.bit.ENABLE = 0;
+    waitForChannelDisable();
+
+    // Remaining beats on the aborted (active) transaction.
+    remainingBeats = dmac_writeback[m_channel_id].BTCNT.reg;
+
+    // Clear any flags latched during the final beat and reset channel state.
+    DMAC->CHINTFLAG.reg = DMAC_CHINTFLAG_TCMPL | DMAC_CHINTFLAG_TERR | DMAC_CHINTFLAG_SUSP;
+
+    m_busy = false;
+}
+
 void DmaChannel::markIdle() {
     m_busy = false;
 }

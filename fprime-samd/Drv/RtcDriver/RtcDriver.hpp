@@ -56,7 +56,8 @@ class RtcDriver final : public RtcDriverComponentBase {
     void enable();
 
     //! Handler for input port activeIn
-    void activeIn_handler(FwIndexType portNum,  //!< The port number
+    //! Returns true if the wakeup interrupt was pending and cycle work was done this tick
+    bool activeIn_handler(FwIndexType portNum,  //!< The port number
                           U32 context           //!< The call order
                           ) override;
 

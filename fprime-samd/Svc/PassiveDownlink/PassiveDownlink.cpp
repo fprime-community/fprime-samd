@@ -71,4 +71,14 @@ void PassiveDownlink ::TlmRecv_handler(FwIndexType portNum, FwChanIdType id, Fw:
     }
 }
 
+void PassiveDownlink ::flush_handler(FwIndexType portNum, U32 context) {
+    if (this->m_tlmPacket.getNumEntries() > 0) {
+        if (this->isConnected_PktSend_OutputPort(PassiveDownlink_PacketPort::TELEMETRY)) {
+            this->PktSend_out(PassiveDownlink_PacketPort::TELEMETRY, m_tlmPacket.getBuffer(), 0);
+        }
+
+        this->m_tlmPacket.resetPktSer();
+    }
+}
+
 }  // namespace Samd21

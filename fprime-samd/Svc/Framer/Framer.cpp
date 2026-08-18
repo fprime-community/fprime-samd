@@ -20,7 +20,7 @@ namespace Samd21 {
 // ----------------------------------------------------------------------
 
 Framer ::Framer(const char* const compName)
-    : FramerComponentBase(compName), m_driverConnected(false), m_activeBufferIdx(0) {
+    : FramerComponentBase(compName), m_driverConnected(false), m_activeBufferIdx(0), m_droppedPackets(0) {
     // Initialize both buffers to IDLE state with space reserved for header
     for (FwIndexType i = 0; i < 2; i++) {
         m_buffers[i].size = 0;
@@ -35,40 +35,43 @@ Framer ::~Framer() {}
 // ----------------------------------------------------------------------
 
 void Framer ::comPacketQueueIn_handler(FwIndexType portNum, Fw::ComBuffer& data, U32 context) {
-    TxBuffer& activeBuf = m_buffers[m_activeBufferIdx];
+    TxBuffer* activeBuf = &m_buffers[m_activeBufferIdx];
 
-    // Calculate space needed: ComBuffer data + trailer (header already reserved)
+    // Calculate space needed: frame header + ComBuffer data + trailer
     FwSizeType spaceNeeded = Svc::FprimeProtocol::FrameHeader::SERIALIZED_SIZE + data.getSize() +
                              Svc::FprimeProtocol::FrameTrailer::SERIALIZED_SIZE;
 
     // If both buffers are in flight (backpressure), drop this packet
-    if (activeBuf.state == TRANSMITTING) {
-        // TODO: Add telemetry to track dropped packets due to backpressure
+    if (activeBuf->state == TRANSMITTING) {
+        this->m_droppedPackets++;
         return;
     }
 
     // If adding this ComBuffer would overflow, flush first
-    if (activeBuf.size + spaceNeeded > FramerConfig::FRAMER_TX_BUFFER_SIZE) {
+    if (activeBuf->size + spaceNeeded > FramerConfig::FRAMER_TX_BUFFER_SIZE) {
         flushActiveBuffer();
 
+        // flushActiveBuffer() swapped the active buffer -- re-acquire it
+        activeBuf = &m_buffers[m_activeBufferIdx];
+
         // If both buffers are in flight (backpressure), drop this packet
-        if (activeBuf.state == TRANSMITTING) {
-            // TODO: Add telemetry to track dropped packets due to backpressure
+        if (activeBuf->state == TRANSMITTING) {
+            this->m_droppedPackets++;
             return;
         }
 
-        // After flush, active buffer should be IDLE with header space reserved
-        FW_ASSERT(activeBuf.state == IDLE);
-        FW_ASSERT(activeBuf.size == Svc::FprimeProtocol::FrameHeader::SERIALIZED_SIZE);
+        // After flush, the swapped-in buffer should be idle and empty
+        FW_ASSERT(activeBuf->state == IDLE);
+        FW_ASSERT(activeBuf->size == 0);
     }
 
     // Mark buffer as active if it's idle
-    if (activeBuf.state == IDLE) {
-        activeBuf.state = ACTIVE;
+    if (activeBuf->state == IDLE) {
+        activeBuf->state = ACTIVE;
     }
 
     // Append ComBuffer data directly to the buffer (after existing data)
-    Fw::Buffer bufWrapper(activeBuf.data + activeBuf.size, FramerConfig::FRAMER_TX_BUFFER_SIZE - activeBuf.size);
+    Fw::Buffer bufWrapper(activeBuf->data + activeBuf->size, FramerConfig::FRAMER_TX_BUFFER_SIZE - activeBuf->size);
     Fw::ExternalSerializeBuffer serializer(bufWrapper.getData(), bufWrapper.getSize());
 
     // Write the packet header
@@ -87,7 +90,7 @@ void Framer ::comPacketQueueIn_handler(FwIndexType portNum, Fw::ComBuffer& data,
 
     // Compute the CRC of the packet (header + data)
     Utils::HashBuffer hashBuffer;
-    Utils::Hash::hash(activeBuf.data + activeBuf.size,
+    Utils::Hash::hash(activeBuf->data + activeBuf->size,
                       data.getSize() + Svc::FprimeProtocol::FrameHeader::SERIALIZED_SIZE, hashBuffer);
 
     // Write trailer with CRC
@@ -98,8 +101,8 @@ void Framer ::comPacketQueueIn_handler(FwIndexType portNum, Fw::ComBuffer& data,
     FW_ASSERT(status == Fw::FW_SERIALIZE_OK, status);
 
     // Update buffer size to include the packet frame
-    activeBuf.size += serializer.getSize();
-    FW_ASSERT(activeBuf.size <= FramerConfig::FRAMER_TX_BUFFER_SIZE);
+    activeBuf->size += serializer.getSize();
+    FW_ASSERT(activeBuf->size <= FramerConfig::FRAMER_TX_BUFFER_SIZE);
 }
 
 void Framer ::drvConnected_handler(FwIndexType portNum) {
@@ -148,6 +151,8 @@ void Framer ::schedIn_handler(FwIndexType portNum, U32 context) {
         // Only flush if the other buffer is not transmitting
         FwIndexType nextBufferIdx = (m_activeBufferIdx + 1) % 2;
         TxBuffer& nextBuf = m_buffers[nextBufferIdx];
+
+        this->tlmWrite_DroppedPackets(this->m_droppedPackets);
 
         if (nextBuf.state == TRANSMITTING) {
             // Can't flush because both buffers would be in flight

@@ -42,7 +42,7 @@ module Samd21 {
         @ 2. Returns TX buffers with status to senders
         @ 3. Sends RX buffers downstream to consumers
         @ Without this connection, all TX/RX operations will hang.
-        sync input port activeIn: Svc.Sched
+        sync input port activeIn: Svc.ActiveSched
 
         @ Synchronously transmit data on this UART
         @ Blocks until the entire buffer is transferred

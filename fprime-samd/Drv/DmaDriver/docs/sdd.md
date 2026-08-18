@@ -18,6 +18,7 @@ The driver implements a descriptor-based architecture with support for linked de
 | SAMD21-DMA-006 | The DmaDriver shall support circular buffer mode for continuous transfers                                                                     | Hardware Test |
 | SAMD21-DMA-007 | The DmaDriver shall provide writeback register access for in-flight transfer monitoring                                                       | Hardware Test |
 | SAMD21-DMA-008 | The DmaDriver shall report the number of free descriptors as telemetry                                                                        | Hardware Test |
+| SAMD21-DMA-009 | The DmaDriver shall abort the active transaction and drop the queued chain on a channel without emitting completion replies                    | Hardware Test |
 
 ## 3. Design
 
@@ -31,6 +32,7 @@ The driver implements a descriptor-based architecture with support for linked de
 | ------------ | ------------------- | ---------------------- | ------------------------------------------------------------------- |
 | `sync input` | `sendTransactionIn` | `Dma.Transaction`      | Queue DMA transaction on channel (array of 12 ports)                |
 | `sync input` | `linkToFrontIn`     | `Fw.Signal`            | Link last descriptor to first for circular mode (array of 12 ports) |
+| `sync input` | `abortTransactionIn`| `Fw.Signal`            | Abort active transaction and drop queued chain (array of 12 ports)  |
 | `sync input` | `readWritebackIn`   | `Dma.ReadWriteback`    | Suspend, read the writeback descriptor, resume (array of 12 ports)  |
 | `sync input` | `schedIn`           | `Svc.Sched`            | Rate group tick; publishes the `freeDescriptors` telemetry channel  |
 | `output`     | `transactionIsrOut` | `Dma.TransactionReply` | Transaction completion signal from ISR (array of 12 ports)          |
@@ -123,6 +125,24 @@ struct Writeback {
 ```
 
 The writeback descriptor is updated live by hardware during DMA transfers. To read a coherent snapshot, `readWritebackIn` momentarily suspends the channel, reads the writeback registers, and then resumes the channel — the transfer continues from where it left off. This lets a consumer (e.g. the `UsartDriver` idle watchdog) read how many bytes have arrived in the buffer the DMA is actively filling without disturbing the descriptor chain.
+
+#### 3.4.4 Aborting a Channel
+
+The `abortTransactionIn` port cancels the active transaction and discards every queued descriptor on the channel:
+
+1. **Idle channel** — If the channel is not busy there is nothing to abort; the handler returns immediately.
+2. **Disable interrupts** — The channel's `TCMPL`/`TERR`/`SUSP` interrupt enables are cleared first. A software disable does not raise any of these interrupts, but a flag already pending would otherwise fire against a chain that is being torn down.
+3. **Disable the channel** — Clearing `CHCTRLA.ENABLE` lets the in-progress beat finish and updates the writeback before the channel is cleared (datasheet §20.6.3.6); queued/pending descriptors are dropped and `PENDCH` cleared. The writeback therefore reflects the final progress of the transaction that was executing, reported back to the channel as `remainingBeats`.
+4. **Clear latched flags** — Any flags latched during the final beat are cleared and the channel is marked idle.
+5. **Free the chain** — The driver walks the descriptor chain from the anchor (active descriptor plus all dropped descriptors) and frees each back into the shared pool, bounded by `DMA_DESCRIPTOR_N`, then detaches the freed chain from `dmac_base` and clears the tracking pointer.
+
+Because disabling raises no DMAC interrupt, **no `transactionIsrOut` reply is emitted** for the aborted transaction or any dropped queued transactions — the caller is responsible for synthesizing any completion notification it needs.
+
+**Requirements:**
+- Channel must be busy (asserts otherwise via the `abort()` helper; the port handler short-circuits on idle before reaching it)
+- Channel must **not** be in circular mode — a circular channel has no end and its descriptors are shared/never freed, so aborting one is a programming error (assertion failure)
+
+The port handler runs inside a `Samd21::CriticalSection` to guard the register access and descriptor bookkeeping against the DMAC ISR.
 
 ### 3.5 Descriptor Architecture
 
@@ -285,7 +305,24 @@ if (bytesReceived > 0) {
 **Requirements:**
 - Channel must be busy (have an active transaction)
 
-### 4.7 Free Descriptor Telemetry
+### 4.7 Aborting a Channel with abortTransaction
+
+Cancel the in-flight transaction and drop everything queued behind it. No completion reply is emitted, so the owner of the channel must handle any cleanup itself:
+
+```cpp
+// Tear down whatever channel 1 is doing (e.g. on UART teardown or error recovery)
+dmaDriver.abortTransactionIn_out(1);
+
+// The active beat finishes, the writeback captures final progress, all queued
+// descriptors are freed back into the shared pool, and the channel is idle again.
+// No transactionIsrOut fires for the aborted or dropped transactions.
+```
+
+**Requirements:**
+- Channel must not be in circular mode (assertion failure — use a channel reset instead)
+- Aborting an idle channel is a no-op (safe to call)
+
+### 4.8 Free Descriptor Telemetry
 
 Connect `schedIn` to a rate group to periodically publish the number of unused descriptors in the shared pool via the `freeDescriptors` telemetry channel. This is useful for monitoring descriptor-pool exhaustion in flight:
 
@@ -295,7 +332,7 @@ rateGroup1Hz.RateGroupMemberOut[1] -> dmaDriver.schedIn
 
 On each tick, the handler counts the clear bits in the `m_descriptors_used` bitfield and writes the count to `freeDescriptors`.
 
-### 4.8 Topology Connections
+### 4.9 Topology Connections
 
 ```fpp
 instance dmaDriver: Samd21.DmaDriver base id 0xD00
@@ -325,7 +362,7 @@ dmaDriver.configure();
 """
 ```
 
-### 4.9 Tested Configurations
+### 4.10 Tested Configurations
 
 This component has been tested on the following hardware venues:
 

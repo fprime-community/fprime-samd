@@ -136,7 +136,11 @@ class UsartDriver final : public UsartDriverComponentBase {
                       ) override;
 
     //! Handler for input port activeIn
-    void activeIn_handler(FwIndexType portNum,  //!< The port number
+    //!
+    //! Returns true iff at least one signal was dequeued and processed this
+    //! tick (so the cycler should re-invoke us); false if idle (not configured
+    //! or the queue was empty).
+    bool activeIn_handler(FwIndexType portNum,  //!< The port number
                           U32 context           //!< The call order
                           ) override;
 
@@ -155,12 +159,6 @@ class UsartDriver final : public UsartDriverComponentBase {
         B,
         INVALID,
     };
-
-    //! Get SERCOM TX DMA trigger source
-    Dma::TriggerSource getSercomTxTrigger(SercomKind sercom);
-
-    //! Get SERCOM RX DMA trigger source
-    Dma::TriggerSource getSercomRxTrigger(SercomKind sercom);
 
     //! Handle a reply on the TX DMA channel
     void dmaReplyTxIsr(const Samd21::Dma::Reply& reply);
