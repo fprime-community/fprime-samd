@@ -9,6 +9,7 @@ register_fprime_config(
         "${CMAKE_CURRENT_LIST_DIR}/UsartDriverConfig.hpp"
         "${CMAKE_CURRENT_LIST_DIR}/I2cDriverConfig.hpp"
         "${CMAKE_CURRENT_LIST_DIR}/FramerConfig.hpp"
+    DEPENDS
+        Fw_Types
     INTERFACE
-    BASE_CONFIG
 )

@@ -33,6 +33,7 @@ register_fprime_library(
       Drv_Interfaces
       fprime-samd_Drv_Types
       fprime-samd_Svc_Types
+      config-fprime-samd
 )
 
 ### Unit Tests ###

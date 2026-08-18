@@ -12,7 +12,8 @@ namespace Os {
 //! \param to_copy: pointer to copy-constructor input
 //! \return: pointer to delegate
 RawTimeInterface* RawTimeInterface::getDelegate(RawTimeHandleStorage& aligned_placement_new_memory,
-                                                const RawTimeInterface* to_copy) {
+                                                const RawTimeInterface* to_copy,
+                                                Os::RawTimeSource source) {
     return Os::Delegate::makeDelegate<RawTimeInterface, Os::Samd21::Samd21RawTime, RawTimeHandleStorage>(
         aligned_placement_new_memory, to_copy);
 }
