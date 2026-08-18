@@ -137,9 +137,6 @@ module Samd21 {
         @ Running count of bus errors reported by this I2C peripheral
         telemetry BusErrorCount: U32 id 0
 
-        @ Running count of stalled transactions force-recovered by the watchdog
-        telemetry StallRecoveryCount: U32 id 5
-
         enum I2cBusState: U8 {
             UNKNOWN = 0
             IDLE    = 1
@@ -165,6 +162,9 @@ module Samd21 {
 
         @ I2C Bus interrupt bit flags
         telemetry DeviceOnBus: DeviceOnBusFlag id 4
+
+        @ Running count of stalled transactions force-recovered by the watchdog
+        telemetry StallRecoveryCount: U32 id 5
 
         @ Clear the [BusErrorCount] channel
         sync command CLEAR_ERRORS opcode 0
