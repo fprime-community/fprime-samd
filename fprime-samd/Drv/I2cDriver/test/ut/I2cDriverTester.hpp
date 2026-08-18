@@ -114,6 +114,11 @@ class I2cDriverTester : public I2cDriverGTestBase {
     //! Fire the SERCOM ISR after arming an error/interrupt state in the stub.
     void fireIsr();
 
+    //! Drive the activeIn port (main-context tick) that delivers a pending
+    //! transaction completion to the client. Returns whether a completion was
+    //! delivered this tick.
+    bool driveActiveIn();
+
     //! Truncated 32-bit address of a buffer's data, matching how the driver
     //! passes buffer pointers to the DMA transaction port.
     static U32 bufferAddr(const U8* data);

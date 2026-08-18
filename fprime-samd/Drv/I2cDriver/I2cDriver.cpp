@@ -25,6 +25,7 @@ I2cDriver ::I2cDriver(const char* const compName)
       m_sercom(SercomKind::SERCOM_0),
       m_configured(false),
       m_state(I2cDriver::State::IDLE),
+      m_pendingStatus(Drv::I2cStatus::I2C_OK),
       m_portNum(),
       m_read(),
       m_pending_read_address(0),
@@ -115,32 +116,33 @@ void I2cDriver ::isrHandler() {
         // Acknowledge the master-on-bus flag (if set) and all error flags.
         I2cHardware::I2cHal::acknowledgeErrors(this->m_sercom);
 
-        // Handle the error
+        // Handle the error. The DMA channels are aborted here (the transaction
+        // must stop immediately), but the client reply is NOT issued from this ISR:
+        // the driver moves into the matching COMPLETE_* state and records the
+        // status, and the reply is delivered from activeIn in the main context.
         switch (this->m_state) {
             case State::IDLE:
-                // We got an interrupt when we were not expecting to
+            case State::COMPLETE_READ:
+            case State::COMPLETE_WRITE:
+            case State::COMPLETE_WRITE_READ:
+                // Error IRQ with no in-flight transaction: either genuinely idle,
+                // or a completion is already recorded and waiting for activeIn to
+                // deliver it. Nothing to abort or re-report; just flag it and leave
+                // the pending completion untouched.
                 this->log_WARNING_HI_UnexpectedInterrupt(this->m_sercom, I2cDriver_I2CInterrupt::BUS_ERROR);
                 break;
-            case State::READ: {
-                auto buf = this->m_read.getBuffer();
-                this->m_state = State::IDLE;
+            case State::READ:
                 this->dmaTransactionAbortOut_out(I2cDriver_DmaChannel::READ);
-                if (this->isConnected_readComplete_OutputPort(this->m_portNum)) {
-                    this->readComplete_out(this->m_portNum, buf, Drv::I2cStatus::I2C_READ_ERR);
-                }
+                this->m_pendingStatus = Drv::I2cStatus::I2C_READ_ERR;
+                this->m_state = State::COMPLETE_READ;
                 break;
-            }
-            case State::WRITE: {
-                auto buf = this->m_write.getBuffer();
-                this->m_state = State::IDLE;
+            case State::WRITE:
                 this->dmaTransactionAbortOut_out(I2cDriver_DmaChannel::WRITE);
-                if (this->isConnected_writeComplete_OutputPort(this->m_portNum)) {
-                    this->writeComplete_out(this->m_portNum, buf, Drv::I2cStatus::I2C_WRITE_ERR);
-                }
+                this->m_pendingStatus = Drv::I2cStatus::I2C_WRITE_ERR;
+                this->m_state = State::COMPLETE_WRITE;
                 break;
-            }
             case State::WRITE_READ_WRITING_WAIT:
-            case State::WRITE_READ_WRITING: {
+            case State::WRITE_READ_WRITING:
                 // WRITE_READ_WRITING_WAIT has the MB interrupt enabled (armed by the
                 // write-DMA completion). Disable it before recovering, otherwise the
                 // stale enable leaks into the next transaction and can latch MB
@@ -150,30 +152,17 @@ void I2cDriver ::isrHandler() {
                     I2cHardware::I2cHal::disableMasterOnBusInterrupt(this->m_sercom);
                 }
 
-                auto w_buf = this->m_write.getBuffer();
-                auto r_buf = this->m_read.getBuffer();
-                this->m_state = State::IDLE;
                 this->dmaTransactionAbortOut_out(I2cDriver_DmaChannel::WRITE);
                 this->dmaTransactionAbortOut_out(I2cDriver_DmaChannel::READ);
-
-                if (this->isConnected_writeReadComplete_OutputPort(this->m_portNum)) {
-                    this->writeReadComplete_out(this->m_portNum, w_buf, r_buf, Drv::I2cStatus::I2C_WRITE_ERR);
-                }
+                this->m_pendingStatus = Drv::I2cStatus::I2C_WRITE_ERR;
+                this->m_state = State::COMPLETE_WRITE_READ;
                 break;
-            }
-            case State::WRITE_READ_READING: {
-                auto w_buf = this->m_write.getBuffer();
-                auto r_buf = this->m_read.getBuffer();
-                this->m_state = State::IDLE;
-
-                // Write already finished, no need to abort
+            case State::WRITE_READ_READING:
+                // Write already finished, no need to abort it
                 this->dmaTransactionAbortOut_out(I2cDriver_DmaChannel::READ);
-
-                if (this->isConnected_writeReadComplete_OutputPort(this->m_portNum)) {
-                    this->writeReadComplete_out(this->m_portNum, w_buf, r_buf, Drv::I2cStatus::I2C_READ_ERR);
-                }
+                this->m_pendingStatus = Drv::I2cStatus::I2C_READ_ERR;
+                this->m_state = State::COMPLETE_WRITE_READ;
                 break;
-            }
             default:
                 FW_ASSERT(false, this->m_sercom, static_cast<FwAssertArgType>(this->m_state));
         }
@@ -227,13 +216,10 @@ void I2cDriver ::serviceWriteReadMasterOnBus() {
     // the pre-armed read DMA and report the write-read as a write error rather
     // than issuing a repeated START into a device that never accepted the pointer.
     if (I2cHardware::I2cHal::readInterruptStatus(this->m_sercom).rxNack) {
-        auto w_buf = this->m_write.getBuffer();
-        auto r_buf = this->m_read.getBuffer();
-        this->m_state = State::IDLE;
         this->dmaTransactionAbortOut_out(I2cDriver_DmaChannel::READ);
-        if (this->isConnected_writeReadComplete_OutputPort(this->m_portNum)) {
-            this->writeReadComplete_out(this->m_portNum, w_buf, r_buf, Drv::I2cStatus::I2C_WRITE_ERR);
-        }
+        // Record the write error; activeIn delivers the reply from the main context.
+        this->m_pendingStatus = Drv::I2cStatus::I2C_WRITE_ERR;
+        this->m_state = State::COMPLETE_WRITE_READ;
         return;
     }
 
@@ -334,6 +320,12 @@ void I2cDriver ::dmaReplyIn_handler(FwIndexType portNum, const Samd21::Dma::Repl
     switch (this->m_state) {
         case State::IDLE:
         case State::WRITE_READ_WRITING_WAIT:
+        case State::COMPLETE_READ:
+        case State::COMPLETE_WRITE:
+        case State::COMPLETE_WRITE_READ:
+            // No DMA is expected in these states: either idle, waiting on the MB
+            // interrupt (not a DMA event), or a completion is already recorded and
+            // pending delivery. Drop the reply.
             return;
 
             // Expecting a read reply
@@ -370,25 +362,24 @@ void I2cDriver ::dmaReplyIn_handler(FwIndexType portNum, const Samd21::Dma::Repl
     switch (this->m_state) {
         case State::IDLE:
         case State::WRITE_READ_WRITING_WAIT:
+        case State::COMPLETE_READ:
+        case State::COMPLETE_WRITE:
+        case State::COMPLETE_WRITE_READ:
             // We already handled these cases
             this->log_WARNING_HI_InvalidDmaReply(this->m_sercom, portNum, Samd21::I2cDriver_DmaChannel::N);
             break;
         case State::READ: {
             FW_ASSERT(reply.get_status() == Samd21::Dma::Status::OK);
-            auto buf = this->m_read.getBuffer();
-            this->m_state = State::IDLE;
-            if (this->isConnected_readComplete_OutputPort(this->m_portNum)) {
-                this->readComplete_out(this->m_portNum, buf, Drv::I2cStatus::I2C_OK);
-            }
+            // Record the successful read; activeIn delivers the reply from the main context.
+            this->m_pendingStatus = Drv::I2cStatus::I2C_OK;
+            this->m_state = State::COMPLETE_READ;
             break;
         }
         case State::WRITE: {
             FW_ASSERT(reply.get_status() == Samd21::Dma::Status::OK);
-            auto buf = this->m_write.getBuffer();
-            this->m_state = State::IDLE;
-            if (this->isConnected_writeComplete_OutputPort(this->m_portNum)) {
-                this->writeComplete_out(this->m_portNum, buf, Drv::I2cStatus::I2C_OK);
-            }
+            // Record the successful write; activeIn delivers the reply from the main context.
+            this->m_pendingStatus = Drv::I2cStatus::I2C_OK;
+            this->m_state = State::COMPLETE_WRITE;
             break;
         }
         case State::WRITE_READ_WRITING: {
@@ -426,18 +417,70 @@ void I2cDriver ::dmaReplyIn_handler(FwIndexType portNum, const Samd21::Dma::Repl
         }
         case State::WRITE_READ_READING: {
             FW_ASSERT(reply.get_status() == Samd21::Dma::Status::OK);
-            auto w_buf = this->m_write.getBuffer();
-            auto r_buf = this->m_read.getBuffer();
-            this->m_state = State::IDLE;
-
-            if (this->isConnected_writeReadComplete_OutputPort(this->m_portNum)) {
-                this->writeReadComplete_out(this->m_portNum, w_buf, r_buf, Drv::I2cStatus::I2C_OK);
-            }
+            // Record the successful write-read; activeIn delivers the reply from the main context.
+            this->m_pendingStatus = Drv::I2cStatus::I2C_OK;
+            this->m_state = State::COMPLETE_WRITE_READ;
             break;
         }
         default:
             FW_ASSERT(false, this->m_sercom, static_cast<FwAssertArgType>(this->m_state));
     }
+}
+
+bool I2cDriver ::activeIn_handler(FwIndexType portNum, U32 context) {
+    // Snapshot the pending completion under a critical section so a completion ISR
+    // cannot mutate m_state / m_pendingStatus between the read and the transition
+    // back to IDLE. The actual client callback (potentially long) runs OUTSIDE the
+    // critical section.
+    State completed;
+    Drv::I2cStatus status;
+    {
+        Samd21::CriticalSection cs;
+        completed = this->m_state;
+        switch (completed) {
+            case State::COMPLETE_READ:
+            case State::COMPLETE_WRITE:
+            case State::COMPLETE_WRITE_READ:
+                status = this->m_pendingStatus;
+                this->m_state = State::IDLE;
+                break;
+            default:
+                // No completion pending (idle or a transaction still in flight):
+                // nothing to deliver this tick.
+                return false;
+        }
+    }
+
+    // Deliver the reply on the port matching the completed transaction kind. The
+    // buffers are still owned by the driver until the callback returns them.
+    switch (completed) {
+        case State::COMPLETE_READ: {
+            Fw::Buffer buf = this->m_read.getBuffer();
+            if (this->isConnected_readComplete_OutputPort(this->m_portNum)) {
+                this->readComplete_out(this->m_portNum, buf, status);
+            }
+            break;
+        }
+        case State::COMPLETE_WRITE: {
+            Fw::Buffer buf = this->m_write.getBuffer();
+            if (this->isConnected_writeComplete_OutputPort(this->m_portNum)) {
+                this->writeComplete_out(this->m_portNum, buf, status);
+            }
+            break;
+        }
+        case State::COMPLETE_WRITE_READ: {
+            Fw::Buffer w_buf = this->m_write.getBuffer();
+            Fw::Buffer r_buf = this->m_read.getBuffer();
+            if (this->isConnected_writeReadComplete_OutputPort(this->m_portNum)) {
+                this->writeReadComplete_out(this->m_portNum, w_buf, r_buf, status);
+            }
+            break;
+        }
+        default:
+            FW_ASSERT(false, static_cast<FwAssertArgType>(completed));
+    }
+
+    return true;
 }
 
 void I2cDriver ::read_handler(FwIndexType portNum, U32 addr, Fw::Buffer& buffer) {
@@ -474,7 +517,13 @@ void I2cDriver ::reportTelemetryIn_handler(FwIndexType portNum, U32 context) {
     State stalledState = State::IDLE;
     {
         Samd21::CriticalSection cs;
-        if (this->m_state == State::IDLE) {
+        // A COMPLETE_* state is not a stall: the transaction already finished in
+        // the ISR, the bus is idle, and the reply is only waiting for the next
+        // activeIn tick. Only the in-flight states (READ/WRITE/WRITE_READ_*) can
+        // wedge, so only they accrue stall ticks.
+        const bool inFlight = (this->m_state != State::IDLE) && (this->m_state != State::COMPLETE_READ) &&
+                              (this->m_state != State::COMPLETE_WRITE) && (this->m_state != State::COMPLETE_WRITE_READ);
+        if (!inFlight) {
             this->m_stallTicks = 0;
         } else {
             this->m_stallTicks++;

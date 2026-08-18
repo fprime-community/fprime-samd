@@ -60,6 +60,10 @@ void I2cDriverTester::fireIsr() {
     I2cHardware::fireIsr();
 }
 
+bool I2cDriverTester::driveActiveIn() {
+    return this->invoke_to_activeIn(0, 0);
+}
+
 U32 I2cDriverTester::bufferAddr(const U8* data) {
     return static_cast<U32>(reinterpret_cast<uintptr_t>(data));
 }
@@ -156,12 +160,19 @@ void I2cDriverTester::testReadCompletion() {
     Fw::Buffer buffer(this->m_read_data, 8);
     this->invoke_to_read(0, 0x42, buffer);
 
-    // DMA signals the read completed
+    // DMA signals the read completed (ISR context): the reply is recorded but NOT
+    // delivered yet -- it is deferred to the main-context activeIn tick.
     this->injectDmaReply(I2cDriver_DmaChannel::READ, Samd21::Dma::Status::OK, 0);
+    ASSERT_from_readComplete_SIZE(0);
 
+    // The activeIn tick delivers the completion and reports that work was done.
+    ASSERT_TRUE(this->driveActiveIn());
     ASSERT_from_readComplete_SIZE(1);
     ASSERT_EQ(this->fromPortHistory_readComplete->at(0).status, Drv::I2cStatus::I2C_OK);
     ASSERT_EQ(this->fromPortHistory_readComplete->at(0).buffer.getData(), this->m_read_data);
+
+    // A second activeIn with nothing pending is a no-op.
+    ASSERT_FALSE(this->driveActiveIn());
 
     // Back to idle: a second read is accepted
     this->invoke_to_read(0, 0x42, buffer);
@@ -227,8 +238,11 @@ void I2cDriverTester::testWriteCompletion() {
     Fw::Buffer buffer(this->m_write_data, 16);
     this->invoke_to_write(0, 0x21, buffer);
 
+    // DMA completion (ISR context) records the reply; delivery is deferred.
     this->injectDmaReply(I2cDriver_DmaChannel::WRITE, Samd21::Dma::Status::OK, 0);
+    ASSERT_from_writeComplete_SIZE(0);
 
+    ASSERT_TRUE(this->driveActiveIn());
     ASSERT_from_writeComplete_SIZE(1);
     ASSERT_EQ(this->fromPortHistory_writeComplete->at(0).status, Drv::I2cStatus::I2C_OK);
     ASSERT_EQ(this->fromPortHistory_writeComplete->at(0).buffer.getData(), this->m_write_data);
@@ -318,8 +332,11 @@ void I2cDriverTester::testWriteReadFullSequence() {
     ASSERT_EQ(this->stub().begin_read_addr, addr);  // read half targets the stashed address
     ASSERT_EQ(this->stub().begin_read_len, 8U);
 
-    // 3) Read DMA completes -> writeRead completion fires OK
+    // 3) Read DMA completes -> reply recorded, delivered on the activeIn tick.
     this->injectDmaReply(I2cDriver_DmaChannel::READ, Samd21::Dma::Status::OK, 0);
+    ASSERT_from_writeReadComplete_SIZE(0);
+
+    ASSERT_TRUE(this->driveActiveIn());
     ASSERT_from_writeReadComplete_SIZE(1);
     ASSERT_EQ(this->fromPortHistory_writeReadComplete->at(0).status, Drv::I2cStatus::I2C_OK);
     ASSERT_EQ(this->fromPortHistory_writeReadComplete->at(0).writeBuffer.getData(), this->m_write_data);
@@ -374,8 +391,12 @@ void I2cDriverTester::testWriteReadPointerNack() {
     ASSERT_EQ(this->stub().disable_mb_count, 1U);
     ASSERT_EQ(this->stub().begin_read_count, 0U);
 
-    // The pre-armed read DMA was aborted and the caller got WRITE_ERR.
+    // The pre-armed read DMA was aborted (in the ISR); the WRITE_ERR reply is
+    // recorded and delivered on the activeIn tick.
     ASSERT_from_dmaTransactionAbortOut_SIZE(1);  // READ only
+    ASSERT_from_writeReadComplete_SIZE(0);
+
+    ASSERT_TRUE(this->driveActiveIn());
     ASSERT_from_writeReadComplete_SIZE(1);
     ASSERT_EQ(this->fromPortHistory_writeReadComplete->at(0).status, Drv::I2cStatus::I2C_WRITE_ERR);
 
@@ -414,8 +435,10 @@ void I2cDriverTester::testWriteReadMbAlreadyLatched() {
     ASSERT_EQ(this->stub().begin_read_addr, addr);  // read half targets the stashed address
     ASSERT_EQ(this->stub().begin_read_len, 8U);
 
-    // No separate MB ISR was needed; the read DMA completes the transaction OK.
+    // No separate MB ISR was needed; the read DMA completes the transaction OK
+    // (reply delivered on the activeIn tick).
     this->injectDmaReply(I2cDriver_DmaChannel::READ, Samd21::Dma::Status::OK, 0);
+    ASSERT_TRUE(this->driveActiveIn());
     ASSERT_from_writeReadComplete_SIZE(1);
     ASSERT_EQ(this->fromPortHistory_writeReadComplete->at(0).status, Drv::I2cStatus::I2C_OK);
     ASSERT_EQ(this->fromPortHistory_writeReadComplete->at(0).writeBuffer.getData(), this->m_write_data);
@@ -459,8 +482,10 @@ void I2cDriverTester::testWriteReadMbAlreadyLatchedSpuriousIsr() {
     ASSERT_EVENTS_UnexpectedInterrupt_SIZE(0);
     ASSERT_from_writeReadComplete_SIZE(0);
 
-    // The read DMA still completes the transaction cleanly.
+    // The read DMA still completes the transaction cleanly (reply delivered on the
+    // activeIn tick).
     this->injectDmaReply(I2cDriver_DmaChannel::READ, Samd21::Dma::Status::OK, 0);
+    ASSERT_TRUE(this->driveActiveIn());
     ASSERT_from_writeReadComplete_SIZE(1);
     ASSERT_EQ(this->fromPortHistory_writeReadComplete->at(0).status, Drv::I2cStatus::I2C_OK);
 }
@@ -507,7 +532,11 @@ void I2cDriverTester::testIsrErrorDuringRead() {
     ASSERT_EVENTS_I2cBusError_SIZE(1);
     ASSERT_EVENTS_I2cBusError(0, SercomKind::SERCOM_0, I2cDriver_I2cError::ARBITRATION_LOST);
 
+    // The DMA was aborted in the ISR, but the READ_ERR reply is deferred to activeIn.
     ASSERT_from_dmaTransactionAbortOut_SIZE(1);
+    ASSERT_from_readComplete_SIZE(0);
+
+    ASSERT_TRUE(this->driveActiveIn());
     ASSERT_from_readComplete_SIZE(1);
     ASSERT_EQ(this->fromPortHistory_readComplete->at(0).status, Drv::I2cStatus::I2C_READ_ERR);
 
@@ -531,6 +560,9 @@ void I2cDriverTester::testIsrErrorDuringWrite() {
     this->fireIsr();
 
     ASSERT_from_dmaTransactionAbortOut_SIZE(1);
+    ASSERT_from_writeComplete_SIZE(0);
+
+    ASSERT_TRUE(this->driveActiveIn());
     ASSERT_from_writeComplete_SIZE(1);
     ASSERT_EQ(this->fromPortHistory_writeComplete->at(0).status, Drv::I2cStatus::I2C_WRITE_ERR);
 }
@@ -553,6 +585,9 @@ void I2cDriverTester::testIsrErrorDuringWriteReadWriting() {
 
     ASSERT_EVENTS_I2cBusError(0, SercomKind::SERCOM_0, I2cDriver_I2cError::SCL_LOW_TIMEOUT);
     ASSERT_from_dmaTransactionAbortOut_SIZE(2);  // WRITE + READ
+    ASSERT_from_writeReadComplete_SIZE(0);
+
+    ASSERT_TRUE(this->driveActiveIn());
     ASSERT_from_writeReadComplete_SIZE(1);
     ASSERT_EQ(this->fromPortHistory_writeReadComplete->at(0).status, Drv::I2cStatus::I2C_WRITE_ERR);
 }
@@ -582,6 +617,9 @@ void I2cDriverTester::testIsrErrorDuringWriteReadReading() {
 
     ASSERT_EVENTS_I2cBusError(0, SercomKind::SERCOM_0, I2cDriver_I2cError::SLAVE_SCL_EXTEND_TIMEOUT);
     ASSERT_from_dmaTransactionAbortOut_SIZE(1);  // READ only
+    ASSERT_from_writeReadComplete_SIZE(0);
+
+    ASSERT_TRUE(this->driveActiveIn());
     ASSERT_from_writeReadComplete_SIZE(1);
     ASSERT_EQ(this->fromPortHistory_writeReadComplete->at(0).status, Drv::I2cStatus::I2C_READ_ERR);
 }
@@ -813,8 +851,11 @@ void I2cDriverTester::testIsrErrorDuringWriteReadWaitDisablesMb() {
     this->fireIsr();
 
     ASSERT_EQ(this->stub().disable_mb_count, 1U);
-    // Both DMA channels aborted and the caller notified with WRITE_ERR.
+    // Both DMA channels aborted in the ISR; the WRITE_ERR reply is deferred to activeIn.
     ASSERT_from_dmaTransactionAbortOut_SIZE(2);
+    ASSERT_from_writeReadComplete_SIZE(0);
+
+    ASSERT_TRUE(this->driveActiveIn());
     ASSERT_from_writeReadComplete_SIZE(1);
     ASSERT_EQ(this->fromPortHistory_writeReadComplete->at(0).status, Drv::I2cStatus::I2C_WRITE_ERR);
 
@@ -962,8 +1003,10 @@ void I2cDriverTester::testStallWatchdogResetsOnCompletion() {
     }
     ASSERT_EQ(this->stub().recover_bus_count, 0U);
 
-    // ...then the read completes normally, returning the driver to IDLE.
+    // ...then the read completes normally. The activeIn tick delivers the reply and
+    // returns the driver to IDLE.
     this->injectDmaReply(I2cDriver_DmaChannel::READ, Samd21::Dma::Status::OK, 0);
+    ASSERT_TRUE(this->driveActiveIn());
     this->clearHistory();
 
     // The stall counter must have reset: a full threshold of fresh ticks with the

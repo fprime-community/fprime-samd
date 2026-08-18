@@ -59,6 +59,13 @@ module Samd21 {
         @ Port for periodically writing telemetry
         sync input port reportTelemetryIn: Svc.Sched
 
+        @ REQUIRED CONNECTION: deliver transaction completions from the main context.
+        @ Connect to a PassiveCycler. The completion callbacks (read/write/writeRead
+        @ Complete) are driven from here rather than from the DMA/SERCOM ISR, so client
+        @ components run outside interrupt context. Returns true if a completion was
+        @ delivered this tick (so the cycler re-invokes us), false when idle.
+        sync input port activeIn: Svc.ActiveSched
+
         @ Port to send a DMA transaction to the DMA driver
         output port dmaTransactionOut: [DmaChannel.N] Dma.Transaction
 

@@ -46,10 +46,17 @@ different SERCOM triggers. Using separate channels also lets the read transfer b
 armed ahead of time so the write→read transition never has to set up DMA from
 within an interrupt.
 
-Transaction completions (and bus errors) are delivered to the driver from
-interrupt context and are forwarded straight to the caller's completion callback.
-The driver does not use a signal queue or `PassiveCycler`, so **completion
-callbacks run in ISR context** — consumers must keep those handlers short.
+Transaction completions (and bus errors) are detected in interrupt context
+(the DMA `dmaReplyIn` and the SERCOM error/master-on-bus interrupts), but the
+completion callback is **not** invoked from there. Instead the ISR records the
+outcome — it moves the driver into a terminal `COMPLETE_*` state and stores the
+resulting `I2cStatus` — and the client callback is delivered later from the
+`activeIn` tick, which runs in the main context off a `PassiveCycler`. This means
+**completion callbacks run in the main loop, not ISR context**, so client handlers
+are free to do ordinary work (telemetry, events, replies). The driver stays
+non-IDLE (and rejects new requests as busy) between the ISR recording the
+completion and `activeIn` delivering it. `activeIn` must therefore be connected
+for the driver to function.
 
 ### 3.2 Ports
 
@@ -64,6 +71,7 @@ callbacks run in ISR context** — consumers must keep those handlers short.
 | `output`     | `dmaTransactionOut[N]`              | `Dma.Transaction`          | Queue a DMA transfer on the WRITE or READ channel    |
 | `output`     | `dmaTransactionAbortOut[N]`         | `Fw.Signal`                | Abort a channel's DMA transfer (error teardown)      |
 | `sync input` | `dmaReplyIn[N]`                     | `Dma.TransactionReply`     | DMA completion from the DMAC (ISR context)           |
+| `sync input` | `activeIn`                          | `Svc.ActiveSched`          | Main-context tick that delivers pending completions  |
 | `sync input` | `reportTelemetryIn`                 | `Svc.Sched`                | Periodic tick that emits bus-state / error telemetry |
 | `time get`   | `timeCaller`                        | —                          | Timestamp source for telemetry                       |
 

@@ -134,6 +134,15 @@ class I2cDriver final : public I2cDriverComponentBase {
     void dmaReplyIn_handler(FwIndexType portNum,  //!< The port number
                             const Samd21::Dma::Reply& reply) override;
 
+    //! Handler implementation for activeIn
+    //!
+    //! Deliver a pending transaction completion to the client from the main
+    //! context (outside the ISR that finished the transaction). Returns true if a
+    //! completion was delivered this tick, false when there was nothing pending.
+    bool activeIn_handler(FwIndexType portNum,  //!< The port number
+                          U32 context           //!< The call order
+                          ) override;
+
     //! Handler implementation for read
     //!
     //! Port for asynchronous read transaction
@@ -197,10 +206,26 @@ class I2cDriver final : public I2cDriverComponentBase {
         WRITE_READ_WRITING,
         WRITE_READ_WRITING_WAIT,
         WRITE_READ_READING,
+
+        //! Terminal states: the transaction finished (successfully or with an
+        //! error) inside the DMA/SERCOM ISR, but the client reply has not been
+        //! delivered yet. The bus is idle and no DMA is in flight; the driver
+        //! stays non-IDLE so new requests are rejected as busy until activeIn
+        //! delivers the pending reply (m_pendingStatus) from the main context and
+        //! returns to IDLE. Which callback port is invoked is encoded in the
+        //! specific COMPLETE_* value.
+        COMPLETE_READ,
+        COMPLETE_WRITE,
+        COMPLETE_WRITE_READ,
     };
 
     //! Current peripheral state/executing transaction
     State m_state;
+
+    //! Status of the completed transaction, recorded by the ISR when it moves the
+    //! driver into a COMPLETE_* state and consumed by activeIn when it delivers the
+    //! reply. Only meaningful while m_state is one of the COMPLETE_* states.
+    Drv::I2cStatus m_pendingStatus;
 
     //! Currently pending port number to reply to
     FwIndexType m_portNum;
