@@ -546,7 +546,7 @@ void I2cHal::beginWrite(SercomKind sercom, U32 addr, U8 byteCount, bool generate
         addrReg.bit.LENEN = 0;
     }
 
-    addrReg.bit.ADDR = (addr << 1) | 0x0;  // send a write request
+    addrReg.bit.ADDR = (addr << 1);  // send a write request (R/W bit = 0)
 
     // Send NACK if anyone tries to send data to us
     sercom_hw->I2CM.CTRLB.bit.ACKACT = 1;

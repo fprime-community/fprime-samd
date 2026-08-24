@@ -235,6 +235,28 @@ TEST(DmaReply, IdleIgnored) {
 }
 
 // ----------------------------------------------------------------------
+// Input-range boundary conditions
+// ----------------------------------------------------------------------
+
+TEST(Boundary, WriteMaxPayload) {
+    COMMENT("a 255-byte write (max DMA payload) queues a full-length transfer and completes OK");
+    Samd21::I2cDriverTester tester;
+    tester.testWriteMaxPayload();
+}
+
+TEST(Boundary, ReadMinPayload) {
+    COMMENT("a 1-byte read (min payload) queues a single-beat transfer and completes OK");
+    Samd21::I2cDriverTester tester;
+    tester.testReadMinPayload();
+}
+
+TEST(Boundary, WriteReadMaxAddress) {
+    COMMENT("both phases of a write-read target the max legal 7-bit address 0x7F");
+    Samd21::I2cDriverTester tester;
+    tester.testWriteReadMaxAddress();
+}
+
+// ----------------------------------------------------------------------
 // Telemetry
 // ----------------------------------------------------------------------
 

@@ -721,6 +721,83 @@ void I2cDriverTester::testDmaReplyIdleIgnored() {
 }
 
 // ----------------------------------------------------------------------
+// Input-range boundary conditions
+// ----------------------------------------------------------------------
+
+void I2cDriverTester::testWriteMaxPayload() {
+    this->resetTest();
+    this->configureStandard();
+    this->clearHistory();
+
+    // Maximum DMA payload the driver supports is 255 bytes. A write at exactly the
+    // limit must queue a full-length DMA transfer and complete normally.
+    const U32 addr = 0x21;
+    const U16 len = 255;
+    Fw::Buffer buffer(this->m_write_data, len);
+    this->invoke_to_write(0, addr, buffer);
+
+    ASSERT_from_dmaTransactionOut_SIZE(1);
+    ASSERT_EQ(this->fromPortHistory_dmaTransactionOut->at(0).beat_count, static_cast<U32>(len));
+    ASSERT_EQ(this->stub().begin_write_count, 1U);
+    ASSERT_EQ(this->stub().begin_write_len, static_cast<U8>(len));  // 255 fits in the U8 ADDR.LEN field
+    ASSERT_TRUE(this->stub().begin_write_stop);
+
+    // Completes OK through the normal DMA -> activeIn path.
+    this->injectDmaReply(I2cDriver_DmaChannel::WRITE, Samd21::Dma::Status::OK, 0);
+    ASSERT_TRUE(this->driveActiveIn());
+    ASSERT_from_writeComplete_SIZE(1);
+    ASSERT_EQ(this->fromPortHistory_writeComplete->at(0).status, Drv::I2cStatus::I2C_OK);
+}
+
+void I2cDriverTester::testReadMinPayload() {
+    this->resetTest();
+    this->configureStandard();
+    this->clearHistory();
+
+    // Minimum useful payload is a single byte.
+    Fw::Buffer buffer(this->m_read_data, 1);
+    this->invoke_to_read(0, 0x42, buffer);
+
+    ASSERT_from_dmaTransactionOut_SIZE(1);
+    ASSERT_EQ(this->fromPortHistory_dmaTransactionOut->at(0).beat_count, 1U);
+    ASSERT_EQ(this->stub().begin_read_count, 1U);
+    ASSERT_EQ(this->stub().begin_read_len, 1U);
+
+    this->injectDmaReply(I2cDriver_DmaChannel::READ, Samd21::Dma::Status::OK, 0);
+    ASSERT_TRUE(this->driveActiveIn());
+    ASSERT_from_readComplete_SIZE(1);
+    ASSERT_EQ(this->fromPortHistory_readComplete->at(0).status, Drv::I2cStatus::I2C_OK);
+}
+
+void I2cDriverTester::testWriteReadMaxAddress() {
+    this->resetTest();
+    this->configureStandard();
+    this->clearHistory();
+
+    // The driver supports 7-bit addressing; 0x7F is the largest legal address.
+    // Both phases of a write-read must target it (the read half uses the stashed
+    // address), confirming the address is carried through unmodified at the limit.
+    const U32 addr = 0x7F;
+    Fw::Buffer writeBuffer(this->m_write_data, 4);
+    Fw::Buffer readBuffer(this->m_read_data, 8);
+    this->invoke_to_writeRead(0, addr, writeBuffer, readBuffer);
+    ASSERT_EQ(this->stub().begin_write_addr, addr);
+
+    // Walk the handoff to the read phase and confirm the read targets 0x7F too.
+    this->injectDmaReply(I2cDriver_DmaChannel::WRITE, Samd21::Dma::Status::OK, 0);
+    this->stub().interrupt_status.error = false;
+    this->stub().interrupt_status.masterOnBus = true;
+    this->fireIsr();
+    ASSERT_EQ(this->stub().begin_read_count, 1U);
+    ASSERT_EQ(this->stub().begin_read_addr, addr);
+
+    this->injectDmaReply(I2cDriver_DmaChannel::READ, Samd21::Dma::Status::OK, 0);
+    ASSERT_TRUE(this->driveActiveIn());
+    ASSERT_from_writeReadComplete_SIZE(1);
+    ASSERT_EQ(this->fromPortHistory_writeReadComplete->at(0).status, Drv::I2cStatus::I2C_OK);
+}
+
+// ----------------------------------------------------------------------
 // Telemetry
 // ----------------------------------------------------------------------
 
@@ -897,7 +974,7 @@ void I2cDriverTester::testStallWatchdogRecoversRead() {
     this->clearHistory();
 
     // Arm a representative frozen register signature for the snapshot event.
-    this->stub().raw_registers.intflag = 0x01;  // MB
+    this->stub().raw_registers.intflag = 0x01;   // MB
     this->stub().raw_registers.status = 0x0010;  // (arbitrary) bus IDLE-ish
 
     // Reaching the threshold triggers recovery.
