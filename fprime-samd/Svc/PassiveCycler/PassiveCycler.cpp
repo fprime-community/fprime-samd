@@ -18,9 +18,14 @@ PassiveCycler ::PassiveCycler(const char* const compName) : PassiveCyclerCompone
 PassiveCycler ::~PassiveCycler() {}
 
 void PassiveCycler ::cycle() {
-    for (FwIndexType i = 0; i < PassiveCycler::NUM_CYCLEOUT_OUTPUT_PORTS; i++) {
-        if (this->isConnected_cycleOut_OutputPort(i)) {
-            this->cycleOut_out(i, i);
+    // Cycle the active context until nobody has any more work to do
+    bool didWork = true;
+    while (didWork) {
+        didWork = false;
+        for (FwIndexType i = 0; i < PassiveCycler::NUM_CYCLEOUT_OUTPUT_PORTS; i++) {
+            if (this->isConnected_cycleOut_OutputPort(i)) {
+                didWork = didWork || this->cycleOut_out(i, i);
+            }
         }
     }
 }

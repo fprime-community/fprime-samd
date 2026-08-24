@@ -10,7 +10,7 @@
 
 # System setup for SAMD21 M0
 set(CMAKE_SYSTEM_NAME "Generic")
-set(CMAKE_SYSTEM_PROCESSOR "samd21")
+set(CMAKE_SYSTEM_PROCESSOR "arm")
 set(CMAKE_CROSSCOMPILING 1)
 set(FPRIME_PLATFORM "Samd21")
 set(FPRIME_USE_BAREMETAL_SCHEDULER ON)
@@ -20,6 +20,7 @@ include("${CMAKE_CURRENT_LIST_DIR}/samd21-bare-toolchain.cmake")
 
 # Additional F' specific flags
 set(SAMD21_COMMON_FLAGS "\
+    -D__SAMD21__\
     -DNDEBUG \
     -Wall \
     -Wextra \

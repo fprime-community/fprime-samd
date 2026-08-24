@@ -17,5 +17,11 @@ module Samd21 {
         @ Receive buffer back from driver
         sync input port drvReturnIn: Drv.ByteStreamData
 
+        import Fw.Channel
+        time get port timeGetOut
+
+        @ Number of dropped packets
+        telemetry DroppedPackets: U32 update on change
+
     }
 }

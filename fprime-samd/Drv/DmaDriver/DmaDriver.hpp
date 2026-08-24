@@ -42,6 +42,13 @@ class DmaDriver final : public DmaDriverComponentBase {
     // Handler implementations for typed input ports
     // ----------------------------------------------------------------------
 
+    //! Handler implementation for abortTransactionIn
+    //!
+    //! Abort all jobs on a single DMA channel.
+    //! There will be no replies on transactionIsrOut for any uncompleted transactions
+    void abortTransactionIn_handler(FwIndexType portNum  //!< The port number
+                                    ) override;
+
     //! Handler implementation for linkToFrontIn
     //!
     //! Updates the final DmaDescriptor in the chain configured on this channel to link

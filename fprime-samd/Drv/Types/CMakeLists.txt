@@ -13,13 +13,15 @@
 # Select hardware implementation based on platform
 if (FPRIME_PLATFORM STREQUAL "Samd21")
     # SAMD21 target build - use real hardware implementation
-    set(TYPES_HARDWARE_SOURCE
+    set(TYPES_HARDWARE_SOURCES
         "${CMAKE_CURRENT_LIST_DIR}/PinMux.cpp"
         "${CMAKE_CURRENT_LIST_DIR}/CriticalSection.cpp"
+        "${CMAKE_CURRENT_LIST_DIR}/SercomHardware.cpp"
     )
+
 else()
     # Linux/test build - use stub implementations
-    set(TYPES_HARDWARE_SOURCE
+    set(TYPES_HARDWARE_SOURCES
         "${CMAKE_CURRENT_LIST_DIR}/PinMuxStub.cpp"
         "${CMAKE_CURRENT_LIST_DIR}/CriticalSectionStub.cpp"
     )
@@ -31,5 +33,15 @@ register_fprime_library(
         "${CMAKE_CURRENT_LIST_DIR}/Types.fpp"
     SOURCES
         "${CMAKE_CURRENT_LIST_DIR}/ThinBuffer.cpp"
-        ${TYPES_HARDWARE_SOURCE}
+        "${CMAKE_CURRENT_LIST_DIR}/Sercom.cpp"
+        ${TYPES_HARDWARE_SOURCES}
 )
+
+if (FPRIME_PLATFORM STREQUAL "Samd21")
+    if (SAMD21_LTO)
+        set_source_files_properties(
+            "${CMAKE_CURRENT_LIST_DIR}/SercomHardware.cpp"
+            PROPERTIES COMPILE_FLAGS "-fno-lto"
+        )
+    endif()
+endif()

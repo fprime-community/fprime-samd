@@ -51,6 +51,8 @@ class PassiveDownlink final : public PassiveDownlinkComponentBase {
                          Fw::TlmBuffer& val    //!< Buffer containing serialized telemetry value
                          ) override;
 
+    void flush_handler(FwIndexType portNum, U32 context) override;
+
     Fw::ComBuffer m_logBuffer;
     Fw::LogPacket m_logPacket;
     Fw::TlmPacket m_tlmPacket;
