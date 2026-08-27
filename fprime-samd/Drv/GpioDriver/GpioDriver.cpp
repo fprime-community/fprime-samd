@@ -22,16 +22,33 @@ GpioDriver ::GpioDriver(const char* const compName)
 
 GpioDriver ::~GpioDriver() {}
 
-void GpioDriver ::configure(Group group, Pin pin, Mode mode, InputPullMode input_pull_mode) {
+void GpioDriver ::configureInput(Group group,
+                                 Pin pin,
+                                 InputPullMode input_pull_mode,
+                                 ExternalInterruptMode interrupt_mode) {
     FW_ASSERT(!this->m_configured);
 
     this->m_group = group;
     this->m_pin = pin;
-    this->m_mode = mode;
+    this->m_mode = Mode::INPUT;
 
     const U8 groupIdx = static_cast<U8>(group);
     const U8 pinIdx = static_cast<U8>(pin);
-    GpioHardware::GpioHal::configure(groupIdx, pinIdx, mode, input_pull_mode);
+    GpioHardware::GpioHal::configureInput(groupIdx, pinIdx, input_pull_mode, interrupt_mode);
+
+    this->m_configured = true;
+}
+
+void GpioDriver ::configureOutput(Group group, Pin pin) {
+    FW_ASSERT(!this->m_configured);
+
+    this->m_group = group;
+    this->m_pin = pin;
+    this->m_mode = Mode::OUTPUT;
+
+    const U8 groupIdx = static_cast<U8>(group);
+    const U8 pinIdx = static_cast<U8>(pin);
+    GpioHardware::GpioHal::configureOutput(groupIdx, pinIdx);
 
     this->m_configured = true;
 }

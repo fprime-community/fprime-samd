@@ -19,12 +19,12 @@ namespace GpioHardware {
 
 //! Global GPIO state instance for stub
 static GpioState g_gpio_state = {
-    .configure_count = 0,
+    .configure_input_count = 0,
+    .configure_output_count = 0,
     .write_count = 0,
     .read_count = 0,
     .last_group = 0,
     .last_pin = 0,
-    .last_mode = GpioDriver::Mode::INPUT,
     .last_input_pull_mode = GpioDriver::InputPullMode::NO_PULL,
     .last_write_group = 0,
     .last_write_pin = 0,
@@ -38,12 +38,17 @@ GpioState& getGpioState() {
     return g_gpio_state;
 }
 
-void GpioHal::configure(U8 groupIdx, U8 pinIdx, GpioDriver::Mode mode, GpioDriver::InputPullMode input_pull_mode) {
-    g_gpio_state.configure_count++;
+void GpioHal::configureInput(U8 groupIdx, U8 pinIdx, GpioDriver::InputPullMode input_pull_mode) {
+    g_gpio_state.configure_input_count++;
     g_gpio_state.last_group = groupIdx;
     g_gpio_state.last_pin = pinIdx;
-    g_gpio_state.last_mode = mode;
     g_gpio_state.last_input_pull_mode = input_pull_mode;
+}
+
+void GpioHal::configureOutput(U8 groupIdx, U8 pinIdx) {
+    g_gpio_state.configure_output_count++;
+    g_gpio_state.last_group = groupIdx;
+    g_gpio_state.last_pin = pinIdx;
 }
 
 Fw::Logic GpioHal::read(U8 groupIdx, U8 pinIdx) {
@@ -62,12 +67,12 @@ void GpioHal::write(U8 groupIdx, U8 pinIdx, const Fw::Logic& state) {
 
 //! Test helper: reset stub state for clean test runs
 void resetGpioState() {
-    g_gpio_state.configure_count = 0;
+    g_gpio_state.configure_input_count = 0;
+    g_gpio_state.configure_output_count = 0;
     g_gpio_state.write_count = 0;
     g_gpio_state.read_count = 0;
     g_gpio_state.last_group = 0;
     g_gpio_state.last_pin = 0;
-    g_gpio_state.last_mode = GpioDriver::Mode::INPUT;
     g_gpio_state.last_input_pull_mode = GpioDriver::InputPullMode::NO_PULL;
     g_gpio_state.last_write_group = 0;
     g_gpio_state.last_write_pin = 0;

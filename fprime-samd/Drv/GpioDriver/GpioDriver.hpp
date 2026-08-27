@@ -66,12 +66,6 @@ class GpioDriver final : public GpioDriverComponentBase {
         PIN_31,
     };
 
-    //! Pin I/O mode
-    enum class Mode : U8 {
-        INPUT,
-        OUTPUT,
-    };
-
     //! Selects the pull up/down resistor on an input line
     enum class InputPullMode : U8 {
         NO_PULL,    //!< The pull up/down resistors are not connected
@@ -79,8 +73,19 @@ class GpioDriver final : public GpioDriverComponentBase {
         PULL_UP,    //!< Pull up a floating input line
     };
 
-    //! Configure this component to control a pin in a certain mode
-    void configure(Group group, Pin pin, Mode mode, InputPullMode input_pull_mode);
+    //! Selects the external interrupt behavior
+    enum class ExternalInterruptMode : U8 {
+        NONE,     //!< Do not configure this pin to interrupt on an edge
+        RISING,   //!< Interrupt on a rising edge
+        FALLING,  //!< Interrupt on a falling edge
+        BOTH,     //!< Interrupt on both a rising and falling edge
+    };
+
+    //! Configure this component to control an input GPIO pin
+    void configureInput(Group group, Pin pin, InputPullMode input_pull_mode, ExternalInterruptMode interrupt_mode);
+
+    //! Configure this component to control an output GPIO pin
+    void configureOutput(Group group, Pin pin);
 
   private:
     // ----------------------------------------------------------------------
@@ -101,6 +106,12 @@ class GpioDriver final : public GpioDriverComponentBase {
 
     //! Flag indicating whether pin has been configured
     bool m_configured;
+
+    //! Pin I/O mode
+    enum class Mode : U8 {
+        INPUT,
+        OUTPUT,
+    };
 
     //! Pin's input/output mode
     Mode m_mode;

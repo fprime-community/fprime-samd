@@ -67,11 +67,13 @@ class GpioDriverTester : public GpioDriverGTestBase {
     //! Reset test + stub hardware state between test actions
     void resetTest();
 
-    //! Configure the component and assert the HAL received the arguments
-    void configureAndAssert(GpioDriver::Group group,
-                            GpioDriver::Pin pin,
-                            GpioDriver::Mode mode,
-                            GpioDriver::InputPullMode input_pull_mode);
+    //! Configure the component as an input and assert the HAL received the arguments
+    void configureInputAndAssert(GpioDriver::Group group,
+                                 GpioDriver::Pin pin,
+                                 GpioDriver::InputPullMode input_pull_mode);
+
+    //! Configure the component as an output and assert the HAL received the arguments
+    void configureOutputAndAssert(GpioDriver::Group group, GpioDriver::Pin pin);
 
     //! Invoke gpioWrite and assert the returned status
     void invokeWriteAndAssertStatus(const Fw::Logic& state, Drv::GpioStatus expected);

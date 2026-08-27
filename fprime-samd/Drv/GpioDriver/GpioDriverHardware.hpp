@@ -15,8 +15,14 @@ namespace GpioHardware {
 
 //! Hardware abstraction layer for GPIO peripheral operations
 struct GpioHal {
-    //! Configure GPIO pin
-    static void configure(U8 groupIdx, U8 pinIdx, GpioDriver::Mode mode, GpioDriver::InputPullMode input_pull_mode);
+    //! Configure GPIO pin in input mode
+    static void configureInput(U8 groupIdx,
+                               U8 pinIdx,
+                               GpioDriver::InputPullMode input_pull_mode,
+                               GpioDriver::ExternalInterruptMode interrupt_mode);
+
+    //! Configure GPIO pin in output mode
+    static void configureOutput(U8 groupIdx, U8 pinIdx);
 
     //! Read the logic level on a given input pin
     static Fw::Logic read(U8 groupIdx, U8 pinIdx);
@@ -30,17 +36,19 @@ struct GpioHal {
 
 //! Observable state recorded by the stub HAL for unit testing
 struct GpioState {
-    //! Number of times configure() was called
-    U32 configure_count;
+    //! Number of times configureInput() was called
+    U32 configure_input_count;
+    //! Number of times configureOutput() was called
+    U32 configure_output_count;
     //! Number of times write() was called
     U32 write_count;
     //! Number of times read() was called
     U32 read_count;
 
-    //! Arguments captured from the most recent configure() call
+    //! Arguments captured from the most recent configureInput()/configureOutput() call
     U8 last_group;
     U8 last_pin;
-    GpioDriver::Mode last_mode;
+    //! Pull mode captured from the most recent configureInput() call
     GpioDriver::InputPullMode last_input_pull_mode;
 
     //! Arguments captured from the most recent write() call
