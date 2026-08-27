@@ -36,11 +36,11 @@ void GpioDriver ::configureInput(Group group,
     const U8 pinIdx = static_cast<U8>(pin);
     GpioHardware::GpioHal::configureInput(groupIdx, pinIdx, input_pull_mode);
 
-    // Configure edge-triggered external interrupts and register for ISR dispatch
-    // so EIC_Handler can notify this instance on an edge.
+    // Register for ISR dispatch before enabling the interrupt, so EIC_Handler
+    // never sees the interrupt live with no handler registered for this line.
     if (interrupt_mode != ExternalInterruptMode::NONE) {
-        GpioHardware::GpioHal::configureExternalInterrupt(groupIdx, pinIdx, interrupt_mode);
         GpioHardware::registerInterruptHandler(pinIdx, this);
+        GpioHardware::GpioHal::configureExternalInterrupt(groupIdx, pinIdx, interrupt_mode);
     }
 
     this->m_configured = true;

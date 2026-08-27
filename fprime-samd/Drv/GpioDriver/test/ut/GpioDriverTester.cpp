@@ -214,4 +214,81 @@ void GpioDriverTester::testReadWrongMode() {
     this->invokeReadAndAssertStatus(Drv::GpioStatus::INVALID_MODE);
 }
 
+void GpioDriverTester::testConfigureInputExternalInterrupt() {
+    // REQUIREMENT("GPIO-007: configureInput() shall configure the EIC when ExternalInterruptMode is not NONE");
+    this->resetTest();
+
+    // NONE must not touch the EIC.
+    this->component.configureInput(GpioDriver::Group::PA, GpioDriver::Pin::PIN_6, GpioDriver::InputPullMode::NO_PULL,
+                                   GpioDriver::ExternalInterruptMode::NONE);
+    const GpioHardware::GpioState& stateNone = GpioHardware::getGpioState();
+    ASSERT_EQ(stateNone.configure_external_interrupt_count, 0U);
+
+    // Each non-NONE mode must reach the HAL exactly once with the mode forwarded unmodified.
+    const GpioDriver::ExternalInterruptMode modes[] = {
+        GpioDriver::ExternalInterruptMode::RISING,
+        GpioDriver::ExternalInterruptMode::FALLING,
+        GpioDriver::ExternalInterruptMode::BOTH,
+    };
+
+    for (const auto mode : modes) {
+        GpioDriver comp("GpioDriverInterrupt");
+        GpioHardware::resetGpioState();
+
+        comp.configureInput(GpioDriver::Group::PB, GpioDriver::Pin::PIN_9, GpioDriver::InputPullMode::PULL_UP, mode);
+
+        const GpioHardware::GpioState& state = GpioHardware::getGpioState();
+        ASSERT_EQ(state.configure_external_interrupt_count, 1U);
+        ASSERT_EQ(state.last_group, static_cast<U8>(GpioDriver::Group::PB));
+        ASSERT_EQ(state.last_pin, static_cast<U8>(GpioDriver::Pin::PIN_9));
+        ASSERT_EQ(state.last_input_interrupt_mode, mode);
+    }
+}
+
+void GpioDriverTester::testInterruptFiresWhenConnected() {
+    // REQUIREMENT("GPIO-008: On each configured edge, the driver shall emit a cycle on gpioInterrupt when connected");
+    this->resetTest();
+
+    const GpioDriver::Pin pin = GpioDriver::Pin::PIN_11;
+    this->component.configureInput(GpioDriver::Group::PA, pin, GpioDriver::InputPullMode::NO_PULL,
+                                   GpioDriver::ExternalInterruptMode::BOTH);
+
+    ASSERT_from_gpioInterrupt_SIZE(0);
+
+    // gpioInterrupt is auto-connected to this tester's recording port by connectPorts(),
+    // so simulating an edge on the configured pin must dispatch to it exactly once.
+    GpioHardware::simulateInterrupt(static_cast<U8>(pin));
+    ASSERT_from_gpioInterrupt_SIZE(1);
+
+    // A second edge dispatches a second cycle.
+    GpioHardware::simulateInterrupt(static_cast<U8>(pin));
+    ASSERT_from_gpioInterrupt_SIZE(2);
+}
+
+void GpioDriverTester::testInterruptIsrNoOpWhenDisconnected() {
+    // A standalone GpioDriver instance's gpioInterrupt port is never connected
+    // (only this->component is wired to a recorder via connectPorts()), so its
+    // ISR hook must be a safe no-op rather than touch an unconnected port.
+    this->resetTest();
+
+    GpioDriver comp("GpioDriverDisconnected");
+    comp.configureInput(GpioDriver::Group::PB, GpioDriver::Pin::PIN_15, GpioDriver::InputPullMode::NO_PULL,
+                        GpioDriver::ExternalInterruptMode::RISING);
+
+    // Must not crash, and must not affect this->component's (unrelated) history.
+    comp.gpioInterruptIsr();
+
+    ASSERT_from_gpioInterrupt_SIZE(0);
+}
+
+void GpioDriverTester::testInterruptNoDispatchWithoutRegisteredHandler() {
+    // resetTest() clears the HAL's interrupt-handler table; simulating an edge
+    // on a pin nothing has registered for must dispatch to nothing.
+    this->resetTest();
+
+    GpioHardware::simulateInterrupt(static_cast<U8>(GpioDriver::Pin::PIN_20));
+
+    ASSERT_from_gpioInterrupt_SIZE(0);
+}
+
 }  // namespace Samd21

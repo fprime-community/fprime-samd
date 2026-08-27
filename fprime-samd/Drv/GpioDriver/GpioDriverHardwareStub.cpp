@@ -69,6 +69,7 @@ void GpioHal::clearInterruptFlags(U32 mask) {
 }
 
 void registerInterruptHandler(U8 pinIdx, GpioDriver* handler) {
+    FW_ASSERT(handler != nullptr);
     g_interrupt_handlers[pinIdx % EXTINT_LINE_COUNT] = handler;
 }
 

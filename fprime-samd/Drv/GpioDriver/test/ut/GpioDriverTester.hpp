@@ -54,6 +54,19 @@ class GpioDriverTester : public GpioDriverGTestBase {
     //! gpioRead on an output-configured pin returns INVALID_MODE
     void testReadWrongMode();
 
+    //! configureInput() forwards each ExternalInterruptMode to the HAL's
+    //! configureExternalInterrupt(), and does not call it for NONE
+    void testConfigureInputExternalInterrupt();
+    //! An edge simulated on a pin configured with an interrupt mode dispatches
+    //! through the HAL to gpioInterruptIsr() and emits a cycle on gpioInterrupt
+    //! when the port is connected
+    void testInterruptFiresWhenConnected();
+    //! gpioInterruptIsr() is a no-op (does not touch the port) when
+    //! gpioInterrupt is not connected
+    void testInterruptIsrNoOpWhenDisconnected();
+    //! Simulating an edge on a pin with no registered handler dispatches to nothing
+    void testInterruptNoDispatchWithoutRegisteredHandler();
+
   private:
     //! Component under test
     GpioDriver component;

@@ -61,6 +61,30 @@ TEST(OffNominal, testReadWrongMode) {
     tester.testReadWrongMode();
 }
 
+TEST(Nominal, testConfigureInputExternalInterrupt) {
+    // COMMENT("configureInput() forwards each ExternalInterruptMode to the HAL");
+    Samd21::GpioDriverTester tester;
+    tester.testConfigureInputExternalInterrupt();
+}
+
+TEST(Nominal, testInterruptFiresWhenConnected) {
+    // COMMENT("A simulated edge dispatches to gpioInterruptIsr() and emits a cycle when connected");
+    Samd21::GpioDriverTester tester;
+    tester.testInterruptFiresWhenConnected();
+}
+
+TEST(OffNominal, testInterruptIsrNoOpWhenDisconnected) {
+    // COMMENT("gpioInterruptIsr() is a no-op when gpioInterrupt is not connected");
+    Samd21::GpioDriverTester tester;
+    tester.testInterruptIsrNoOpWhenDisconnected();
+}
+
+TEST(OffNominal, testInterruptNoDispatchWithoutRegisteredHandler) {
+    // COMMENT("Simulating an edge on a pin with no registered handler dispatches to nothing");
+    Samd21::GpioDriverTester tester;
+    tester.testInterruptNoDispatchWithoutRegisteredHandler();
+}
+
 int main(int argc, char** argv) {
     // Seed random number generator for STest
     STest::Random::seed();
