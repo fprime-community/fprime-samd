@@ -19,6 +19,7 @@ if (FPRIME_PLATFORM STREQUAL "Samd21")
     # SAMD21 target build - use real hardware implementation
     set(GPIO_HARDWARE_SOURCE
         "${CMAKE_CURRENT_LIST_DIR}/GpioDriverHardware.cpp"
+        "${CMAKE_CURRENT_LIST_DIR}/GpioDriverIsr.cpp"
     )
 else()
     # Linux/test build - use stub implementation
@@ -32,6 +33,14 @@ register_fprime_library(
         "${CMAKE_CURRENT_LIST_DIR}/GpioDriver.cpp"
         ${GPIO_HARDWARE_SOURCE}
 )
+
+# Disable LTO for ISR file to ensure EIC_Handler ISR is not optimized away
+if (SAMD21_LTO)
+    set_source_files_properties(
+        "${CMAKE_CURRENT_LIST_DIR}/GpioDriverIsr.cpp"
+        PROPERTIES COMPILE_FLAGS "-fno-lto"
+    )
+endif()
 
 ### Unit Tests ###
 register_fprime_ut(

@@ -34,7 +34,14 @@ void GpioDriver ::configureInput(Group group,
 
     const U8 groupIdx = static_cast<U8>(group);
     const U8 pinIdx = static_cast<U8>(pin);
-    GpioHardware::GpioHal::configureInput(groupIdx, pinIdx, input_pull_mode, interrupt_mode);
+    GpioHardware::GpioHal::configureInput(groupIdx, pinIdx, input_pull_mode);
+
+    // Configure edge-triggered external interrupts and register for ISR dispatch
+    // so EIC_Handler can notify this instance on an edge.
+    if (interrupt_mode != ExternalInterruptMode::NONE) {
+        GpioHardware::GpioHal::configureExternalInterrupt(groupIdx, pinIdx, interrupt_mode);
+        GpioHardware::registerInterruptHandler(pinIdx, this);
+    }
 
     this->m_configured = true;
 }
@@ -51,6 +58,18 @@ void GpioDriver ::configureOutput(Group group, Pin pin) {
     GpioHardware::GpioHal::configureOutput(groupIdx, pinIdx);
 
     this->m_configured = true;
+}
+
+void GpioDriver ::gpioInterruptIsr() {
+    // Nothing to emit if the interrupt notification port is not wired up.
+    if (!this->isConnected_gpioInterrupt_OutputPort(0)) {
+        return;
+    }
+
+    // Timestamp the edge and emit it as a cycle to the connected consumer.
+    Os::RawTime cycleStart;
+    (void)cycleStart.now();
+    this->gpioInterrupt_out(0, cycleStart);
 }
 
 // ----------------------------------------------------------------------

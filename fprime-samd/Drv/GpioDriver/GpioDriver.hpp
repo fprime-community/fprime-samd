@@ -87,6 +87,13 @@ class GpioDriver final : public GpioDriverComponentBase {
     //! Configure this component to control an output GPIO pin
     void configureOutput(Group group, Pin pin);
 
+    //! Interrupt service hook for the configured input pin's external interrupt.
+    //!
+    //! Called from the EIC_Handler ISR (interrupt context) when this pin's edge
+    //! fires. Emits a cycle on the gpioInterrupt output port. Runs in interrupt
+    //! context, so it must stay minimal.
+    void gpioInterruptIsr();
+
   private:
     // ----------------------------------------------------------------------
     // Handler implementations for typed input ports

@@ -35,7 +35,7 @@ void GpioDriverTester::configureInputAndAssert(GpioDriver::Group group,
     const GpioHardware::GpioState& state = GpioHardware::getGpioState();
     const U32 before = state.configure_input_count;
 
-    this->component.configureInput(group, pin, input_pull_mode);
+    this->component.configureInput(group, pin, input_pull_mode, GpioDriver::ExternalInterruptMode::NONE);
 
     // The driver must forward exactly one configureInput() call to the HAL,
     // passing each argument through unmodified.
@@ -115,7 +115,8 @@ void GpioDriverTester::testConfigureInput() {
     // Pull-down input (fresh component: configure may only be called once)
     GpioDriver comp2("GpioDriver2");
     GpioHardware::resetGpioState();
-    comp2.configureInput(GpioDriver::Group::PA, GpioDriver::Pin::PIN_3, GpioDriver::InputPullMode::PULL_DOWN);
+    comp2.configureInput(GpioDriver::Group::PA, GpioDriver::Pin::PIN_3, GpioDriver::InputPullMode::PULL_DOWN,
+                         GpioDriver::ExternalInterruptMode::NONE);
     const GpioHardware::GpioState& s2 = GpioHardware::getGpioState();
     ASSERT_EQ(s2.configure_input_count, 1U);
     ASSERT_EQ(s2.last_input_pull_mode, GpioDriver::InputPullMode::PULL_DOWN);
@@ -123,7 +124,8 @@ void GpioDriverTester::testConfigureInput() {
     // Floating input (no pull)
     GpioDriver comp3("GpioDriver3");
     GpioHardware::resetGpioState();
-    comp3.configureInput(GpioDriver::Group::PB, GpioDriver::Pin::PIN_0, GpioDriver::InputPullMode::NO_PULL);
+    comp3.configureInput(GpioDriver::Group::PB, GpioDriver::Pin::PIN_0, GpioDriver::InputPullMode::NO_PULL,
+                         GpioDriver::ExternalInterruptMode::NONE);
     const GpioHardware::GpioState& s3 = GpioHardware::getGpioState();
     ASSERT_EQ(s3.configure_input_count, 1U);
     ASSERT_EQ(s3.last_input_pull_mode, GpioDriver::InputPullMode::NO_PULL);
@@ -167,7 +169,8 @@ void GpioDriverTester::testReadNominal() {
     // REQUIREMENT("GPIO-004: gpioRead on a configured input pin shall read the HAL and return OP_OK");
     this->resetTest();
 
-    this->component.configureInput(GpioDriver::Group::PB, GpioDriver::Pin::PIN_2, GpioDriver::InputPullMode::PULL_UP);
+    this->component.configureInput(GpioDriver::Group::PB, GpioDriver::Pin::PIN_2, GpioDriver::InputPullMode::PULL_UP,
+                                   GpioDriver::ExternalInterruptMode::NONE);
 
     // The value read back must match whatever the HAL reports.
     GpioHardware::setReadValue(Fw::Logic::HIGH);
@@ -196,7 +199,8 @@ void GpioDriverTester::testWriteWrongMode() {
     // REQUIREMENT("GPIO-006: gpioWrite on an input pin shall return INVALID_MODE");
     this->resetTest();
 
-    this->component.configureInput(GpioDriver::Group::PA, GpioDriver::Pin::PIN_1, GpioDriver::InputPullMode::NO_PULL);
+    this->component.configureInput(GpioDriver::Group::PA, GpioDriver::Pin::PIN_1, GpioDriver::InputPullMode::NO_PULL,
+                                   GpioDriver::ExternalInterruptMode::NONE);
 
     this->invokeWriteAndAssertStatus(Fw::Logic::HIGH, Drv::GpioStatus::INVALID_MODE);
 }
