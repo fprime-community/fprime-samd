@@ -10,18 +10,24 @@
 #
 ####
 
-# Module names are derived from the path from the nearest project/library/framework
-# root when not specifically overridden by the developer, i.e. the module defined by
-# `MyProj/Some/Path/CMakeLists.txt` will be named `MyProj_Some_Path`.
-
 register_fprime_library(
     AUTOCODER_INPUTS
         "${CMAKE_CURRENT_LIST_DIR}/AdcDriver.fpp"
     SOURCES
         "${CMAKE_CURRENT_LIST_DIR}/AdcDriver.cpp"
-#   DEPENDS
-#       MyPackage_MyOtherModule
+        "${CMAKE_CURRENT_LIST_DIR}/AdcDriverIsr.cpp"
+        "${CMAKE_CURRENT_LIST_DIR}/TempSensorCalibration.cpp"
+   DEPENDS
+       config-fprime-samd
 )
+
+# Disable LTO on ISR file to avoid DMAC_Handler ISR getting optimized away
+if (SAMD21_LTO)
+    set_source_files_properties(
+        "${CMAKE_CURRENT_LIST_DIR}/AdcDriverIsr.cpp"
+        PROPERTIES COMPILE_FLAGS "-fno-lto"
+    )
+endif()
 
 ### Unit Tests ###
 # register_fprime_ut(
