@@ -5,37 +5,12 @@
 // ======================================================================
 
 #include "fprime-samd/Drv/AdcDriver/AdcDriver.hpp"
-#include "fprime-samd/Drv/Types/PinMux.hpp"
-#include "sam.h"
+#include "fprime-samd/Drv/AdcDriver/AdcDriverHardware.hpp"
 
 namespace Samd21 {
 
 // Singleton instance for ISR access
 AdcDriver* AdcDriver::s_instance = nullptr;
-
-// ----------------------------------------------------------------------
-// Helper functions for synchronization waits
-// ----------------------------------------------------------------------
-
-static void waitForGclkSync() {
-    volatile U32 limit = F_CPU;
-    while (limit > 0 && GCLK->STATUS.bit.SYNCBUSY) {
-        limit--;
-    }
-
-    // Check if we timed out
-    FW_ASSERT(limit != 0);
-}
-
-static void waitForAdcSync() {
-    volatile U32 limit = F_CPU;
-    while (limit > 0 && ADC->STATUS.bit.SYNCBUSY) {
-        limit--;
-    }
-
-    // Check if we timed out
-    FW_ASSERT(limit != 0);
-}
 
 // ----------------------------------------------------------------------
 // Component construction and destruction
@@ -45,9 +20,7 @@ AdcDriver::AdcDriver(const char* const compName)
     : AdcDriverComponentBase(compName),
       m_configured(false),
       m_gain(0),
-      m_conversionPending(false),
-      m_conversionComplete(false),
-      m_overrunOccurred(false),
+      m_state(State::IDLE),
       m_lastResult(0),
       m_pendingPortNum(0) {
     // Initialize channel arrays
@@ -69,111 +42,24 @@ AdcDriver::~AdcDriver() {
 // ----------------------------------------------------------------------
 // Convenient conversion time calculator https://blog.thea.codes/getting-the-most-out-of-the-samd21-adc/
 void AdcDriver::configure(VoltageReference ref, Resolution res, SampleCount samples, U8 samplingTime, Gain gain) {
-    // Enable the APB clock for the ADC
-    PM->APBCMASK.reg |= PM_APBCMASK_ADC;
-
-    // Enable generic clock for ADC (use GCLK3 or GCLK0 depending on setup)
-    // Using GCLK0 (48MHz) with DIV32 prescaler = 1.5MHz ADC clock
-    GCLK->CLKCTRL.reg = GCLK_CLKCTRL_CLKEN | GCLK_CLKCTRL_GEN_GCLK0 | GCLK_CLKCTRL_ID_ADC;
-    waitForGclkSync();
-
-    // Load calibration data from NVM
-    U32 bias = (*((U32*)ADC_FUSES_BIASCAL_ADDR) & ADC_FUSES_BIASCAL_Msk) >> ADC_FUSES_BIASCAL_Pos;
-    U32 linearity = (*((U32*)ADC_FUSES_LINEARITY_0_ADDR) & ADC_FUSES_LINEARITY_0_Msk) >> ADC_FUSES_LINEARITY_0_Pos;
-    linearity |= ((*((U32*)ADC_FUSES_LINEARITY_1_ADDR) & ADC_FUSES_LINEARITY_1_Msk) >> ADC_FUSES_LINEARITY_1_Pos) << 5;
-
-    // Software reset to ensure clean state
-    ADC->CTRLA.bit.SWRST = 1;
-    waitForAdcSync();
-
-    // Write calibration data
-    ADC->CALIB.reg = ADC_CALIB_BIAS_CAL(bias) | ADC_CALIB_LINEARITY_CAL(linearity);
-
-    // Configure voltage reference
-    U8 refsel = 0;
-    switch (ref) {
-        case VoltageReference::INT1V:
-            refsel = ADC_REFCTRL_REFSEL_INT1V_Val;
-            break;
-        case VoltageReference::INTVCC0:
-            refsel = ADC_REFCTRL_REFSEL_INTVCC0_Val;
-            break;
-        case VoltageReference::INTVCC1:
-            refsel = ADC_REFCTRL_REFSEL_INTVCC1_Val;
-            break;
-        case VoltageReference::VREFA:
-            refsel = ADC_REFCTRL_REFSEL_AREFA_Val;
-            break;
-        case VoltageReference::VREFB:
-            refsel = ADC_REFCTRL_REFSEL_AREFB_Val;
-            break;
-    }
-    ADC->REFCTRL.reg = ADC_REFCTRL_REFSEL(refsel) | ADC_REFCTRL_REFCOMP;
-    waitForAdcSync();
+    // Enforce singleton: only one AdcDriver instance can be configured at a time
+    // to ensure ISR routing works correctly. A reconfigure() method could be added
+    // in the future to allow runtime reconfiguration of ADC parameters (resolution,
+    // reference voltage, etc.) without violating the singleton constraint.
+    FW_ASSERT(s_instance == nullptr);
 
     // Store gain for use in readAdc
     m_gain = static_cast<U8>(gain);
 
-    // Configure resolution and prescaler
-    U8 ressel = 0;
-    switch (res) {
-        case Resolution::RES_8BIT:
-            ressel = ADC_CTRLB_RESSEL_8BIT_Val;
-            break;
-        case Resolution::RES_10BIT:
-            ressel = ADC_CTRLB_RESSEL_10BIT_Val;
-            break;
-        case Resolution::RES_12BIT:
-            ressel = ADC_CTRLB_RESSEL_12BIT_Val;
-            break;
-    }
-    // Prescaler could be changed, DIV32 was selected because GCLK0 = 48MHz, with a prescaler of DIV32
-    // the ADC clock runs at 1.5MHz which is close to, but less than the the max ADC clock freq of 2.1MHz
-    ADC->CTRLB.reg = ADC_CTRLB_RESSEL(ressel) | ADC_CTRLB_PRESCALER_DIV32;
-    waitForAdcSync();
+    // Delegate all hardware configuration to the HAL
+    AdcHardware::AdcHal::configure(ref, res, samples, samplingTime, gain);
 
-    // Configure averaging (always write to ensure known state)
-    U8 samplenum = static_cast<U8>(samples);
-    // Calculate right shift for result adjustment (maintains resolution)
-    // For SAMPLES_1 (no averaging), samplenum=0, adjres=0, disables averaging
-    U8 adjres = samplenum;
-    ADC->AVGCTRL.reg = ADC_AVGCTRL_SAMPLENUM(samplenum) | ADC_AVGCTRL_ADJRES(adjres);
-
-    // Configure sampling time (SAMPLEN is 6-bit field, valid range 0-63)
-    // These bits control the ADC sampling time in number of half CLK_ADC cycles, depending of the
-    // prescaler value, thus controlling the ADC input impedance. Sampling time is set according to the
-    // equation:
-    // Sampling time = (SAMPLEN + 1) * (CLKadc / 2)
-    FW_ASSERT(samplingTime <= 63, samplingTime);
-    ADC->SAMPCTRL.reg = ADC_SAMPCTRL_SAMPLEN(samplingTime);
-
-    // Register singleton for ISR access BEFORE enabling interrupts
+    // Register singleton for ISR access
     s_instance = this;
 
-    // Enable ADC first (must be enabled before configuring interrupts)
-    ADC->CTRLA.bit.ENABLE = 1;
-    waitForAdcSync();
-
-    // Per SAMD21 datasheet Section 33.6.2.1: "The first conversion after the reference
-    // is changed must not be used." Perform a dummy conversion BEFORE enabling interrupts.
-    ADC->INPUTCTRL.reg = ADC_INPUTCTRL_MUXPOS_SCALEDIOVCC | ADC_INPUTCTRL_MUXNEG_GND | ADC_INPUTCTRL_GAIN(m_gain);
-    waitForAdcSync();
-    ADC->SWTRIG.bit.START = 1;
-    while (!ADC->INTFLAG.bit.RESRDY) {
-    }
-    (void)ADC->RESULT.reg;                  // Read and discard
-    ADC->INTFLAG.reg = ADC_INTFLAG_RESRDY;  // Clear flag
-
-    // Clear any pending interrupt flags AFTER dummy conversion
-    ADC->INTFLAG.reg = ADC_INTFLAG_RESRDY | ADC_INTFLAG_OVERRUN;
-
-    // Now enable interrupts for result ready and overrun
-    ADC->INTENSET.reg = ADC_INTENSET_RESRDY | ADC_INTENSET_OVERRUN;
-
-    // Enable ADC interrupt in NVIC with lowest priority
-    static constexpr U32 LOWEST_PRIORITY = (1U << __NVIC_PRIO_BITS) - 1;
-    NVIC_SetPriority(ADC_IRQn, LOWEST_PRIORITY);
-    NVIC_EnableIRQ(ADC_IRQn);
+    // Enable interrupts via HAL (HAL handles priority calculation)
+    AdcHardware::AdcHal::enableInterrupt();
+    AdcHardware::AdcHal::enableAdcInterrupts();
 
     m_configured = true;
 }
@@ -187,14 +73,12 @@ void AdcDriver::configureChannel(FwIndexType portNum, AdcChannel channel) {
     // Use Samd21::PinMux::configure(PINMUX_xxx) in instances.fpp
     // Internal channels (TEMP, BANDGAP, SCALEDIOVCC) don't require pin configuration
 
-    // Enable internal resources if needed (saves power by only enabling when used)
-    if (channel == AdcChannel::TEMP) {
-        SYSCTRL->VREF.reg |= SYSCTRL_VREF_TSEN;  // Enable temperature sensor
-    } else if (channel == AdcChannel::BANDGAP) {
-        SYSCTRL->VREF.reg |= SYSCTRL_VREF_BGOUTEN;  // Enable bandgap output
+    // Enable internal resources if needed (only TEMP and BANDGAP require hardware setup)
+    if (channel == AdcChannel::TEMP || channel == AdcChannel::BANDGAP) {
+        AdcHardware::AdcHal::configureChannel(channel);
     }
 
-    // Store channel mapping
+    // Store channel mapping in component state
     m_channels[portNum] = channel;
     m_channelConfigured[portNum] = true;
 }
@@ -213,46 +97,43 @@ Samd21::AdcStatus AdcDriver::readAdc_handler(FwIndexType portNum) {
     }
 
     // Check if ADC is already busy
-    if (m_conversionPending) {
+    if (m_state != State::IDLE) {
         return Samd21::AdcStatus::ADC_BUSY;
     }
 
-    // Select input channel with configured gain
-    ADC->INPUTCTRL.reg = ADC_INPUTCTRL_MUXPOS(static_cast<U8>(m_channels[portNum])) | ADC_INPUTCTRL_MUXNEG_GND |
-                         ADC_INPUTCTRL_GAIN(m_gain);
-    waitForAdcSync();
+    // Select input channel with configured gain via HAL
+    AdcHardware::AdcHal::selectChannel(m_channels[portNum], m_gain);
 
-    // Clear previous conversion state and mark as pending
-    m_conversionComplete = false;
-    m_overrunOccurred = false;
-    m_conversionPending = true;
+    // Transition to CONVERTING state
+    m_state = State::CONVERTING;
     m_pendingPortNum = portNum;
 
-    // Start conversion (interrupt will fire when complete)
-    ADC->SWTRIG.bit.START = 1;
+    // Start conversion via HAL (interrupt will fire when complete)
+    AdcHardware::AdcHal::startConversion();
 
     return Samd21::AdcStatus::ADC_OK;
 }
 
-void AdcDriver::schedIn_handler(FwIndexType portNum, U32 context) {
+bool AdcDriver::activeIn_handler(FwIndexType portNum, U32 context) {
     (void)portNum;
     (void)context;
 
-    // Check if there's a pending conversion
-    if (!m_conversionPending) {
-        return;
+    // Check if conversion is complete and result ready to deliver
+    if (m_state == State::COMPLETE || m_state == State::COMPLETE_OVERRUN) {
+        // Determine status based on whether overrun occurred
+        Samd21::AdcStatus status =
+            (m_state == State::COMPLETE_OVERRUN) ? Samd21::AdcStatus::ADC_OVERRUN : Samd21::AdcStatus::ADC_OK;
+
+        // Deliver result and status to the requesting port via output port
+        this->adcResult_out(m_pendingPortNum, m_lastResult, status);
+
+        // Return to IDLE state - ADC is now available for new conversion
+        m_state = State::IDLE;
+    } else {
+        return false;
     }
 
-    // Check if conversion has completed
-    if (m_conversionComplete) {
-        // Deliver result to the requesting port via output port
-        this->adcResult_out(m_pendingPortNum, m_lastResult);
-
-        // Clear pending state - ADC is now available for new conversion
-        m_conversionPending = false;
-        m_conversionComplete = false;
-        m_overrunOccurred = false;
-    }
+    return true;
 }
 
 // ----------------------------------------------------------------------
@@ -260,22 +141,34 @@ void AdcDriver::schedIn_handler(FwIndexType portNum, U32 context) {
 // ----------------------------------------------------------------------
 
 void AdcDriver::handleInterrupt() {
-    // Check for overrun error first
-    if (ADC->INTFLAG.bit.OVERRUN) {
-        // Clear overrun flag
-        ADC->INTFLAG.reg = ADC_INTFLAG_OVERRUN;
-
-        // Set error flag
-        m_overrunOccurred = true;
+    // Only process interrupt if we're actually waiting for a conversion
+    if (m_state != State::CONVERTING) {
+        // Spurious interrupt - clear flags but don't change state
+        if (AdcHardware::AdcHal::isOverrun()) {
+            AdcHardware::AdcHal::clearOverrun();
+        }
+        if (AdcHardware::AdcHal::isResultReady()) {
+            (void)AdcHardware::AdcHal::readResult();  // Clear RESRDY by reading
+        }
+        return;
     }
 
-    // Check if RESRDY flag is set (this happens even if OVERRUN occurred)
-    if (ADC->INTFLAG.bit.RESRDY) {
-        // Read result (reading RESULT automatically clears RESRDY flag)
-        m_lastResult = ADC->RESULT.reg;
+    bool overrun = false;
 
-        // Signal completion
-        m_conversionComplete = true;
+    // Check for overrun error first via HAL
+    if (AdcHardware::AdcHal::isOverrun()) {
+        // Clear overrun flag via HAL
+        AdcHardware::AdcHal::clearOverrun();
+        overrun = true;
+    }
+
+    // Check if RESRDY flag is set via HAL (this happens even if OVERRUN occurred)
+    if (AdcHardware::AdcHal::isResultReady()) {
+        // Read result via HAL (reading RESULT automatically clears RESRDY flag per SAMD21 datasheet §33.6.5)
+        m_lastResult = AdcHardware::AdcHal::readResult();
+
+        // Transition to appropriate COMPLETE state
+        m_state = overrun ? State::COMPLETE_OVERRUN : State::COMPLETE;
     }
 }
 

@@ -14,7 +14,8 @@ module Samd21 {
 
   @ Port to deliver completed ADC conversion result
   port AdcResult(
-    value: U32  @< ADC conversion result
+    value: U32        @< ADC conversion result
+    status: AdcStatus @< Conversion status (ADC_OK or ADC_OVERRUN)
   )
 
 }

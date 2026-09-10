@@ -10,7 +10,7 @@ module Samd21 {
         output port adcResult: [Samd21.ADC_CHANNEL_COUNT] AdcResult
 
         @ Schedule input from rate group (checks for completed conversions)
-        sync input port schedIn: Svc.Sched
+        sync input port activeIn: Svc.ActiveSched
 
     }
 }
