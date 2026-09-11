@@ -17,7 +17,10 @@ class ThinBuffer {
   public:
     ThinBuffer();
     explicit ThinBuffer(const Fw::Buffer& fwBuffer);
+    //! Leaves context at 0 -- callers that need context-based slot identification
+    //! (e.g. ThinBufferManager) must use the 3-arg constructor instead.
     explicit ThinBuffer(U8* data, U32 size);
+    ThinBuffer(U8* data, U32 size, U32 context);
     U8* getData() const;
     U32 getSize() const;
     Fw::Buffer getBuffer() const;
