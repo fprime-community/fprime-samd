@@ -71,7 +71,11 @@ class StaticMallocator : public Fw::MemAllocator {
   private:
     // Use u64 so that we force 64-bit memory alignment
     U64 data[BUCKET_SIZE / 8];
-    bool used;
+    // Explicitly initialized: StaticMallocator() = default leaves this indeterminate for
+    // automatic-storage-duration instances (safe only by accident for the file-scope/namespace-scope
+    // globals this class is normally used as, since those are zero-initialized by the language before
+    // any constructor runs). Reading an indeterminate bool is undefined behavior.
+    bool used = false;
 };
 
 }  // namespace Samd21

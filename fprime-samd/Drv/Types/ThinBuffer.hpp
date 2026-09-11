@@ -18,6 +18,7 @@ class ThinBuffer {
     ThinBuffer();
     explicit ThinBuffer(const Fw::Buffer& fwBuffer);
     explicit ThinBuffer(U8* data, U32 size);
+    ThinBuffer(U8* data, U32 size, U32 context);
     U8* getData() const;
     U32 getSize() const;
     Fw::Buffer getBuffer() const;
