@@ -18,7 +18,7 @@ module Samd21 {
         import Fw.Channel
 
         @ Max execution time of rate group cycle
-        telemetry MaxCycleTime: U32 update on change format "{} us"
+        telemetry MaxCycleTime: U32 format "{} us"
 
         @ Execution time of current cycle
         telemetry CycleTime: U32 format "{} us"

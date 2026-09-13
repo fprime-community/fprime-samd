@@ -1,0 +1,244 @@
+#!/usr/bin/env python3
+"""
+static-tlm-packetizer:
+    Generate deployment level telemetry packet helpers for static tlm packetizers
+"""
+
+import sys
+from contextlib import nullcontext
+from typing import TYPE_CHECKING
+
+import fpp
+import static_autocoder_common as common
+
+if TYPE_CHECKING:
+    import fprime_cpp_codegen as cg
+
+
+#: Credited in the `\author` line of every generated file's banner
+TOOL_NAME = "static-tlm-packetizer"
+
+#: Stem appended to a topology's name, e.g. `Top` -> `TopTlmPacketAc`. Extension-free
+#: because it doubles as the CppDocBuilder file base, which names the files itself.
+GENERATED_STEM = "StaticTlmPacketAc"
+
+#: Suffix of a generated source
+GENERATED_SUFFIX = f"{GENERATED_STEM}.cpp"
+
+#: Annotation marking the component this autocoder generates packet helpers for. Must
+#: match the `@` annotation on the component definition, e.g. Samd21.StaticTlmPacketizer.
+PACKETIZER_ANNOTATION = "static-tlm-packetizer"
+
+
+def tlm_packet_offsets(dictionary: fpp.Dictionary, tlm_id: int):
+    pkt_set = list(dictionary.tlm_packet_set_map.values())[0]
+
+    for pkt in pkt_set.packet_map.values():
+        if tlm_id in pkt.member_location_map:
+            # This packet has this channel
+            # Sum up the sizes of the previous channels to figure out it's offset
+            offset = 0
+            for current_id in pkt.member_id_list:
+                if tlm_id == current_id:
+                    yield (pkt, offset)
+                offset += dictionary.tlm_channel_entry_map[
+                    current_id
+                ].tlm_channel.channel_type.serialized_size
+
+
+def assert_fixed_width(ty: fpp.Type):
+    match ty:
+        case fpp.StringType():
+            raise fpp.DiagnosticError(
+                "Only fixed-width serializables are supported in static telemetry packets"
+            )
+        case fpp.StructType() as s:
+            for name, member in s.anon_struct.members:
+                try:
+                    assert_fixed_width(member)
+                except fpp.DiagnosticError as e:
+                    # Look up the member in the AST to get it's span
+                    member_span = next(
+                        (m.span for m in s.node.members if m.name == name), None
+                    )
+                    e.diagnostic.add_annotation("in struct member", span=member_span)
+                    raise
+        case fpp.ArrayType() as a:
+            try:
+                assert_fixed_width(a.anon_array.elt_type)
+            except fpp.DiagnosticError as e:
+                e.diagnostic.add_annotation(
+                    "element of array", span=a.node.elt_type.span
+                )
+                raise
+        case fpp.AliasType() as a:
+            try:
+                assert_fixed_width(a.alias_type)
+            except fpp.DiagnosticError as e:
+                e.diagnostic.add_annotation("aliased here", span=a.node.type_name.span)
+                raise
+        case _:
+            # Everything else is fixed width (for now...)
+            pass
+
+
+def compute_size(dictionary: fpp.Dictionary, pkt: fpp.TlmPacket) -> int:
+    size = 0
+    for id_ in pkt.member_id_list:
+        chan = dictionary.tlm_channel_entry_map[id_]
+        try:
+            assert_fixed_width(chan.tlm_channel.channel_type)
+        except fpp.DiagnosticError as e:
+            e.diagnostic.add_annotation(
+                "in telemetry channel", span=chan.tlm_channel.node.span
+            )
+            e.diagnostic.add_annotation("in telemetry packet", span=pkt.node.span)
+            raise
+
+        size += chan.tlm_channel.channel_type.serialized_size
+
+    return size
+
+
+def generate(
+    model: fpp.Model,
+    topology: fpp.Topology,
+) -> str:
+    dictionary = model.analysis.dictionary_map[topology.symbol]
+
+    tlm_packet_sets = list(dictionary.tlm_packet_set_map.values())
+    if len(tlm_packet_sets) > 1:
+        # Ugh there is more than one packet set
+        # You want to be fancy?... Make this autocoder to runtime offset swapping then!
+        raise fpp.DiagnosticError(
+            fpp.Diagnostic(
+                "Only a single packet set is supported",
+                children=[
+                    fpp.DiagnosticMessage(
+                        "if you want this feature, open a PR...",
+                        kind=fpp.DiagnosticMessageKind.Note,
+                    ),
+                ]
+                + [
+                    fpp.DiagnosticMessage(
+                        "Packet set defined here",
+                        span=s.node.span,
+                        kind=fpp.DiagnosticMessageKind.Annotation,
+                    )
+                    for s in tlm_packet_sets
+                ],
+            )
+        )
+    elif len(tlm_packet_sets) == 0:
+        raise fpp.DiagnosticError(
+            fpp.Diagnostic(
+                "Topology does not define a packet set",
+                span=topology.node.span,
+            )
+        )
+
+    tlm_packet_set = tlm_packet_sets[0]
+
+    from fprime_cpp_codegen import CppDocBuilder, Output
+
+    doc = CppDocBuilder(
+        f"{topology.name}{GENERATED_STEM}",
+        description=f"static telemetry packet code for {topology.qualified_name}",
+        tool_name=TOOL_NAME,
+    )
+
+    doc.include(
+        "Fw/Tlm/TlmBuffer.hpp",
+        "Fw/Com/ComBuffer.hpp",
+        f"{topology.name}TopologyAc.hpp",
+        output=Output.CPP,
+    )
+    doc.system_include("cstring", output=Output.CPP)
+
+    for component in common.all_annotated_components(model, PACKETIZER_ANNOTATION):
+        generate_ac_functions(topology, component, dictionary, tlm_packet_set, doc)
+
+    return doc.render_cpp()
+
+
+def generate_ac_functions(
+    topology: fpp.Topology,
+    component: fpp.Component,
+    dictionary: fpp.Dictionary,
+    tlm_packet_set: fpp.TlmPacketSet,
+    doc: "cg.CppDocBuilder",
+):
+    import fprime_cpp_codegen as cg
+
+    # Make sure this component is a singleton
+    _ = common.get_singleton_instance(topology, component)
+
+    # //! Load a telemetry packet into a ComBuffer given the packet's ID
+    # //! This function is autocoded at the topology level
+    # Fw::SerializeStatus loadPacket(Fw::ComBuffer& dest, U32 id);
+
+    # //! Given a telemetry id/value, write the value to the memory holding this value
+    # void writePoint(FwChanIdType id, Fw::TlmBuffer& val);
+
+    # Generate the above interface in the proper namespace/C++ class
+    *namespaces, packetizer_name = component.symbol.qualified_name.split(".")
+
+    def tlm_packet_buf(pkt: fpp.TlmPacket) -> str:
+        return f"__TLM_PACKET_{component.node.name}_{pkt.name}"
+
+    # A topology need not sit inside a module, and namespace() rejects an empty name list
+    scope = doc.namespace(*namespaces) if namespaces else nullcontext(doc)
+    with scope as ns:
+        # Generate the RAM buffers to hold the telemetry packets
+        for pkt in tlm_packet_set.packet_map.values():
+            size = compute_size(dictionary, pkt)
+
+            ns.lines(
+                f"""
+                |//! Buffer for {pkt.name} packet
+                |U8 {tlm_packet_buf(pkt)}[{size}] = {"{}"};
+                |""",
+                output=cg.Output.CPP,
+            )
+
+        # Generate the function that populates the RAM buffer given id/value
+        with ns.function(f"{packetizer_name} ::writePoint") as write_point:
+            write_point.param("FwChanIdType", "id")
+            write_point.param("const Fw::TlmBuffer&", "val")
+            with write_point.body as b:
+                with b.switch("id") as sw:
+                    for tlm_id, tlm_chan in dictionary.tlm_channel_entry_map.items():
+                        with sw.case(f"0x{tlm_id:x}") as c:
+                            # Emit memcpy()s for each offset in all packets where this channel exists
+                            for pkt, offset in tlm_packet_offsets(dictionary, tlm_id):
+                                c.comment(
+                                    f"{tlm_chan.qualified_name} -> {pkt.name} + {offset}"
+                                )
+                                c.line(
+                                    f"(void)memcpy(&{tlm_packet_buf(pkt)}[{offset}], val.getBuffAddr(), {tlm_chan.tlm_channel.channel_type.serialized_size});"
+                                )
+                    with sw.default() as d:
+                        d.lines("""// Invalid telemetry ID
+                        |FW_ASSERT(false, id);""")
+
+        # Generate the function that reads the RAM buffer given packet id
+        with ns.function(f"{packetizer_name} ::loadPacket") as load_packet:
+            load_packet.ret = cg.as_type("Fw::SerializeStatus")
+            load_packet.param("Fw::ComBuffer&", "dest")
+            load_packet.param("U32", "id")
+
+            with load_packet.body as b:
+                b.line("return Fw::FW_SERIALIZE_OK;")
+
+
+def main() -> int:
+    """Entry point"""
+    return common.main(TOOL_NAME, GENERATED_SUFFIX, generate)
+
+
+if __name__ == "__main__":
+    try:
+        sys.exit(main())
+    except fpp.DiagnosticError as e:
+        print(e.diagnostic.render(color=True))
+        sys.exit(1)

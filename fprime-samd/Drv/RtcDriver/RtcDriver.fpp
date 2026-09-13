@@ -11,7 +11,7 @@ module Samd21 {
         time get port timeGetOut
 
         @ Counter tracking the number of cycle overruns
-        telemetry CycleOverrun: U16 update on change
+        telemetry CycleOverrun: U16
 
     }
 }

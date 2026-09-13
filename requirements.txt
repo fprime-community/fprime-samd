@@ -1,0 +1,2 @@
+fprime-fpp-python==3.3.21
+fprime-cpp-codegen==0.2.0

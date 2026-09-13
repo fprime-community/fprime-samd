@@ -7,9 +7,6 @@
 #ifndef Samd21_PassiveDownlink_HPP
 #define Samd21_PassiveDownlink_HPP
 
-#include "Fw/Com/ComBuffer.hpp"
-#include "Fw/Log/LogPacket.hpp"
-#include "Fw/Tlm/TlmPacket.hpp"
 #include "fprime-samd/Svc/PassiveDownlink/PassiveDownlinkComponentAc.hpp"
 
 namespace Samd21 {
@@ -41,21 +38,6 @@ class PassiveDownlink final : public PassiveDownlinkComponentBase {
                          const Fw::LogSeverity& severity,  //!< The severity argument
                          Fw::LogBuffer& args               //!< Buffer containing serialized log entry
                          ) override;
-
-    //! Handler implementation for TlmRecv
-    //!
-    //! Port for receiving telemetry values
-    void TlmRecv_handler(FwIndexType portNum,  //!< The port number
-                         FwChanIdType id,      //!< Telemetry Channel ID
-                         Fw::Time& timeTag,    //!< Time Tag
-                         Fw::TlmBuffer& val    //!< Buffer containing serialized telemetry value
-                         ) override;
-
-    void flush_handler(FwIndexType portNum, U32 context) override;
-
-    Fw::ComBuffer m_logBuffer;
-    Fw::LogPacket m_logPacket;
-    Fw::TlmPacket m_tlmPacket;
 };
 
 }  // namespace Samd21

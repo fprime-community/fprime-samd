@@ -1,0 +1,131 @@
+#!/usr/bin/env python3
+"""
+static-cmd-dispatcher:
+    Generate deployment level command dispatch helpers for static cmd dispatchers
+"""
+
+import sys
+from contextlib import nullcontext
+from typing import TYPE_CHECKING
+
+import fpp
+import static_autocoder_common as common
+
+if TYPE_CHECKING:
+    import fprime_cpp_codegen as cg
+
+#: Credited in the `\author` line of every generated file's banner
+TOOL_NAME = "static-cmd-dispatcher"
+
+#: Stem appended to a topology's name, e.g. `Top` -> `TopStaticCmdDispatchAc`. Extension-free
+#: because it doubles as the CppDocBuilder file base, which names the files itself.
+GENERATED_STEM = "StaticCmdDispatchAc"
+
+#: Suffix of a generated source
+GENERATED_SUFFIX = f"{GENERATED_STEM}.cpp"
+
+#: Annotation marking the component this autocoder generates dispatch helpers for. Must
+#: match the `@` annotation on the component definition, e.g. Samd21.StaticCmdDispatcher.
+DISPATCHER_ANNOTATION = "static-cmd-dispatcher"
+
+
+def generate(
+    model: fpp.Model,
+    topology: fpp.Topology,
+) -> str:
+    from fprime_cpp_codegen import CppDocBuilder, Output
+
+    doc = CppDocBuilder(
+        f"{topology.name}{GENERATED_STEM}",
+        description=f"command dispatch code for {topology.qualified_name}",
+        tool_name=TOOL_NAME,
+    )
+
+    doc.include(
+        f"{topology.name}TopologyAc.hpp",
+        output=Output.CPP,
+    )
+
+    for component in common.all_annotated_components(model, DISPATCHER_ANNOTATION):
+        generate_ac_functions(topology, component, doc)
+
+    return doc.render_cpp()
+
+
+def generate_ac_functions(
+    topology: fpp.Topology,
+    component: fpp.Component,
+    doc: "cg.CppDocBuilder",
+):
+    # Find this command dispatcher instance
+    # It should be a singleton
+    cmd_disp = common.get_singleton_instance(topology, component)
+    if cmd_disp is None:
+        # This component is not in the topology, we don't need to do anythihng
+        print("No cmdDisp instance")
+        print(topology)
+        exit(1)
+        return
+
+    # Generate the above interface in the proper namespace/C++ class
+    *namespaces, dispatcher_name = component.symbol.qualified_name.split(".")
+
+    # Find the output port for sending commands
+    try:
+        # TODO(tumbar) Consider lookup for output ports that emit `Fw.Cmd` instead of a hardcoded name
+        cmd_send_pii = cmd_disp.get_port_instance_identifier("compCmdSend")
+    except fpp.DiagnosticError as e:
+        e.diagnostic.add_note(
+            "static-cmd-dispatcher requires this port name exactly as the dispatch port"
+        )
+        raise
+
+    scope = doc.namespace(*namespaces) if namespaces else nullcontext(doc)
+    with scope as ns:
+        with ns.function(
+            f"{dispatcher_name} ::lookupDispatchPort", ret="Fw::Success"
+        ) as dispatch:
+            dispatch.param("FwOpcodeType", "opCode")
+            dispatch.param("FwIndexType&", "port")
+
+            # For every component instance in the topology, dump all opcodes into the same port index case
+            with dispatch.body.switch("opCode") as sw:
+                for connection in topology.get_connections_from(cmd_send_pii):
+                    src_port = topology.get_port_number(
+                        connection.from_.underlying_endpoint.port.port_instance,
+                        connection,
+                    )
+                    assert src_port is not None, f"Unresolved port number: {connection}"
+
+                    dest_ci = connection.to.underlying_endpoint.port.interface_instance
+                    assert isinstance(
+                        dest_ci, fpp.ComponentInterfaceInstance
+                    ), "unflattened topology"
+
+                    # Dump all the base_id + opcode for this instance
+                    assert dest_ci.component
+                    with sw.case(
+                        *[
+                            f"0x{dest_ci.base_id:x} + 0x{opcode:x}"
+                            for opcode in dest_ci.component.command_map
+                        ]
+                    ) as b:
+                        b.comment(f"0x{dest_ci.base_id:x} ({dest_ci.qualified_name})")
+                        for opcode, cmd in dest_ci.component.command_map.items():
+                            b.comment(f"0x{opcode:x} ({cmd.name})")
+                        b.line(f"port = {src_port};")
+                        b.line("return Fw::Success::SUCCESS;")
+                with sw.default() as b:
+                    b.line("return Fw::Success::FAILURE;")
+
+
+def main() -> int:
+    return common.main(TOOL_NAME, GENERATED_SUFFIX, generate)
+
+
+if __name__ == "__main__":
+    try:
+        sys.exit(main())
+    except fpp.DiagnosticError as e:
+        print(e.diagnostic.render(color=True))
+        sys.exit(1)

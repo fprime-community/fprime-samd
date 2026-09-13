@@ -66,12 +66,13 @@ set(CPU_FLAGS "-mcpu=cortex-m0plus -mthumb")
 # Common C/C++ flags
 set(COMMON_FLAGS "\
     ${CPU_FLAGS} \
-    -O2 \
+    -Os \
     -g \
     -ffunction-sections \
     -fdata-sections \
     -nostdlib \
     -Werror=return-type \
+    -fomit-frame-pointer \
 ")
 
 # C-specific flags
@@ -83,11 +84,14 @@ set(CMAKE_C_FLAGS_INIT "\
 # C++-specific flags
 set(CMAKE_CXX_FLAGS_INIT "\
     ${COMMON_FLAGS} \
-    -std=c++11 \
+    -std=c++14 \
     -fno-threadsafe-statics \
     -fno-rtti \
     -fno-exceptions \
     -fno-use-cxa-atexit \
+    -fdevirtualize-speculatively \
+    -findirect-inlining \
+    -fdevirtualize-at-ltrans \
 ")
 
 # ASM flags
@@ -97,6 +101,9 @@ set(CMAKE_ASM_FLAGS_INIT "${CPU_FLAGS}")
 set(CMAKE_EXE_LINKER_FLAGS_INIT "\
     ${CPU_FLAGS} \
     -Os \
+    -fdevirtualize-speculatively \
+    -findirect-inlining \
+    -fdevirtualize-at-ltrans \
     -Wl,--gc-sections \
     -Wl,--cref \
     -Wl,--check-sections \
