@@ -208,27 +208,43 @@ def generate_ac_functions(
             with write_point.body as b:
                 with b.switch("id") as sw:
                     for tlm_id, tlm_chan in dictionary.tlm_channel_entry_map.items():
-                        with sw.case(f"0x{tlm_id:x}") as c:
+                        with sw.case(f"0x{tlm_id:x}", braces=False) as c:
                             # Emit memcpy()s for each offset in all packets where this channel exists
+                            c.comment(tlm_chan.qualified_name)
+                            in_packet = False
                             for pkt, offset in tlm_packet_offsets(dictionary, tlm_id):
-                                c.comment(
-                                    f"{tlm_chan.qualified_name} -> {pkt.name} + {offset}"
-                                )
+                                in_packet = True
+                                c.comment(f"{pkt.name} + {offset}")
                                 c.line(
                                     f"(void)memcpy(&{tlm_packet_buf(pkt)}[{offset}], val.getBuffAddr(), {tlm_chan.tlm_channel.channel_type.serialized_size});"
                                 )
-                    with sw.default() as d:
+
+                            if not in_packet:
+                                c.comment("(omitted)")
+                    with sw.default(braces=False) as d:
                         d.lines("""// Invalid telemetry ID
                         |FW_ASSERT(false, id);""")
 
         # Generate the function that reads the RAM buffer given packet id
-        with ns.function(f"{packetizer_name} ::loadPacket") as load_packet:
-            load_packet.ret = cg.as_type("Fw::SerializeStatus")
-            load_packet.param("Fw::ComBuffer&", "dest")
-            load_packet.param("U32", "id")
-
-            with load_packet.body as b:
-                b.line("return Fw::FW_SERIALIZE_OK;")
+        with ns.function(
+            f"{packetizer_name} ::loadPacket",
+            ret="Fw::SerializeStatus",
+            params=[("Fw::ComBuffer&", "dest"), ("U32", "id")],
+        ).body as f:
+            with f.switch("id") as sw:
+                for pkt_id, pkt in tlm_packet_set.packet_map.items():
+                    with sw.case(f"0x{pkt_id:x}", braces=False) as c:
+                        buf = tlm_packet_buf(pkt)
+                        with c.if_(f"dest.getSerializeSizeLeft() >= sizeof({buf})") as fits:
+                            fits.lines(
+                                f"""(void)memcpy(dest.getBuffAddrSer(), {buf}, sizeof({buf}));
+                                |dest.serializeSkip(sizeof({buf}));
+                                |return Fw::FW_SERIALIZE_OK;""")
+                        with c.else_() as too_small:
+                            too_small.line("return Fw::FW_SERIALIZE_NO_ROOM_LEFT;")
+                with sw.default(braces=False) as d:
+                    d.lines("""// Invalid telemetry packet ID
+                    |return Fw::FW_SERIALIZE_FORMAT_ERROR;""")
 
 
 def main() -> int:
