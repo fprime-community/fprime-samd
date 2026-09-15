@@ -80,7 +80,7 @@ class TmFramer final : public TmFramerComponentBase {
     ComCfg::Apid apidForComBuffer(const Fw::ComBuffer& data) const;
 
     //! Look up (and advance) the sequence count for a given APID. Only two APIDs are routed
-    //! through this framer today (FW_PACKET_TELEM, FW_PACKET_LOG per comPacketQueueIn's two
+    //! through this framer currently (FW_PACKET_TELEM, FW_PACKET_LOG per comPacketQueueIn's two
     //! upstream sources), so a small fixed table is used instead of a general-purpose map
     //! (e.g. Svc::Ccsds::ApidManager's Fw::ArrayMap). Revisit if more downlink APIDs are added.
     U16 nextApidSequenceCount(ComCfg::Apid apid);
