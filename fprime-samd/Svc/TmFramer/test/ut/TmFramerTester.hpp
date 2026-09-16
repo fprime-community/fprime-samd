@@ -71,6 +71,10 @@ class TmFramerTester final : public TmFramerGTestBase {
     //! Test that returning a buffer the framer didn't send asserts
     void testUnexpectedBufferReturn();
 
+    //! Test that a distinct APID beyond Samd21::FramerConfig::MAX_TRACKED_APIDS asserts
+    //! rather than silently sharing another APID's sequence count
+    void testApidTrackingOverflow();
+
   private:
     // ----------------------------------------------------------------------
     // Helper functions

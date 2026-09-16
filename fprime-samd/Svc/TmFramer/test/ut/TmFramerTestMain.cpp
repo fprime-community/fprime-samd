@@ -57,6 +57,11 @@ TEST(OffNominal, UnexpectedBufferReturn) {
     tester.testUnexpectedBufferReturn();
 }
 
+TEST(OffNominal, ApidTrackingOverflow) {
+    Samd21::TmFramerTester tester;
+    tester.testApidTrackingOverflow();
+}
+
 int main(int argc, char** argv) {
     ::testing::InitGoogleTest(&argc, argv);
     STest::Random::seed();

@@ -14,6 +14,7 @@
 #include "config/ApidEnumAc.hpp"
 #include "config/FppConstantsAc.hpp"
 #include "fprime-samd/Svc/TmFramer/TmFramerComponentAc.hpp"
+#include "samd-config/FramerConfig.hpp"
 
 namespace Samd21 {
 
@@ -79,10 +80,10 @@ class TmFramer final : public TmFramerComponentBase {
     //! cursor (it is still copied byte-for-byte into the Space Packet afterward).
     ComCfg::Apid apidForComBuffer(const Fw::ComBuffer& data) const;
 
-    //! Look up (and advance) the sequence count for a given APID. Only two APIDs are routed
-    //! through this framer currently (FW_PACKET_TELEM, FW_PACKET_LOG per comPacketQueueIn's two
-    //! upstream sources), so a small fixed table is used instead of a general-purpose map
-    //! (e.g. Svc::Ccsds::ApidManager's Fw::ArrayMap). Revisit if more downlink APIDs are added.
+    //! Look up (and advance) the sequence count for a given APID, claiming a fresh slot in
+    //! m_apidSequenceCounts on first sight of that APID. Capacity is
+    //! Samd21::FramerConfig::MAX_TRACKED_APIDS; asserts if a new, distinct APID would exceed
+    //! it (see that constant's comment for what to do when adding a downlink packet source).
     U16 nextApidSequenceCount(ComCfg::Apid apid);
 
     //! Pad the remainder of a not-yet-full TM frame data field with a CCSDS idle Space Packet,
@@ -107,17 +108,25 @@ class TmFramer final : public TmFramerComponentBase {
     //! matched here for consistency with stock fprime CCSDS idle packets.
     static constexpr U8 IDLE_DATA_PATTERN = 0x44;
 
-    //! Fixed set of APIDs this framer tracks a sequence count for. Extend if more downlink
-    //! packet sources are ever wired into comPacketQueueIn.
-    enum ApidSequenceSlot { TELEM_SLOT, LOG_SLOT, NUM_APID_SEQUENCE_SLOTS };
+    //! One slot in the per-APID sequence count table. `apid` is INVALID_UNINITIALIZED until
+    //! nextApidSequenceCount() claims this slot for a newly-seen APID.
+    struct ApidSequenceSlot {
+        ComCfg::Apid apid;
+        U16 count;  //!< Sequence count (mod-16384)
+    };
 
     bool m_driverConnected;
     TxBuffer m_buffers[2];          //!< Double buffer
     FwIndexType m_activeBufferIdx;  //!< Index of currently active buffer
     U32 m_droppedPackets;           //!< Telemetry tracking number of dropped packets
-    U16 m_apidSequenceCounts[NUM_APID_SEQUENCE_SLOTS];  //!< Per-APID sequence count (mod-16384)
-    U8 m_masterFrameCount;                              //!< Master Channel Frame Count (mod-256)
-    U8 m_virtualFrameCount;                             //!< Virtual Channel Frame Count (mod-256)
+
+    //! Per-APID sequence count table, capacity Samd21::FramerConfig::MAX_TRACKED_APIDS. Slots
+    //! are claimed lazily as distinct APIDs are first seen by nextApidSequenceCount().
+    ApidSequenceSlot m_apidSequenceCounts[Samd21::FramerConfig::MAX_TRACKED_APIDS];
+    FwIndexType m_numApidsTracked;  //!< Number of slots claimed so far in m_apidSequenceCounts
+
+    U8 m_masterFrameCount;   //!< Master Channel Frame Count (mod-256)
+    U8 m_virtualFrameCount;  //!< Virtual Channel Frame Count (mod-256)
 };
 
 }  // namespace Samd21

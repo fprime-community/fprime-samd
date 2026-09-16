@@ -41,14 +41,12 @@ TmFramer ::TmFramer(const char* const compName)
       m_driverConnected(false),
       m_activeBufferIdx(0),
       m_droppedPackets(0),
+      m_numApidsTracked(0),
       m_masterFrameCount(0),
       m_virtualFrameCount(0) {
     for (FwIndexType i = 0; i < 2; i++) {
         m_buffers[i].dataFieldSize = 0;
         m_buffers[i].state = IDLE;
-    }
-    for (FwIndexType i = 0; i < NUM_APID_SEQUENCE_SLOTS; i++) {
-        m_apidSequenceCounts[i] = 0;
     }
 }
 
@@ -136,22 +134,30 @@ ComCfg::Apid TmFramer ::apidForComBuffer(const Fw::ComBuffer& data) const {
 }
 
 U16 TmFramer ::nextApidSequenceCount(ComCfg::Apid apid) {
-    ApidSequenceSlot slot;
-    switch (apid) {
-        case ComCfg::Apid::FW_PACKET_LOG:
-            slot = LOG_SLOT;
+    FwIndexType slotIdx = -1;
+    for (FwIndexType i = 0; i < this->m_numApidsTracked; i++) {
+        if (this->m_apidSequenceCounts[i].apid == apid) {
+            slotIdx = i;
             break;
-        case ComCfg::Apid::FW_PACKET_TELEM:
-        default:
-            // Any APID this framer doesn't have a dedicated slot for tracks alongside
-            // telemetry rather than asserting -- see enum comment in TmFramer.hpp.
-            slot = TELEM_SLOT;
-            break;
+        }
     }
 
-    U16 count = this->m_apidSequenceCounts[slot];
+    if (slotIdx == -1) {
+        // First time seeing this APID -- claim the next free slot. If every downlink packet
+        // source is accounted for in Samd21::FramerConfig::MAX_TRACKED_APIDS, this can only
+        // fire (numApidsTracked + 1) times over the life of the deployment, once per distinct
+        // APID actually routed through comPacketQueueIn.
+        FW_ASSERT(this->m_numApidsTracked < Samd21::FramerConfig::MAX_TRACKED_APIDS,
+                  static_cast<FwAssertArgType>(this->m_numApidsTracked));
+        slotIdx = this->m_numApidsTracked;
+        this->m_apidSequenceCounts[slotIdx].apid = apid;
+        this->m_apidSequenceCounts[slotIdx].count = 0;
+        this->m_numApidsTracked++;
+    }
+
+    U16 count = this->m_apidSequenceCounts[slotIdx].count;
     // Sequence count is 14 bits, mod-16384 per APID (CCSDS 133.0-B-2 4.1.3.4).
-    this->m_apidSequenceCounts[slot] =
+    this->m_apidSequenceCounts[slotIdx].count =
         static_cast<U16>((count + 1) & Svc::Ccsds::SpacePacketSubfields::SeqCountMask);
     return count;
 }

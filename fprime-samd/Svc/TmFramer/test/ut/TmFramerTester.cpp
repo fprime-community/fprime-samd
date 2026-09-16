@@ -192,7 +192,7 @@ void TmFramerTester ::testSchedInFlush() {
 
 void TmFramerTester ::testPerApidSequenceCounts() {
     // TELEM and LOG packets are fanned into the same port but must track independent
-    // sequence counts (see nextApidSequenceCount / ApidSequenceSlot).
+    // sequence counts (see nextApidSequenceCount).
     sendPacket(ComCfg::Apid::FW_PACKET_TELEM, 10);
     sendPacket(ComCfg::Apid::FW_PACKET_LOG, 10);
     sendPacket(ComCfg::Apid::FW_PACKET_TELEM, 10);
@@ -234,6 +234,20 @@ void TmFramerTester ::testUnexpectedBufferReturn() {
     Fw::Buffer foreignBuffer(bufferData, sizeof(bufferData));
     ASSERT_DEATH_IF_SUPPORTED(this->invoke_to_drvReturnIn(0, foreignBuffer, Drv::ByteStreamStatus::OP_OK),
                                "Assert:");
+}
+
+void TmFramerTester ::testApidTrackingOverflow() {
+    // Claim every slot up to Samd21::FramerConfig::MAX_TRACKED_APIDS with distinct APIDs.
+    // FW_PACKET_TELEM and FW_PACKET_LOG are this project's two real downlink sources; if
+    // MAX_TRACKED_APIDS is ever raised, this test needs more distinct APIDs sent here to
+    // still exercise the assert below.
+    FW_ASSERT(Samd21::FramerConfig::MAX_TRACKED_APIDS == 2, Samd21::FramerConfig::MAX_TRACKED_APIDS);
+    sendPacket(ComCfg::Apid::FW_PACKET_TELEM, 10);
+    sendPacket(ComCfg::Apid::FW_PACKET_LOG, 10);
+
+    // A third, distinct APID has no free slot left -- nextApidSequenceCount() must assert
+    // rather than silently aliasing this APID's sequence count onto another APID's slot.
+    ASSERT_DEATH_IF_SUPPORTED(sendPacket(ComCfg::Apid::FW_PACKET_DP, 10), "Assert:");
 }
 
 // ----------------------------------------------------------------------
