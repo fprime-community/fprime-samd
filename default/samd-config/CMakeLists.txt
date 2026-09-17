@@ -1,6 +1,7 @@
 register_fprime_config(
         config-fprime-samd
     AUTOCODER_INPUTS
+        "${CMAKE_CURRENT_LIST_DIR}/Samd21AdcConfig.fpp"    
         "${CMAKE_CURRENT_LIST_DIR}/Samd21SpiConfig.fpp"
         "${CMAKE_CURRENT_LIST_DIR}/Samd21I2cConfig.fpp"
     HEADERS
