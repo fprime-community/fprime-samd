@@ -71,7 +71,7 @@ class StaticMallocator : public Fw::MemAllocator {
   private:
     // Use u64 so that we force 64-bit memory alignment
     U64 data[BUCKET_SIZE / 8];
-    bool used;
+    bool used = false;
 };
 
 }  // namespace Samd21
