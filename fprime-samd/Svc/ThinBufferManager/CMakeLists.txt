@@ -14,10 +14,7 @@ register_fprime_library(
     AUTOCODER_INPUTS
         "${CMAKE_CURRENT_LIST_DIR}/ThinBufferManager.fpp"
     SOURCES
-        "${CMAKE_CURRENT_LIST_DIR}/ThinBufferManagerComponentImpl.cpp"
-    HEADERS
-        "${CMAKE_CURRENT_LIST_DIR}/ThinBufferManager.hpp"
-        "${CMAKE_CURRENT_LIST_DIR}/ThinBufferManagerComponentImpl.hpp"
+        "${CMAKE_CURRENT_LIST_DIR}/ThinBufferManager.cpp"
     DEPENDS
         fprime-samd_Drv_Types
         config-fprime-samd

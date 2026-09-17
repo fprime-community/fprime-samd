@@ -3,7 +3,7 @@
 // \brief  hpp file for ThinBufferManager test harness implementation class
 //
 // Ported from lib/fprime/Svc/BufferManager/test/ut/BufferManagerTester.hpp,
-// adapted for Samd21::ThinBufferManagerComponentImpl.
+// adapted for Samd21::ThinBufferManager.
 //
 // ======================================================================
 
@@ -11,7 +11,7 @@
 #define Samd21_ThinBufferManagerTester_HPP
 
 #include <STest/Pick/Pick.hpp>
-#include "fprime-samd/Svc/ThinBufferManager/ThinBufferManagerComponentImpl.hpp"
+#include "fprime-samd/Svc/ThinBufferManager/ThinBufferManager.hpp"
 #include "fprime-samd/Svc/ThinBufferManager/ThinBufferManagerGTestBase.hpp"
 
 namespace Samd21 {
@@ -80,7 +80,7 @@ class ThinBufferManagerTester : public ThinBufferManagerGTestBase {
 
     //! The component under test
     //!
-    ThinBufferManagerComponentImpl component;
+    ThinBufferManager component;
 };
 
 }  // end namespace Samd21

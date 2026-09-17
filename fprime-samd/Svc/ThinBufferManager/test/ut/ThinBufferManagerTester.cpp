@@ -3,7 +3,7 @@
 // \brief  cpp file for ThinBufferManager test harness implementation class
 //
 // Ported from lib/fprime/Svc/BufferManager/test/ut/BufferManagerTester.cpp,
-// adapted for Samd21::ThinBufferManagerComponentImpl. Two behavioral
+// adapted for Samd21::ThinBufferManager. Two behavioral
 // differences from the original:
 //
 // 1. ThinBuffer has no getContext() accessor of its own (only Fw::Buffer
@@ -114,7 +114,7 @@ ThinBufferManagerTester ::~ThinBufferManagerTester() {}
 // ----------------------------------------------------------------------
 
 void ThinBufferManagerTester ::testSetup() {
-    ThinBufferManagerComponentImpl::BufferBins bins;
+    ThinBufferManager::BufferBins bins;
     memset(&bins, 0, sizeof(bins));
     bins.bins[0].bufferSize = BIN0_BUFFER_SIZE;
     bins.bins[0].numBuffers = BIN0_NUM_BUFFERS;
@@ -135,7 +135,7 @@ void ThinBufferManagerTester ::testSetup() {
 
     // check that enough memory was requested
     FwSizeType memSize = (BIN0_NUM_BUFFERS + BIN1_NUM_BUFFERS + BIN2_NUM_BUFFERS) *
-                             sizeof(Samd21::ThinBufferManagerComponentImpl::AllocatedBuffer) +
+                             sizeof(Samd21::ThinBufferManager::AllocatedBuffer) +
                          (BIN0_NUM_BUFFERS * BIN0_BUFFER_SIZE + BIN1_NUM_BUFFERS * BIN1_BUFFER_SIZE +
                           BIN2_NUM_BUFFERS * BIN2_BUFFER_SIZE);
     ASSERT_EQ(memSize, alloc.getSize());
@@ -145,7 +145,7 @@ void ThinBufferManagerTester ::testSetup() {
 
     // first buffer should point at location just past buffer structs
     U8* mem = reinterpret_cast<U8*>(alloc.getMem()) +
-              this->component.m_numStructs * sizeof(Samd21::ThinBufferManagerComponentImpl::AllocatedBuffer);
+              this->component.m_numStructs * sizeof(Samd21::ThinBufferManager::AllocatedBuffer);
     ;
 
     // check the buffer properties
@@ -184,7 +184,7 @@ void ThinBufferManagerTester ::testSetup() {
 }
 
 void ThinBufferManagerTester::oneBufferSize() {
-    ThinBufferManagerComponentImpl::BufferBins bins;
+    ThinBufferManager::BufferBins bins;
     memset(&bins, 0, sizeof(bins));
     bins.bins[0].bufferSize = BIN1_BUFFER_SIZE;
     bins.bins[0].numBuffers = BIN1_NUM_BUFFERS;
@@ -272,7 +272,7 @@ void ThinBufferManagerTester::oneBufferSize() {
 }
 
 void ThinBufferManagerTester::multBuffSize() {
-    ThinBufferManagerComponentImpl::BufferBins bins;
+    ThinBufferManager::BufferBins bins;
     memset(&bins, 0, sizeof(bins));
     bins.bins[0].bufferSize = BIN0_BUFFER_SIZE;
     bins.bins[0].numBuffers = BIN0_NUM_BUFFERS;

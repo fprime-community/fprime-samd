@@ -1,5 +1,5 @@
 // ======================================================================
-// \title  ThinBufferManagerComponentImpl.cpp
+// \title  ThinBufferManager.cpp
 // \brief  cpp file for ThinBufferManager component implementation class
 //
 // Ported from Svc::BufferManagerComponentImpl (lib/fprime/Svc/BufferManager),
@@ -8,7 +8,7 @@
 //
 // ======================================================================
 
-#include "fprime-samd/Svc/ThinBufferManager/ThinBufferManagerComponentImpl.hpp"
+#include "fprime-samd/Svc/ThinBufferManager/ThinBufferManager.hpp"
 #include <Fw/Buffer/Buffer.hpp>
 #include <Fw/FPrimeBasicTypes.hpp>
 #include <Fw/Types/Assert.hpp>
@@ -20,7 +20,7 @@ namespace Samd21 {
 // Construction, initialization, and destruction
 // ----------------------------------------------------------------------
 
-ThinBufferManagerComponentImpl ::ThinBufferManagerComponentImpl(const char* const compName)
+ThinBufferManager ::ThinBufferManager(const char* const compName)
     : ThinBufferManagerComponentBase(compName),
       m_setup(false),
       m_cleaned(false),
@@ -34,13 +34,13 @@ ThinBufferManagerComponentImpl ::ThinBufferManagerComponentImpl(const char* cons
       m_noBuffs(0),
       m_emptyBuffs(0) {}
 
-ThinBufferManagerComponentImpl ::~ThinBufferManagerComponentImpl() {
+ThinBufferManager ::~ThinBufferManager() {
     if (m_setup) {
         this->cleanup();
     }
 }
 
-void ThinBufferManagerComponentImpl ::cleanup() {
+void ThinBufferManager ::cleanup() {
     FW_ASSERT(this->m_buffers != nullptr);
     FW_ASSERT(this->m_allocator != nullptr);
 
@@ -58,7 +58,7 @@ void ThinBufferManagerComponentImpl ::cleanup() {
 // Handler implementations for user-defined typed input ports
 // ----------------------------------------------------------------------
 
-void ThinBufferManagerComponentImpl ::bufferSendIn_handler(const FwIndexType portNum, Fw::Buffer& fwBuffer) {
+void ThinBufferManager ::bufferSendIn_handler(const FwIndexType portNum, Fw::Buffer& fwBuffer) {
     // make sure component has been set up
     FW_ASSERT(this->m_setup);
     FW_ASSERT(m_buffers != nullptr);
@@ -94,8 +94,8 @@ void ThinBufferManagerComponentImpl ::bufferSendIn_handler(const FwIndexType por
     this->m_currBuffs--;
 }
 
-Fw::Buffer ThinBufferManagerComponentImpl ::bufferGetCallee_handler(const FwIndexType portNum,
-                                                                    Fw::Buffer::SizeType size) {
+Fw::Buffer ThinBufferManager ::bufferGetCallee_handler(const FwIndexType portNum,
+                                                       Fw::Buffer::SizeType size) {
     // make sure component has been set up
     FW_ASSERT(this->m_setup);
     FW_ASSERT(m_buffers != nullptr);
@@ -123,10 +123,10 @@ Fw::Buffer ThinBufferManagerComponentImpl ::bufferGetCallee_handler(const FwInde
     return Fw::Buffer();
 }
 
-void ThinBufferManagerComponentImpl::setup(U16 mgrId,                    //!< manager ID
-                                           FwEnumStoreType memId,        //!< Memory segment identifier
-                                           Fw::MemAllocator& allocator,  //!< memory allocator
-                                           const BufferBins& bins        //!< Set of user bins
+void ThinBufferManager::setup(U16 mgrId,                    //!< manager ID
+                              FwEnumStoreType memId,        //!< Memory segment identifier
+                              Fw::MemAllocator& allocator,  //!< memory allocator
+                              const BufferBins& bins        //!< Set of user bins
 ) {
     this->m_mgrId = mgrId;
     this->m_memId = memId;
@@ -206,7 +206,7 @@ void ThinBufferManagerComponentImpl::setup(U16 mgrId,                    //!< ma
     this->m_setup = true;
 }
 
-void ThinBufferManagerComponentImpl ::schedIn_handler(const FwIndexType portNum, U32 context) {
+void ThinBufferManager ::schedIn_handler(const FwIndexType portNum, U32 context) {
     // write telemetry values
     this->tlmWrite_HiBuffs(this->m_highWater);
     this->tlmWrite_CurrBuffs(this->m_currBuffs);
