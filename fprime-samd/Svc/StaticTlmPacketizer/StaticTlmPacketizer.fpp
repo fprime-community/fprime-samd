@@ -23,7 +23,7 @@ module Samd21 {
 
         @ Send a telemetry packet
         sync command SEND_PKT(
-            $id: U32  @< The packet ID
+            $id: FwTlmPacketizeIdType  @< The packet ID
         ) \
             opcode 0
 
@@ -37,7 +37,7 @@ module Samd21 {
 
         @ Couldn't find the packet to send
         event PacketNotFound(
-            $id: U32  @< The packet ID
+            $id: FwTlmPacketizeIdType  @< The packet ID
         ) \
             severity warning low \
             id 1 \

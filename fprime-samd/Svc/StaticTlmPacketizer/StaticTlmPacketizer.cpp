@@ -5,10 +5,12 @@
 // ======================================================================
 
 #include "fprime-samd/Svc/StaticTlmPacketizer/StaticTlmPacketizer.hpp"
+#include "Fw/Cmd/CmdResponseEnumAc.hpp"
 #include "Fw/Com/ComBuffer.hpp"
 #include "Fw/Com/ComPacket.hpp"
 #include "Fw/Types/Assert.hpp"
 #include "Fw/Types/Serializable.hpp"
+#include "Fw/Types/SuccessEnumAc.hpp"
 
 namespace Samd21 {
 
@@ -25,10 +27,13 @@ StaticTlmPacketizer ::~StaticTlmPacketizer() {}
 // ----------------------------------------------------------------------
 
 void StaticTlmPacketizer ::pktSendIn_handler(FwIndexType portNum, U32 context) {
-    // TODO
+    this->sendPkt(static_cast<FwTlmPacketizeIdType>(portNum));
 }
 
-void StaticTlmPacketizer ::tlmRecvIn_handler(FwIndexType portNum, FwChanIdType id, Fw::Time& timeTag, Fw::TlmBuffer& val) {
+void StaticTlmPacketizer ::tlmRecvIn_handler(FwIndexType portNum,
+                                             FwChanIdType id,
+                                             Fw::Time& timeTag,
+                                             Fw::TlmBuffer& val) {
     this->writePoint(id, val);
 }
 
@@ -36,12 +41,13 @@ void StaticTlmPacketizer ::tlmRecvIn_handler(FwIndexType portNum, FwChanIdType i
 // Handler implementations for commands
 // ----------------------------------------------------------------------
 
-void StaticTlmPacketizer ::SEND_PKT_cmdHandler(FwOpcodeType opCode, U32 cmdSeq, U32 id) {
-    this->sendPkt(id);
-    this->cmdResponse_out(opCode, cmdSeq, Fw::CmdResponse::OK);
+void StaticTlmPacketizer ::SEND_PKT_cmdHandler(FwOpcodeType opCode, U32 cmdSeq, FwTlmPacketizeIdType id) {
+    auto status = this->sendPkt(id);
+    this->cmdResponse_out(opCode, cmdSeq,
+                          status == Fw::Success::SUCCESS ? Fw::CmdResponse::OK : Fw::CmdResponse::EXECUTION_ERROR);
 }
 
-void StaticTlmPacketizer ::sendPkt(U32 id) {
+Fw::Success StaticTlmPacketizer ::sendPkt(FwTlmPacketizeIdType id) {
     Fw::ComBuffer pkt;
     Fw::Time now = getTime();
 
@@ -50,7 +56,7 @@ void StaticTlmPacketizer ::sendPkt(U32 id) {
     FW_ASSERT(status == Fw::FW_SERIALIZE_OK, status);
 
     // Encode TLM packet header
-    status = pkt.serializeFrom(id);
+    status = pkt.serializeFrom(static_cast<FwTlmPacketizeIdType>(id));
     FW_ASSERT(status == Fw::FW_SERIALIZE_OK, status);
 
     status = pkt.serializeFrom(now);
@@ -58,10 +64,18 @@ void StaticTlmPacketizer ::sendPkt(U32 id) {
 
     // Load/copy the payload from the packet buffer into our packet buffer
     status = this->loadPacket(pkt, id);
-    FW_ASSERT(status == Fw::FW_SERIALIZE_OK, status);
+    if (status == Fw::FW_SERIALIZE_FORMAT_ERROR) {
+        // `id` comes from "user" input so we fail gracefully
+        this->log_WARNING_LO_PacketNotFound(id);
+        return Fw::Success::FAILURE;
+    } else {
+        // Make sure the packet fits in a ComBuffer
+        FW_ASSERT(status == Fw::FW_SERIALIZE_OK, status);
 
-    // Transmit the packet
-    this->pktSendOut_out(0, pkt, 0);
+        // Transmit the packet
+        this->pktSendOut_out(0, pkt, 0);
+        return Fw::Success::SUCCESS;
+    }
 }
 
 }  // namespace Samd21

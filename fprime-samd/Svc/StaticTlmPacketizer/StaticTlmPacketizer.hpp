@@ -8,6 +8,7 @@
 #define Samd21_StaticTlmPacketizer_HPP
 
 #include "Fw/Types/Serializable.hpp"
+#include "Fw/Types/SuccessEnumAc.hpp"
 #include "fprime-samd/Svc/StaticTlmPacketizer/StaticTlmPacketizerComponentAc.hpp"
 
 namespace Samd21 {
@@ -54,14 +55,14 @@ class StaticTlmPacketizer final : public StaticTlmPacketizerComponentBase {
     //! Handler implementation for command SEND_PKT
     //!
     //! Send a telemetry packet
-    void SEND_PKT_cmdHandler(FwOpcodeType opCode,  //!< The opcode
-                             U32 cmdSeq,           //!< The command sequence number
-                             U32 id                //!< The packet ID
+    void SEND_PKT_cmdHandler(FwOpcodeType opCode,     //!< The opcode
+                             U32 cmdSeq,              //!< The command sequence number
+                             FwTlmPacketizeIdType id  //!< The packet ID
                              ) override;
 
   private:
     //! Send a telemetry packet given it's id
-    void sendPkt(U32 id);
+    Fw::Success sendPkt(FwTlmPacketizeIdType id);
 
     //! Given a telemetry id/value, write the value to the memory holding this value
     void writePoint(FwChanIdType id, const Fw::TlmBuffer& val);
