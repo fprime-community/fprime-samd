@@ -107,8 +107,10 @@ void AdcHal::configure(AdcDriver::VoltageReference ref,
     AdcHal::waitForAdcSync();
 
     // Configure averaging
+    // Per datasheet Table 33-3: ADJRES tracks SAMPLENUM up to SAMPLES_16 (0x4), then
+    // stays pinned at 0x4 for SAMPLES_32 and above.
     U8 samplenum = static_cast<U8>(samples);
-    U8 adjres = samplenum;
+    U8 adjres = (samplenum <= 4) ? samplenum : 4;
     ADC->AVGCTRL.reg = ADC_AVGCTRL_SAMPLENUM(samplenum) | ADC_AVGCTRL_ADJRES(adjres);
 
     // Configure sampling time
