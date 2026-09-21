@@ -5,6 +5,7 @@
 // ======================================================================
 
 #include "fprime-samd/Drv/AdcDriver/test/ut/AdcDriverTester.hpp"
+#include "Fw/Test/UnitTest.hpp"
 
 namespace Samd21 {
 
@@ -77,6 +78,8 @@ void AdcDriverTester::assertAdcResult(FwSizeType size,
 // ----------------------------------------------------------------------
 
 void AdcDriverTester::testConfigure() {
+    REQUIREMENT("SAMD21-ADC-001: The AdcDriver shall configure the ADC peripheral with configurable voltage "
+                "reference, resolution, hardware averaging, sampling time, and gain");
     this->resetTest();
 
     // Configure with non-default parameters to verify all parameter plumbing
@@ -102,6 +105,8 @@ void AdcDriverTester::testConfigure() {
 // ----------------------------------------------------------------------
 
 void AdcDriverTester::testConfigureChannelNominal() {
+    REQUIREMENT("SAMD21-ADC-002: The AdcDriver shall bind a readAdc port index to a physical ADC input channel "
+                "via configureChannel");
     this->resetTest();
     this->configureStandard();
     this->clearHistory();
@@ -132,6 +137,9 @@ void AdcDriverTester::testConfigureChannelNominal() {
 // ----------------------------------------------------------------------
 
 void AdcDriverTester::testConversionCompletion() {
+    REQUIREMENT("SAMD21-ADC-003: The AdcDriver shall start an asynchronous conversion on readAdc");
+    REQUIREMENT("SAMD21-ADC-006: The AdcDriver shall deliver every conversion result from the main context (via "
+                "activeIn), not from interrupt context");
     this->resetTest();
     this->configureStandard();
     this->component.configureChannel(0, AdcDriver::AdcChannel::AIN0);
@@ -162,6 +170,8 @@ void AdcDriverTester::testConversionCompletion() {
 }
 
 void AdcDriverTester::testConversionNotConfigured() {
+    REQUIREMENT("SAMD21-ADC-004: The AdcDriver shall return ADC_NOT_CONFIGURED from readAdc without touching "
+                "hardware if the peripheral is not configured");
     this->resetTest();
     // Don't call configureStandard() - ADC peripheral not configured
 
@@ -178,6 +188,8 @@ void AdcDriverTester::testConversionNotConfigured() {
 }
 
 void AdcDriverTester::testConversionChannelNotConfigured() {
+    REQUIREMENT("SAMD21-ADC-004: The AdcDriver shall return ADC_INVALID_CHANNEL from readAdc without touching "
+                "hardware if the requested port is not configured");
     this->resetTest();
     this->configureStandard();
     // Configure channel 0 but not channel 1
@@ -197,6 +209,8 @@ void AdcDriverTester::testConversionChannelNotConfigured() {
 }
 
 void AdcDriverTester::testConversionBusy() {
+    REQUIREMENT("SAMD21-ADC-003: The AdcDriver shall return ADC_BUSY if a conversion is already in progress on "
+                "any port");
     this->resetTest();
     this->configureStandard();
     this->component.configureChannel(0, AdcDriver::AdcChannel::AIN0);
@@ -219,6 +233,9 @@ void AdcDriverTester::testConversionBusy() {
 }
 
 void AdcDriverTester::testConversionMultipleChannels() {
+    REQUIREMENT("SAMD21-ADC-002: The AdcDriver shall bind a readAdc port index to a physical ADC input channel "
+                "via configureChannel");
+    REQUIREMENT("SAMD21-ADC-003: The AdcDriver shall start an asynchronous conversion on readAdc");
     this->resetTest();
     this->configureStandard();
     this->component.configureChannel(0, AdcDriver::AdcChannel::AIN0);
@@ -260,6 +277,8 @@ void AdcDriverTester::testConversionMultipleChannels() {
 // ----------------------------------------------------------------------
 
 void AdcDriverTester::testHandleInterruptResultReady() {
+    REQUIREMENT("SAMD21-ADC-006: The AdcDriver shall deliver every conversion result from the main context (via "
+                "activeIn), not from interrupt context");
     // Technically repeats testConversionCompletion
     this->resetTest();
     this->configureStandard();
@@ -281,6 +300,8 @@ void AdcDriverTester::testHandleInterruptResultReady() {
 }
 
 void AdcDriverTester::testHandleInterruptOverrun() {
+    REQUIREMENT("SAMD21-ADC-005: The AdcDriver shall report an overrun (ADC_OVERRUN) if the result register was "
+                "not read before the next conversion completed");
     this->resetTest();
     this->configureStandard();
     this->component.configureChannel(0, AdcDriver::AdcChannel::AIN0);
@@ -303,6 +324,8 @@ void AdcDriverTester::testHandleInterruptOverrun() {
 }
 
 void AdcDriverTester::testHandleInterruptBothFlags() {
+    REQUIREMENT("SAMD21-ADC-005: The AdcDriver shall report an overrun (ADC_OVERRUN) if the result register was "
+                "not read before the next conversion completed");
     this->resetTest();
     this->configureStandard();
     this->component.configureChannel(0, AdcDriver::AdcChannel::AIN0);
@@ -333,6 +356,8 @@ void AdcDriverTester::testHandleInterruptBothFlags() {
 // ----------------------------------------------------------------------
 
 void AdcDriverTester::testConfigureAllReferences() {
+    REQUIREMENT("SAMD21-ADC-001: The AdcDriver shall configure the ADC peripheral with configurable voltage "
+                "reference");
     this->resetTest();
 
     // Test all voltage reference options to achieve line coverage in HAL switch statement
@@ -352,6 +377,7 @@ void AdcDriverTester::testConfigureAllReferences() {
 }
 
 void AdcDriverTester::testConfigureAllResolutions() {
+    REQUIREMENT("SAMD21-ADC-001: The AdcDriver shall configure the ADC peripheral with configurable resolution");
     this->resetTest();
 
     // Test all resolution options (8, 10, 12 bit) for line coverage
@@ -370,6 +396,8 @@ void AdcDriverTester::testConfigureAllResolutions() {
 }
 
 void AdcDriverTester::testConfigureAllSampleCounts() {
+    REQUIREMENT("SAMD21-ADC-001: The AdcDriver shall configure the ADC peripheral with configurable hardware "
+                "averaging");
     this->resetTest();
 
     // Test all sample count options (1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024) for line coverage
@@ -390,6 +418,7 @@ void AdcDriverTester::testConfigureAllSampleCounts() {
 }
 
 void AdcDriverTester::testConfigureAllGains() {
+    REQUIREMENT("SAMD21-ADC-001: The AdcDriver shall configure the ADC peripheral with configurable gain");
     this->resetTest();
 
     // Test both gain options (1X and DIV2) for line coverage
@@ -419,6 +448,8 @@ void AdcDriverTester::testConfigureAllGains() {
 // ----------------------------------------------------------------------
 
 void AdcDriverTester::testConversionResultBoundaries() {
+    REQUIREMENT("SAMD21-ADC-006: The AdcDriver shall deliver every conversion result from the main context (via "
+                "activeIn), not from interrupt context");
     this->resetTest();
     this->configureStandard();
     this->component.configureChannel(0, AdcDriver::AdcChannel::AIN0);
@@ -446,6 +477,8 @@ void AdcDriverTester::testConversionResultBoundaries() {
 // ----------------------------------------------------------------------
 
 void AdcDriverTester::testConversionBeforeComplete() {
+    REQUIREMENT("SAMD21-ADC-006: The AdcDriver shall deliver a conversion result via activeIn only once the "
+                "conversion has completed");
     this->resetTest();
     this->configureStandard();
     this->component.configureChannel(0, AdcDriver::AdcChannel::AIN0);
@@ -470,6 +503,8 @@ void AdcDriverTester::testConversionBeforeComplete() {
 }
 
 void AdcDriverTester::testConversionMultipleactiveInIdle() {
+    REQUIREMENT("SAMD21-ADC-006: The AdcDriver shall deliver every conversion result exactly once from the main "
+                "context (via activeIn)");
     this->resetTest();
     this->configureStandard();
     this->component.configureChannel(0, AdcDriver::AdcChannel::AIN0);
@@ -496,6 +531,8 @@ void AdcDriverTester::testConversionMultipleactiveInIdle() {
 // ----------------------------------------------------------------------
 
 void AdcDriverTester::testHandleInterruptNoFlags() {
+    REQUIREMENT("SAMD21-ADC-007: The AdcDriver shall ignore spurious interrupts (flags clear with a conversion "
+                "requested) without corrupting driver state");
     this->resetTest();
     this->configureStandard();
     this->component.configureChannel(0, AdcDriver::AdcChannel::AIN0);
@@ -517,6 +554,8 @@ void AdcDriverTester::testHandleInterruptNoFlags() {
 }
 
 void AdcDriverTester::testHandleInterruptMultipleTimes() {
+    REQUIREMENT("SAMD21-ADC-007: The AdcDriver shall ignore repeated interrupts for an already-latched result "
+                "without corrupting driver state");
     this->resetTest();
     this->configureStandard();
     this->component.configureChannel(0, AdcDriver::AdcChannel::AIN0);
@@ -541,6 +580,8 @@ void AdcDriverTester::testHandleInterruptMultipleTimes() {
 }
 
 void AdcDriverTester::testHandleInterruptWithoutPendingConversion() {
+    REQUIREMENT("SAMD21-ADC-007: The AdcDriver shall ignore spurious interrupts (no conversion pending) without "
+                "corrupting driver state");
     this->resetTest();
     this->configureStandard();
     this->component.configureChannel(0, AdcDriver::AdcChannel::AIN0);
@@ -559,6 +600,8 @@ void AdcDriverTester::testHandleInterruptWithoutPendingConversion() {
 }
 
 void AdcDriverTester::testHandleInterruptSpuriousWithOverrun() {
+    REQUIREMENT("SAMD21-ADC-007: The AdcDriver shall ignore spurious interrupts (flags set with nothing "
+                "requested) without corrupting driver state");
     this->resetTest();
     this->configureStandard();
     this->component.configureChannel(0, AdcDriver::AdcChannel::AIN0);
