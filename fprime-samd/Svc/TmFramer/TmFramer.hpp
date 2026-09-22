@@ -119,6 +119,7 @@ class TmFramer final : public TmFramerComponentBase {
     TxBuffer m_buffers[2];          //!< Double buffer
     FwIndexType m_activeBufferIdx;  //!< Index of currently active buffer
     U32 m_droppedPackets;           //!< Telemetry tracking number of dropped packets
+    U8 m_apidOverflowCount;         //!< Telemetry tracking number of untracked-APID occurrences
 
     //! Per-APID sequence count table, capacity Samd21::FramerConfig::MAX_TRACKED_APIDS. Slots
     //! are claimed lazily as distinct APIDs are first seen by nextApidSequenceCount().
