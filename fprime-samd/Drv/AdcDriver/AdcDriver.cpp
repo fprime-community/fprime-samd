@@ -124,11 +124,12 @@ bool AdcDriver::activeIn_handler(FwIndexType portNum, U32 context) {
         Samd21::AdcStatus status =
             (m_state == State::COMPLETE_OVERRUN) ? Samd21::AdcStatus::ADC_OVERRUN : Samd21::AdcStatus::ADC_OK;
 
-        // Deliver result and status to the requesting port via output port
-        this->adcResult_out(m_pendingPortNum, m_lastResult, status);
+        const FwIndexType portNumToReport = m_pendingPortNum;
+        const U32 resultToReport = m_lastResult;
 
-        // Return to IDLE state - ADC is now available for new conversion
         m_state = State::IDLE;
+
+        this->adcResult_out(portNumToReport, resultToReport, status);
     } else {
         return false;
     }
