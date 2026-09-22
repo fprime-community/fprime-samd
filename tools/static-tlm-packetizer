@@ -50,7 +50,9 @@ def assert_fixed_width(ty: fpp.Type):
     match ty:
         case fpp.StringType():
             raise fpp.DiagnosticError(
-                "Only fixed-width serializables are supported in static telemetry packets"
+                fpp.Diagnostic(
+                    "Only fixed-width serializables are supported in static telemetry packets"
+                )
             )
         case fpp.StructType() as s:
             for name, member in s.anon_struct.members:
@@ -235,11 +237,14 @@ def generate_ac_functions(
                 for pkt_id, pkt in tlm_packet_set.packet_map.items():
                     with sw.case(f"0x{pkt_id:x}", braces=False) as c:
                         buf = tlm_packet_buf(pkt)
-                        with c.if_(f"dest.getSerializeSizeLeft() >= sizeof({buf})") as fits:
+                        with c.if_(
+                            f"dest.getSerializeSizeLeft() >= sizeof({buf})"
+                        ) as fits:
                             fits.lines(
                                 f"""(void)memcpy(dest.getBuffAddrSer(), {buf}, sizeof({buf}));
                                 |dest.serializeSkip(sizeof({buf}));
-                                |return Fw::FW_SERIALIZE_OK;""")
+                                |return Fw::FW_SERIALIZE_OK;"""
+                            )
                         with c.else_() as too_small:
                             too_small.line("return Fw::FW_SERIALIZE_NO_ROOM_LEFT;")
                 with sw.default(braces=False) as d:
