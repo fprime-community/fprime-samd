@@ -15,7 +15,8 @@ namespace Samd21 {
 // Construction and destruction
 // ----------------------------------------------------------------------
 
-TmFramerTester ::TmFramerTester() : TmFramerGTestBase("TmFramerTester", TmFramerTester::MAX_HISTORY_SIZE), component("TmFramer") {
+TmFramerTester ::TmFramerTester()
+    : TmFramerGTestBase("TmFramerTester", TmFramerTester::MAX_HISTORY_SIZE), component("TmFramer") {
     this->initComponents();
     this->connectPorts();
 
@@ -54,8 +55,8 @@ void TmFramerTester ::testNominalFraming() {
     // Idle Space Packet fills the remainder: header + payload + idle Space Packet header,
     // then idle-fill pattern out to the trailer.
     const FwSizeType idleDataOffset = Svc::Ccsds::TMHeader::SERIALIZED_SIZE +
-                                       Svc::Ccsds::SpacePacketHeader::SERIALIZED_SIZE + payloadSize +
-                                       Svc::Ccsds::SpacePacketHeader::SERIALIZED_SIZE;
+                                      Svc::Ccsds::SpacePacketHeader::SERIALIZED_SIZE + payloadSize +
+                                      Svc::Ccsds::SpacePacketHeader::SERIALIZED_SIZE;
     const FwSizeType idleDataEndOffset =
         static_cast<FwSizeType>(ComCfg::TmFrameFixedSize) - Svc::Ccsds::TMTrailer::SERIALIZED_SIZE;
     for (FwSizeType i = idleDataOffset; i < idleDataEndOffset; ++i) {
@@ -232,8 +233,7 @@ void TmFramerTester ::testFrameCountWrapAround() {
 void TmFramerTester ::testUnexpectedBufferReturn() {
     U8 bufferData[10];
     Fw::Buffer foreignBuffer(bufferData, sizeof(bufferData));
-    ASSERT_DEATH_IF_SUPPORTED(this->invoke_to_drvReturnIn(0, foreignBuffer, Drv::ByteStreamStatus::OP_OK),
-                               "Assert:");
+    ASSERT_DEATH_IF_SUPPORTED(this->invoke_to_drvReturnIn(0, foreignBuffer, Drv::ByteStreamStatus::OP_OK), "Assert:");
 }
 
 void TmFramerTester ::testApidTrackingOverflow() {
@@ -241,13 +241,19 @@ void TmFramerTester ::testApidTrackingOverflow() {
     // FW_PACKET_TELEM and FW_PACKET_LOG are this project's two real downlink sources; if
     // MAX_TRACKED_APIDS is ever raised, this test needs more distinct APIDs sent here to
     // still exercise the assert below.
-    FW_ASSERT(Samd21::FramerConfig::MAX_TRACKED_APIDS == 2, Samd21::FramerConfig::MAX_TRACKED_APIDS);
-    sendPacket(ComCfg::Apid::FW_PACKET_TELEM, 10);
-    sendPacket(ComCfg::Apid::FW_PACKET_LOG, 10);
+    invoke_to_schedIn(0, 0);
+    clearHistory();
+    U8 apid = 0;
+    while (apid < Samd21::FramerConfig::MAX_TRACKED_APIDS) {
+        sendPacket(static_cast<ComCfg::Apid>(apid++), 10);
+        invoke_to_schedIn(0, 0);
+        ASSERT_TLM_ApidOverflowCount_SIZE(0);
+    }
 
-    // A third, distinct APID has no free slot left -- nextApidSequenceCount() must assert
-    // rather than silently aliasing this APID's sequence count onto another APID's slot.
-    ASSERT_DEATH_IF_SUPPORTED(sendPacket(ComCfg::Apid::FW_PACKET_DP, 10), "Assert:");
+    sendPacket(static_cast<ComCfg::Apid>(apid++), 10);
+    invoke_to_schedIn(0, 0);
+    ASSERT_TLM_ApidOverflowCount_SIZE(1);
+    ASSERT_TLM_ApidOverflowCount(0, 1);
 }
 
 // ----------------------------------------------------------------------

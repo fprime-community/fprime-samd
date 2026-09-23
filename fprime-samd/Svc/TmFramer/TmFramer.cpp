@@ -41,6 +41,7 @@ TmFramer ::TmFramer(const char* const compName)
       m_driverConnected(false),
       m_activeBufferIdx(0),
       m_droppedPackets(0),
+      m_apidOverflowCount(0),
       m_numApidsTracked(0),
       m_masterFrameCount(0),
       m_virtualFrameCount(0) {
@@ -143,12 +144,14 @@ U16 TmFramer ::nextApidSequenceCount(ComCfg::Apid apid) {
     }
 
     if (slotIdx == -1) {
-        // First time seeing this APID -- claim the next free slot. If every downlink packet
-        // source is accounted for in Samd21::FramerConfig::MAX_TRACKED_APIDS, this can only
-        // fire (numApidsTracked + 1) times over the life of the deployment, once per distinct
-        // APID actually routed through comPacketQueueIn.
-        FW_ASSERT(this->m_numApidsTracked < Samd21::FramerConfig::MAX_TRACKED_APIDS,
-                  static_cast<FwAssertArgType>(this->m_numApidsTracked));
+        // First time seeing this APID -- claim the next free slot if one is available. If
+        // every downlink packet source is accounted for in Samd21::FramerConfig::MAX_TRACKED_APIDS,
+        // This path must stay non-fatal because it can be reached while handling a 
+        // fatal/assert packet, and a crash here would prevent that packet from ever being sent.
+        if (this->m_numApidsTracked >= Samd21::FramerConfig::MAX_TRACKED_APIDS) {
+            this->m_apidOverflowCount++;
+            return 0;
+        }
         slotIdx = this->m_numApidsTracked;
         this->m_apidSequenceCounts[slotIdx].apid = apid;
         this->m_apidSequenceCounts[slotIdx].count = 0;
@@ -305,6 +308,7 @@ void TmFramer ::schedIn_handler(FwIndexType portNum, U32 context) {
         TxBuffer& nextBuf = m_buffers[nextBufferIdx];
 
         this->tlmWrite_DroppedPackets(this->m_droppedPackets);
+        this->tlmWrite_ApidOverflowCount(this->m_apidOverflowCount);
 
         if (nextBuf.state == TRANSMITTING) {
             // Can't flush because both buffers would be in flight

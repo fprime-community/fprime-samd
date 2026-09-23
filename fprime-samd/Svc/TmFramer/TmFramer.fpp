@@ -28,5 +28,10 @@ module Samd21 {
         @ Number of dropped packets
         telemetry DroppedPackets: U32 update on change
 
+        @ Number of times a distinct APID could not be tracked because
+        @ Samd21::FramerConfig::MAX_TRACKED_APIDS was already exceeded. Packets from an untracked
+        @ APID still downlink normally, just without per-APID sequence count continuity.
+        telemetry ApidOverflowCount: U8 update on change
+
     }
 }
