@@ -7,7 +7,8 @@
 #include "fprime-samd/Os/Console.hpp"
 
 namespace Os {
-ConsoleInterface* ConsoleInterface::getDelegate(ConsoleHandleStorage& aligned_new_memory, const ConsoleInterface* to_copy) {
+ConsoleInterface* ConsoleInterface::getDelegate(ConsoleHandleStorage& aligned_new_memory,
+                                                const ConsoleInterface* to_copy) {
     return Os::Delegate::makeDelegate<ConsoleInterface, Os::Samd21::StreamConsole>(aligned_new_memory, to_copy);
 }
-}
+}  // namespace Os

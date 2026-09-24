@@ -39,10 +39,10 @@ struct AdcHal {
     //! reference/resolution/averaging setup, and dummy conversion. Returns once the
     //! peripheral is enabled and ready for conversions.
     static void configure(AdcDriver::VoltageReference ref,
-                           AdcDriver::Resolution res,
-                           AdcDriver::SampleCount samples,
-                           U8 samplingTime,
-                           AdcDriver::Gain gain);
+                          AdcDriver::Resolution res,
+                          AdcDriver::SampleCount samples,
+                          U8 samplingTime,
+                          AdcDriver::Gain gain);
 
     //! Configure a specific ADC channel and enable any required internal resources.
     //!
@@ -106,9 +106,9 @@ struct StubState {
     U32 startConversion_count;
 
     // Hardware state injection
-    U32 result;               //!< Return value for readResult()
-    bool result_ready;        //!< Return value for isResultReady()
-    bool overrun;             //!< Return value for isOverrun()
+    U32 result;         //!< Return value for readResult()
+    bool result_ready;  //!< Return value for isResultReady()
+    bool overrun;       //!< Return value for isOverrun()
 
     // Sync wait tracking
     U32 waitForGclkSync_calls;

@@ -36,10 +36,10 @@ void AdcHal::waitForAdcSync() {
 }
 
 void AdcHal::configure(AdcDriver::VoltageReference ref,
-                        AdcDriver::Resolution res,
-                        AdcDriver::SampleCount samples,
-                        U8 samplingTime,
-                        AdcDriver::Gain gain) {
+                       AdcDriver::Resolution res,
+                       AdcDriver::SampleCount samples,
+                       U8 samplingTime,
+                       AdcDriver::Gain gain) {
     // Call sync waits to track them (mirroring the real hardware sequence)
     waitForGclkSync();  // Called once for GCLK setup
     waitForAdcSync();   // Called for reset

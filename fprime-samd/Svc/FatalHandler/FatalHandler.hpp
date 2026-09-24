@@ -24,7 +24,7 @@ class FatalHandler final : public FatalHandlerComponentBase {
     //! Destroy FatalHandler object
     ~FatalHandler();
 
-    private:
+  private:
     // ----------------------------------------------------------------------
     // Handler implementations for user-defined typed input ports
     // ----------------------------------------------------------------------

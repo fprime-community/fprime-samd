@@ -64,5 +64,5 @@ class Mutex : public Os::MutexInterface {
 };
 
 }  // namespace Samd21
-} // namespace Os
+}  // namespace Os
 #endif  // Samd21Os_Os_Mutex_HPP

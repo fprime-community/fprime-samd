@@ -119,8 +119,9 @@ void UsartDriverTester::testConfigureNominal() {
 }
 
 void UsartDriverTester::testConfigureAllParameters() {
-    REQUIREMENT("SAMD21-UART-001: The UsartDriver shall configure SERCOM peripherals with configurable baud "
-                "rates, data formats, parity, stop bits, bit ordering, communication modes, and clock sources");
+    REQUIREMENT(
+        "SAMD21-UART-001: The UsartDriver shall configure SERCOM peripherals with configurable baud "
+        "rates, data formats, parity, stop bits, bit ordering, communication modes, and clock sources");
     this->resetTest();
 
     // Non-default combination exercises the parameter plumbing
@@ -191,8 +192,9 @@ void UsartDriverTester::testSendNominal() {
 }
 
 void UsartDriverTester::testSendQueueFull() {
-    REQUIREMENT("SAMD21-UART-005: The UsartDriver shall queue TX requests with asynchronous completion (a full "
-                "queue returns SEND_RETRY)");
+    REQUIREMENT(
+        "SAMD21-UART-005: The UsartDriver shall queue TX requests with asynchronous completion (a full "
+        "queue returns SEND_RETRY)");
     this->resetTest();
     this->configureStandard();
     this->clearHistory();
@@ -215,8 +217,9 @@ void UsartDriverTester::testSendQueueFull() {
 }
 
 void UsartDriverTester::testSendCompletion() {
-    REQUIREMENT("SAMD21-UART-005: The UsartDriver shall queue TX requests with asynchronous completion (the "
-                "buffer is returned OP_OK from the main context)");
+    REQUIREMENT(
+        "SAMD21-UART-005: The UsartDriver shall queue TX requests with asynchronous completion (the "
+        "buffer is returned OP_OK from the main context)");
     this->resetTest();
     this->configureStandard();
     this->clearHistory();
@@ -239,8 +242,9 @@ void UsartDriverTester::testSendCompletion() {
 }
 
 void UsartDriverTester::testSendChannelError() {
-    REQUIREMENT("SAMD21-UART-002: The UsartDriver shall use DMA for transmission (an unrecoverable TX DMA bus "
-                "error asserts)");
+    REQUIREMENT(
+        "SAMD21-UART-002: The UsartDriver shall use DMA for transmission (an unrecoverable TX DMA bus "
+        "error asserts)");
     // TX DMA bus errors are unrecoverable (invalid buffer pointer) and assert immediately
     this->resetTest();
     this->configureStandard();
@@ -262,8 +266,9 @@ void UsartDriverTester::testSendChannelError() {
 // ----------------------------------------------------------------------
 
 void UsartDriverTester::testSendSyncNominal() {
-    REQUIREMENT("SAMD21-UART-006: The UsartDriver shall provide synchronous blocking transmission for early boot "
-                "diagnostics");
+    REQUIREMENT(
+        "SAMD21-UART-006: The UsartDriver shall provide synchronous blocking transmission for early boot "
+        "diagnostics");
     this->resetTest();
     this->configureStandard();
     this->clearHistory();
@@ -290,8 +295,9 @@ void UsartDriverTester::testSendSyncNominal() {
 // ----------------------------------------------------------------------
 
 void UsartDriverTester::testSchedInNoData() {
-    REQUIREMENT("SAMD21-UART-004: The UsartDriver shall poll the in-progress RX transfer on each rate group tick "
-                "(no new bytes yields no signal and no recv)");
+    REQUIREMENT(
+        "SAMD21-UART-004: The UsartDriver shall poll the in-progress RX transfer on each rate group tick "
+        "(no new bytes yields no signal and no recv)");
     this->resetTest();
     this->configureStandard();
     this->clearHistory();
@@ -310,8 +316,9 @@ void UsartDriverTester::testSchedInNoData() {
 }
 
 void UsartDriverTester::testSchedInPartial() {
-    REQUIREMENT("SAMD21-UART-004: The UsartDriver shall poll the in-progress RX transfer on each rate group tick "
-                "to extract partial RX frames");
+    REQUIREMENT(
+        "SAMD21-UART-004: The UsartDriver shall poll the in-progress RX transfer on each rate group tick "
+        "to extract partial RX frames");
     this->resetTest();
     this->configureStandard();
     this->clearHistory();
@@ -331,8 +338,9 @@ void UsartDriverTester::testSchedInPartial() {
 }
 
 void UsartDriverTester::testRxMultiplePartials() {
-    REQUIREMENT("SAMD21-UART-004: The UsartDriver shall poll the in-progress RX transfer on each rate group tick "
-                "(repeated partials advance the buffer offset)");
+    REQUIREMENT(
+        "SAMD21-UART-004: The UsartDriver shall poll the in-progress RX transfer on each rate group tick "
+        "(repeated partials advance the buffer offset)");
     this->resetTest();
     this->configureStandard();
     this->clearHistory();
@@ -354,8 +362,9 @@ void UsartDriverTester::testRxMultiplePartials() {
 }
 
 void UsartDriverTester::testRxBufferDone() {
-    REQUIREMENT("SAMD21-UART-003: The UsartDriver shall implement double-buffering for continuous RX (a full "
-                "buffer drains its remainder)");
+    REQUIREMENT(
+        "SAMD21-UART-003: The UsartDriver shall implement double-buffering for continuous RX (a full "
+        "buffer drains its remainder)");
     this->resetTest();
     this->configureStandard();
     this->clearHistory();
@@ -372,8 +381,9 @@ void UsartDriverTester::testRxBufferDone() {
 }
 
 void UsartDriverTester::testRxBufferFlip() {
-    REQUIREMENT("SAMD21-UART-003: The UsartDriver shall implement double-buffering for continuous RX (the active "
-                "buffer flips A->B->A on completion)");
+    REQUIREMENT(
+        "SAMD21-UART-003: The UsartDriver shall implement double-buffering for continuous RX (the active "
+        "buffer flips A->B->A on completion)");
     this->resetTest();
     this->configureStandard();
     this->clearHistory();
@@ -407,8 +417,9 @@ void UsartDriverTester::testRxBufferFlip() {
 }
 
 void UsartDriverTester::testRecvReturnIn() {
-    REQUIREMENT("SAMD21-UART-003: The UsartDriver shall implement double-buffering for continuous RX (returned "
-                "buffers stay in the DMA chain)");
+    REQUIREMENT(
+        "SAMD21-UART-003: The UsartDriver shall implement double-buffering for continuous RX (returned "
+        "buffers stay in the DMA chain)");
     // recvReturnIn is a no-op; buffers stay in the DMA chain
     this->resetTest();
     this->configureStandard();
@@ -427,8 +438,9 @@ void UsartDriverTester::testRecvReturnIn() {
 // ----------------------------------------------------------------------
 
 void UsartDriverTester::testSchedInUnconfigured() {
-    REQUIREMENT("SAMD21-UART-004: The UsartDriver shall poll the in-progress RX transfer on each rate group tick "
-                "(a tick before configure() is a no-op)");
+    REQUIREMENT(
+        "SAMD21-UART-004: The UsartDriver shall poll the in-progress RX transfer on each rate group tick "
+        "(a tick before configure() is a no-op)");
     // schedIn before configure() is a safe no-op
     this->resetTest();
 
@@ -440,8 +452,9 @@ void UsartDriverTester::testSchedInUnconfigured() {
 }
 
 void UsartDriverTester::testActiveInUnconfigured() {
-    REQUIREMENT("SAMD21-UART-005: The UsartDriver shall queue TX requests with asynchronous completion (an "
-                "activeIn tick before configure() delivers nothing)");
+    REQUIREMENT(
+        "SAMD21-UART-005: The UsartDriver shall queue TX requests with asynchronous completion (an "
+        "activeIn tick before configure() delivers nothing)");
     // activeIn before configure() is a safe no-op; not configured, so it
     // does no work and must return false.
     this->resetTest();
@@ -457,8 +470,9 @@ void UsartDriverTester::testActiveInUnconfigured() {
 // ----------------------------------------------------------------------
 
 void UsartDriverTester::testTriggerSourceMapping() {
-    REQUIREMENT("SAMD21-UART-002: The UsartDriver shall use DMA for both transmission and reception (the correct "
-                "DMA trigger is selected per SERCOM)");
+    REQUIREMENT(
+        "SAMD21-UART-002: The UsartDriver shall use DMA for both transmission and reception (the correct "
+        "DMA trigger is selected per SERCOM)");
     // Configure a fresh component on each SERCOM and confirm both the RX trigger
     // (requested during configure()) and the TX trigger (requested during a
     // send()) match the SERCOM.
@@ -505,8 +519,9 @@ void UsartDriverTester::testTriggerSourceMapping() {
 }
 
 void UsartDriverTester::testRxChannelError() {
-    REQUIREMENT("SAMD21-UART-002: The UsartDriver shall use DMA for reception (an unrecoverable RX DMA bus error "
-                "asserts)");
+    REQUIREMENT(
+        "SAMD21-UART-002: The UsartDriver shall use DMA for reception (an unrecoverable RX DMA bus error "
+        "asserts)");
     // RX DMA bus errors are unrecoverable (invalid buffer pointer) and assert immediately
     this->resetTest();
     this->configureStandard();

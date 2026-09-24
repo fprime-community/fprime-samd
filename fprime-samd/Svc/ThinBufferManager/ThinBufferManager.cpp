@@ -94,8 +94,7 @@ void ThinBufferManager ::bufferSendIn_handler(const FwIndexType portNum, Fw::Buf
     this->m_currBuffs--;
 }
 
-Fw::Buffer ThinBufferManager ::bufferGetCallee_handler(const FwIndexType portNum,
-                                                       Fw::Buffer::SizeType size) {
+Fw::Buffer ThinBufferManager ::bufferGetCallee_handler(const FwIndexType portNum, Fw::Buffer::SizeType size) {
     // make sure component has been set up
     FW_ASSERT(this->m_setup);
     FW_ASSERT(m_buffers != nullptr);

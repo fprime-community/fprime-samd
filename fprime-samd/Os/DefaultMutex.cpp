@@ -3,8 +3,8 @@
 // \brief sets default Os::Mutex and ConditionVariable implementation via linker
 // ======================================================================
 #include "Os/Delegate.hpp"
-#include "fprime-samd/Os/Mutex.hpp"
 #include "Os/Stub/ConditionVariable.hpp"
+#include "fprime-samd/Os/Mutex.hpp"
 
 namespace Os {
 

@@ -90,8 +90,8 @@ struct StubState {
     U32 data_register_address;
 
     // checkAndClearRxOverflow() control/capture
-    bool rx_overflow;               //!< value returned by checkAndClearRxOverflow()
-    U32 rx_overflow_check_count;    //!< number of times checkAndClearRxOverflow() was called
+    bool rx_overflow;             //!< value returned by checkAndClearRxOverflow()
+    U32 rx_overflow_check_count;  //!< number of times checkAndClearRxOverflow() was called
 };
 
 //! Get the mutable stub state (shared across all HAL calls)

@@ -100,18 +100,21 @@ void GpioDriverTester::invokeReadAndAssertStatus(Drv::GpioStatus expected) {
 // ----------------------------------------------------------------------
 
 void GpioDriverTester::testConfigureOutput() {
-    REQUIREMENT("GPIO-001: configureOutput shall bind the instance to one group/pin and forward the "
-                "configuration to the PORT peripheral");
+    REQUIREMENT(
+        "GPIO-001: configureOutput shall bind the instance to one group/pin and forward the "
+        "configuration to the PORT peripheral");
     this->resetTest();
 
     this->configureOutputAndAssert(GpioDriver::Group::PA, GpioDriver::Pin::PIN_5);
 }
 
 void GpioDriverTester::testConfigureInput() {
-    REQUIREMENT("GPIO-001: configureInput shall bind the instance to one group/pin and forward the "
-                "configuration to the PORT peripheral");
-    REQUIREMENT("GPIO-002: configureInput shall select a pull-up, pull-down, or no internal resistor via "
-                "InputPullMode");
+    REQUIREMENT(
+        "GPIO-001: configureInput shall bind the instance to one group/pin and forward the "
+        "configuration to the PORT peripheral");
+    REQUIREMENT(
+        "GPIO-002: configureInput shall select a pull-up, pull-down, or no internal resistor via "
+        "InputPullMode");
 
     // Pull-up input
     this->resetTest();
@@ -160,8 +163,9 @@ void GpioDriverTester::testConfigureAllPins() {
 }
 
 void GpioDriverTester::testWriteNominal() {
-    REQUIREMENT("GPIO-003: gpioWrite shall set the pin logic level and return OP_OK when the pin is configured "
-                "as an output");
+    REQUIREMENT(
+        "GPIO-003: gpioWrite shall set the pin logic level and return OP_OK when the pin is configured "
+        "as an output");
     this->resetTest();
 
     this->component.configureOutput(GpioDriver::Group::PA, GpioDriver::Pin::PIN_7);
@@ -172,8 +176,9 @@ void GpioDriverTester::testWriteNominal() {
 }
 
 void GpioDriverTester::testReadNominal() {
-    REQUIREMENT("GPIO-004: gpioRead shall return the pin logic level and OP_OK when the pin is configured as "
-                "an input");
+    REQUIREMENT(
+        "GPIO-004: gpioRead shall return the pin logic level and OP_OK when the pin is configured as "
+        "an input");
     this->resetTest();
 
     this->component.configureInput(GpioDriver::Group::PB, GpioDriver::Pin::PIN_2, GpioDriver::InputPullMode::PULL_UP,
@@ -222,8 +227,9 @@ void GpioDriverTester::testReadWrongMode() {
 }
 
 void GpioDriverTester::testConfigureInputExternalInterrupt() {
-    REQUIREMENT("GPIO-007: configureInput shall, when ExternalInterruptMode is not NONE, configure the EIC to "
-                "detect the selected edge(s) on the pin's EXTINT line");
+    REQUIREMENT(
+        "GPIO-007: configureInput shall, when ExternalInterruptMode is not NONE, configure the EIC to "
+        "detect the selected edge(s) on the pin's EXTINT line");
     this->resetTest();
 
     // NONE must not touch the EIC.
@@ -254,8 +260,9 @@ void GpioDriverTester::testConfigureInputExternalInterrupt() {
 }
 
 void GpioDriverTester::testInterruptFiresWhenConnected() {
-    REQUIREMENT("GPIO-008: On each configured edge, the driver shall emit a cycle on the gpioInterrupt output "
-                "port when it is connected");
+    REQUIREMENT(
+        "GPIO-008: On each configured edge, the driver shall emit a cycle on the gpioInterrupt output "
+        "port when it is connected");
     this->resetTest();
 
     const GpioDriver::Pin pin = GpioDriver::Pin::PIN_11;
@@ -275,8 +282,9 @@ void GpioDriverTester::testInterruptFiresWhenConnected() {
 }
 
 void GpioDriverTester::testInterruptIsrNoOpWhenDisconnected() {
-    REQUIREMENT("GPIO-008: the driver shall emit a cycle on the gpioInterrupt output port only when it is "
-                "connected");
+    REQUIREMENT(
+        "GPIO-008: the driver shall emit a cycle on the gpioInterrupt output port only when it is "
+        "connected");
     // A standalone GpioDriver instance's gpioInterrupt port is never connected
     // (only this->component is wired to a recorder via connectPorts()), so its
     // ISR hook must be a safe no-op rather than touch an unconnected port.
@@ -293,8 +301,9 @@ void GpioDriverTester::testInterruptIsrNoOpWhenDisconnected() {
 }
 
 void GpioDriverTester::testInterruptNoDispatchWithoutRegisteredHandler() {
-    REQUIREMENT("GPIO-008: the driver shall emit a cycle on the gpioInterrupt output port only for edges on "
-                "the pin it configured");
+    REQUIREMENT(
+        "GPIO-008: the driver shall emit a cycle on the gpioInterrupt output port only for edges on "
+        "the pin it configured");
     // resetTest() clears the HAL's interrupt-handler table; simulating an edge
     // on a pin nothing has registered for must dispatch to nothing.
     this->resetTest();
