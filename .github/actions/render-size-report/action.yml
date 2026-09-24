@@ -1,0 +1,92 @@
+name: "Render the size-report comment"
+description: >-
+  Renders the sticky pull-request comment markdown from a current measurement and
+  an optional baseline. A missing or unparseable baseline degrades to absolute
+  sizes with a callout; it is never an error.
+
+inputs:
+  current:
+    description: "JSON measurement for this build."
+    required: false
+    default: "size/current.json"
+  baseline:
+    description: "JSON measurement for the baseline; missing means no baseline."
+    required: false
+    default: ""
+  nm:
+    description: "Symbol dump to embed, collapsed, in the comment."
+    required: false
+    default: ""
+  output:
+    description: "Markdown file to write."
+    required: false
+    default: "size/size-report.md"
+  head-sha:
+    description: "Commit the measurement is for."
+    required: false
+    default: ""
+  base-sha:
+    description: "Commit the baseline is for."
+    required: false
+    default: ""
+  baseline-origin:
+    description: "Human-readable provenance of the baseline."
+    required: false
+    default: "unavailable"
+  marker:
+    description: >-
+      HTML comment marker the reporter uses to find and edit its own comment. A
+      repository with more than one deployment MUST pass a distinct marker per
+      deployment, or the comments overwrite each other.
+    required: false
+    default: "samd21-size-report"
+  title:
+    description: "Heading for the comment."
+    required: false
+    default: ""
+  baseline-label:
+    description: "What to call the baseline column."
+    required: false
+    default: "`main`"
+  step-summary:
+    description: "Also append the rendered report to the job summary."
+    required: false
+    default: "true"
+
+outputs:
+  markdown:
+    description: "Path of the markdown that was written."
+    value: ${{ inputs.output }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: "Render the size report"
+      shell: bash
+      env:
+        CURRENT: ${{ inputs.current }}
+        BASELINE: ${{ inputs.baseline }}
+        NM: ${{ inputs.nm }}
+        OUTPUT: ${{ inputs.output }}
+        HEAD_SHA: ${{ inputs.head-sha }}
+        BASE_SHA: ${{ inputs.base-sha }}
+        BASELINE_ORIGIN: ${{ inputs.baseline-origin }}
+        MARKER: ${{ inputs.marker }}
+        TITLE: ${{ inputs.title }}
+        BASELINE_LABEL: ${{ inputs.baseline-label }}
+        STEP_SUMMARY: ${{ inputs.step-summary }}
+      run: |
+        set -euo pipefail
+        SCRIPT="${{ github.action_path }}/../../scripts/size_report.py"
+        mkdir -p "$(dirname "${OUTPUT}")"
+        ARGS=(render --current "${CURRENT}" --output "${OUTPUT}"
+              --head-sha "${HEAD_SHA}" --base-sha "${BASE_SHA}"
+              --baseline-origin "${BASELINE_ORIGIN}" --marker "${MARKER}"
+              --baseline-label "${BASELINE_LABEL}")
+        [ -z "${BASELINE}" ] || ARGS+=(--baseline "${BASELINE}")
+        [ -z "${NM}" ] || ARGS+=(--nm "${NM}")
+        [ -z "${TITLE}" ] || ARGS+=(--title "${TITLE}")
+        python3 "${SCRIPT}" "${ARGS[@]}"
+        if [ "${STEP_SUMMARY}" = "true" ]; then
+          cat "${OUTPUT}" >> "${GITHUB_STEP_SUMMARY}"
+        fi

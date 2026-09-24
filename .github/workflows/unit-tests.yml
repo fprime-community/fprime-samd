@@ -1,0 +1,133 @@
+# Native (host x86-64) unit tests for this library's own components.
+#
+# WHY THIS NEEDS ANOTHER REPOSITORY
+# ----------------------------------------------------------------------------------------
+# fprime-samd is a pure F Prime *library*: there is no settings.ini, no root
+# CMakeLists.txt and no CMakePresets.json here, so it cannot be configured on its own. A
+# project has to supply the framework path, the `library_locations` that make the Samd21
+# platform visible, and the `config/` overrides the components compile against.
+#
+# fprime-samd-reference is that project, and it is the right one to borrow: it is small,
+# it is maintained alongside this library, and its config-samd-reference/CMakeLists.txt
+# already drops the PlatformCfg.fpp override under BUILD_TESTING (the POSIX OSAL's handles
+# are larger than the SAMD21-tuned FW_*_HANDLE_MAX_SIZE maxima), which is exactly what a
+# native unit-test build of these components needs.
+#
+# So: check the harness out, splice THIS commit over its lib/fprime-samd submodule, and
+# build. The second actions/checkout does the splicing, which is what makes fork pull
+# requests work without any token juggling -- it resolves github.repository at the
+# triggering ref by itself.
+#
+# ONE THING THE HARNESS HAS TO GET RIGHT
+# ----------------------------------------------------------------------------------------
+# A consumer's config/ override SHADOWS the matching file in default/samd-config/ rather
+# than extending it, so a constant the harness omits is undeclared for the tests below even
+# though this repository declares it. That is not hypothetical: adding
+# Samd21::FramerConfig::MAX_TRACKED_APIDS here failed to compile against the harness's
+# FramerConfig.hpp until config-samd-reference/CMakeLists.txt learned to drop that override
+# under BUILD_TESTING, which it now does -- the library's tests see the library's own
+# defaults.
+#
+# If this job ever fails with "'<SOMETHING>' is not a member of 'Samd21::<Something>Config'"
+# for a constant that plainly exists in default/samd-config/, that is this problem
+# recurring: the harness is overriding the file and has not been dropped under
+# BUILD_TESTING. Fix it there, not by duplicating the constant into the harness.
+
+name: "Unit Tests"
+
+on:
+  pull_request:
+  push:
+    branches: [ main ]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  # The harness. `main` rather than a pinned SHA so a harness fix does not require a
+  # commit here; the trade-off is that an unrelated harness regression can turn this red,
+  # which the job log makes obvious because the failure is in the reference's own code.
+  HARNESS_REPO: fprime-community/fprime-samd-reference
+  HARNESS_REF: main
+
+jobs:
+  native-ut:
+    name: "Native unit tests"
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      # THE SPLICE. Three steps, repeated in build.yml and format-check.yml.
+      #
+      # Submodules are initialised SELECTIVELY rather than with `submodules: recursive`,
+      # which leaves lib/fprime-samd as an empty directory and therefore an unambiguous,
+      # clean target for the checkout below. Checking out on top of an *initialised*
+      # submodule would instead depend on actions/checkout's directory-reuse heuristics: it
+      # compares the existing remote URL against github.repository and reuses or wipes the
+      # directory accordingly, which is a different code path on a fork than on the
+      # canonical repository. Not worth betting the whole pipeline on.
+      - name: "Checkout the harness"
+        uses: actions/checkout@v7
+        with:
+          repository: ${{ env.HARNESS_REPO }}
+          ref: ${{ env.HARNESS_REF }}
+          # lib/fprime's history is large and nothing here needs it.
+          filter: blob:none
+
+      - name: "Initialise the harness's other submodules"
+        # --recursive because lib/fprime carries googletest, which every unit test links.
+        # No --depth: a shallow submodule fetch cannot always reach a pinned commit that is
+        # not a branch tip, and silently failing to check out the framework is a much worse
+        # outcome than a slower clone.
+        shell: bash
+        run: |
+          git submodule update --init --recursive --filter=blob:none \
+            lib/fprime lib/fprime-baremetal
+
+      - name: "Check this commit out as lib/fprime-samd"
+        uses: actions/checkout@v7
+        with:
+          # Defaults to github.repository at the triggering ref, which is the merge commit
+          # for a pull_request event. This is what makes fork pull requests work with no
+          # token juggling: the merge ref lives in the base repository. fprime-samd has no
+          # submodules of its own, so none are requested.
+          path: lib/fprime-samd
+          filter: blob:none
+
+      - name: "Report what is being tested"
+        shell: bash
+        run: |
+          echo "harness  ${HARNESS_REPO}@$(git rev-parse HEAD)"
+          echo "library  ${GITHUB_REPOSITORY}@$(git -C lib/fprime-samd rev-parse HEAD)"
+
+      - name: "Set up F Prime"
+        uses: ./lib/fprime-samd/.github/actions/setup-fprime
+
+      - name: "Generate the native unit-test build cache"
+        # settings.ini sets no `default_ut_toolchain`, so fprime-util falls back to
+        # "native" and lands the cache in build-fprime-automatic-native-ut -- the same
+        # directory the harness's `native-ut` CMake preset declares as its binaryDir.
+        #
+        # fprime-util rather than `cmake --preset native-ut` because only fprime-util
+        # applies settings.ini's default_cmake_options, and FPRIME_ENABLE_FRAMEWORK_UTS=OFF
+        # is what keeps the ~150 framework unit tests out of this build entirely.
+        run: fprime-util generate --ut
+
+      - name: "Build and run this library's unit tests"
+        uses: ./lib/fprime-samd/.github/actions/unit-tests
+        with:
+          # Gate on fprime-samd's own tests. The harness's `native-ut` test preset is
+          # used so its exclusions still apply, and `-R` narrows the run to this
+          # library so an unrelated harness test cannot be charged to a pull request
+          # here. The harness's full suite is its own CI's job.
+          preset: native-ut
+          include: "^fprime-samd_"
+
+      - name: "Build the native-ut all target"
+        # Catches any module that stops compiling for a native platform even though no
+        # unit test covers it -- the FPP has to parse and autocode for something other
+        # than Samd21, which is a real source of breakage in a cross-targeted library.
+        run: ninja -C build-fprime-automatic-native-ut all

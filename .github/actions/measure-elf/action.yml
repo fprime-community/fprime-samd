@@ -1,0 +1,81 @@
+name: "Measure a linked ELF"
+description: >-
+  Runs size_report.py measure against a linked ELF, writing the JSON measurement
+  (plus the raw readelf/size dumps) and optionally a demangled symbol dump. Fails
+  if the image does not fit the target's memory, so a budget blow-out is a red
+  check and not merely a comment.
+
+inputs:
+  elf:
+    description: "Path to the linked .elf."
+    required: true
+  output:
+    description: "JSON measurement to write."
+    required: false
+    default: "size/current.json"
+  nm:
+    description: "Optional path for the demangled, size-sorted symbol dump."
+    required: false
+    default: ""
+  linker-script:
+    description: >-
+      Linker script whose MEMORY block gives the flash/RAM capacity. Strongly
+      preferred over the built-in SAMD21x17 defaults, which are wrong for any
+      other variant (qtpy_m0 is a 256 KiB/32 KiB part with an 8 KiB bootloader
+      carve-out).
+    required: false
+    default: ""
+  label:
+    description: "Part name shown in the report, e.g. SAMD21G17D."
+    required: false
+    default: ""
+  flash-bytes:
+    description: "Override flash capacity (accepts 0x...)."
+    required: false
+    default: ""
+  ram-bytes:
+    description: "Override RAM capacity (accepts 0x...)."
+    required: false
+    default: ""
+  tool-prefix:
+    description: "binutils prefix (default: arm-none-eabi-)."
+    required: false
+    default: ""
+
+outputs:
+  json:
+    description: "Path of the JSON measurement that was written."
+    value: ${{ inputs.output }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: "Measure ${{ inputs.elf }}"
+      shell: bash
+      # github.action_path locates size_report.py relative to this action, so the
+      # caller never has to know where the fprime-samd submodule sits.
+      env:
+        ELF: ${{ inputs.elf }}
+        OUTPUT: ${{ inputs.output }}
+        NM: ${{ inputs.nm }}
+        LINKER_SCRIPT: ${{ inputs.linker-script }}
+        LABEL: ${{ inputs.label }}
+        FLASH_BYTES: ${{ inputs.flash-bytes }}
+        RAM_BYTES: ${{ inputs.ram-bytes }}
+        TOOL_PREFIX: ${{ inputs.tool-prefix }}
+      run: |
+        set -euo pipefail
+        SCRIPT="${{ github.action_path }}/../../scripts/size_report.py"
+        if [ ! -f "${ELF}" ]; then
+          echo "::error::no ELF at ${ELF}"
+          exit 1
+        fi
+        mkdir -p "$(dirname "${OUTPUT}")"
+        ARGS=(measure "${ELF}" "${OUTPUT}")
+        [ -z "${NM}" ] || { mkdir -p "$(dirname "${NM}")"; ARGS+=(--nm "${NM}"); }
+        [ -z "${LINKER_SCRIPT}" ] || ARGS+=(--linker-script "${LINKER_SCRIPT}")
+        [ -z "${LABEL}" ] || ARGS+=(--label "${LABEL}")
+        [ -z "${FLASH_BYTES}" ] || ARGS+=(--flash-bytes "${FLASH_BYTES}")
+        [ -z "${RAM_BYTES}" ] || ARGS+=(--ram-bytes "${RAM_BYTES}")
+        [ -z "${TOOL_PREFIX}" ] || ARGS+=(--tool-prefix "${TOOL_PREFIX}")
+        python3 "${SCRIPT}" "${ARGS[@]}"
