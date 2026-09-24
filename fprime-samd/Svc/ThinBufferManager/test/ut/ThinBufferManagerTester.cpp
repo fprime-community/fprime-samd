@@ -30,8 +30,8 @@
 
 #include "ThinBufferManagerTester.hpp"
 #include <Fw/Test/UnitTest.hpp>
-#include <fprime-samd/Svc/StaticMallocator/StaticMallocator.hpp>
 #include <cstdlib>
+#include <fprime-samd/Svc/StaticMallocator/StaticMallocator.hpp>
 
 // Bin buffer sizes/numbers
 static const FwSizeType BIN0_BUFFER_SIZE = 10;
@@ -48,11 +48,18 @@ static const U16 MGR_ID = 32;
 // Largest total any single test method requests: BIN0_NUM_BUFFERS * BIN0_BUFFER_SIZE +
 // BIN1_NUM_BUFFERS * BIN1_BUFFER_SIZE + BIN2_NUM_BUFFERS * BIN2_BUFFER_SIZE, plus
 // (BIN0_NUM_BUFFERS + BIN1_NUM_BUFFERS + BIN2_NUM_BUFFERS) * sizeof(AllocatedBuffer). This UT runs
-// on the native (Darwin/x86_64 or arm64) toolchain, not the SAMD21 cross-compiler, so
+// on the native (Linux/Darwin, x86_64 or arm64) toolchain, not the SAMD21 cross-compiler, so
 // sizeof(AllocatedBuffer) here (measured: 48 bytes/slot, due to wider pointers/FwSizeType on this
 // ABI) is larger than the SAMD21-target figure (24 bytes/slot) used elsewhere in this project.
 // Rounded up generously above the measured 800-byte requirement, to a multiple of 8
-// (StaticMallocator's alignment requirement).
+// (StaticMallocator's BUCKET_SIZE static_assert).
+//
+// This figure is NOT platform-sensitive in practice and is not what used to make this test
+// abort on Linux x86-64. That was StaticMallocator::allocate asserting `alignment <= 8`
+// while its own default argument passes alignof(std::max_align_t), which is 16 there and 8
+// on Darwin arm64; the allocator now aligns its storage to match. Keep the two causes
+// distinct if this ever needs revisiting -- a bucket overflow asserts on line 49 with the
+// requested size, an alignment mismatch on line 50 with the alignment.
 static const size_t TEST_ALLOCATOR_BUCKET_SIZE = 840;
 
 // Define our own instrumented allocator for testing
@@ -101,8 +108,7 @@ namespace Samd21 {
 // ----------------------------------------------------------------------
 
 ThinBufferManagerTester ::ThinBufferManagerTester()
-    : ThinBufferManagerGTestBase("Tester", ThinBufferManagerTester::MAX_HISTORY_SIZE),
-      component("ThinBufferManager") {
+    : ThinBufferManagerGTestBase("Tester", ThinBufferManagerTester::MAX_HISTORY_SIZE), component("ThinBufferManager") {
     this->initComponents();
     this->connectPorts();
 }
@@ -134,10 +140,10 @@ void ThinBufferManagerTester ::testSetup() {
     ASSERT_EQ(BIN0_NUM_BUFFERS + BIN1_NUM_BUFFERS + BIN2_NUM_BUFFERS, this->component.m_numStructs);
 
     // check that enough memory was requested
-    FwSizeType memSize = (BIN0_NUM_BUFFERS + BIN1_NUM_BUFFERS + BIN2_NUM_BUFFERS) *
-                             sizeof(Samd21::ThinBufferManager::AllocatedBuffer) +
-                         (BIN0_NUM_BUFFERS * BIN0_BUFFER_SIZE + BIN1_NUM_BUFFERS * BIN1_BUFFER_SIZE +
-                          BIN2_NUM_BUFFERS * BIN2_BUFFER_SIZE);
+    FwSizeType memSize =
+        (BIN0_NUM_BUFFERS + BIN1_NUM_BUFFERS + BIN2_NUM_BUFFERS) * sizeof(Samd21::ThinBufferManager::AllocatedBuffer) +
+        (BIN0_NUM_BUFFERS * BIN0_BUFFER_SIZE + BIN1_NUM_BUFFERS * BIN1_BUFFER_SIZE +
+         BIN2_NUM_BUFFERS * BIN2_BUFFER_SIZE);
     ASSERT_EQ(memSize, alloc.getSize());
 
     // check that correct ID was requested

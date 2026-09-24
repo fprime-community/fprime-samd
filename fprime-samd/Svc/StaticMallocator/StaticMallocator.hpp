@@ -14,6 +14,7 @@
 #define SAMD21_MALLOCALLOCATOR_HPP
 
 #include <Fw/Types/MemAllocator.hpp>
+#include <cstddef>
 #include "Fw/Types/Assert.hpp"
 #include "config/FwAssertArgTypeAliasAc.h"
 #include "config/FwEnumStoreTypeAliasAc.h"
@@ -47,7 +48,13 @@ class StaticMallocator : public Fw::MemAllocator {
                    FwSizeType alignment = alignof(std::max_align_t)) override {
         FW_ASSERT(identifier == IDENT, static_cast<FwAssertArgType>(identifier), static_cast<FwAssertArgType>(IDENT));
         FW_ASSERT(size <= BUCKET_SIZE, static_cast<FwAssertArgType>(size), static_cast<FwAssertArgType>(BUCKET_SIZE));
-        FW_ASSERT(alignment <= 8, static_cast<FwAssertArgType>(alignment));
+        // `data` is declared alignas(std::max_align_t), so the bound here is exactly the
+        // default argument above. It used to read `alignment <= 8`, which made the DEFAULT
+        // call self-inconsistent on any host where alignof(std::max_align_t) is 16 -- true
+        // of Linux x86-64, where `long double` is 16-byte aligned. Darwin arm64 has it at
+        // 8, so the bug was invisible there and only surfaced when a unit test ran on
+        // Linux. Keep this comparing against the same expression `data` is aligned to.
+        FW_ASSERT(alignment <= alignof(std::max_align_t), static_cast<FwAssertArgType>(alignment));
         FW_ASSERT(!used);
 
         recoverable = true;
@@ -69,8 +76,12 @@ class StaticMallocator : public Fw::MemAllocator {
     }
 
   private:
-    // Use u64 so that we force 64-bit memory alignment
-    U64 data[BUCKET_SIZE / 8];
+    // U64 for 64-bit alignment, and alignas() on top of it so the storage really does
+    // satisfy the alignment this class advertises as its default argument. On the SAMD21
+    // (arm-none-eabi, 32-bit) alignof(std::max_align_t) is 8 and the U64 array is already
+    // 8-aligned, so this costs nothing on target; it only widens the alignment on hosts
+    // where max_align_t is 16, i.e. in unit tests.
+    alignas(std::max_align_t) U64 data[BUCKET_SIZE / 8];
     bool used = false;
 };
 
