@@ -1,3 +1,5 @@
+restrict_platforms(Samd21)
+
 register_fprime_implementation(
     Samd21_StringFormat_snprintf
   IMPLEMENTS
