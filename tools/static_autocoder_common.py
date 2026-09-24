@@ -4,9 +4,15 @@ static_autocoder_common:
     static-cmd-dispatcher, ...). Each of those generates a single source file per
     deployment topology, keyed off a component instance carrying a specific
     annotation.
+
+    These tools are the build-time half of an F Prime build autocoder. The
+    configure-time half -- listing the files that will be generated -- is handled
+    by `fpp-query` reading the same `--rules` file, so the two halves cannot
+    disagree about a path.
 """
 
 import argparse
+import tomllib
 from pathlib import Path
 from typing import Callable, Optional
 from collections.abc import Iterator
@@ -14,8 +20,9 @@ from collections.abc import Iterator
 import fpp
 
 #: Signature of a `generate` callback: renders the C++ source for the target
-#: component instance found within a topology.
-Generate = Callable[[fpp.Model, fpp.Topology], str]
+#: component instance found within a topology. `file_base` is the extension-free
+#: name the document must use, derived from the rules file.
+Generate = Callable[[fpp.Model, fpp.Topology, str], str]
 
 
 def parse_arguments(tool_name: str) -> argparse.Namespace:
@@ -26,12 +33,34 @@ def parse_arguments(tool_name: str) -> argparse.Namespace:
         "-i", "--imports", default="", help="comma-separated files to import"
     )
     parser.add_argument(
-        "--filenames",
+        "--rules",
         metavar="<file>",
-        help="write the names of the files that would be generated to <file>, and exit",
+        required=True,
+        help="fpp-query TOML rules naming the files to generate",
     )
     parser.add_argument("files", nargs="+", help="files to translate")
     return parser.parse_args()
+
+
+def generated_suffix(rules: str) -> str:
+    """The single suffix `rules` names, e.g. `StaticCmdDispatchAc.cpp`
+
+    The rules file is the one artifact both halves of the autocoder read, so the
+    paths `fpp-query` declares at configure time and the ones written here cannot
+    drift -- a declared output that is never produced is a Ninja error well
+    removed from its cause. These autocoders emit exactly one source per
+    deployment topology, so any other count is a mistake in the rules file.
+    """
+    suffixes = [
+        suffix
+        for group in tomllib.loads(Path(rules).read_text()).get("group", [])
+        for suffix in group.get("generate", [])
+    ]
+    if len(suffixes) != 1:
+        raise ValueError(
+            f"{rules}: expected exactly one `generate` suffix, found {suffixes}"
+        )
+    return suffixes[0]
 
 
 def output_for(directory: str, node: fpp.DefTopology, suffix: str) -> Path:
@@ -93,10 +122,10 @@ def get_singleton_instance(
 
 def generate_all(
     options: argparse.Namespace,
-    suffix: str,
     generate: Generate,
 ) -> int:
     """Write a source file for each deployment topology defined in the input files"""
+    suffix = generated_suffix(options.rules)
     imports = [path for path in options.imports.split(",") if path]
     model = fpp.analyze(paths=options.files, imports=imports)
     for diag in model.diagnostics:
@@ -106,60 +135,19 @@ def generate_all(
         return 1
 
     topology = find_deployment_topology(model)
+    # The same rules file gated this invocation at configure time: without a
+    # deployment topology no output was declared, so nothing runs us here
     assert topology
 
     output_for(options.directory, topology.node, suffix).write_text(
-        generate(model, topology)
+        generate(model, topology, f"{topology.name}{Path(suffix).stem}")
     )
-    return 0
-
-
-def write_filenames(options: argparse.Namespace, suffix: str) -> int:
-    """Write the paths `generate_all` would produce for the same inputs"""
-    syntax = fpp.parse(paths=options.files)
-
-    # Check if this module has a deployment topology
-    class FilenamesVisitor(fpp.NodeVisitor):
-        deployment_topology: Optional[fpp.DefTopology] = None
-
-        def generic_visit(self, node: fpp.AstNode):
-            # Shallow visitor
-            pass
-
-        def visit_DefModule(self, node: fpp.DefModule):
-            # Deeply visit all modules to discover namespaced topologies
-            super().generic_visit(node)
-
-        def visit_DefTopology(self, node: fpp.DefTopology):
-            self.deployment_topology = node
-
-    visitor = FilenamesVisitor()
-    visitor.visit(syntax)
-
-    filenames: list[Path] = []
-
-    if visitor.deployment_topology:
-        filenames.append(
-            output_for(
-                options.directory, visitor.deployment_topology, suffix
-            ).absolute()
-        )
-
-    with open(options.filenames, "w+") as f:
-        f.writelines([str(m) for m in filenames])
-
     return 0
 
 
 def main(
     tool_name: str,
-    suffix: str,
     generate: Generate,
 ) -> int:
     """Entry point shared by the static-* autocoder CLIs"""
-    options = parse_arguments(tool_name)
-
-    if options.filenames:
-        return write_filenames(options, suffix)
-    else:
-        return generate_all(options, suffix, generate)
+    return generate_all(parse_arguments(tool_name), generate)

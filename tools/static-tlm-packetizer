@@ -18,13 +18,6 @@ if TYPE_CHECKING:
 #: Credited in the `\author` line of every generated file's banner
 TOOL_NAME = "static-tlm-packetizer"
 
-#: Stem appended to a topology's name, e.g. `Top` -> `TopTlmPacketAc`. Extension-free
-#: because it doubles as the CppDocBuilder file base, which names the files itself.
-GENERATED_STEM = "StaticTlmPacketAc"
-
-#: Suffix of a generated source
-GENERATED_SUFFIX = f"{GENERATED_STEM}.cpp"
-
 #: Annotation marking the component this autocoder generates packet helpers for. Must
 #: match the `@` annotation on the component definition, e.g. Samd21.StaticTlmPacketizer.
 PACKETIZER_ANNOTATION = "static-tlm-packetizer"
@@ -105,6 +98,7 @@ def compute_size(dictionary: fpp.Dictionary, pkt: fpp.TlmPacket) -> int:
 def generate(
     model: fpp.Model,
     topology: fpp.Topology,
+    file_base: str,
 ) -> str:
     dictionary = model.analysis.dictionary_map[topology.symbol]
 
@@ -144,7 +138,7 @@ def generate(
     from fprime_cpp_codegen import CppDocBuilder, Output
 
     doc = CppDocBuilder(
-        f"{topology.name}{GENERATED_STEM}",
+        file_base,
         description=f"static telemetry packet code for {topology.qualified_name}",
         tool_name=TOOL_NAME,
     )
@@ -254,7 +248,7 @@ def generate_ac_functions(
 
 def main() -> int:
     """Entry point"""
-    return common.main(TOOL_NAME, GENERATED_SUFFIX, generate)
+    return common.main(TOOL_NAME, generate)
 
 
 if __name__ == "__main__":

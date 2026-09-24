@@ -3,10 +3,8 @@ module Samd21 {
     @ A small bare-metal implementation on StaticTlmPacketizer
     passive component StaticTlmPacketizer {
 
-        # TODO(tumbar) Svc.TELEMETRY_SEND_PORTS -> NUM_TLM_PACKETS
-
         @ Send a telemetry packet
-        sync input port pktSendIn: [Svc.TELEMETRY_SEND_PORTS] Svc.Sched
+        sync input port pktSendIn: [Samd21.NUM_TLM_PACKETS] Svc.Sched
 
         @ Packet send port
         @ Ordered by Section, Group

@@ -1,0 +1,8 @@
+# Rules naming the files `static-tlm-packetizer` generates.
+
+# One source per deployment topology, e.g. `Top` -> `TopStaticTlmPacketAc.cpp`.
+# A module without a deployment topology matches nothing and generates nothing.
+[[group]]
+node = "DefTopology"
+where = '$.is_deployment'
+generate = ["StaticTlmPacketAc.cpp"]

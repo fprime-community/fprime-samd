@@ -17,13 +17,6 @@ if TYPE_CHECKING:
 #: Credited in the `\author` line of every generated file's banner
 TOOL_NAME = "static-cmd-dispatcher"
 
-#: Stem appended to a topology's name, e.g. `Top` -> `TopStaticCmdDispatchAc`. Extension-free
-#: because it doubles as the CppDocBuilder file base, which names the files itself.
-GENERATED_STEM = "StaticCmdDispatchAc"
-
-#: Suffix of a generated source
-GENERATED_SUFFIX = f"{GENERATED_STEM}.cpp"
-
 #: Annotation marking the component this autocoder generates dispatch helpers for. Must
 #: match the `@` annotation on the component definition, e.g. Samd21.StaticCmdDispatcher.
 DISPATCHER_ANNOTATION = "static-cmd-dispatcher"
@@ -32,11 +25,12 @@ DISPATCHER_ANNOTATION = "static-cmd-dispatcher"
 def generate(
     model: fpp.Model,
     topology: fpp.Topology,
+    file_base: str,
 ) -> str:
     from fprime_cpp_codegen import CppDocBuilder, Output
 
     doc = CppDocBuilder(
-        f"{topology.name}{GENERATED_STEM}",
+        file_base,
         description=f"command dispatch code for {topology.qualified_name}",
         tool_name=TOOL_NAME,
     )
@@ -120,7 +114,7 @@ def generate_ac_functions(
 
 
 def main() -> int:
-    return common.main(TOOL_NAME, GENERATED_SUFFIX, generate)
+    return common.main(TOOL_NAME, generate)
 
 
 if __name__ == "__main__":
