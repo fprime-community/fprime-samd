@@ -5,6 +5,7 @@
 // ======================================================================
 
 #include "fprime-samd/Drv/GpioDriver/test/ut/GpioDriverTester.hpp"
+#include "Fw/Test/UnitTest.hpp"
 #include "Fw/Types/LogicEnumAc.hpp"
 #include "STest/Pick/Pick.hpp"
 
@@ -99,14 +100,18 @@ void GpioDriverTester::invokeReadAndAssertStatus(Drv::GpioStatus expected) {
 // ----------------------------------------------------------------------
 
 void GpioDriverTester::testConfigureOutput() {
-    // REQUIREMENT("GPIO-001: configureOutput() shall forward output configuration to the HAL");
+    REQUIREMENT("GPIO-001: configureOutput shall bind the instance to one group/pin and forward the "
+                "configuration to the PORT peripheral");
     this->resetTest();
 
     this->configureOutputAndAssert(GpioDriver::Group::PA, GpioDriver::Pin::PIN_5);
 }
 
 void GpioDriverTester::testConfigureInput() {
-    // REQUIREMENT("GPIO-002: configureInput() shall forward input configuration and pull selection to the HAL");
+    REQUIREMENT("GPIO-001: configureInput shall bind the instance to one group/pin and forward the "
+                "configuration to the PORT peripheral");
+    REQUIREMENT("GPIO-002: configureInput shall select a pull-up, pull-down, or no internal resistor via "
+                "InputPullMode");
 
     // Pull-up input
     this->resetTest();
@@ -132,7 +137,7 @@ void GpioDriverTester::testConfigureInput() {
 }
 
 void GpioDriverTester::testConfigureAllPins() {
-    // REQUIREMENT("GPIO-001: configureOutput() shall support every group/pin combination");
+    REQUIREMENT("GPIO-001: configureOutput shall bind the instance to any one group/pin combination");
 
     const GpioDriver::Group groups[] = {GpioDriver::Group::PA, GpioDriver::Group::PB};
 
@@ -155,7 +160,8 @@ void GpioDriverTester::testConfigureAllPins() {
 }
 
 void GpioDriverTester::testWriteNominal() {
-    // REQUIREMENT("GPIO-003: gpioWrite on a configured output pin shall drive the HAL and return OP_OK");
+    REQUIREMENT("GPIO-003: gpioWrite shall set the pin logic level and return OP_OK when the pin is configured "
+                "as an output");
     this->resetTest();
 
     this->component.configureOutput(GpioDriver::Group::PA, GpioDriver::Pin::PIN_7);
@@ -166,7 +172,8 @@ void GpioDriverTester::testWriteNominal() {
 }
 
 void GpioDriverTester::testReadNominal() {
-    // REQUIREMENT("GPIO-004: gpioRead on a configured input pin shall read the HAL and return OP_OK");
+    REQUIREMENT("GPIO-004: gpioRead shall return the pin logic level and OP_OK when the pin is configured as "
+                "an input");
     this->resetTest();
 
     this->component.configureInput(GpioDriver::Group::PB, GpioDriver::Pin::PIN_2, GpioDriver::InputPullMode::PULL_UP,
@@ -181,7 +188,7 @@ void GpioDriverTester::testReadNominal() {
 }
 
 void GpioDriverTester::testWriteUnconfigured() {
-    // REQUIREMENT("GPIO-005: gpioWrite before configure() shall return NOT_OPENED");
+    REQUIREMENT("GPIO-005: gpioWrite shall return NOT_OPENED if invoked before configureOutput");
     this->resetTest();
 
     // No configure() call has happened on this component.
@@ -189,14 +196,14 @@ void GpioDriverTester::testWriteUnconfigured() {
 }
 
 void GpioDriverTester::testReadUnconfigured() {
-    // REQUIREMENT("GPIO-005: gpioRead before configure() shall return NOT_OPENED");
+    REQUIREMENT("GPIO-005: gpioRead shall return NOT_OPENED if invoked before configureInput");
     this->resetTest();
 
     this->invokeReadAndAssertStatus(Drv::GpioStatus::NOT_OPENED);
 }
 
 void GpioDriverTester::testWriteWrongMode() {
-    // REQUIREMENT("GPIO-006: gpioWrite on an input pin shall return INVALID_MODE");
+    REQUIREMENT("GPIO-006: gpioWrite on an input pin shall return INVALID_MODE without touching hardware");
     this->resetTest();
 
     this->component.configureInput(GpioDriver::Group::PA, GpioDriver::Pin::PIN_1, GpioDriver::InputPullMode::NO_PULL,
@@ -206,7 +213,7 @@ void GpioDriverTester::testWriteWrongMode() {
 }
 
 void GpioDriverTester::testReadWrongMode() {
-    // REQUIREMENT("GPIO-006: gpioRead on an output pin shall return INVALID_MODE");
+    REQUIREMENT("GPIO-006: gpioRead on an output pin shall return INVALID_MODE without touching hardware");
     this->resetTest();
 
     this->component.configureOutput(GpioDriver::Group::PB, GpioDriver::Pin::PIN_4);
@@ -215,7 +222,8 @@ void GpioDriverTester::testReadWrongMode() {
 }
 
 void GpioDriverTester::testConfigureInputExternalInterrupt() {
-    // REQUIREMENT("GPIO-007: configureInput() shall configure the EIC when ExternalInterruptMode is not NONE");
+    REQUIREMENT("GPIO-007: configureInput shall, when ExternalInterruptMode is not NONE, configure the EIC to "
+                "detect the selected edge(s) on the pin's EXTINT line");
     this->resetTest();
 
     // NONE must not touch the EIC.
@@ -246,7 +254,8 @@ void GpioDriverTester::testConfigureInputExternalInterrupt() {
 }
 
 void GpioDriverTester::testInterruptFiresWhenConnected() {
-    // REQUIREMENT("GPIO-008: On each configured edge, the driver shall emit a cycle on gpioInterrupt when connected");
+    REQUIREMENT("GPIO-008: On each configured edge, the driver shall emit a cycle on the gpioInterrupt output "
+                "port when it is connected");
     this->resetTest();
 
     const GpioDriver::Pin pin = GpioDriver::Pin::PIN_11;
@@ -266,6 +275,8 @@ void GpioDriverTester::testInterruptFiresWhenConnected() {
 }
 
 void GpioDriverTester::testInterruptIsrNoOpWhenDisconnected() {
+    REQUIREMENT("GPIO-008: the driver shall emit a cycle on the gpioInterrupt output port only when it is "
+                "connected");
     // A standalone GpioDriver instance's gpioInterrupt port is never connected
     // (only this->component is wired to a recorder via connectPorts()), so its
     // ISR hook must be a safe no-op rather than touch an unconnected port.
@@ -282,6 +293,8 @@ void GpioDriverTester::testInterruptIsrNoOpWhenDisconnected() {
 }
 
 void GpioDriverTester::testInterruptNoDispatchWithoutRegisteredHandler() {
+    REQUIREMENT("GPIO-008: the driver shall emit a cycle on the gpioInterrupt output port only for edges on "
+                "the pin it configured");
     // resetTest() clears the HAL's interrupt-handler table; simulating an edge
     // on a pin nothing has registered for must dispatch to nothing.
     this->resetTest();
