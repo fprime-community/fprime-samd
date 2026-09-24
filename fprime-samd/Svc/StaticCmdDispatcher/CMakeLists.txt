@@ -19,8 +19,6 @@ register_fprime_library(
         "${CMAKE_CURRENT_LIST_DIR}/StaticCmdDispatcher.fpp"
     SOURCES
         "${CMAKE_CURRENT_LIST_DIR}/StaticCmdDispatcher.cpp"
-#   DEPENDS
-#       MyPackage_MyOtherModule
 )
 
 ### Unit Tests ###

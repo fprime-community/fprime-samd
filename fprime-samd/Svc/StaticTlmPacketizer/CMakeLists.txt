@@ -19,8 +19,8 @@ register_fprime_library(
         "${CMAKE_CURRENT_LIST_DIR}/StaticTlmPacketizer.fpp"
     SOURCES
         "${CMAKE_CURRENT_LIST_DIR}/StaticTlmPacketizer.cpp"
-#   DEPENDS
-#       MyPackage_MyOtherModule
+    DEPENDS
+        config-fprime-samd
 )
 
 ### Unit Tests ###
