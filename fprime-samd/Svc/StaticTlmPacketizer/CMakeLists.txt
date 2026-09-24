@@ -21,6 +21,9 @@ register_fprime_library(
         "${CMAKE_CURRENT_LIST_DIR}/StaticTlmPacketizer.cpp"
     DEPENDS
         config-fprime-samd
+        # StaticTlmPacketizer.fpp declares the telemetry-packet types from
+        # Svc/TlmPacketizer/TlmPacketizerTypes.hpp
+        Svc_TlmPacketizer_config_TlmPacketizerConfig
 )
 
 ### Unit Tests ###

@@ -24,9 +24,6 @@ Requirements are likewise inherited.
 
 ## Usage / Topology Integration
 
-Snippets are verbatim from `Breadboard_Curiosity/Top/`; `FFB_Tester/Top/` is identical
-apart from indentation. Paths are relative to the project root.
-
 **1. Enable the autocoder**, once per project, in the root `CMakeLists.txt` between the
 `FPrime.cmake` include and `fprime_setup_included_code()`. It resolves out of
 `lib/fprime-samd/cmake/autocoder/`, so `lib/fprime-samd` must be in `settings.ini`
