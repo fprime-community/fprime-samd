@@ -60,7 +60,7 @@ This pattern separates interrupt handling (minimal ISR that sets a flag) from si
 
 | Name           | Type  | Update       | Description                                |
 | -------------- | ----- | ------------ | ------------------------------------------ |
-| `CycleOverrun` | `U16` | On change    | Counter tracking the number of cycle overruns |
+| `CycleOverrun` | `U16` | always    | Counter tracking the number of cycle overruns |
 
 ### 3.4 Hardware Configuration
 

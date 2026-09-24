@@ -5,21 +5,11 @@ module Samd21 {
         @ Port for receiving events
         sync input port LogRecv: Fw.Log
 
-        @ Port for receiving telemetry values
-        sync input port TlmRecv: Fw.Tlm
-
         @ FATAL event announce port
         output port FatalAnnounce: Svc.FatalEvent
 
-        sync input port flush: Svc.Sched
-
-        enum PacketPort {
-            EVENT = 0,
-            TELEMETRY = 1,
-        }
-
         @ Packet send port
-        output port PktSend: [2] Fw.Com
+        output port PktSend: Fw.Com
 
     }
 }
