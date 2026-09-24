@@ -17,6 +17,21 @@
 # build. The second actions/checkout does the splicing, which is what makes fork pull
 # requests work without any token juggling -- it resolves github.repository at the
 # triggering ref by itself.
+#
+# ONE THING THE HARNESS HAS TO GET RIGHT
+# ----------------------------------------------------------------------------------------
+# A consumer's config/ override SHADOWS the matching file in default/samd-config/ rather
+# than extending it, so a constant the harness omits is undeclared for the tests below even
+# though this repository declares it. That is not hypothetical: adding
+# Samd21::FramerConfig::MAX_TRACKED_APIDS here failed to compile against the harness's
+# FramerConfig.hpp until config-samd-reference/CMakeLists.txt learned to drop that override
+# under BUILD_TESTING, which it now does -- the library's tests see the library's own
+# defaults.
+#
+# If this job ever fails with "'<SOMETHING>' is not a member of 'Samd21::<Something>Config'"
+# for a constant that plainly exists in default/samd-config/, that is this problem
+# recurring: the harness is overriding the file and has not been dropped under
+# BUILD_TESTING. Fix it there, not by duplicating the constant into the harness.
 
 name: "Unit Tests"
 
