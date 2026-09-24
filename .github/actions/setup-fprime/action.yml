@@ -1,0 +1,67 @@
+name: "Set up F Prime (Python)"
+description: >-
+  Installs Python and the F Prime Python toolchain (fprime-tools, fprime-fpp, the
+  pip-provided cmake and ninja, and fprime-samd's autocoder packages) from the
+  consuming repository's requirements.txt.
+
+inputs:
+  python-version:
+    description: >-
+      Python to install. 3.11 is a hard floor: fprime-samd's
+      static-tlm-packetizer and static-cmd-dispatcher autocoders import tomllib.
+    required: false
+    default: "3.12"
+  requirements:
+    description: "Requirements file to install (fans out to the submodules')."
+    required: false
+    default: "requirements.txt"
+  cache-dependency-path:
+    description: >-
+      Newline-separated requirements files to key the pip cache on. Must list the
+      nested submodule requirements too, or a submodule bump that changes a
+      pinned autocoder version will hit a stale cache.
+    required: false
+    default: |
+      requirements.txt
+      lib/fprime/requirements.txt
+      lib/fprime-samd/requirements.txt
+  report-versions:
+    description: "Print the resolved tool versions (useful in the job log)."
+    required: false
+    default: "true"
+
+runs:
+  using: "composite"
+  steps:
+    - name: "Setup Python"
+      uses: actions/setup-python@v7
+      with:
+        python-version: ${{ inputs.python-version }}
+        cache: "pip"
+        cache-dependency-path: ${{ inputs.cache-dependency-path }}
+
+    - name: "Install Python dependencies"
+      # lib/fprime/requirements.txt supplies fprime-tools, fprime-fpp and the
+      # pip-provided cmake and ninja (so no apt packages are needed).
+      # lib/fprime-samd/requirements.txt supplies fprime-fpp-python,
+      # fprime-fpp-query and fprime-cpp-codegen, which the static_tlm_packet /
+      # static_cmd_dispatch build autocoders require -- their fpp_query.cmake runs
+      # `fprime-version-check` and hard-errors on a mismatch.
+      shell: bash
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r "${{ inputs.requirements }}"
+
+    - name: "Report tool versions"
+      if: inputs.report-versions == 'true'
+      shell: bash
+      # Non-fatal: this is log decoration, not a gate. `|| true` on the whole
+      # block keeps a missing optional tool from failing the job here instead of
+      # at the step that actually needs it.
+      run: |
+        {
+          cmake --version | head -1
+          ninja --version
+          fprime-util --help > /dev/null 2>&1 && echo "fprime-util ok"
+          fpp-check --help > /dev/null 2>&1 && echo "fpp ok"
+        } || true

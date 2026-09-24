@@ -1,0 +1,227 @@
+name: "Post the sticky size comment"
+description: >-
+  Downloads a size-report artifact produced by an untrusted build run and
+  posts/updates one sticky pull-request comment per rendered markdown file.
+  Intended to be called from a `workflow_run`-triggered workflow so the build
+  itself never needs a writable token.
+
+# SECURITY MODEL -- READ BEFORE CHANGING
+# --------------------------------------------------------------------------------
+# The caller must be triggered by `workflow_run`, not `pull_request_target`. The
+# build workflow runs a contributor's C++, this project's CMake and its Python
+# autocoders; under `pull_request_target` that untrusted code would execute with a
+# writable token, which is a straight remote-code-execution hole in a public repo.
+# With `workflow_run` the build gets a read-only token and no secrets, uploads the
+# rendered markdown as an artifact, and THIS action -- running the default-branch
+# copy of the caller, never the pull request's copy -- does nothing but download
+# that artifact and post it. It never checks out or executes pull request code.
+#
+# Residual risk, and the mitigations here:
+#   * For a `pull_request` event GitHub runs the *pull request's* copy of the build
+#     workflow, so a contributor controls both the markdown and the pull request
+#     number the artifact declares. The declared number is therefore ignored
+#     unless that pull request's head SHA matches the triggering run's head_sha.
+#   * The body is untrusted text. GitHub sanitises comment bodies (no scripts, no
+#     markup escape), so the worst case is a cosmetic or misleading comment on the
+#     contributor's own pull request. Bodies are clamped so an oversized artifact
+#     cannot 422 the API and leave the reporter permanently red.
+#   * The sticky marker is read from the artifact too, so it is charset-validated
+#     and only ever matched against comments on the already-verified pull request.
+#
+# Combined with no `checkout`, no secrets beyond GITHUB_TOKEN, and `contents: read`,
+# the worst case even if the SHA check were bypassed is a comment -- never a
+# repository write and never code execution.
+
+inputs:
+  run-id:
+    description: "github.event.workflow_run.id of the build that produced the artifact."
+    required: true
+  head-sha:
+    description: >-
+      github.event.workflow_run.head_sha. The artifact's claimed pull request is
+      only trusted if that pull request's head matches this.
+    required: true
+  artifact-name:
+    description: >-
+      Artifact uploaded by the build workflow. Ignored when artifact-pattern is set.
+    required: false
+    default: "size-report"
+  artifact-pattern:
+    description: >-
+      Glob matching several artifacts, merged into one directory. Use this when the
+      build is a matrix over deployments: each job uploads its own artifact, and
+      each report markdown must have a DISTINCT FILENAME or merging will have them
+      overwrite each other. One sticky comment is posted per surviving .md file.
+    required: false
+    default: ""
+  path:
+    description: "Directory to download the artifact(s) into."
+    required: false
+    default: "size-report"
+  github-token:
+    description: "Token with pull-requests: write. Defaults to the caller's GITHUB_TOKEN."
+    required: false
+    default: ${{ github.token }}
+
+outputs:
+  posted:
+    description: "Number of comments created or updated."
+    value: ${{ steps.comment.outputs.posted }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: "Download the size report artifact"
+      id: download
+      if: inputs.artifact-pattern == ''
+      continue-on-error: true
+      uses: actions/download-artifact@v8
+      with:
+        name: ${{ inputs.artifact-name }}
+        path: ${{ inputs.path }}
+        run-id: ${{ inputs.run-id }}
+        github-token: ${{ inputs.github-token }}
+
+    - name: "Download and merge the size report artifacts"
+      id: download-many
+      if: inputs.artifact-pattern != ''
+      continue-on-error: true
+      uses: actions/download-artifact@v8
+      with:
+        pattern: ${{ inputs.artifact-pattern }}
+        merge-multiple: true
+        path: ${{ inputs.path }}
+        run-id: ${{ inputs.run-id }}
+        github-token: ${{ inputs.github-token }}
+
+    - name: "Verify the pull request and post the comment(s)"
+      id: comment
+      # Exactly one of the two download steps runs; the other reports 'skipped'.
+      if: steps.download.outcome == 'success' || steps.download-many.outcome == 'success'
+      uses: actions/github-script@v9
+      env:
+        ARTIFACT_PATH: ${{ inputs.path }}
+        EXPECTED_HEAD_SHA: ${{ inputs.head-sha }}
+      with:
+        github-token: ${{ inputs.github-token }}
+        script: |
+          const fs = require('fs');
+          const path = require('path');
+          const dir = process.env.ARTIFACT_PATH;
+          const expected = process.env.EXPECTED_HEAD_SHA;
+          // Well under GitHub's hard 65536-character cap; the renderer already
+          // clamps, this is the defence against an artifact that did not come
+          // from it.
+          const BODY_LIMIT = 64000;
+          // The marker comes from the artifact, so constrain it before using it
+          // as a search needle.
+          const MARKER_RE = /^<!--\s*([A-Za-z0-9._:-]{1,100})\s*-->/;
+
+          core.setOutput('posted', '0');
+
+          const numberPath = path.join(dir, 'pr-number.txt');
+          if (!fs.existsSync(numberPath)) {
+            core.info('artifact carries no pr-number.txt; nothing to post');
+            return;
+          }
+          const claimed = parseInt(fs.readFileSync(numberPath, 'utf8').trim(), 10);
+          if (!Number.isInteger(claimed) || claimed <= 0) {
+            core.warning('artifact declared a non-numeric pull request number; refusing to comment');
+            return;
+          }
+
+          // The artifact comes from an untrusted build, so the declared number is
+          // only trusted if that pull request's head really is the commit this
+          // run was for.
+          let pull;
+          try {
+            ({ data: pull } = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: claimed,
+            }));
+          } catch (error) {
+            core.warning(`could not read pull request #${claimed}: ${error.message}`);
+            return;
+          }
+          if (pull.head.sha !== expected) {
+            core.warning(
+              `pull request #${claimed} head is ${pull.head.sha} but the build ran on ` +
+              `${expected}; refusing to comment`);
+            return;
+          }
+
+          // One markdown file per deployment. Sorted so multi-deployment
+          // repositories get a stable comment order on a first run.
+          const bodies = fs.readdirSync(dir)
+            .filter((name) => name.endsWith('.md'))
+            .sort();
+          if (bodies.length === 0) {
+            core.warning('artifact carries no .md report; nothing to post');
+            return;
+          }
+
+          const comments = await github.paginate(github.rest.issues.listComments, {
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            issue_number: claimed,
+            per_page: 100,
+          });
+
+          let posted = 0;
+          for (const name of bodies) {
+            let body = fs.readFileSync(path.join(dir, name), 'utf8');
+            if (body.trim() === '') {
+              core.warning(`${name}: rendered report is empty; skipping`);
+              continue;
+            }
+            const markerMatch = MARKER_RE.exec(body);
+            if (markerMatch === null) {
+              core.warning(
+                `${name}: no valid marker on the first line; skipping. The renderer ` +
+                'writes "<!-- marker -->" there and the marker is how this comment is ' +
+                'found and updated on the next push.');
+              continue;
+            }
+            const marker = markerMatch[0];
+            if (body.length > BODY_LIMIT) {
+              body = body.slice(0, BODY_LIMIT) +
+                "\n\n<sub>[clamped by the reporter workflow to fit GitHub's comment size " +
+                'limit]</sub>\n';
+              core.warning(`${name}: body was over ${BODY_LIMIT} characters and has been clamped`);
+            }
+
+            // Stickiness: edit the comment carrying this marker in place, so N
+            // pushes leave exactly one comment per deployment.
+            const existing = comments.find(
+              (comment) => comment.user.type === 'Bot' && (comment.body || '').includes(marker));
+            try {
+              if (existing !== undefined) {
+                await github.rest.issues.updateComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  comment_id: existing.id,
+                  body,
+                });
+                core.info(`${name}: updated comment ${existing.id}`);
+              } else {
+                await github.rest.issues.createComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: claimed,
+                  body,
+                });
+                core.info(`${name}: posted a new comment`);
+              }
+              posted += 1;
+            } catch (error) {
+              // One failing deployment's comment must not lose the others.
+              core.warning(`${name}: could not post: ${error.message}`);
+            }
+          }
+          core.setOutput('posted', String(posted));
+
+    - name: "Note a build that produced no report"
+      if: steps.download.outcome != 'success' && steps.download-many.outcome != 'success'
+      shell: bash
+      run: echo "::notice::no size-report artifact on run ${{ inputs.run-id }}; nothing to comment"

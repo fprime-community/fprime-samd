@@ -1,0 +1,128 @@
+# C++ formatting and CI-script sanity for this library.
+#
+# `fprime-util format` resolves .clang-format through settings.ini's framework_path, and
+# this repository has neither, so the harness is borrowed here for the same reason
+# unit-tests.yml borrows it. Only fprime-samd/ is checked: default/samd-config holds
+# configuration headers that consumers copy and edit, and cmake/ is not C++.
+
+name: "Code Format Check"
+
+on:
+  pull_request:
+  push:
+    branches: [ main ]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  HARNESS_REPO: fprime-community/fprime-samd-reference
+  HARNESS_REF: main
+  # Relative to the harness root, i.e. inside the spliced submodule.
+  CHECKED_DIRS: >-
+    lib/fprime-samd/fprime-samd
+    lib/fprime-samd/default
+
+jobs:
+  cpp-formatting:
+    name: "C++ formatting"
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      # THE SPLICE. See the long comment on the same three steps in unit-tests.yml for why
+      # submodules are initialised selectively instead of with `submodules: recursive`.
+      - name: "Checkout the harness"
+        uses: actions/checkout@v7
+        with:
+          repository: ${{ env.HARNESS_REPO }}
+          ref: ${{ env.HARNESS_REF }}
+          filter: blob:none
+
+      - name: "Initialise the harness's other submodules"
+        # fprime-util format resolves .clang-format through settings.ini's framework_path,
+        # so lib/fprime must be present even though nothing is compiled here.
+        shell: bash
+        run: |
+          git submodule update --init --recursive --filter=blob:none \
+            lib/fprime lib/fprime-baremetal
+
+      - name: "Check this commit out as lib/fprime-samd"
+        uses: actions/checkout@v7
+        with:
+          path: lib/fprime-samd
+          filter: blob:none
+
+      - name: "Set up F Prime"
+        # Installing the project requirements rather than fprime-tools alone is what pins
+        # clang-format to the version lib/fprime/requirements.txt names. A different
+        # clang-format produces different output and the check would then disagree with
+        # what contributors get locally.
+        uses: ./lib/fprime-samd/.github/actions/setup-fprime
+
+      - name: "Check C++ formatting"
+        run: |
+          # CHECKED_DIRS holds several directories and `--dirs` takes a list, so the word
+          # splitting here is deliberate.
+          # shellcheck disable=SC2086
+          fprime-util format --check --dirs ${CHECKED_DIRS}
+
+      - name: "Check the shared CI scripts"
+        # size_report.py is consumed by every repository that uses these actions, so a
+        # syntax error or a broken linker-script parser here breaks all of them. The
+        # self-test needs no toolchain and no build, which is why it belongs in this job.
+        run: |
+          python3 -m compileall -q lib/fprime-samd/.github/scripts
+          python3 lib/fprime-samd/.github/scripts/size_report.py --help > /dev/null
+          python3 lib/fprime-samd/.github/scripts/size_report.py selftest
+
+      - name: "Check the composite actions parse"
+        # A malformed action.yml is otherwise only discovered when a consumer's workflow
+        # tries to use it, in a different repository, with a confusing error.
+        run: |
+          # PyYAML arrives transitively via fprime-gds today, but that is not a promise
+          # this check should depend on.
+          python3 -c "import yaml" 2>/dev/null || pip install pyyaml
+          python3 - <<'PY'
+          import glob, sys, yaml
+          failed = False
+          for path in sorted(glob.glob("lib/fprime-samd/.github/actions/*/action.yml")):
+              try:
+                  spec = yaml.safe_load(open(path, encoding="utf-8"))
+              except yaml.YAMLError as error:
+                  print(f"::error file={path}::{error}")
+                  failed = True
+                  continue
+              runs = spec.get("runs", {})
+              if runs.get("using") != "composite":
+                  print(f"::error file={path}::runs.using must be 'composite'")
+                  failed = True
+              for step in runs.get("steps", []):
+                  # A `run:` step with no `shell:` is valid YAML but fails at execution
+                  # time only, in the consumer's repository.
+                  if "run" in step and "shell" not in step:
+                      print(f"::error file={path}::step '{step.get('name')}' has run: but no shell:")
+                      failed = True
+              print(f"ok {path}")
+          sys.exit(1 if failed else 0)
+          PY
+
+      - name: "Comment on the pull request in case of failure"
+        # Skipped for forks: a fork pull request carries a read-only GITHUB_TOKEN and the
+        # createComment call would 403. The check itself still shows up as a failed status
+        # with the same command in its log, so nothing is lost but the convenience.
+        if: failure() && github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
+        uses: actions/github-script@v9
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: 'C++ formatting checks failed on the submitted code. To fix, run this ' +
+                    'command on your branch:\n\n```bash\n' +
+                    'git diff --name-only origin/main...HEAD | fprime-util format --stdin\n```'
+            })

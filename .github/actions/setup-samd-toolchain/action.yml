@@ -1,0 +1,264 @@
+name: "Set up the SAMD21 ARM toolchain and CMSIS"
+description: >-
+  Provisions arm-none-eabi-gcc, CMSIS and CMSIS-Atmel exactly where
+  samd21-bare-toolchain.cmake expects to find them, restoring from the Actions
+  cache when possible. Pair with save-samd-toolchain after a successful build.
+
+inputs:
+  adafruit-samd-version:
+    description: >-
+      adafruit:samd core version. These four versions are pinned together and
+      must stay in lockstep with cmake/toolchain/samd21-bare-toolchain.cmake,
+      which discovers the compiler and the CMSIS headers by *absolute path* with
+      the tool versions as literal path components and a
+      `message(FATAL_ERROR ...)` else-branch. Do not float this to "latest": a
+      core bump that moves any tool version silently breaks path resolution at
+      configure time.
+    required: false
+    default: "1.7.17"
+  arm-gcc-version:
+    description: "arm-none-eabi-gcc version, as an ~/.arduino15 path component."
+    required: false
+    default: "9-2019q4"
+  cmsis-version:
+    description: "CMSIS version, as an ~/.arduino15 path component."
+    required: false
+    default: "5.4.0"
+  cmsis-atmel-version:
+    description: "CMSIS-Atmel version, as an ~/.arduino15 path component."
+    required: false
+    default: "1.2.2"
+  arduino-cli-version:
+    description: >-
+      arduino-cli is only used as a downloader for the above. Pinned for
+      reproducibility; the install script is fetched from the matching tag rather
+      than from `master` so the bootstrap is not a floating remote script.
+    required: false
+    default: "1.5.1"
+  board-manager-url:
+    description: "Additional board index arduino-cli needs for adafruit:samd."
+    required: false
+    default: "https://adafruit.github.io/arduino-board-index/package_adafruit_index.json"
+  toolchain-file:
+    description: >-
+      Path to samd21-bare-toolchain.cmake, hashed into the cache key. That hash
+      is what encodes the expected 9-2019q4 / 5.4.0 / 1.2.2 paths; without it,
+      bumping those in fprime-samd would still hit a stale cache and die at the
+      verify step.
+    required: false
+    default: "lib/fprime-samd/cmake/toolchain/samd21-bare-toolchain.cmake"
+  cache-epoch:
+    description: "Bump to force a cold toolchain install, e.g. after editing the prune list."
+    required: false
+    default: "v1"
+  prune:
+    description: >-
+      Delete the unused half of the tools tree before caching it (~944 MB down to
+      ~496 MB). Set false only when debugging a missing-CMSIS-component problem.
+    required: false
+    default: "true"
+  add-to-path:
+    description: >-
+      Prepend the toolchain bin directory to PATH. Nothing needs this for the
+      build itself -- the toolchain file computes absolute compiler paths -- but
+      the readelf / size / nm steps of a size report must use the *matching*
+      binutils rather than whatever is on the runner.
+    required: false
+    default: "true"
+  tools-archive-base:
+    description: >-
+      Unused by default. Escape hatch for an air-gapped or Enterprise Server
+      runner that cannot reach Adafruit's board index: mirror the three archives
+      below under this base URL and they will be fetched directly instead of via
+      arduino-cli. Extracting them into
+      ~/.arduino15/packages/adafruit/tools/<name>/<version>/ produces a
+      byte-identical layout.
+        arm-none-eabi-gcc 9-2019q4
+          gcc-arm-none-eabi-9-2019-q4-major-x86_64-linux.tar.bz2
+        CMSIS 5.4.0
+          5.4.0.tar.gz   (github.com/ARM-software/CMSIS_5)
+        CMSIS-Atmel 1.2.2
+          CMSIS-Atmel-1.2.2.tar.bz2
+    required: false
+    default: ""
+
+outputs:
+  tools-dir:
+    description: "~/.arduino15/packages/adafruit/tools"
+    value: ${{ steps.paths.outputs.tools-dir }}
+  bin-dir:
+    description: "Directory holding arm-none-eabi-*"
+    value: ${{ steps.paths.outputs.bin-dir }}
+  cache-hit:
+    description: "'true' when the tools tree came from the cache."
+    value: ${{ steps.tools-cache.outputs.cache-hit }}
+  cache-key:
+    description: "Cache key used; pass to save-samd-toolchain."
+    value: ${{ steps.paths.outputs.cache-key }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: "Resolve HOME-dependent toolchain paths"
+      id: paths
+      # samd21-bare-toolchain.cmake hardcodes `$ENV{HOME}/.arduino15`, so the
+      # Arduino data directory cannot be relocated. Deriving these from $HOME
+      # rather than hardcoding /home/runner keeps this valid on self-hosted and
+      # Enterprise Server runners too.
+      shell: bash
+      env:
+        ARM_GCC_VERSION: ${{ inputs.arm-gcc-version }}
+        CACHE_KEY: >-
+          samd21-tools-${{ runner.os }}-${{ inputs.adafruit-samd-version }}-${{ inputs.cache-epoch }}-${{ hashFiles(inputs.toolchain-file) }}
+      run: |
+        TOOLS_DIR="${HOME}/.arduino15/packages/adafruit/tools"
+        {
+          echo "tools-dir=${TOOLS_DIR}"
+          echo "bin-dir=${TOOLS_DIR}/arm-none-eabi-gcc/${ARM_GCC_VERSION}/bin"
+          echo "cache-key=${CACHE_KEY}"
+        } >> "${GITHUB_OUTPUT}"
+        # Exported for the steps below and for the caller's own steps.
+        {
+          echo "ARDUINO_DIRECTORIES_DATA=${HOME}/.arduino15"
+          echo "ARDUINO_TOOLS_DIR=${TOOLS_DIR}"
+          echo "ARM_TOOLCHAIN_BIN=${TOOLS_DIR}/arm-none-eabi-gcc/${ARM_GCC_VERSION}/bin"
+        } >> "${GITHUB_ENV}"
+        if [ -z "${CACHE_KEY##*-}" ]; then
+          echo "::error::hashFiles found nothing at '${{ inputs.toolchain-file }}'." \
+               "Is lib/fprime-samd checked out, and is toolchain-file correct?"
+          exit 1
+        fi
+
+    - name: "Restore ARM toolchain and CMSIS"
+      id: tools-cache
+      uses: actions/cache/restore@v6
+      with:
+        path: ${{ steps.paths.outputs.tools-dir }}
+        key: ${{ steps.paths.outputs.cache-key }}
+        # There is deliberately no `restore-keys` fallback: a fuzzy match could
+        # hand back a tools tree whose version directories do not match what the
+        # toolchain file looks for, which fails confusingly at configure time
+        # rather than obviously here.
+
+    - name: "Install arduino-cli"
+      if: steps.tools-cache.outputs.cache-hit != 'true' && inputs.tools-archive-base == ''
+      shell: bash
+      env:
+        ARDUINO_CLI_VERSION: ${{ inputs.arduino-cli-version }}
+      run: |
+        mkdir -p "${RUNNER_TEMP}/arduino-cli/bin"
+        curl -fsSL "https://raw.githubusercontent.com/arduino/arduino-cli/v${ARDUINO_CLI_VERSION}/install.sh" \
+          | BINDIR="${RUNNER_TEMP}/arduino-cli/bin" sh -s "${ARDUINO_CLI_VERSION}"
+        echo "${RUNNER_TEMP}/arduino-cli/bin" >> "${GITHUB_PATH}"
+
+    - name: "Install the adafruit:samd toolchain"
+      if: steps.tools-cache.outputs.cache-hit != 'true' && inputs.tools-archive-base == ''
+      shell: bash
+      # Only the `tools` tree is kept. The adafruit:samd *hardware* core is
+      # deliberately not retained: the board toolchain files point at
+      # cmake/toolchain/samd21/<variant>, which contains only linker scripts, and
+      # sam.h/samd.h come from CMSIS-Atmel. arduino-cli has no tools-only mode, so
+      # a cold run downloads the core anyway.
+      env:
+        ARDUINO_BOARD_MANAGER_ADDITIONAL_URLS: ${{ inputs.board-manager-url }}
+        ADAFRUIT_SAMD_VERSION: ${{ inputs.adafruit-samd-version }}
+      run: |
+        arduino-cli core update-index
+        arduino-cli core install "adafruit:samd@${ADAFRUIT_SAMD_VERSION}"
+
+    - name: "Fetch the toolchain from a mirror"
+      if: steps.tools-cache.outputs.cache-hit != 'true' && inputs.tools-archive-base != ''
+      shell: bash
+      env:
+        BASE: ${{ inputs.tools-archive-base }}
+        ARM_GCC_VERSION: ${{ inputs.arm-gcc-version }}
+        CMSIS_VERSION: ${{ inputs.cmsis-version }}
+        CMSIS_ATMEL_VERSION: ${{ inputs.cmsis-atmel-version }}
+      run: |
+        set -euo pipefail
+        fetch() {  # <url> <dest-dir> <strip-components>
+          mkdir -p "$2"
+          echo "fetching $1"
+          curl -fsSL "$1" | tar -x -C "$2" --strip-components="$3"
+        }
+        fetch "${BASE%/}/gcc-arm-none-eabi-9-2019-q4-major-x86_64-linux.tar.bz2" \
+              "${ARDUINO_TOOLS_DIR}/arm-none-eabi-gcc/${ARM_GCC_VERSION}" 1
+        fetch "${BASE%/}/${CMSIS_VERSION}.tar.gz" \
+              "${ARDUINO_TOOLS_DIR}/CMSIS/${CMSIS_VERSION}" 1
+        fetch "${BASE%/}/CMSIS-Atmel-${CMSIS_ATMEL_VERSION}.tar.bz2" \
+              "${ARDUINO_TOOLS_DIR}/CMSIS-Atmel/${CMSIS_ATMEL_VERSION}" 0
+
+    - name: "Prune unused toolchain payload"
+      if: steps.tools-cache.outputs.cache-hit != 'true' && inputs.prune == 'true'
+      shell: bash
+      # The tools tree lands at roughly 944 MB, of which nearly half is dead
+      # weight. This drops it to roughly 496 MB, halving both the cache upload and
+      # every subsequent restore. Everything removed here is documentation, the
+      # CoreValidation/RTOS/Pack/NN/DAP sources, the prebuilt ARM and IAR DSP
+      # libraries (only Lib/GCC is on the linker search path) and the DSP sources
+      # (only DSP/Include is on the compiler include path). The three include
+      # directories and Lib/GCC are asserted by the verify step below, and the
+      # cache is only *saved* after a real build has succeeded against the pruned
+      # tree.
+      env:
+        CMSIS_VERSION: ${{ inputs.cmsis-version }}
+        ARM_GCC_VERSION: ${{ inputs.arm-gcc-version }}
+      run: |
+        CMSIS="${ARDUINO_TOOLS_DIR}/CMSIS/${CMSIS_VERSION}"
+        du -sh "${ARDUINO_TOOLS_DIR}" || true
+        rm -rf \
+          "${CMSIS}/docs" \
+          "${CMSIS}/CMSIS_EW2018.pdf" \
+          "${CMSIS}/CMSIS/DoxyGen" \
+          "${CMSIS}/CMSIS/CoreValidation" \
+          "${CMSIS}/CMSIS/RTOS" \
+          "${CMSIS}/CMSIS/RTOS2" \
+          "${CMSIS}/CMSIS/Pack" \
+          "${CMSIS}/CMSIS/NN" \
+          "${CMSIS}/CMSIS/DAP" \
+          "${CMSIS}/CMSIS/Utilities" \
+          "${CMSIS}/CMSIS/Driver" \
+          "${CMSIS}/CMSIS/Core_A" \
+          "${CMSIS}/CMSIS/DSP/DSP_Lib_TestSuite" \
+          "${CMSIS}/CMSIS/DSP/Examples" \
+          "${CMSIS}/CMSIS/DSP/Projects" \
+          "${CMSIS}/CMSIS/DSP/Source" \
+          "${CMSIS}/CMSIS/Lib/ARM" \
+          "${CMSIS}/CMSIS/Lib/IAR" \
+          "${ARDUINO_TOOLS_DIR}/arm-none-eabi-gcc/${ARM_GCC_VERSION}/share/doc"
+        du -sh "${ARDUINO_TOOLS_DIR}" || true
+
+    - name: "Verify toolchain layout"
+      shell: bash
+      # samd21-bare-toolchain.cmake finds all of these by absolute path and raises
+      # FATAL_ERROR if any is missing, so fail here instead with a message that
+      # names the offending path.
+      env:
+        CMSIS_VERSION: ${{ inputs.cmsis-version }}
+        CMSIS_ATMEL_VERSION: ${{ inputs.cmsis-atmel-version }}
+      run: |
+        missing=0
+        for required in \
+          "${ARM_TOOLCHAIN_BIN}/arm-none-eabi-gcc" \
+          "${ARM_TOOLCHAIN_BIN}/arm-none-eabi-readelf" \
+          "${ARM_TOOLCHAIN_BIN}/arm-none-eabi-size" \
+          "${ARM_TOOLCHAIN_BIN}/arm-none-eabi-nm" \
+          "${ARDUINO_TOOLS_DIR}/CMSIS/${CMSIS_VERSION}/CMSIS/Core/Include/core_cm0plus.h" \
+          "${ARDUINO_TOOLS_DIR}/CMSIS/${CMSIS_VERSION}/CMSIS/DSP/Include" \
+          "${ARDUINO_TOOLS_DIR}/CMSIS/${CMSIS_VERSION}/CMSIS/Lib/GCC" \
+          "${ARDUINO_TOOLS_DIR}/CMSIS-Atmel/${CMSIS_ATMEL_VERSION}/CMSIS/Device/ATMEL/sam.h" ; do
+          if [ ! -e "${required}" ]; then
+            echo "::error::missing toolchain component: ${required}"
+            missing=1
+          fi
+        done
+        [ "${missing}" -eq 0 ] || exit 1
+
+    - name: "Add the toolchain to PATH"
+      if: inputs.add-to-path == 'true'
+      shell: bash
+      run: echo "${ARM_TOOLCHAIN_BIN}" >> "${GITHUB_PATH}"
+
+    - name: "Report the compiler version"
+      shell: bash
+      run: "${ARM_TOOLCHAIN_BIN}/arm-none-eabi-gcc --version | head -1"
