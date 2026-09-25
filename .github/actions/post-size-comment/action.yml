@@ -71,32 +71,68 @@ outputs:
 runs:
   using: "composite"
   steps:
+    # v3, not v4+: v4's @actions/artifact v2 backend (and its `pattern` /
+    # `merge-multiple` inputs) needs GHES blob storage that this org's instance does
+    # not have (GHESNotSupportedError). v3 uses the legacy artifact API, which every
+    # GHES version supports, but it can only fetch by exact name or fetch everything --
+    # there is no server-side glob. The pattern case below downloads every artifact for
+    # the run and filters client-side instead.
     - name: "Download the size report artifact"
       id: download
       if: inputs.artifact-pattern == ''
       continue-on-error: true
-      uses: actions/download-artifact@v5
+      uses: actions/download-artifact@v3
       with:
         name: ${{ inputs.artifact-name }}
         path: ${{ inputs.path }}
         run-id: ${{ inputs.run-id }}
         github-token: ${{ inputs.github-token }}
 
-    - name: "Download and merge the size report artifacts"
-      id: download-many
+    - name: "Download every artifact from the run"
+      id: download-all
       if: inputs.artifact-pattern != ''
       continue-on-error: true
-      uses: actions/download-artifact@v5
+      uses: actions/download-artifact@v3
       with:
-        pattern: ${{ inputs.artifact-pattern }}
-        merge-multiple: true
+        # `name` omitted: v3 fetches every artifact for the run, each into its own
+        # `${path}/<artifact-name>/` subdirectory.
         path: ${{ inputs.path }}
         run-id: ${{ inputs.run-id }}
         github-token: ${{ inputs.github-token }}
 
+    - name: "Merge the artifacts matching the pattern"
+      id: download-many
+      if: inputs.artifact-pattern != '' && steps.download-all.outcome == 'success'
+      shell: bash
+      env:
+        PATTERN: ${{ inputs.artifact-pattern }}
+        DIR: ${{ inputs.path }}
+      run: |
+        set -euo pipefail
+        # Flattens the subset of per-artifact subdirectories whose name matches
+        # $PATTERN up into $DIR, mirroring v4's `pattern` + `merge-multiple: true`.
+        # Non-matching artifacts (e.g. this run's build-artifacts upload) are left
+        # nested and ignored by the step below.
+        shopt -s nullglob
+        matched=0
+        for sub in "$DIR"/*/; do
+          name="$(basename "$sub")"
+          case "$name" in
+            $PATTERN)
+              find "$sub" -mindepth 1 -maxdepth 1 -exec mv -t "$DIR" {} +
+              matched=1
+              ;;
+          esac
+          rmdir "$sub" 2>/dev/null || true
+        done
+        if [ "$matched" -eq 0 ]; then
+          echo "::warning::no artifact in this run matched pattern '$PATTERN'"
+          exit 1
+        fi
+
     - name: "Verify the pull request and post the comment(s)"
       id: comment
-      # Exactly one of the two download steps runs; the other reports 'skipped'.
+      # Exactly one of the two download paths runs; the other reports 'skipped'.
       if: steps.download.outcome == 'success' || steps.download-many.outcome == 'success'
       uses: actions/github-script@v8
       env:

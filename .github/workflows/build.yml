@@ -242,7 +242,11 @@ jobs:
         # `baseline-size/` would put entries at `size/...` when a baseline exists but at
         # the archive root when it does not -- silently breaking the reporter in precisely
         # the degraded case this design is supposed to handle.
-        uses: actions/upload-artifact@v4
+        #
+        # v3, not v4+: v4's @actions/artifact v2 backend needs GHES blob storage that
+        # this org's instance does not have (GHESNotSupportedError). v3 uses the legacy
+        # artifact API, which every GHES version supports.
+        uses: actions/upload-artifact@v3
         with:
           name: size-report
           path: size/
@@ -251,7 +255,7 @@ jobs:
 
       - name: "Upload build artifacts"
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v3
         with:
           name: ${{ env.DEPLOYMENT }}-${{ env.TOOLCHAIN }}
           path: build-artifacts/${{ env.TOOLCHAIN }}/${{ env.DEPLOYMENT }}/
