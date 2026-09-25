@@ -31,7 +31,7 @@ jobs:
       # THE SPLICE. See the long comment on the same three steps in unit-tests.yml for why
       # submodules are initialised selectively instead of with `submodules: recursive`.
       - name: "Checkout the harness"
-        uses: actions/checkout@v7
+        uses: actions/checkout@v5
         with:
           repository: ${{ env.HARNESS_REPO }}
           ref: ${{ env.HARNESS_REF }}
@@ -46,7 +46,7 @@ jobs:
             lib/fprime lib/fprime-baremetal
 
       - name: "Check this commit out as lib/fprime-samd"
-        uses: actions/checkout@v7
+        uses: actions/checkout@v5
         with:
           path: lib/fprime-samd
           filter: blob:none
@@ -110,7 +110,7 @@ jobs:
         # createComment call would 403. The check itself still shows up as a failed status
         # with the same command in its log, so nothing is lost but the convenience.
         if: failure() && github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
-        uses: actions/github-script@v9
+        uses: actions/github-script@v8
         with:
           script: |
             github.rest.issues.createComment({

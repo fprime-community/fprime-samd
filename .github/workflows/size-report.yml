@@ -26,7 +26,7 @@ jobs:
       actions: read
     steps:
       - name: "Checkout the reporting action"
-        uses: actions/checkout@v7
+        uses: actions/checkout@v5
         with:
           sparse-checkout: .github/actions/post-size-comment
           sparse-checkout-cone-mode: false
