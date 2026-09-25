@@ -5,7 +5,7 @@
 1. Checkout with submodules, before any local-path `uses:`:
 
    ```yaml
-   - uses: actions/checkout@v7
+   - uses: actions/checkout@v5
      with:
        submodules: recursive
    - uses: ./lib/fprime-samd/.github/actions/setup-samd-toolchain

@@ -28,7 +28,7 @@ jobs:
     timeout-minutes: 60
     steps:
       - name: "Checkout the harness"
-        uses: actions/checkout@v7
+        uses: actions/checkout@v5
         with:
           repository: ${{ env.HARNESS_REPO }}
           ref: ${{ env.HARNESS_REF }}
@@ -46,7 +46,7 @@ jobs:
         run: echo "sha=$(git rev-parse HEAD)" >> "${GITHUB_OUTPUT}"
 
       - name: "Check this commit out as lib/fprime-samd"
-        uses: actions/checkout@v7
+        uses: actions/checkout@v5
         with:
           path: lib/fprime-samd
           filter: blob:none
@@ -95,7 +95,7 @@ jobs:
       - name: "Restore the baseline measurement"
         id: baseline-cache
         if: github.event_name == 'pull_request'
-        uses: actions/cache/restore@v6
+        uses: actions/cache/restore@v4
         with:
           path: baseline-size
           key: samd-size-baseline-${{ env.DEPLOYMENT }}-${{ steps.harness.outputs.sha }}-${{ github.event.pull_request.base.sha }}
@@ -104,7 +104,7 @@ jobs:
         id: baseline-harness
         if: github.event_name == 'pull_request' && steps.baseline-cache.outputs.cache-hit != 'true'
         continue-on-error: true
-        uses: actions/checkout@v7
+        uses: actions/checkout@v5
         with:
           repository: ${{ env.HARNESS_REPO }}
           # The SHA resolved above, not HARNESS_REF, so head and baseline share a
@@ -127,7 +127,7 @@ jobs:
         id: baseline-splice
         if: github.event_name == 'pull_request' && steps.baseline-cache.outputs.cache-hit != 'true' && steps.baseline-submodules.outcome == 'success'
         continue-on-error: true
-        uses: actions/checkout@v7
+        uses: actions/checkout@v5
         with:
           ref: ${{ github.event.pull_request.base.sha }}
           path: baseline-src/lib/fprime-samd
@@ -164,7 +164,7 @@ jobs:
         # is what continue-on-error is for here.
         if: github.event_name == 'pull_request' && steps.baseline-cache.outputs.cache-hit != 'true' && steps.baseline-measure.outcome == 'success'
         continue-on-error: true
-        uses: actions/cache/save@v6
+        uses: actions/cache/save@v4
         with:
           path: baseline-size
           key: samd-size-baseline-${{ env.DEPLOYMENT }}-${{ steps.harness.outputs.sha }}-${{ github.event.pull_request.base.sha }}
@@ -181,7 +181,7 @@ jobs:
       - name: "Seed the baseline cache"
         if: github.event_name == 'push'
         continue-on-error: true
-        uses: actions/cache/save@v6
+        uses: actions/cache/save@v4
         with:
           path: baseline-size
           key: samd-size-baseline-${{ env.DEPLOYMENT }}-${{ steps.harness.outputs.sha }}-${{ github.sha }}
@@ -242,7 +242,7 @@ jobs:
         # `baseline-size/` would put entries at `size/...` when a baseline exists but at
         # the archive root when it does not -- silently breaking the reporter in precisely
         # the degraded case this design is supposed to handle.
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v4
         with:
           name: size-report
           path: size/
@@ -251,7 +251,7 @@ jobs:
 
       - name: "Upload build artifacts"
         if: always()
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v4
         with:
           name: ${{ env.DEPLOYMENT }}-${{ env.TOOLCHAIN }}
           path: build-artifacts/${{ env.TOOLCHAIN }}/${{ env.DEPLOYMENT }}/

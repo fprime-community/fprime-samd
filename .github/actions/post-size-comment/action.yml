@@ -75,7 +75,7 @@ runs:
       id: download
       if: inputs.artifact-pattern == ''
       continue-on-error: true
-      uses: actions/download-artifact@v8
+      uses: actions/download-artifact@v5
       with:
         name: ${{ inputs.artifact-name }}
         path: ${{ inputs.path }}
@@ -86,7 +86,7 @@ runs:
       id: download-many
       if: inputs.artifact-pattern != ''
       continue-on-error: true
-      uses: actions/download-artifact@v8
+      uses: actions/download-artifact@v5
       with:
         pattern: ${{ inputs.artifact-pattern }}
         merge-multiple: true
@@ -98,7 +98,7 @@ runs:
       id: comment
       # Exactly one of the two download steps runs; the other reports 'skipped'.
       if: steps.download.outcome == 'success' || steps.download-many.outcome == 'success'
-      uses: actions/github-script@v9
+      uses: actions/github-script@v8
       env:
         ARTIFACT_PATH: ${{ inputs.path }}
         EXPECTED_HEAD_SHA: ${{ inputs.head-sha }}

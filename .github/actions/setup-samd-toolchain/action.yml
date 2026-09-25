@@ -131,7 +131,7 @@ runs:
 
     - name: "Restore ARM toolchain and CMSIS"
       id: tools-cache
-      uses: actions/cache/restore@v6
+      uses: actions/cache/restore@v4
       with:
         path: ${{ steps.paths.outputs.tools-dir }}
         key: ${{ steps.paths.outputs.cache-key }}

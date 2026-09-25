@@ -33,7 +33,7 @@ runs:
       #    the cold path.
       if: inputs.cache-hit != 'true'
       continue-on-error: true
-      uses: actions/cache/save@v6
+      uses: actions/cache/save@v4
       with:
         path: ${{ inputs.tools-dir }}
         key: ${{ inputs.cache-key }}
