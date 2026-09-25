@@ -19,6 +19,8 @@
    | `setup-samd-toolchain` | arm-none-eabi-gcc + CMSIS + CMSIS-Atmel, cached |
    | `save-samd-toolchain` | Saves that cache, only after a build has succeeded |
    | `unit-tests` | Builds and runs `*_ut_exe` targets in a generated cache |
+   | `measure-coverage` | Per-module + library-wide gcovr, plus per-module console logs |
+   | `publish-coverage` | Renders the coverage site and pushes it to the Pages branch |
    | `measure-elf` | `size_report.py measure` against a linked ELF |
    | `render-size-report` | `size_report.py render` into comment markdown |
    | `post-size-comment` | Posts/updates the sticky comment from a `workflow_run` |
@@ -33,6 +35,9 @@
      instance, plus runner egress to github.com for the one-time `arduino-cli`
      download (or set `setup-samd-toolchain`'s `tools-archive-base` for air-gapped
      runners)
+   - for `measure-coverage` and the coverage workflows only: `nasa/fprime-actions`
+     reachable, since the module-discovery and per-module coverage scripts, and the
+     publishers that write the site, all come from there
 
 ## Which deployments, which toolchain
 
