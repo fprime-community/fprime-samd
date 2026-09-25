@@ -5,33 +5,6 @@ description: >-
   Intended to be called from a `workflow_run`-triggered workflow so the build
   itself never needs a writable token.
 
-# SECURITY MODEL -- READ BEFORE CHANGING
-# --------------------------------------------------------------------------------
-# The caller must be triggered by `workflow_run`, not `pull_request_target`. The
-# build workflow runs a contributor's C++, this project's CMake and its Python
-# autocoders; under `pull_request_target` that untrusted code would execute with a
-# writable token, which is a straight remote-code-execution hole in a public repo.
-# With `workflow_run` the build gets a read-only token and no secrets, uploads the
-# rendered markdown as an artifact, and THIS action -- running the default-branch
-# copy of the caller, never the pull request's copy -- does nothing but download
-# that artifact and post it. It never checks out or executes pull request code.
-#
-# Residual risk, and the mitigations here:
-#   * For a `pull_request` event GitHub runs the *pull request's* copy of the build
-#     workflow, so a contributor controls both the markdown and the pull request
-#     number the artifact declares. The declared number is therefore ignored
-#     unless that pull request's head SHA matches the triggering run's head_sha.
-#   * The body is untrusted text. GitHub sanitises comment bodies (no scripts, no
-#     markup escape), so the worst case is a cosmetic or misleading comment on the
-#     contributor's own pull request. Bodies are clamped so an oversized artifact
-#     cannot 422 the API and leave the reporter permanently red.
-#   * The sticky marker is read from the artifact too, so it is charset-validated
-#     and only ever matched against comments on the already-verified pull request.
-#
-# Combined with no `checkout`, no secrets beyond GITHUB_TOKEN, and `contents: read`,
-# the worst case even if the SHA check were bypassed is a comment -- never a
-# repository write and never code execution.
-
 inputs:
   run-id:
     description: "github.event.workflow_run.id of the build that produced the artifact."
@@ -71,15 +44,20 @@ outputs:
 runs:
   using: "composite"
   steps:
-    # v3, not v4+: v4's @actions/artifact v2 backend (and its `pattern` /
-    # `merge-multiple` inputs) needs GHES blob storage that this org's instance does
-    # not have (GHESNotSupportedError). v3 uses the legacy artifact API, which every
-    # GHES version supports, but it can only fetch by exact name or fetch everything --
-    # there is no server-side glob. The pattern case below downloads every artifact for
-    # the run and filters client-side instead.
-    - name: "Download the size report artifact"
+    - name: "Download the size report artifact (github.com)"
       id: download
-      if: inputs.artifact-pattern == ''
+      if: inputs.artifact-pattern == '' && github.server_url == 'https://github.com'
+      continue-on-error: true
+      uses: actions/download-artifact@v4
+      with:
+        name: ${{ inputs.artifact-name }}
+        path: ${{ inputs.path }}
+        run-id: ${{ inputs.run-id }}
+        github-token: ${{ inputs.github-token }}
+
+    - name: "Download the size report artifact (GHES)"
+      id: download-ghes
+      if: inputs.artifact-pattern == '' && github.server_url != 'https://github.com'
       continue-on-error: true
       uses: actions/download-artifact@v3
       with:
@@ -88,21 +66,36 @@ runs:
         run-id: ${{ inputs.run-id }}
         github-token: ${{ inputs.github-token }}
 
-    - name: "Download every artifact from the run"
-      id: download-all
-      if: inputs.artifact-pattern != ''
+    - name: "Download and merge the size report artifacts (github.com)"
+      id: download-many
+      if: inputs.artifact-pattern != '' && github.server_url == 'https://github.com'
       continue-on-error: true
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
       with:
-        # `name` omitted: v3 fetches every artifact for the run, each into its own
-        # `${path}/<artifact-name>/` subdirectory.
+        pattern: ${{ inputs.artifact-pattern }}
+        merge-multiple: true
         path: ${{ inputs.path }}
         run-id: ${{ inputs.run-id }}
         github-token: ${{ inputs.github-token }}
 
-    - name: "Merge the artifacts matching the pattern"
-      id: download-many
-      if: inputs.artifact-pattern != '' && steps.download-all.outcome == 'success'
+    - name: "Download every artifact from the run (GHES)"
+      id: download-all-ghes
+      if: inputs.artifact-pattern != '' && github.server_url != 'https://github.com'
+      continue-on-error: true
+      uses: actions/download-artifact@v3
+      with:
+        # `name` omitted: v3 has no server-side glob, so it fetches every artifact for
+        # the run instead, each into its own `${path}/<artifact-name>/` subdirectory.
+        # The next step filters and flattens client-side.
+        path: ${{ inputs.path }}
+        run-id: ${{ inputs.run-id }}
+        github-token: ${{ inputs.github-token }}
+
+    - name: "Merge the artifacts matching the pattern (GHES)"
+      id: download-many-ghes
+      if: >-
+        inputs.artifact-pattern != '' && github.server_url != 'https://github.com' &&
+        steps.download-all-ghes.outcome == 'success'
       shell: bash
       env:
         PATTERN: ${{ inputs.artifact-pattern }}
@@ -132,8 +125,10 @@ runs:
 
     - name: "Verify the pull request and post the comment(s)"
       id: comment
-      # Exactly one of the two download paths runs; the other reports 'skipped'.
-      if: steps.download.outcome == 'success' || steps.download-many.outcome == 'success'
+      # Exactly one of the four download paths runs; the rest report 'skipped'.
+      if: >-
+        steps.download.outcome == 'success' || steps.download-ghes.outcome == 'success' ||
+        steps.download-many.outcome == 'success' || steps.download-many-ghes.outcome == 'success'
       uses: actions/github-script@v8
       env:
         ARTIFACT_PATH: ${{ inputs.path }}
@@ -258,6 +253,8 @@ runs:
           core.setOutput('posted', String(posted));
 
     - name: "Note a build that produced no report"
-      if: steps.download.outcome != 'success' && steps.download-many.outcome != 'success'
+      if: >-
+        steps.download.outcome != 'success' && steps.download-ghes.outcome != 'success' &&
+        steps.download-many.outcome != 'success' && steps.download-many-ghes.outcome != 'success'
       shell: bash
       run: echo "::notice::no size-report artifact on run ${{ inputs.run-id }}; nothing to comment"
