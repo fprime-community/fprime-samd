@@ -1,27 +1,3 @@
-# Cross-builds the fprime-samd-reference deployment against THIS commit of fprime-samd and
-# measures the flash/RAM footprint against the same harness built with this pull request's
-# base commit of fprime-samd.
-#
-# This is the gate that matters for a library like this one. The unit tests prove the
-# components behave; this proves they still fit. A library whose components each pass in
-# isolation but which adds 3 KB of flash to every consumer has regressed, and on a 128 KiB
-# part that is a defect.
-#
-# SECURITY: THIS WORKFLOW RUNS UNTRUSTED CODE AND MUST NEVER HOLD A WRITE TOKEN
-# ----------------------------------------------------------------------------------------
-# Its whole purpose is to compile a contributor's C++ and run CMake and Python autocoders.
-# On a `pull_request` from a fork the GITHUB_TOKEN is read-only and no secrets are exposed,
-# which is what we want -- and it also means this job cannot post the size comment itself.
-# It uploads the rendered markdown as an artifact and the separate size-report.yml
-# workflow, triggered by `workflow_run`, posts it. See that file, and the security notes in
-# .github/actions/post-size-comment, for why `pull_request_target` was rejected.
-#
-# Note that the shared composite actions this job uses come from the *pull request's* copy
-# of .github/actions, because they are spliced in along with the rest of the library. That
-# is deliberate: a pull request that changes CI is testable in the pull request that
-# changes it. It is safe for the same reason compiling the pull request's C++ is safe --
-# read-only token, no secrets.
-
 name: "Build"
 
 on:
@@ -49,12 +25,8 @@ jobs:
   build:
     name: "SAMD21 build and size report"
     runs-on: ubuntu-24.04
-    # The slow path is a cold toolchain cache (~500 MB restore) plus a baseline build,
-    # i.e. two full cross builds.
     timeout-minutes: 60
     steps:
-      # THE SPLICE. See the long comment on the same three steps in unit-tests.yml for why
-      # submodules are initialised selectively instead of with `submodules: recursive`.
       - name: "Checkout the harness"
         uses: actions/checkout@v7
         with:
@@ -70,10 +42,6 @@ jobs:
 
       - name: "Resolve the harness commit"
         id: harness
-        # Pinned here and reused for the baseline checkout below, so head and baseline
-        # are built against a byte-identical harness even if HARNESS_REF moves
-        # mid-run. Without this the size delta could silently include a harness change,
-        # which is the exact failure the whole baseline design exists to avoid.
         shell: bash
         run: echo "sha=$(git rev-parse HEAD)" >> "${GITHUB_OUTPUT}"
 
@@ -124,20 +92,6 @@ jobs:
           linker-script: lib/fprime-samd/cmake/toolchain/samd21/curiosity_nano/linker_scripts/flash_without_bootloader.ld
           label: SAMD21G17D
 
-      # ---------------------------------------------------------------------------------
-      # Baseline: the SAME harness commit, with this pull request's BASE commit of
-      # fprime-samd. That isolates the delta to this pull request's library diff, which is
-      # the only thing a library pull request can be held responsible for.
-      #
-      # Memoised on (harness sha, library base sha) so the second and later pushes to a
-      # pull request cost a single build. Push-to-main runs seed the same cache, and caches
-      # written on the default branch are readable from every pull request.
-      #
-      # There is deliberately NO `restore-keys` fallback: a fuzzy match would hand back a
-      # baseline from an unrelated commit and report infrastructure drift as a code delta.
-      # Every step below is non-fatal; a missing baseline degrades the comment to absolute
-      # sizes and must never fail the build.
-      # ---------------------------------------------------------------------------------
       - name: "Restore the baseline measurement"
         id: baseline-cache
         if: github.event_name == 'pull_request'
