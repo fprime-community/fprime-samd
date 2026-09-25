@@ -46,11 +46,30 @@ inputs:
     description: "Fail if the filters match no tests at all."
     required: false
     default: "true"
+  output-junit:
+    description: >-
+      Write a ctest JUnit XML report here (absolute, or relative to the working
+      directory). Empty writes none. The report carries each test's captured console
+      output in <system-out>, which is what the coverage site's console-log pages are
+      built from.
+    required: false
+    default: ""
+  output-size-limit:
+    description: >-
+      Per-test cap on captured output, in bytes, for the JUnit report. ctest's own
+      default truncates *passing* tests at 1 KiB and replaces the rest with "[This
+      part of the test output was removed...]" -- which throws away almost all of a
+      gtest run. Only meaningful alongside output-junit.
+    required: false
+    default: "4194304"
 
 outputs:
   test-count:
     description: "Number of tests ctest ran."
     value: ${{ steps.run.outputs.count }}
+  junit-path:
+    description: "Path of the JUnit report, or empty if none was written."
+    value: ${{ steps.run.outputs.junit }}
 
 runs:
   using: "composite"
@@ -112,6 +131,8 @@ runs:
         INCLUDE_RE: ${{ inputs.include }}
         EXCLUDE_RE: ${{ inputs.exclude }}
         FAIL_ON_NO_TESTS: ${{ inputs.fail-on-no-tests }}
+        OUTPUT_JUNIT: ${{ inputs.output-junit }}
+        OUTPUT_SIZE_LIMIT: ${{ inputs.output-size-limit }}
       run: |
         set -uo pipefail
         if [ -n "${PRESET}" ]; then
@@ -136,6 +157,17 @@ runs:
           echo "::notice::no tests matched in ${BUILD_DIR}; nothing was run"
           exit 0
         fi
+
+        # Added only now, after the --show-only count above: --output-junit on a
+        # --show-only run writes a report with no results, overwriting the real one.
+        if [ -n "${OUTPUT_JUNIT}" ]; then
+          mkdir -p "$(dirname "${OUTPUT_JUNIT}")"
+          CTEST_ARGS+=(--output-junit "${OUTPUT_JUNIT}"
+                       --test-output-size-passed "${OUTPUT_SIZE_LIMIT}"
+                       --test-output-size-failed "${OUTPUT_SIZE_LIMIT}")
+          echo "junit=${OUTPUT_JUNIT}" >> "${GITHUB_OUTPUT}"
+        fi
+
         echo "running ${COUNT} test(s)"
         ctest "${CTEST_ARGS[@]}"
 

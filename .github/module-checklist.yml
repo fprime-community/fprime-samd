@@ -1,0 +1,13 @@
+# Reporting policy for the published coverage site, read by
+# nasa/fprime-actions/coverage-update via .github/workflows/coverage-update.yml.
+#
+# Badge tiers are line-coverage cut-offs: at or above `platinum` is platinum, at or
+# above `gold` is gold, at or above `silver` is silver, and anything below (including
+# a module with no coverage at all) is bronze. These are upstream's defaults, written
+# out explicitly so the thresholds are visible and reviewable here rather than
+# implied. Every key is optional; omitting one falls back to the same default.
+coverage:
+  tiers:
+    platinum: 95
+    gold: 90
+    silver: 80

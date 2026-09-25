@@ -1,0 +1,141 @@
+# Publishes the coverage site GitHub Pages serves, and the baseline that
+# coverage-check.yml compares pull requests against.
+#
+# Everything lands on one orphan branch, coverage/main, because GitHub Pages serves
+# exactly one branch:
+#
+#   /                      the current state of main, republished on every push
+#   /releases/<tag>/       frozen at the tag, never rewritten -- the permanent link
+#   /releases/             index of every release published so far
+#
+# A tag build does not touch the root's coverage data; it only re-renders the root
+# page so the new release appears in its release list.
+name: "Coverage Update"
+
+# No paths-ignore here, deliberately. Path filters are evaluated for tag pushes too,
+# and a tag pointing at an already-pushed commit can fail them and silently skip the
+# release publish. An occasional no-op republish after a docs-only push to main is
+# the cheaper failure.
+on:
+  push:
+    branches: [ main ]
+    tags: [ 'v*' ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  # Per ref, and not cancel-in-progress: a half-published site is worse than a stale
+  # one. Races between a main push and a tag push are handled inside the publisher,
+  # which re-mirrors and retries on a rejected push.
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  HARNESS_REPO: fprime-community/fprime-samd-reference
+  HARNESS_REF: main
+  # The branch GitHub Pages is configured to serve. Fixed, not derived from the ref:
+  # a tag build has to publish here too or its report would not be served.
+  PAGES_BRANCH: coverage/main
+
+jobs:
+  coverage-update:
+    name: "Coverage [${{ github.ref_type == 'tag' && github.ref_name || 'main' }}]"
+    # ubuntu-24.04 for gcov-13; see coverage-check.yml for why gcov-11 must be avoided.
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    steps:
+      - name: "Checkout the harness"
+        uses: actions/checkout@v5
+        with:
+          repository: ${{ env.HARNESS_REPO }}
+          ref: ${{ env.HARNESS_REF }}
+          filter: blob:none
+
+      - name: "Initialise the harness's other submodules"
+        shell: bash
+        run: |
+          git submodule update --init --recursive --filter=blob:none \
+            lib/fprime lib/fprime-baremetal
+
+      - name: "Check this ref out as lib/fprime-samd"
+        uses: actions/checkout@v5
+        with:
+          path: lib/fprime-samd
+          # Full history: the publisher worktrees the Pages branch out of this
+          # checkout and reads the built commit's subject for its commit message.
+          fetch-depth: 0
+          filter: blob:none
+
+      - name: "Report what is being measured"
+        shell: bash
+        run: |
+          echo "harness  ${HARNESS_REPO}@$(git rev-parse HEAD)"
+          echo "library  ${GITHUB_REPOSITORY}@$(git -C lib/fprime-samd rev-parse HEAD)"
+          echo "ref      ${{ github.ref_type }} ${{ github.ref_name }}"
+
+      - name: "Set up F Prime"
+        uses: ./lib/fprime-samd/.github/actions/setup-fprime
+
+      - name: "Generate the native unit-test build cache"
+        run: fprime-util generate --ut
+
+      - name: "Build and run this library's unit tests"
+        id: ut
+        uses: ./lib/fprime-samd/.github/actions/unit-tests
+        with:
+          # Captures each test's console output, which becomes the site's per-module
+          # "Unit tests" links.
+          output-junit: ${{ runner.temp }}/fprime-samd-coverage/ut-junit.xml
+          preset: native-ut
+          include: "^fprime-samd_"
+
+      - name: "Coverage"
+        id: cov
+        uses: ./lib/fprime-samd/.github/actions/measure-coverage
+        with:
+          junit: ${{ steps.ut.outputs.junit-path }}
+
+      - name: "Publish"
+        id: publish
+        uses: ./lib/fprime-samd/.github/actions/publish-coverage
+        with:
+          modules-jsonl: ${{ steps.cov.outputs.modules-jsonl }}
+          pages-branch: ${{ env.PAGES_BRANCH }}
+          # Non-empty only for a tag build, which is what routes the report to
+          # releases/<tag>/ instead of the branch root.
+          release: ${{ github.ref_type == 'tag' && github.ref_name || '' }}
+
+      - name: "Ensure the site has .nojekyll"
+        # Without it GitHub Pages runs the tree through Jekyll, which drops paths
+        # beginning with `_` or `.` and can fail the build outright on content it did
+        # not expect. Idempotent, and done through the contents API rather than a
+        # worktree so it cannot collide with the publisher's still-checked-out one.
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          if gh api "repos/${REPO}/contents/.nojekyll?ref=${PAGES_BRANCH}" >/dev/null 2>&1; then
+            echo ".nojekyll already present on ${PAGES_BRANCH}"
+            exit 0
+          fi
+          gh api -X PUT "repos/${REPO}/contents/.nojekyll" \
+            -f message="pages: add .nojekyll so the coverage tree is served verbatim" \
+            -f content="$(printf '\n' | base64)" \
+            -f branch="${PAGES_BRANCH}"
+
+      - name: "Link to what was published"
+        shell: bash
+        env:
+          OWNER: ${{ github.repository_owner }}
+          NAME: ${{ github.event.repository.name }}
+          URL_PATH: ${{ steps.publish.outputs.url-path }}
+        run: |
+          {
+            echo "Published to \`${PAGES_BRANCH}\`."
+            echo ""
+            echo "<https://${OWNER}.github.io/${NAME}/${URL_PATH}>"
+          } >> "${GITHUB_STEP_SUMMARY}"
