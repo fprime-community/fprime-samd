@@ -1,9 +1,4 @@
 # C++ formatting and CI-script sanity for this library.
-#
-# `fprime-util format` resolves .clang-format through settings.ini's framework_path, and
-# this repository has neither, so the harness is borrowed here for the same reason
-# unit-tests.yml borrows it. Only fprime-samd/ is checked: default/samd-config holds
-# configuration headers that consumers copy and edit, and cmake/ is not C++.
 
 name: "Code Format Check"
 

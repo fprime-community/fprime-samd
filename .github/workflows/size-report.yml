@@ -1,18 +1,4 @@
 # Posts, and keeps updating, the sticky flash/RAM size comment produced by build.yml.
-#
-# This file is intentionally thin: all of the logic, and all of the security reasoning,
-# lives in .github/actions/post-size-comment. What cannot be shared is the trigger -- a
-# `workflow_run` filter names workflows in the *same* repository, so every repository that
-# wants a size comment needs its own copy of this shim. That is also what makes it safe:
-# `workflow_run` runs the copy of this file on the DEFAULT BRANCH, never the pull request's
-# version, so a contributor cannot alter the job that holds the writable token.
-#
-# BOOTSTRAPPING CAVEAT
-# ----------------------------------------------------------------------------------------
-# `workflow_run` only fires for workflow files that already exist on the default branch.
-# The pull request that introduces this file will not get a size comment; the next one
-# will. Build results still gate that first pull request normally.
-
 name: "Size Report"
 
 on:
@@ -40,9 +26,6 @@ jobs:
       actions: read
     steps:
       - name: "Checkout the reporting action"
-        # Pinned to the default branch by omitting `ref` -- this must never be the pull
-        # request's copy of the action, because this job holds a writable token. The action
-        # is in this repository, so no submodules are needed.
         uses: actions/checkout@v7
         with:
           sparse-checkout: .github/actions/post-size-comment
