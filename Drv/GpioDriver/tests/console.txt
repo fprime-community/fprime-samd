@@ -1,0 +1,100 @@
+# unit-test console output: Drv/GpioDriver
+
+==============================================================================
+PASSED  fprime-samd_Drv_GpioDriver_ut_exe  (0.02s)
+==============================================================================
+[STest::Random] Generated seed 577936 from system time
+[==========] Running 13 tests from 2 test suites.
+[----------] Global test environment set-up.
+[----------] 7 tests from Nominal
+[ RUN      ] Nominal.testConfigureOutput
+
+***************************************
+(RQ)       GPIO-001: configureOutput shall bind the instance to one group/pin and forward the configuration to the PORT peripheral
+***************************************
+[       OK ] Nominal.testConfigureOutput (0 ms)
+[ RUN      ] Nominal.testConfigureInput
+
+***************************************
+(RQ)       GPIO-001: configureInput shall bind the instance to one group/pin and forward the configuration to the PORT peripheral
+***************************************
+
+***************************************
+(RQ)       GPIO-002: configureInput shall select a pull-up, pull-down, or no internal resistor via InputPullMode
+***************************************
+[       OK ] Nominal.testConfigureInput (0 ms)
+[ RUN      ] Nominal.testConfigureAllPins
+
+***************************************
+(RQ)       GPIO-001: configureOutput shall bind the instance to any one group/pin combination
+***************************************
+[       OK ] Nominal.testConfigureAllPins (0 ms)
+[ RUN      ] Nominal.testWriteNominal
+
+***************************************
+(RQ)       GPIO-003: gpioWrite shall set the pin logic level and return OP_OK when the pin is configured as an output
+***************************************
+[       OK ] Nominal.testWriteNominal (0 ms)
+[ RUN      ] Nominal.testReadNominal
+
+***************************************
+(RQ)       GPIO-004: gpioRead shall return the pin logic level and OP_OK when the pin is configured as an input
+***************************************
+[       OK ] Nominal.testReadNominal (0 ms)
+[ RUN      ] Nominal.testConfigureInputExternalInterrupt
+
+***************************************
+(RQ)       GPIO-007: configureInput shall, when ExternalInterruptMode is not NONE, configure the EIC to detect the selected edge(s) on the pin's EXTINT line
+***************************************
+[       OK ] Nominal.testConfigureInputExternalInterrupt (0 ms)
+[ RUN      ] Nominal.testInterruptFiresWhenConnected
+
+***************************************
+(RQ)       GPIO-008: On each configured edge, the driver shall emit a cycle on the gpioInterrupt output port when it is connected
+***************************************
+[       OK ] Nominal.testInterruptFiresWhenConnected (0 ms)
+[----------] 7 tests from Nominal (0 ms total)
+
+[----------] 6 tests from OffNominal
+[ RUN      ] OffNominal.testWriteUnconfigured
+
+***************************************
+(RQ)       GPIO-005: gpioWrite shall return NOT_OPENED if invoked before configureOutput
+***************************************
+[       OK ] OffNominal.testWriteUnconfigured (0 ms)
+[ RUN      ] OffNominal.testReadUnconfigured
+
+***************************************
+(RQ)       GPIO-005: gpioRead shall return NOT_OPENED if invoked before configureInput
+***************************************
+[       OK ] OffNominal.testReadUnconfigured (0 ms)
+[ RUN      ] OffNominal.testWriteWrongMode
+
+***************************************
+(RQ)       GPIO-006: gpioWrite on an input pin shall return INVALID_MODE without touching hardware
+***************************************
+[       OK ] OffNominal.testWriteWrongMode (0 ms)
+[ RUN      ] OffNominal.testReadWrongMode
+
+***************************************
+(RQ)       GPIO-006: gpioRead on an output pin shall return INVALID_MODE without touching hardware
+***************************************
+[       OK ] OffNominal.testReadWrongMode (0 ms)
+[ RUN      ] OffNominal.testInterruptIsrNoOpWhenDisconnected
+
+***************************************
+(RQ)       GPIO-008: the driver shall emit a cycle on the gpioInterrupt output port only when it is connected
+***************************************
+[       OK ] OffNominal.testInterruptIsrNoOpWhenDisconnected (0 ms)
+[ RUN      ] OffNominal.testInterruptNoDispatchWithoutRegisteredHandler
+
+***************************************
+(RQ)       GPIO-008: the driver shall emit a cycle on the gpioInterrupt output port only for edges on the pin it configured
+***************************************
+[       OK ] OffNominal.testInterruptNoDispatchWithoutRegisteredHandler (0 ms)
+[----------] 6 tests from OffNominal (0 ms total)
+
+[----------] Global test environment tear-down
+[==========] 13 tests from 2 test suites ran. (1 ms total)
+[  PASSED  ] 13 tests.
+

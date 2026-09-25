@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html class="theme-green">
+
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+    <title>GCC Code Coverage Report</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <link rel="stylesheet" href="coverage.css"/>
+  </head>
+
+  <body>
+
+    <header>
+      <h1>GCC Code Coverage Report</h1>
+      <hr/>
+      <div class="summary">
+<div>
+  <table class="legend">
+    <tr>
+      <th scope="row">Directory:</th>
+      <td>lib/fprime-samd/fprime-samd/Drv/RtcDriver/</td>
+    </tr>
+    <tr>
+      <th scope="row">Date:</th>
+      <td>2026-09-25 23:57:46</td>
+    </tr>
+  </table>
+</div>
+
+<div>
+  <table class="coverage">
+    <tr>
+      <th></th>
+      <th scope="col">Exec</th>
+      <th scope="col">Total</th>
+      <th scope="col">Coverage</th>
+    </tr>
+    <tr>
+      <th scope="row">Lines:</th>
+      <td>111</td>
+      <td>141</td>
+      <td class="coverage-medium">78.7%</td>
+    </tr>
+    <tr>
+      <th scope="row">Functions:</th>
+      <td>20</td>
+      <td>26</td>
+      <td class="coverage-medium">76.9%</td>
+    </tr>
+    <tr>
+      <th scope="row">Branches:</th>
+      <td>26</td>
+      <td>48</td>
+      <td class="coverage-low">54.2%</td>
+    </tr>
+  </table>
+</div>
+      </div>
+      <hr/>
+    </header>
+    <nav>
+    </nav>
+    <main>
+<table class="listOfFunctions">
+  <tr>
+    <th>Function (File:Line)</th>
+    <th>Call count</th>
+    <th>Block coverage</th>
+  </tr>
+  <tr><td><a href="coverage.DefaultRawTime.cpp.2838b54be519711a962ce8b905e3b80d.html#l14">Os::RawTimeInterface::getDelegate(unsigned char (&amp;) [56], Os::RawTimeInterface const*, Os::RawTimeSource) (lib/fprime-samd/fprime-samd/Drv/RtcDriver/DefaultRawTime.cpp:14)</a></td><td>not called</td><td>0.0%</td></tr>
+  <tr><td><a href="coverage.RawTime.hpp.ebdb19b74fab8929db72ba9639c8a931.html#l29">Os::Samd21::Samd21RawTime::Samd21RawTime() (lib/fprime-samd/fprime-samd/Drv/RtcDriver/RawTime.hpp:29)</a></td><td>called 4 times</td><td>100.0%</td></tr>
+  <tr><td><a href="coverage.RawTime.cpp.7a26cddedeec516a8bb1fb654a50a3c2.html#l57">Os::Samd21::Samd21RawTime::deserializeFrom(Fw::SerialBufferBase&amp;, Fw::Endianness) (lib/fprime-samd/fprime-samd/Drv/RtcDriver/RawTime.cpp:57)</a></td><td>called 2 times</td><td>100.0%</td></tr>
+  <tr><td><a href="coverage.RawTime.cpp.7a26cddedeec516a8bb1fb654a50a3c2.html#l20">Os::Samd21::Samd21RawTime::getHandle() (lib/fprime-samd/fprime-samd/Drv/RtcDriver/RawTime.cpp:20)</a></td><td>called 4 times</td><td>100.0%</td></tr>
+  <tr><td><a href="coverage.RawTime.cpp.7a26cddedeec516a8bb1fb654a50a3c2.html#l30">Os::Samd21::Samd21RawTime::getTimeInterval(Os::DelegateRawTime const&amp;, Fw::TimeInterval&amp;) const (lib/fprime-samd/fprime-samd/Drv/RtcDriver/RawTime.cpp:30)</a></td><td>not called</td><td>0.0%</td></tr>
+  <tr><td><a href="coverage.RawTime.cpp.7a26cddedeec516a8bb1fb654a50a3c2.html#l24">Os::Samd21::Samd21RawTime::now() (lib/fprime-samd/fprime-samd/Drv/RtcDriver/RawTime.cpp:24)</a></td><td>called 2 times</td><td>90.0%</td></tr>
+  <tr><td><a href="coverage.RawTime.cpp.7a26cddedeec516a8bb1fb654a50a3c2.html#l48">Os::Samd21::Samd21RawTime::serializeTo(Fw::SerialBufferBase&amp;, Fw::Endianness) const (lib/fprime-samd/fprime-samd/Drv/RtcDriver/RawTime.cpp:48)</a></td><td>called 2 times</td><td>100.0%</td></tr>
+  <tr><td><a href="coverage.RawTime.hpp.ebdb19b74fab8929db72ba9639c8a931.html#l33">Os::Samd21::Samd21RawTime::~Samd21RawTime() (lib/fprime-samd/fprime-samd/Drv/RtcDriver/RawTime.hpp:33)</a></td><td>called 4 times</td><td>100.0%</td></tr>
+  <tr><td><a href="coverage.RawTime.cpp.7a26cddedeec516a8bb1fb654a50a3c2.html#l10">Os::Samd21::isNewer(Os::Samd21::Samd21RawTimeHandle const&amp;, Os::Samd21::Samd21RawTimeHandle const&amp;) (lib/fprime-samd/fprime-samd/Drv/RtcDriver/RawTime.cpp:10)</a></td><td>not called</td><td>0.0%</td></tr>
+  <tr><td><a href="coverage.RtcDriver.cpp.980e5165639d17133db819b94807abf6.html#l18">Os::Samd21::timeNow() (lib/fprime-samd/fprime-samd/Drv/RtcDriver/RtcDriver.cpp:18)</a></td><td>called 11 times</td><td>82.0%</td></tr>
+  <tr><td><a href="coverage.RtcDriver.cpp.980e5165639d17133db819b94807abf6.html#l62">Samd21::RtcDriver::RtcDriver(char const*) (lib/fprime-samd/fprime-samd/Drv/RtcDriver/RtcDriver.cpp:62)</a></td><td>called 10 times</td><td>100.0%</td></tr>
+  <tr><td><a href="coverage.RtcDriver.cpp.980e5165639d17133db819b94807abf6.html#l120">Samd21::RtcDriver::activeIn_handler(short, unsigned int) (lib/fprime-samd/fprime-samd/Drv/RtcDriver/RtcDriver.cpp:120)</a></td><td>called 7 times</td><td>74.0%</td></tr>
+  <tr><td><a href="coverage.RtcDriver.cpp.980e5165639d17133db819b94807abf6.html#l64">Samd21::RtcDriver::configure(Samd21::RtcDriver::ClockSource, Samd21::RtcDriver::TickRate) (lib/fprime-samd/fprime-samd/Drv/RtcDriver/RtcDriver.cpp:64)</a></td><td>called 33 times</td><td>87.0%</td></tr>
+  <tr><td><a href="coverage.RtcDriver.cpp.980e5165639d17133db819b94807abf6.html#l112">Samd21::RtcDriver::enable() (lib/fprime-samd/fprime-samd/Drv/RtcDriver/RtcDriver.cpp:112)</a></td><td>called 9 times</td><td>75.0%</td></tr>
+  <tr><td><a href="coverage.RtcDriver.cpp.980e5165639d17133db819b94807abf6.html#l145">Samd21::RtcDriver::~RtcDriver() (lib/fprime-samd/fprime-samd/Drv/RtcDriver/RtcDriver.cpp:145)</a></td><td>called 10 times</td><td>100.0%</td></tr>
+  <tr><td><a href="coverage.RtcDriverHardwareStub.cpp.87ab923886a7444af4fb723de099465a.html#l59">Samd21::RtcHardware::RtcHal::clearRtcInterrupt() (lib/fprime-samd/fprime-samd/Drv/RtcDriver/RtcDriverHardwareStub.cpp:59)</a></td><td>not called</td><td>0.0%</td></tr>
+  <tr><td><a href="coverage.RtcDriverHardwareStub.cpp.87ab923886a7444af4fb723de099465a.html#l41">Samd21::RtcHardware::RtcHal::configureGclk(Samd21::RtcDriver::ClockSource) (lib/fprime-samd/fprime-samd/Drv/RtcDriver/RtcDriverHardwareStub.cpp:41)</a></td><td>called 33 times</td><td>100.0%</td></tr>
+  <tr><td><a href="coverage.RtcDriverHardwareStub.cpp.87ab923886a7444af4fb723de099465a.html#l45">Samd21::RtcHardware::RtcHal::configureRtc(unsigned int, Samd21::RtcDriver::TickRate) (lib/fprime-samd/fprime-samd/Drv/RtcDriver/RtcDriverHardwareStub.cpp:45)</a></td><td>called 33 times</td><td>100.0%</td></tr>
+  <tr><td><a href="coverage.RtcDriverHardwareStub.cpp.87ab923886a7444af4fb723de099465a.html#l50">Samd21::RtcHardware::RtcHal::enableRtc() (lib/fprime-samd/fprime-samd/Drv/RtcDriver/RtcDriverHardwareStub.cpp:50)</a></td><td>called 9 times</td><td>100.0%</td></tr>
+  <tr><td><a href="coverage.RtcDriverHardwareStub.cpp.87ab923886a7444af4fb723de099465a.html#l54">Samd21::RtcHardware::RtcHal::readRtcCounter() (lib/fprime-samd/fprime-samd/Drv/RtcDriver/RtcDriverHardwareStub.cpp:54)</a></td><td>called 10 times</td><td>100.0%</td></tr>
+  <tr><td><a href="coverage.RtcDriverHardwareStub.cpp.87ab923886a7444af4fb723de099465a.html#l33">Samd21::RtcHardware::RtcHal::waitForGclk() (lib/fprime-samd/fprime-samd/Drv/RtcDriver/RtcDriverHardwareStub.cpp:33)</a></td><td>not called</td><td>0.0%</td></tr>
+  <tr><td><a href="coverage.RtcDriverHardwareStub.cpp.87ab923886a7444af4fb723de099465a.html#l37">Samd21::RtcHardware::RtcHal::waitForRtcMode0() (lib/fprime-samd/fprime-samd/Drv/RtcDriver/RtcDriverHardwareStub.cpp:37)</a></td><td>not called</td><td>0.0%</td></tr>
+  <tr><td><a href="coverage.RtcDriverHardwareStub.cpp.87ab923886a7444af4fb723de099465a.html#l29">Samd21::RtcHardware::getRtcState() (lib/fprime-samd/fprime-samd/Drv/RtcDriver/RtcDriverHardwareStub.cpp:29)</a></td><td>called 99 times</td><td>100.0%</td></tr>
+  <tr><td><a href="coverage.RtcDriverHardwareStub.cpp.87ab923886a7444af4fb723de099465a.html#l77">Samd21::RtcHardware::resetRtcState() (lib/fprime-samd/fprime-samd/Drv/RtcDriver/RtcDriverHardwareStub.cpp:77)</a></td><td>called 35 times</td><td>100.0%</td></tr>
+  <tr><td><a href="coverage.RtcDriverHardwareStub.cpp.87ab923886a7444af4fb723de099465a.html#l89">Samd21::RtcHardware::setRtcCounter(unsigned int) (lib/fprime-samd/fprime-samd/Drv/RtcDriver/RtcDriverHardwareStub.cpp:89)</a></td><td>called 10 times</td><td>100.0%</td></tr>
+  <tr><td><a href="coverage.RtcDriverHardwareStub.cpp.87ab923886a7444af4fb723de099465a.html#l64">Samd21::RtcHardware::simulateRtcInterrupt() (lib/fprime-samd/fprime-samd/Drv/RtcDriver/RtcDriverHardwareStub.cpp:64)</a></td><td>called 7 times</td><td>94.0%</td></tr>
+</table>
+
+      <hr/>
+    </main>
+    <footer>
+      Generated by: <a href="http://gcovr.com/en/8.2">GCOVR (Version 8.2)</a>
+    </footer>
+  </body>
+</html>
