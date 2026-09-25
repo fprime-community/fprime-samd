@@ -26,9 +26,7 @@ struct GpioHal {
     //! The pin must already be configured as an input (see configureInput). Routes
     //! the pin to its EIC EXTINT line and enables interrupt generation for the
     //! selected edge(s). interrupt_mode must not be NONE.
-    static void configureExternalInterrupt(U8 groupIdx,
-                                           U8 pinIdx,
-                                           GpioDriver::ExternalInterruptMode interrupt_mode);
+    static void configureExternalInterrupt(U8 groupIdx, U8 pinIdx, GpioDriver::ExternalInterruptMode interrupt_mode);
 
     //! Read the logic level on a given input pin
     static Fw::Logic read(U8 groupIdx, U8 pinIdx);

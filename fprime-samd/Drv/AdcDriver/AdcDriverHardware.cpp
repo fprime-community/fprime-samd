@@ -45,10 +45,10 @@ static void waitForResultReady() {
 }
 
 void AdcHal::configure(AdcDriver::VoltageReference ref,
-                        AdcDriver::Resolution res,
-                        AdcDriver::SampleCount samples,
-                        U8 samplingTime,
-                        AdcDriver::Gain gain) {
+                       AdcDriver::Resolution res,
+                       AdcDriver::SampleCount samples,
+                       U8 samplingTime,
+                       AdcDriver::Gain gain) {
     // Enable the APB clock for the ADC
     PM->APBCMASK.reg |= PM_APBCMASK_ADC;
 
@@ -146,8 +146,8 @@ void AdcHal::configureChannel(AdcDriver::AdcChannel channel) {
 }
 
 void AdcHal::selectChannel(AdcDriver::AdcChannel channel, U8 gain) {
-    ADC->INPUTCTRL.reg = ADC_INPUTCTRL_MUXPOS(static_cast<U8>(channel)) | ADC_INPUTCTRL_MUXNEG_GND |
-                         ADC_INPUTCTRL_GAIN(gain);
+    ADC->INPUTCTRL.reg =
+        ADC_INPUTCTRL_MUXPOS(static_cast<U8>(channel)) | ADC_INPUTCTRL_MUXNEG_GND | ADC_INPUTCTRL_GAIN(gain);
     AdcHal::waitForAdcSync();
 }
 

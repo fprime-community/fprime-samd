@@ -13,8 +13,8 @@
 // implementation, but no interrupts exist to disable.
 // ======================================================================
 
-#include "fprime-samd/Drv/Types/CriticalSection.hpp"
 #include "Fw/FPrimeBasicTypes.hpp"
+#include "fprime-samd/Drv/Types/CriticalSection.hpp"
 
 namespace Samd21 {
 

@@ -5,8 +5,8 @@
 // ======================================================================
 
 #include "fprime-samd/Drv/Types/Sercom.hpp"
-#include "fprime-samd/Drv/Types/SercomKindEnumAc.hpp"
 #include "Fw/Types/Assert.hpp"
+#include "fprime-samd/Drv/Types/SercomKindEnumAc.hpp"
 
 namespace Samd21 {
 Dma::TriggerSource SercomUtil::rxDmaTrigger(SercomKind sercom) {

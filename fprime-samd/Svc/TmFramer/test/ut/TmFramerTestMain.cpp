@@ -3,9 +3,9 @@
 // \brief  cpp file for TmFramer component test main function
 // ======================================================================
 
-#include "TmFramerTester.hpp"
-#include "STest/testing.hpp"
 #include "STest/Random/Random.hpp"
+#include "STest/testing.hpp"
+#include "TmFramerTester.hpp"
 
 TEST(Nominal, NominalFraming) {
     Samd21::TmFramerTester tester;

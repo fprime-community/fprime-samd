@@ -13,9 +13,9 @@
  * declarations exactly and avoid -Wbuiltin-declaration-mismatch warnings.
  */
 
-#include <stdint.h>
-#include <stdbool.h>
 #include <sam.h>
+#include <stdbool.h>
+#include <stdint.h>
 
 /**
  * __atomic_compare_exchange_4:

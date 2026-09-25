@@ -15,13 +15,11 @@ namespace Samd21 {
 // Out-of-class definition required pre-C++17 for any ODR-use of a static constexpr member
 constexpr U8 TmFramer::IDLE_DATA_PATTERN;
 
-static_assert(ComCfg::TmFrameFixedSize >
-                  Svc::Ccsds::TMHeader::SERIALIZED_SIZE + Svc::Ccsds::TMTrailer::SERIALIZED_SIZE,
+static_assert(ComCfg::TmFrameFixedSize > Svc::Ccsds::TMHeader::SERIALIZED_SIZE + Svc::Ccsds::TMTrailer::SERIALIZED_SIZE,
               "ComCfg::TmFrameFixedSize too small to hold TMHeader + TMTrailer");
 
 static constexpr FwSizeType TM_DATA_FIELD_CAPACITY =
     ComCfg::TmFrameFixedSize - (Svc::Ccsds::TMHeader::SERIALIZED_SIZE + Svc::Ccsds::TMTrailer::SERIALIZED_SIZE);
-
 
 static constexpr FwSizeType IDLE_SPACE_PACKET_MIN_SIZE = Svc::Ccsds::SpacePacketHeader::SERIALIZED_SIZE + 1;
 static constexpr FwSizeType MAX_SINGLE_SPACE_PACKET_SIZE =
@@ -109,7 +107,7 @@ void TmFramer ::comPacketQueueIn_handler(FwIndexType portNum, Fw::ComBuffer& dat
     // Data field starts after the (not-yet-written) TMHeader; append at that offset.
     U8* dataFieldStart = activeBuf->data + Svc::Ccsds::TMHeader::SERIALIZED_SIZE;
     FwSizeType written = appendSpacePacket(dataFieldStart + activeBuf->dataFieldSize,
-                                            TM_DATA_FIELD_CAPACITY - activeBuf->dataFieldSize, data);
+                                           TM_DATA_FIELD_CAPACITY - activeBuf->dataFieldSize, data);
     activeBuf->dataFieldSize += written;
     FW_ASSERT(activeBuf->dataFieldSize <= TM_DATA_FIELD_CAPACITY,
               static_cast<FwAssertArgType>(activeBuf->dataFieldSize));
@@ -146,7 +144,7 @@ U16 TmFramer ::nextApidSequenceCount(ComCfg::Apid apid) {
     if (slotIdx == -1) {
         // First time seeing this APID -- claim the next free slot if one is available. If
         // every downlink packet source is accounted for in Samd21::FramerConfig::MAX_TRACKED_APIDS,
-        // This path must stay non-fatal because it can be reached while handling a 
+        // This path must stay non-fatal because it can be reached while handling a
         // fatal/assert packet, and a crash here would prevent that packet from ever being sent.
         if (this->m_numApidsTracked >= Samd21::FramerConfig::MAX_TRACKED_APIDS) {
             this->m_apidOverflowCount++;
@@ -226,7 +224,7 @@ void TmFramer ::closeFrame(U8* frameData, FwSizeType dataFieldUsed) {
 
         Svc::Ccsds::SpacePacketHeader idleHeader;
         idleHeader.set_packetIdentification(static_cast<U16>(ComCfg::Apid::SPP_IDLE_PACKET) &
-                                             Svc::Ccsds::SpacePacketSubfields::ApidMask);
+                                            Svc::Ccsds::SpacePacketSubfields::ApidMask);
         idleHeader.set_packetSequenceControl(static_cast<U16>(0x3 << Svc::Ccsds::SpacePacketSubfields::SeqFlagsOffset));
         FwSizeType idleDataLen = remaining - Svc::Ccsds::SpacePacketHeader::SERIALIZED_SIZE;
         idleHeader.set_packetDataLength(static_cast<U16>(idleDataLen - 1));
@@ -243,7 +241,8 @@ void TmFramer ::closeFrame(U8* frameData, FwSizeType dataFieldUsed) {
     // Header (TM Transfer Frame Primary Header, CCSDS 132.0-B-3 4.1.2)
     // -----------------------------------------------
     Svc::Ccsds::TMHeader header;
-    U16 globalVcId = static_cast<U16>(1 << Svc::Ccsds::TMSubfields::virtualChannelIdOffset);  // VCID=1, this project's downlink virtual channel
+    U16 globalVcId = static_cast<U16>(
+        1 << Svc::Ccsds::TMSubfields::virtualChannelIdOffset);  // VCID=1, this project's downlink virtual channel
     globalVcId |= static_cast<U16>(ComCfg::SpacecraftId << Svc::Ccsds::TMSubfields::spacecraftIdOffset);
     globalVcId |= 0x0;  // Operational Control Field: Flag = 0 (no OCF present)
 
@@ -269,12 +268,13 @@ void TmFramer ::closeFrame(U8* frameData, FwSizeType dataFieldUsed) {
     // -----------------------------------------------
     // Trailer (FECF, CRC-16/CCITT-FALSE per CCSDS 132.0-B-3 4.1.6)
     // -----------------------------------------------
-    U16 crc = Svc::Ccsds::Utils::CRC16::compute(frameData, ComCfg::TmFrameFixedSize - Svc::Ccsds::TMTrailer::SERIALIZED_SIZE);
+    U16 crc =
+        Svc::Ccsds::Utils::CRC16::compute(frameData, ComCfg::TmFrameFixedSize - Svc::Ccsds::TMTrailer::SERIALIZED_SIZE);
     Svc::Ccsds::TMTrailer trailer;
     trailer.set_fecf(crc);
 
     Fw::Buffer trailerWrapper(frameData + ComCfg::TmFrameFixedSize - Svc::Ccsds::TMTrailer::SERIALIZED_SIZE,
-                               Svc::Ccsds::TMTrailer::SERIALIZED_SIZE);
+                              Svc::Ccsds::TMTrailer::SERIALIZED_SIZE);
     Fw::ExternalSerializeBuffer trailerSerializer(trailerWrapper.getData(), trailerWrapper.getSize());
     status = trailerSerializer.serializeFrom(trailer);
     FW_ASSERT(status == Fw::FW_SERIALIZE_OK, status);

@@ -16,9 +16,7 @@ namespace Samd21 {
 // ----------------------------------------------------------------------
 
 FramerTester ::FramerTester()
-    : FramerGTestBase("FramerTester", FramerTester::MAX_HISTORY_SIZE),
-      component("Framer"),
-      m_numSentBuffers(0) {
+    : FramerGTestBase("FramerTester", FramerTester::MAX_HISTORY_SIZE), component("Framer"), m_numSentBuffers(0) {
     this->initComponents();
     this->connectPorts();
 
@@ -92,9 +90,9 @@ void FramerTester ::testBufferOverflow() {
     }
 
     // Should have auto-flushed before filling all packets
-    ASSERT_GT(packetsSent, 0);  // Sent at least one
+    ASSERT_GT(packetsSent, 0);            // Sent at least one
     ASSERT_LT(packetsSent, MAX_PACKETS);  // But not all (overflow triggered)
-    ASSERT_from_drvSendOut_SIZE(1);  // One buffer sent
+    ASSERT_from_drvSendOut_SIZE(1);       // One buffer sent
 
     // The overflow packet was dropped (backpressure - buffer 0 still transmitting)
     // Return the first buffer so we can continue
