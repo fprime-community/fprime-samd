@@ -5,9 +5,10 @@
 // ======================================================================
 
 #include "fprime-samd/Drv/RtcDriver/test/ut/RtcDriverTester.hpp"
-#include "fprime-samd/Drv/RtcDriver/RawTime.hpp"
+#include "Fw/Test/UnitTest.hpp"
 #include "Fw/Types/SerialBuffer.hpp"
 #include "STest/Pick/Pick.hpp"
+#include "fprime-samd/Drv/RtcDriver/RawTime.hpp"
 
 namespace Samd21 {
 
@@ -65,6 +66,10 @@ void RtcDriverTester::assertTlmCycleOverrun(U16 expected_overrun) {
 // Tests
 
 void RtcDriverTester::testConfigure() {
+    REQUIREMENT("SAMD21-RTC-001: The RtcDriver shall configure the RTC peripheral for periodic interrupts");
+    REQUIREMENT("SAMD21-RTC-002: The RtcDriver shall support configurable interrupt periods (1-128 Hz)");
+    REQUIREMENT("SAMD21-RTC-005: The RtcDriver shall support internal, external, and ULP clock sources");
+
     this->resetTest();
 
     // Test configuration with different clock sources and rates
@@ -100,7 +105,7 @@ void RtcDriverTester::testConfigure() {
 }
 
 void RtcDriverTester::testEnable() {
-    // REQUIREMENT("RTC-002: Driver shall enable RTC peripheral and interrupts");
+    REQUIREMENT("SAMD21-RTC-001: The RtcDriver shall configure the RTC peripheral for periodic interrupts");
 
     this->resetTest();
 
@@ -116,7 +121,8 @@ void RtcDriverTester::testEnable() {
 }
 
 void RtcDriverTester::testCycle() {
-    // REQUIREMENT("RTC-003: Driver shall emit cycle signal on RTC interrupt");
+    REQUIREMENT("SAMD21-RTC-004: The RtcDriver shall detect RTC interrupts via activeIn port");
+    REQUIREMENT("SAMD21-RTC-006: The RtcDriver shall emit cycle signals via the CycleOut port");
 
     this->resetTest();
 
@@ -145,7 +151,7 @@ void RtcDriverTester::testCycle() {
 }
 
 void RtcDriverTester::testCycleOverrun() {
-    // REQUIREMENT("RTC-004: Driver shall detect and report cycle overruns");
+    REQUIREMENT("SAMD21-RTC-008: The RtcDriver shall detect when processing exceeds the configured period");
 
     this->resetTest();
 
@@ -173,7 +179,8 @@ void RtcDriverTester::testCycleOverrun() {
 }
 
 void RtcDriverTester::testMultipleCycles() {
-    // REQUIREMENT("RTC-005: Driver shall handle multiple consecutive cycles correctly");
+    REQUIREMENT("SAMD21-RTC-004: The RtcDriver shall detect RTC interrupts via activeIn port");
+    REQUIREMENT("SAMD21-RTC-006: The RtcDriver shall emit cycle signals via the CycleOut port");
 
     this->resetTest();
 
@@ -209,7 +216,7 @@ void RtcDriverTester::testMultipleCycles() {
 }
 
 void RtcDriverTester::testTimeNow() {
-    // REQUIREMENT("RTC-006: Driver shall provide accurate time via Os::RawTime");
+    REQUIREMENT("SAMD21-RTC-007: The RtcDriver shall provide an Os::RawTime implementation");
 
     this->resetTest();
 
@@ -258,7 +265,9 @@ void RtcDriverTester::testTimeNow() {
 }
 
 void RtcDriverTester::testTimeNowUnconfigured() {
-    // REQUIREMENT("RTC-007: Driver shall return zero time when unconfigured");
+    REQUIREMENT(
+        "SAMD21-RTC-007: The RtcDriver shall provide an Os::RawTime implementation (zero time when "
+        "unconfigured)");
 
     this->resetTest();
 
@@ -271,7 +280,9 @@ void RtcDriverTester::testTimeNowUnconfigured() {
 }
 
 void RtcDriverTester::testTimeNowFunction() {
-    // REQUIREMENT("RTC-008: timeNow() function shall return accurate time from RTC state");
+    REQUIREMENT(
+        "SAMD21-RTC-007: The RtcDriver shall provide an Os::RawTime implementation (timeNow() derives "
+        "time from the tick counter and hardware counter)");
 
     this->resetTest();
 
@@ -313,7 +324,9 @@ void RtcDriverTester::testTimeNowFunction() {
 }
 
 void RtcDriverTester::testSamd21RawTimeNow() {
-    // REQUIREMENT("RTC-009: Samd21RawTime::now() shall populate handle from timeNow()");
+    REQUIREMENT(
+        "SAMD21-RTC-007: The RtcDriver shall provide an Os::RawTime implementation (Samd21RawTime::now() "
+        "populates the handle)");
 
     this->resetTest();
 
@@ -344,7 +357,9 @@ void RtcDriverTester::testSamd21RawTimeNow() {
 }
 
 void RtcDriverTester::testSamd21RawTimeSerialization() {
-    // REQUIREMENT("RTC-011: Samd21RawTime shall serialize/deserialize correctly");
+    REQUIREMENT(
+        "SAMD21-RTC-007: The RtcDriver shall provide an Os::RawTime implementation (Samd21RawTime "
+        "serializes and deserializes in both endiannesses)");
 
     this->resetTest();
 

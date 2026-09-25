@@ -1,3 +1,4 @@
+restrict_platforms(Samd21)
 
 # Build the MCU support library (startup, reset, handlers)
 # This replaces Arduino core's main.cpp, cortex_handlers.c, and startup.c

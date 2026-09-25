@@ -7,9 +7,9 @@
 #ifndef Samd21_DmaDriver_HPP
 #define Samd21_DmaDriver_HPP
 
-#include "samd-config/DmaDriverConfig.hpp"
 #include "fprime-samd/Drv/DmaDriver/DmaChannel.hpp"
 #include "fprime-samd/Drv/DmaDriver/DmaDriverComponentAc.hpp"
+#include "samd-config/DmaDriverConfig.hpp"
 
 namespace Samd21 {
 

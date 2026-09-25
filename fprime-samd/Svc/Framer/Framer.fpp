@@ -21,7 +21,7 @@ module Samd21 {
         time get port timeGetOut
 
         @ Number of dropped packets
-        telemetry DroppedPackets: U32 update on change
+        telemetry DroppedPackets: U32
 
     }
 }

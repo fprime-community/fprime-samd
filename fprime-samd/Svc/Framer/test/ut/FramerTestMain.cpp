@@ -5,8 +5,8 @@
 // ======================================================================
 
 #include "FramerTester.hpp"
-#include "STest/testing.hpp"
 #include "STest/Random/Random.hpp"
+#include "STest/testing.hpp"
 
 TEST(Nominal, SinglePacket) {
     // Test basic single packet framing

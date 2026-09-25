@@ -44,7 +44,7 @@ class StreamConsole : public ConsoleInterface {
     //!
     //! \param message: raw message to write
     //! \param size: size of the message to write to the console
-    void writeMessage(const CHAR *message, const FwSizeType size) override;
+    void writeMessage(const CHAR* message, const FwSizeType size) override;
 
     //! \brief returns the raw console handle
     //!
@@ -53,12 +53,13 @@ class StreamConsole : public ConsoleInterface {
     //!
     //! \return raw console handle
     //!
-    ConsoleHandle *getHandle() override;
+    ConsoleHandle* getHandle() override;
+
   private:
     //! File handle for PosixFile
     StreamConsoleHandle m_handle;
 };
-} // namespace Arduino
-} // namespace Os
+}  // namespace Samd21
+}  // namespace Os
 
-#endif // OS_Stub_Console_HPP
+#endif  // OS_Stub_Console_HPP

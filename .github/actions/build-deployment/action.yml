@@ -1,0 +1,109 @@
+name: "Build an F Prime deployment"
+description: >-
+  Generates a build cache and builds one deployment, then locates the linked ELF.
+  Uses fprime-util rather than `cmake --preset`, because only fprime-util applies
+  settings.ini's library_locations (without which the Samd21 platform and the
+  fprime-samd modules are not found) and default_cmake_options.
+
+inputs:
+  deployment:
+    description: "Deployment to build, e.g. CuriosityReference."
+    required: true
+  toolchain:
+    description: "Cross toolchain, e.g. microchip_curiosity."
+    required: false
+    default: "microchip_curiosity"
+  working-directory:
+    description: "Project root holding settings.ini."
+    required: false
+    default: "."
+  jobs:
+    description: "Parallelism; defaults to nproc."
+    required: false
+    default: ""
+  generate:
+    description: >-
+      Generate the build cache first. Set false when several deployments share one
+      cache and an earlier call already generated it.
+    required: false
+    default: "true"
+  build-all:
+    description: >-
+      Also build the `all` target. This is the regression gate on the consuming
+      repository's EXCLUDE_FROM_ALL list, whose whole purpose is making `all`
+      viable -- without it, an exclusion that becomes unnecessary is never removed
+      and a newly-broken module is never caught. Cheap, because the objects are
+      already warm.
+    required: false
+    default: "false"
+  locate-elf:
+    description: "Resolve the linked ELF path into the `elf` output."
+    required: false
+    default: "true"
+
+outputs:
+  elf:
+    description: "Path to the linked ELF, relative to working-directory."
+    value: ${{ steps.elf.outputs.path }}
+  build-dir:
+    description: "Generated build cache directory."
+    value: ${{ steps.build.outputs.build-dir }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: "Generate the build cache for ${{ inputs.toolchain }}"
+      if: inputs.generate == 'true'
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      run: fprime-util generate "${{ inputs.toolchain }}"
+
+    - name: "Build ${{ inputs.deployment }}"
+      id: build
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      env:
+        DEPLOYMENT: ${{ inputs.deployment }}
+        TOOLCHAIN: ${{ inputs.toolchain }}
+        JOBS: ${{ inputs.jobs }}
+      run: |
+        set -euo pipefail
+        [ -n "${JOBS}" ] || JOBS="$(nproc)"
+        # -p scopes the build to the deployment so a broken deployment fails fast,
+        # with the narrowest possible log. Note it is -p (path), not -d.
+        fprime-util build -j"${JOBS}" -p "${DEPLOYMENT}" "${TOOLCHAIN}"
+        echo "build-dir=build-fprime-automatic-${TOOLCHAIN}" >> "${GITHUB_OUTPUT}"
+
+    - name: "Build the all target"
+      if: inputs.build-all == 'true'
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      env:
+        JOBS: ${{ inputs.jobs }}
+      run: |
+        set -euo pipefail
+        [ -n "${JOBS}" ] || JOBS="$(nproc)"
+        ninja -C "${{ steps.build.outputs.build-dir }}" -j"${JOBS}" all
+
+    - name: "Locate the linked ELF"
+      id: elf
+      if: inputs.locate-elf == 'true'
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      env:
+        DEPLOYMENT: ${{ inputs.deployment }}
+        TOOLCHAIN: ${{ inputs.toolchain }}
+      run: |
+        set -uo pipefail
+        ELF="build-artifacts/${TOOLCHAIN}/${DEPLOYMENT}/bin/${DEPLOYMENT}.elf"
+        if [ ! -f "${ELF}" ]; then
+          # Deployments whose executable name differs from the directory name, or
+          # a layout change in build-artifacts, land here.
+          ELF="$(find "build-fprime-automatic-${TOOLCHAIN}" -name "${DEPLOYMENT}.elf" -print -quit 2>/dev/null || true)"
+        fi
+        if [ ! -f "${ELF}" ]; then
+          echo "::error::could not locate ${DEPLOYMENT}.elf"
+          exit 1
+        fi
+        echo "path=${ELF}" >> "${GITHUB_OUTPUT}"
+        echo "found ${ELF}"

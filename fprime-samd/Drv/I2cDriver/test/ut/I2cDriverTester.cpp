@@ -5,6 +5,7 @@
 // ======================================================================
 
 #include "fprime-samd/Drv/I2cDriver/test/ut/I2cDriverTester.hpp"
+#include "Fw/Test/UnitTest.hpp"
 #include "fprime-samd/Drv/Types/StatusEnumAc.hpp"
 #include "samd-config/I2cDriverConfig.hpp"
 
@@ -73,6 +74,7 @@ U32 I2cDriverTester::bufferAddr(const U8* data) {
 // ----------------------------------------------------------------------
 
 void I2cDriverTester::testConfigureNominal() {
+    REQUIREMENT("SAMD21-I2C-001: The I2cDriver shall configure a SERCOM peripheral for I2C host operation");
     this->resetTest();
 
     this->configureStandard();
@@ -86,6 +88,9 @@ void I2cDriverTester::testConfigureNominal() {
 }
 
 void I2cDriverTester::testConfigureAllParameters() {
+    REQUIREMENT(
+        "SAMD21-I2C-001: The I2cDriver shall configure a SERCOM peripheral for I2C host operation with "
+        "configurable SCL frequency, SDA hold, and pin usage");
     this->resetTest();
 
     // A non-default combination exercises the parameter plumbing through the HAL
@@ -108,6 +113,9 @@ void I2cDriverTester::testConfigureAllParameters() {
 }
 
 void I2cDriverTester::testConfigureRegistersIsr() {
+    REQUIREMENT(
+        "SAMD21-I2C-001: The I2cDriver shall configure a SERCOM peripheral for I2C host operation (the "
+        "driver's ISR trampoline is registered for its SERCOM)");
     this->resetTest();
 
     this->configureStandard();
@@ -124,6 +132,9 @@ void I2cDriverTester::testConfigureRegistersIsr() {
 // ----------------------------------------------------------------------
 
 void I2cDriverTester::testReadNominal() {
+    REQUIREMENT(
+        "SAMD21-I2C-002: The I2cDriver shall perform 7-bit-addressed read transactions using DMA for the "
+        "data payload");
     this->resetTest();
     this->configureStandard();
     this->clearHistory();
@@ -153,6 +164,12 @@ void I2cDriverTester::testReadNominal() {
 }
 
 void I2cDriverTester::testReadCompletion() {
+    REQUIREMENT(
+        "SAMD21-I2C-002: The I2cDriver shall perform 7-bit-addressed read transactions using DMA for the "
+        "data payload");
+    REQUIREMENT(
+        "SAMD21-I2C-006: The I2cDriver shall deliver every completion callback from the main context "
+        "(via activeIn), not from interrupt context");
     this->resetTest();
     this->configureStandard();
     this->clearHistory();
@@ -180,6 +197,9 @@ void I2cDriverTester::testReadCompletion() {
 }
 
 void I2cDriverTester::testReadBusy() {
+    REQUIREMENT(
+        "SAMD21-I2C-005: The I2cDriver shall reject a new request that arrives while a transaction is in "
+        "progress, returning I2C_OTHER_ERR on the matching completion callback");
     this->resetTest();
     this->configureStandard();
     this->clearHistory();
@@ -203,6 +223,9 @@ void I2cDriverTester::testReadBusy() {
 // ----------------------------------------------------------------------
 
 void I2cDriverTester::testWriteNominal() {
+    REQUIREMENT(
+        "SAMD21-I2C-002: The I2cDriver shall perform 7-bit-addressed write transactions using DMA for "
+        "the data payload");
     this->resetTest();
     this->configureStandard();
     this->clearHistory();
@@ -231,6 +254,12 @@ void I2cDriverTester::testWriteNominal() {
 }
 
 void I2cDriverTester::testWriteCompletion() {
+    REQUIREMENT(
+        "SAMD21-I2C-002: The I2cDriver shall perform 7-bit-addressed write transactions using DMA for "
+        "the data payload");
+    REQUIREMENT(
+        "SAMD21-I2C-006: The I2cDriver shall deliver every completion callback from the main context "
+        "(via activeIn), not from interrupt context");
     this->resetTest();
     this->configureStandard();
     this->clearHistory();
@@ -253,6 +282,9 @@ void I2cDriverTester::testWriteCompletion() {
 }
 
 void I2cDriverTester::testWriteBusy() {
+    REQUIREMENT(
+        "SAMD21-I2C-005: The I2cDriver shall reject a new request that arrives while a transaction is in "
+        "progress, returning I2C_OTHER_ERR on the matching completion callback");
     this->resetTest();
     this->configureStandard();
     this->clearHistory();
@@ -275,6 +307,12 @@ void I2cDriverTester::testWriteBusy() {
 // ----------------------------------------------------------------------
 
 void I2cDriverTester::testWriteReadNominal() {
+    REQUIREMENT(
+        "SAMD21-I2C-002: The I2cDriver shall perform 7-bit-addressed combined write-read transactions "
+        "using DMA for the data payload");
+    REQUIREMENT(
+        "SAMD21-I2C-003: The I2cDriver shall implement writeRead as a repeated START with no intervening "
+        "STOP");
     this->resetTest();
     this->configureStandard();
     this->clearHistory();
@@ -305,6 +343,12 @@ void I2cDriverTester::testWriteReadNominal() {
 }
 
 void I2cDriverTester::testWriteReadFullSequence() {
+    REQUIREMENT(
+        "SAMD21-I2C-003: The I2cDriver shall implement writeRead as a repeated START with no intervening "
+        "STOP");
+    REQUIREMENT(
+        "SAMD21-I2C-006: The I2cDriver shall deliver every completion callback from the main context "
+        "(via activeIn), not from interrupt context");
     this->resetTest();
     this->configureStandard();
     this->clearHistory();
@@ -344,6 +388,9 @@ void I2cDriverTester::testWriteReadFullSequence() {
 }
 
 void I2cDriverTester::testWriteReadBusy() {
+    REQUIREMENT(
+        "SAMD21-I2C-005: The I2cDriver shall reject a new request that arrives while a transaction is in "
+        "progress, returning I2C_OTHER_ERR on the matching completion callback");
     this->resetTest();
     this->configureStandard();
     this->clearHistory();
@@ -364,6 +411,9 @@ void I2cDriverTester::testWriteReadBusy() {
 }
 
 void I2cDriverTester::testWriteReadPointerNack() {
+    REQUIREMENT(
+        "SAMD21-I2C-004: The I2cDriver shall fail the in-flight transaction with the appropriate status "
+        "(a NACKed register pointer fails the write-read with I2C_WRITE_ERR)");
     this->resetTest();
     this->configureStandard();
     this->clearHistory();
@@ -406,6 +456,9 @@ void I2cDriverTester::testWriteReadPointerNack() {
 }
 
 void I2cDriverTester::testWriteReadMbAlreadyLatched() {
+    REQUIREMENT(
+        "SAMD21-I2C-003: The I2cDriver shall implement writeRead as a repeated START with no intervening "
+        "STOP (the read half is kicked off even when MB is already latched)");
     this->resetTest();
     this->configureStandard();
     this->clearHistory();
@@ -446,6 +499,9 @@ void I2cDriverTester::testWriteReadMbAlreadyLatched() {
 }
 
 void I2cDriverTester::testWriteReadMbAlreadyLatchedSpuriousIsr() {
+    REQUIREMENT(
+        "SAMD21-I2C-003: The I2cDriver shall implement writeRead as a repeated START with no intervening "
+        "STOP (a stale SERCOM interrupt after the inline handoff is a benign no-op)");
     this->resetTest();
     this->configureStandard();
     this->clearHistory();
@@ -495,6 +551,9 @@ void I2cDriverTester::testWriteReadMbAlreadyLatchedSpuriousIsr() {
 // ----------------------------------------------------------------------
 
 void I2cDriverTester::testIsrErrorIdleUnexpected() {
+    REQUIREMENT(
+        "SAMD21-I2C-004: The I2cDriver shall report bus errors as events (an error with no transaction "
+        "in flight also raises UnexpectedInterrupt)");
     this->resetTest();
     this->configureStandard();
     this->clearHistory();
@@ -515,6 +574,9 @@ void I2cDriverTester::testIsrErrorIdleUnexpected() {
 }
 
 void I2cDriverTester::testIsrErrorDuringRead() {
+    REQUIREMENT(
+        "SAMD21-I2C-004: The I2cDriver shall report bus errors as events and fail the in-flight "
+        "transaction with the appropriate status (I2C_READ_ERR during a read)");
     this->resetTest();
     this->configureStandard();
     this->clearHistory();
@@ -546,6 +608,9 @@ void I2cDriverTester::testIsrErrorDuringRead() {
 }
 
 void I2cDriverTester::testIsrErrorDuringWrite() {
+    REQUIREMENT(
+        "SAMD21-I2C-004: The I2cDriver shall report bus errors as events and fail the in-flight "
+        "transaction with the appropriate status (I2C_WRITE_ERR during a write)");
     this->resetTest();
     this->configureStandard();
     this->clearHistory();
@@ -568,6 +633,9 @@ void I2cDriverTester::testIsrErrorDuringWrite() {
 }
 
 void I2cDriverTester::testIsrErrorDuringWriteReadWriting() {
+    REQUIREMENT(
+        "SAMD21-I2C-004: The I2cDriver shall report bus errors as events and fail the in-flight "
+        "transaction with the appropriate status (I2C_WRITE_ERR during the write half of a write-read)");
     this->resetTest();
     this->configureStandard();
     this->clearHistory();
@@ -593,6 +661,9 @@ void I2cDriverTester::testIsrErrorDuringWriteReadWriting() {
 }
 
 void I2cDriverTester::testIsrErrorDuringWriteReadReading() {
+    REQUIREMENT(
+        "SAMD21-I2C-004: The I2cDriver shall report bus errors as events and fail the in-flight "
+        "transaction with the appropriate status (I2C_READ_ERR during the read half of a write-read)");
     this->resetTest();
     this->configureStandard();
     this->clearHistory();
@@ -625,6 +696,7 @@ void I2cDriverTester::testIsrErrorDuringWriteReadReading() {
 }
 
 void I2cDriverTester::testIsrAllErrorFlags() {
+    REQUIREMENT("SAMD21-I2C-004: The I2cDriver shall report bus errors as events and count them in telemetry");
     this->resetTest();
     this->configureStandard();
     this->clearHistory();
@@ -653,6 +725,7 @@ void I2cDriverTester::testIsrAllErrorFlags() {
 // ----------------------------------------------------------------------
 
 void I2cDriverTester::testIsrMasterOnBusUnexpected() {
+    REQUIREMENT("SAMD21-I2C-004: The I2cDriver shall report an unexpected master-on-bus interrupt as an event");
     this->resetTest();
     this->configureStandard();
     this->clearHistory();
@@ -673,6 +746,9 @@ void I2cDriverTester::testIsrMasterOnBusUnexpected() {
 // ----------------------------------------------------------------------
 
 void I2cDriverTester::testDmaReplyWrongChannelRead() {
+    REQUIREMENT(
+        "SAMD21-I2C-004: The I2cDriver shall report a DMA reply on an unexpected channel as an event "
+        "without advancing the in-flight read");
     this->resetTest();
     this->configureStandard();
     this->clearHistory();
@@ -691,6 +767,9 @@ void I2cDriverTester::testDmaReplyWrongChannelRead() {
 }
 
 void I2cDriverTester::testDmaReplyWrongChannelWrite() {
+    REQUIREMENT(
+        "SAMD21-I2C-004: The I2cDriver shall report a DMA reply on an unexpected channel as an event "
+        "without advancing the in-flight write");
     this->resetTest();
     this->configureStandard();
     this->clearHistory();
@@ -708,6 +787,9 @@ void I2cDriverTester::testDmaReplyWrongChannelWrite() {
 }
 
 void I2cDriverTester::testDmaReplyIdleIgnored() {
+    REQUIREMENT(
+        "SAMD21-I2C-006: The I2cDriver shall deliver completion callbacks only for transactions it has "
+        "in flight (a DMA reply while IDLE is ignored)");
     this->resetTest();
     this->configureStandard();
     this->clearHistory();
@@ -725,6 +807,9 @@ void I2cDriverTester::testDmaReplyIdleIgnored() {
 // ----------------------------------------------------------------------
 
 void I2cDriverTester::testWriteMaxPayload() {
+    REQUIREMENT(
+        "SAMD21-I2C-002: The I2cDriver shall perform write transactions using DMA for the data payload "
+        "(at the maximum supported payload length)");
     this->resetTest();
     this->configureStandard();
     this->clearHistory();
@@ -750,6 +835,9 @@ void I2cDriverTester::testWriteMaxPayload() {
 }
 
 void I2cDriverTester::testReadMinPayload() {
+    REQUIREMENT(
+        "SAMD21-I2C-002: The I2cDriver shall perform read transactions using DMA for the data payload "
+        "(at the minimum payload length of one byte)");
     this->resetTest();
     this->configureStandard();
     this->clearHistory();
@@ -770,6 +858,12 @@ void I2cDriverTester::testReadMinPayload() {
 }
 
 void I2cDriverTester::testWriteReadMaxAddress() {
+    REQUIREMENT(
+        "SAMD21-I2C-002: The I2cDriver shall perform 7-bit-addressed transactions (at the largest legal "
+        "address, 0x7F)");
+    REQUIREMENT(
+        "SAMD21-I2C-003: The I2cDriver shall implement writeRead as a repeated START with no intervening "
+        "STOP (both halves target the same address)");
     this->resetTest();
     this->configureStandard();
     this->clearHistory();
@@ -802,6 +896,7 @@ void I2cDriverTester::testWriteReadMaxAddress() {
 // ----------------------------------------------------------------------
 
 void I2cDriverTester::testReportTelemetry() {
+    REQUIREMENT("SAMD21-I2C-004: The I2cDriver shall count bus errors in telemetry");
     this->resetTest();
     this->configureStandard();
     this->clearHistory();
@@ -836,6 +931,7 @@ void I2cDriverTester::testReportTelemetry() {
 }
 
 void I2cDriverTester::testReportTelemetryDeviceOnBus() {
+    REQUIREMENT("SAMD21-I2C-004: The I2cDriver shall report bus state in telemetry");
     this->resetTest();
     this->configureStandard();
     this->clearHistory();
@@ -877,6 +973,9 @@ void I2cDriverTester::testReportTelemetryDeviceOnBus() {
 // ----------------------------------------------------------------------
 
 void I2cDriverTester::testClearErrors() {
+    REQUIREMENT(
+        "SAMD21-I2C-004: The I2cDriver shall count bus errors in telemetry (CLEAR_ERRORS resets the "
+        "counter)");
     this->resetTest();
     this->configureStandard();
     this->clearHistory();
@@ -904,6 +1003,9 @@ void I2cDriverTester::testClearErrors() {
 // ----------------------------------------------------------------------
 
 void I2cDriverTester::testIsrErrorDuringWriteReadWaitDisablesMb() {
+    REQUIREMENT(
+        "SAMD21-I2C-004: The I2cDriver shall fail the in-flight transaction with the appropriate status "
+        "and return to service (the error path disables the armed MB interrupt)");
     this->resetTest();
     this->configureStandard();
     this->clearHistory();
@@ -946,6 +1048,9 @@ void I2cDriverTester::testIsrErrorDuringWriteReadWaitDisablesMb() {
 // ----------------------------------------------------------------------
 
 void I2cDriverTester::testStallWatchdogNoRecoveryBeforeThreshold() {
+    REQUIREMENT(
+        "SAMD21-I2C-007: The I2cDriver shall force-recover a transaction whose completion interrupt is "
+        "lost (only once the stall threshold is reached)");
     this->resetTest();
     this->configureStandard();
     this->clearHistory();
@@ -965,6 +1070,9 @@ void I2cDriverTester::testStallWatchdogNoRecoveryBeforeThreshold() {
 }
 
 void I2cDriverTester::testStallWatchdogRecoversRead() {
+    REQUIREMENT(
+        "SAMD21-I2C-007: The I2cDriver shall force-recover a stalled read, reply to the caller with an "
+        "error, and return to service");
     this->resetTest();
     this->configureStandard();
     this->clearHistory();
@@ -998,6 +1106,9 @@ void I2cDriverTester::testStallWatchdogRecoversRead() {
 }
 
 void I2cDriverTester::testStallWatchdogRecoversWrite() {
+    REQUIREMENT(
+        "SAMD21-I2C-007: The I2cDriver shall force-recover a stalled write, reply to the caller with an "
+        "error, and return to service");
     this->resetTest();
     this->configureStandard();
     this->clearHistory();
@@ -1019,6 +1130,9 @@ void I2cDriverTester::testStallWatchdogRecoversWrite() {
 }
 
 void I2cDriverTester::testStallWatchdogRecoversWriteRead() {
+    REQUIREMENT(
+        "SAMD21-I2C-007: The I2cDriver shall force-recover a write-read whose completion interrupt is "
+        "lost, reply to the caller with an error, and return to service");
     this->resetTest();
     this->configureStandard();
     this->clearHistory();
@@ -1055,6 +1169,9 @@ void I2cDriverTester::testStallWatchdogRecoversWriteRead() {
 }
 
 void I2cDriverTester::testStallWatchdogResetsWhenIdle() {
+    REQUIREMENT(
+        "SAMD21-I2C-007: The I2cDriver shall force-recover only stalled transactions (an IDLE driver is "
+        "never recovered)");
     this->resetTest();
     this->configureStandard();
     this->clearHistory();
@@ -1068,6 +1185,9 @@ void I2cDriverTester::testStallWatchdogResetsWhenIdle() {
 }
 
 void I2cDriverTester::testStallWatchdogResetsOnCompletion() {
+    REQUIREMENT(
+        "SAMD21-I2C-007: The I2cDriver shall force-recover only stalled transactions (the stall counter "
+        "resets when a transaction completes normally)");
     this->resetTest();
     this->configureStandard();
     this->clearHistory();
@@ -1096,6 +1216,9 @@ void I2cDriverTester::testStallWatchdogResetsOnCompletion() {
 }
 
 void I2cDriverTester::testStallRecoveryCountTelemetry() {
+    REQUIREMENT(
+        "SAMD21-I2C-007: The I2cDriver shall force-recover a stalled transaction and count the recovery "
+        "in telemetry");
     this->resetTest();
     this->configureStandard();
     this->clearHistory();

@@ -1,0 +1,39 @@
+name: "Save the SAMD21 toolchain cache"
+description: >-
+  Saves the tools tree provisioned by setup-samd-toolchain. Call this only AFTER
+  a real build has succeeded, so a bad prune can never be cached -- which is why
+  this is a separate action rather than part of setup-samd-toolchain.
+
+inputs:
+  tools-dir:
+    description: "The `tools-dir` output of setup-samd-toolchain."
+    required: true
+  cache-key:
+    description: "The `cache-key` output of setup-samd-toolchain."
+    required: true
+  cache-hit:
+    description: >-
+      The `cache-hit` output of setup-samd-toolchain. Saving is skipped when it is
+      already 'true'.
+    required: false
+    default: "false"
+
+runs:
+  using: "composite"
+  steps:
+    - name: "Save ARM toolchain and CMSIS"
+      # Two known operational wrinkles, both harmless and both deliberately
+      # non-fatal (hence continue-on-error on the caller's side is unnecessary --
+      # actions/cache/save does not fail the job on a write error):
+      #  * A fork pull request has a read-only token and cannot write any cache, so
+      #    it always takes the cold path and pays the full download every run.
+      #  * The Actions cache is a 10 GB per-repository LRU. A ~500 MB toolchain
+      #    entry plus one baseline entry per base SHA will churn, and heavy
+      #    baseline traffic can evict the toolchain entry, silently reverting to
+      #    the cold path.
+      if: inputs.cache-hit != 'true'
+      continue-on-error: true
+      uses: actions/cache/save@v4
+      with:
+        path: ${{ inputs.tools-dir }}
+        key: ${{ inputs.cache-key }}

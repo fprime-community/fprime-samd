@@ -1,0 +1,73 @@
+name: "Unit Tests"
+
+on:
+  pull_request:
+  push:
+    branches: [ main ]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  # The harness. `main` rather than a pinned SHA so a harness fix does not require a
+  # commit here; the trade-off is that an unrelated harness regression can turn this red,
+  # which the job log makes obvious because the failure is in the reference's own code.
+  HARNESS_REPO: fprime-community/fprime-samd-reference
+  HARNESS_REF: main
+
+jobs:
+  native-ut:
+    name: "Native unit tests"
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - name: "Checkout the harness"
+        uses: actions/checkout@v5
+        with:
+          repository: ${{ env.HARNESS_REPO }}
+          ref: ${{ env.HARNESS_REF }}
+          filter: blob:none
+
+      - name: "Initialise the harness's other submodules"
+        shell: bash
+        run: |
+          git submodule update --init --recursive --filter=blob:none \
+            lib/fprime lib/fprime-baremetal
+
+      - name: "Check this commit out as lib/fprime-samd"
+        uses: actions/checkout@v5
+        with:
+          path: lib/fprime-samd
+          filter: blob:none
+
+      - name: "Report what is being tested"
+        shell: bash
+        run: |
+          echo "harness  ${HARNESS_REPO}@$(git rev-parse HEAD)"
+          echo "library  ${GITHUB_REPOSITORY}@$(git -C lib/fprime-samd rev-parse HEAD)"
+
+      - name: "Set up F Prime"
+        uses: ./lib/fprime-samd/.github/actions/setup-fprime
+
+      - name: "Generate the native unit-test build cache"
+        run: fprime-util generate --ut
+
+      - name: "Build and run this library's unit tests"
+        uses: ./lib/fprime-samd/.github/actions/unit-tests
+        with:
+          # Gate on fprime-samd's own tests. The harness's `native-ut` test preset is
+          # used so its exclusions still apply, and `-R` narrows the run to this
+          # library so an unrelated harness test cannot be charged to a pull request
+          # here. The harness's full suite is its own CI's job.
+          preset: native-ut
+          include: "^fprime-samd_"
+
+      - name: "Build the native-ut all target"
+        # Catches any module that stops compiling for a native platform even though no
+        # unit test covers it -- the FPP has to parse and autocode for something other
+        # than Samd21, which is a real source of breakage in a cross-targeted library.
+        run: ninja -C build-fprime-automatic-native-ut all

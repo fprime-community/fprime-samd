@@ -1,0 +1,264 @@
+name: "Build"
+
+on:
+  pull_request:
+  push:
+    branches: [ main ]
+
+# Least privilege: this job reads and nothing else.
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  HARNESS_REPO: fprime-community/fprime-samd-reference
+  HARNESS_REF: main
+  DEPLOYMENT: CuriosityReference
+  TOOLCHAIN: microchip_curiosity
+  # Distinct per deployment; the reporter uses it to find and update its own comment.
+  REPORT_MARKER: samd-size-CuriosityReference
+
+jobs:
+  build:
+    name: "SAMD21 build and size report"
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - name: "Checkout the harness"
+        uses: actions/checkout@v5
+        with:
+          repository: ${{ env.HARNESS_REPO }}
+          ref: ${{ env.HARNESS_REF }}
+          filter: blob:none
+
+      - name: "Initialise the harness's other submodules"
+        shell: bash
+        run: |
+          git submodule update --init --recursive --filter=blob:none \
+            lib/fprime lib/fprime-baremetal
+
+      - name: "Resolve the harness commit"
+        id: harness
+        shell: bash
+        run: echo "sha=$(git rev-parse HEAD)" >> "${GITHUB_OUTPUT}"
+
+      - name: "Check this commit out as lib/fprime-samd"
+        uses: actions/checkout@v5
+        with:
+          path: lib/fprime-samd
+          filter: blob:none
+
+      - name: "Report what is being built"
+        shell: bash
+        run: |
+          echo "harness  ${HARNESS_REPO}@${{ steps.harness.outputs.sha }}"
+          echo "library  ${GITHUB_REPOSITORY}@$(git -C lib/fprime-samd rev-parse HEAD)"
+
+      - name: "Set up F Prime"
+        uses: ./lib/fprime-samd/.github/actions/setup-fprime
+
+      - name: "Set up the ARM toolchain and CMSIS"
+        id: toolchain
+        uses: ./lib/fprime-samd/.github/actions/setup-samd-toolchain
+
+      - name: "Build ${{ env.DEPLOYMENT }}"
+        id: build
+        uses: ./lib/fprime-samd/.github/actions/build-deployment
+        with:
+          deployment: ${{ env.DEPLOYMENT }}
+          toolchain: ${{ env.TOOLCHAIN }}
+          # Builds every module this library ships, not just the ones the deployment
+          # links -- the widest cheap compile gate available for a library pull request.
+          build-all: "true"
+
+      - name: "Save the ARM toolchain cache"
+        # Only after a real build has succeeded against the pruned tree.
+        if: success()
+        uses: ./lib/fprime-samd/.github/actions/save-samd-toolchain
+        with:
+          tools-dir: ${{ steps.toolchain.outputs.tools-dir }}
+          cache-key: ${{ steps.toolchain.outputs.cache-key }}
+          cache-hit: ${{ steps.toolchain.outputs.cache-hit }}
+
+      - name: "Measure the current ELF"
+        uses: ./lib/fprime-samd/.github/actions/measure-elf
+        with:
+          elf: ${{ steps.build.outputs.elf }}
+          output: size/current.json
+          nm: size/current.nm
+          linker-script: lib/fprime-samd/cmake/toolchain/samd21/curiosity_nano/linker_scripts/flash_without_bootloader.ld
+          label: SAMD21G17D
+
+      - name: "Restore the baseline measurement"
+        id: baseline-cache
+        if: github.event_name == 'pull_request'
+        uses: actions/cache/restore@v4
+        with:
+          path: baseline-size
+          key: samd-size-baseline-${{ env.DEPLOYMENT }}-${{ steps.harness.outputs.sha }}-${{ github.event.pull_request.base.sha }}
+
+      - name: "Checkout the harness for the baseline"
+        id: baseline-harness
+        if: github.event_name == 'pull_request' && steps.baseline-cache.outputs.cache-hit != 'true'
+        continue-on-error: true
+        uses: actions/checkout@v5
+        with:
+          repository: ${{ env.HARNESS_REPO }}
+          # The SHA resolved above, not HARNESS_REF, so head and baseline share a
+          # byte-identical harness.
+          ref: ${{ steps.harness.outputs.sha }}
+          filter: blob:none
+          path: baseline-src
+
+      - name: "Initialise the baseline harness's other submodules"
+        id: baseline-submodules
+        if: github.event_name == 'pull_request' && steps.baseline-cache.outputs.cache-hit != 'true' && steps.baseline-harness.outcome == 'success'
+        continue-on-error: true
+        shell: bash
+        working-directory: baseline-src
+        run: |
+          git submodule update --init --recursive --filter=blob:none \
+            lib/fprime lib/fprime-baremetal
+
+      - name: "Check the base commit out as the baseline's lib/fprime-samd"
+        id: baseline-splice
+        if: github.event_name == 'pull_request' && steps.baseline-cache.outputs.cache-hit != 'true' && steps.baseline-submodules.outcome == 'success'
+        continue-on-error: true
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          path: baseline-src/lib/fprime-samd
+          filter: blob:none
+
+      - name: "Build the baseline"
+        id: baseline-build
+        if: github.event_name == 'pull_request' && steps.baseline-cache.outputs.cache-hit != 'true' && steps.baseline-splice.outcome == 'success'
+        continue-on-error: true
+        uses: ./lib/fprime-samd/.github/actions/build-deployment
+        with:
+          deployment: ${{ env.DEPLOYMENT }}
+          toolchain: ${{ env.TOOLCHAIN }}
+          working-directory: baseline-src
+          # The known limitation: if this pull request bumps a pinned autocoder version,
+          # fpp_query.cmake's version check rejects the baseline tree and this step fails
+          # -- which is precisely the case where a cross-version delta would have been a
+          # lie. It then degrades to absolute-only, which is the honest answer.
+          build-all: "false"
+
+      - name: "Measure the baseline ELF"
+        id: baseline-measure
+        if: github.event_name == 'pull_request' && steps.baseline-cache.outputs.cache-hit != 'true' && steps.baseline-build.outcome == 'success'
+        continue-on-error: true
+        uses: ./lib/fprime-samd/.github/actions/measure-elf
+        with:
+          elf: baseline-src/${{ steps.baseline-build.outputs.elf }}
+          output: baseline-size/current.json
+          linker-script: lib/fprime-samd/cmake/toolchain/samd21/curiosity_nano/linker_scripts/flash_without_bootloader.ld
+          label: SAMD21G17D
+
+      - name: "Save the baseline measurement"
+        # Two pull requests racing on the same base SHA means the loser gets a 409; that
+        # is what continue-on-error is for here.
+        if: github.event_name == 'pull_request' && steps.baseline-cache.outputs.cache-hit != 'true' && steps.baseline-measure.outcome == 'success'
+        continue-on-error: true
+        uses: actions/cache/save@v4
+        with:
+          path: baseline-size
+          key: samd-size-baseline-${{ env.DEPLOYMENT }}-${{ steps.harness.outputs.sha }}-${{ github.event.pull_request.base.sha }}
+
+      - name: "Stage and seed the baseline for future pull requests"
+        # The cache archive stores workspace-relative paths, so main must seed the cache
+        # under the same directory name a pull request restores into.
+        if: github.event_name == 'push'
+        shell: bash
+        run: |
+          mkdir -p baseline-size
+          cp size/current.json baseline-size/current.json
+
+      - name: "Seed the baseline cache"
+        if: github.event_name == 'push'
+        continue-on-error: true
+        uses: actions/cache/save@v4
+        with:
+          path: baseline-size
+          key: samd-size-baseline-${{ env.DEPLOYMENT }}-${{ steps.harness.outputs.sha }}-${{ github.sha }}
+
+      # ---------------------------------------------------------------------------------
+      # Render. Uploaded as an artifact; size-report.yml posts it.
+      # ---------------------------------------------------------------------------------
+      - name: "Determine the baseline provenance"
+        id: origin
+        if: github.event_name == 'pull_request'
+        shell: bash
+        env:
+          CACHE_HIT: ${{ steps.baseline-cache.outputs.cache-hit }}
+          MEASURED: ${{ steps.baseline-measure.outcome }}
+        run: |
+          if [ "${CACHE_HIT}" = "true" ]; then
+            echo "text=restored from the base-commit size cache" >> "${GITHUB_OUTPUT}"
+          elif [ "${MEASURED}" = "success" ]; then
+            echo "text=built in this run from this pull request's base commit of fprime-samd, on the same harness" >> "${GITHUB_OUTPUT}"
+          else
+            echo "text=unavailable" >> "${GITHUB_OUTPUT}"
+          fi
+
+      - name: "Render the size report"
+        if: github.event_name == 'pull_request'
+        uses: ./lib/fprime-samd/.github/actions/render-size-report
+        with:
+          current: size/current.json
+          baseline: baseline-size/current.json
+          nm: size/current.nm
+          output: size/size-report.md
+          head-sha: ${{ github.event.pull_request.head.sha }}
+          base-sha: ${{ github.event.pull_request.base.sha }}
+          baseline-origin: ${{ steps.origin.outputs.text }}
+          marker: ${{ env.REPORT_MARKER }}
+          title: "`${{ env.DEPLOYMENT }}` flash / RAM size report"
+          baseline-label: "base"
+
+      - name: "Record the pull request number"
+        if: github.event_name == 'pull_request'
+        shell: bash
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          # Read back and verified against the real head SHA by size-report.yml before it
+          # is trusted; see the security notes there.
+          echo "${PR_NUMBER}" > size/pr-number.txt
+          # Folded into size/ rather than uploaded as a second path, for the reason on the
+          # upload step below.
+          if [ -f baseline-size/current.json ]; then
+            cp baseline-size/current.json size/baseline.json
+          fi
+
+      - name: "Upload the size report"
+        if: github.event_name == 'pull_request'
+        # Exactly ONE path, and it is a directory. actions/upload-artifact derives the
+        # archive root from the search paths that actually matched, so listing `size/` and
+        # `baseline-size/` would put entries at `size/...` when a baseline exists but at
+        # the archive root when it does not -- silently breaking the reporter in precisely
+        # the degraded case this design is supposed to handle.
+        #
+        # This workflow only ever runs on github.com's hosted runners (see `runs-on`
+        # above), never on a GHES instance, so v4 is correct here -- unlike
+        # post-size-comment, which is also invoked from GHES-hosted callers and has to
+        # stay on the legacy artifact API.
+        uses: actions/upload-artifact@v4
+        with:
+          name: size-report
+          path: size/
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: "Upload build artifacts"
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.DEPLOYMENT }}-${{ env.TOOLCHAIN }}
+          path: build-artifacts/${{ env.TOOLCHAIN }}/${{ env.DEPLOYMENT }}/
+          if-no-files-found: ignore
+          retention-days: 14

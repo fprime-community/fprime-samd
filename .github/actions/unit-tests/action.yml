@@ -1,0 +1,157 @@
+name: "Build and run F Prime unit tests"
+description: >-
+  Builds the `*_ut_exe` targets in an already-generated native-ut cache and runs
+  them through ctest. Targets are discovered from the ninja target list, not from
+  a hardcoded module list, so a newly registered register_fprime_ut is picked up
+  with no CI change.
+
+inputs:
+  build-dir:
+    description: "Generated native-ut build cache."
+    required: false
+    default: "build-fprime-automatic-native-ut"
+  preset:
+    description: >-
+      Run ctest via `--preset <name>` instead of `--test-dir`. Set this when the
+      repository ships a testPresets block, so CI exercises CMakePresets.json as
+      well as the fprime-util path; the preset's own filters compose with the
+      include/exclude below. Leave empty for repositories without testPresets.
+    required: false
+    default: ""
+  include:
+    description: >-
+      Regex of test names to run (ctest -R). Default runs everything registered in
+      the cache. Use e.g. '^fprime-samd_' to gate a library pull request on that
+      library's own tests.
+    required: false
+    default: ""
+  exclude:
+    description: >-
+      Regex of test names to skip (ctest -E). Every name skipped here is reported
+      as a ::warning:: so an exclusion cannot rot silently into permanent, quiet
+      loss of coverage.
+    required: false
+    default: ""
+  jobs:
+    description: "Parallelism for the build; defaults to nproc."
+    required: false
+    default: ""
+  build-targets:
+    description: >-
+      Whether to build the matching ut_exe targets before running ctest. Turn off
+      if the caller has already built them (e.g. via `ninja all`).
+    required: false
+    default: "true"
+  fail-on-no-tests:
+    description: "Fail if the filters match no tests at all."
+    required: false
+    default: "true"
+
+outputs:
+  test-count:
+    description: "Number of tests ctest ran."
+    value: ${{ steps.run.outputs.count }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: "Discover and build the unit-test executables"
+      if: inputs.build-targets == 'true'
+      shell: bash
+      env:
+        BUILD_DIR: ${{ inputs.build-dir }}
+        INCLUDE_RE: ${{ inputs.include }}
+        EXCLUDE_RE: ${{ inputs.exclude }}
+        JOBS: ${{ inputs.jobs }}
+      run: |
+        set -uo pipefail
+        [ -n "${JOBS}" ] || JOBS="$(nproc)"
+        if [ ! -d "${BUILD_DIR}" ]; then
+          echo "::error::no build cache at ${BUILD_DIR}; run 'fprime-util generate --ut' first"
+          exit 1
+        fi
+        # `ninja -t targets all` lists every target; the bare `<name>_ut_exe`
+        # aliases are the ones worth building (the bin/<platform>/... and
+        # CMakeFiles/... spellings are the same artifacts). CMake also emits a
+        # `cmake_object_order_depends_target_<name>_ut_exe` phony per target, which
+        # ends in _ut_exe but is only an ordering edge -- building those instead of
+        # the real executables would "succeed" while linking nothing.
+        mapfile -t TARGETS < <(
+          ninja -C "${BUILD_DIR}" -t targets all 2>/dev/null \
+            | sed 's/:.*//' \
+            | grep -E '^[A-Za-z0-9_-]+_ut_exe$' \
+            | grep -v '^cmake_object_order_depends_target_' \
+            | sort -u
+        )
+        SELECTED=()
+        for target in "${TARGETS[@]:-}"; do
+          [ -n "${target}" ] || continue
+          if [ -n "${INCLUDE_RE}" ] && ! printf '%s' "${target}" | grep -qE "${INCLUDE_RE}"; then
+            continue
+          fi
+          if [ -n "${EXCLUDE_RE}" ] && printf '%s' "${target}" | grep -qE "${EXCLUDE_RE}"; then
+            echo "::warning::skipping unit-test target ${target} (matched the exclude filter)"
+            continue
+          fi
+          SELECTED+=("${target}")
+        done
+        if [ "${#SELECTED[@]}" -eq 0 ]; then
+          echo "::notice::no unit-test targets matched; nothing to build"
+          exit 0
+        fi
+        printf 'building %d unit-test target(s):\n' "${#SELECTED[@]}"
+        printf '  %s\n' "${SELECTED[@]}"
+        ninja -C "${BUILD_DIR}" -j"${JOBS}" "${SELECTED[@]}"
+
+    - name: "Run the unit tests"
+      id: run
+      shell: bash
+      env:
+        BUILD_DIR: ${{ inputs.build-dir }}
+        PRESET: ${{ inputs.preset }}
+        INCLUDE_RE: ${{ inputs.include }}
+        EXCLUDE_RE: ${{ inputs.exclude }}
+        FAIL_ON_NO_TESTS: ${{ inputs.fail-on-no-tests }}
+      run: |
+        set -uo pipefail
+        if [ -n "${PRESET}" ]; then
+          CTEST_ARGS=(--preset "${PRESET}" --output-on-failure)
+        else
+          CTEST_ARGS=(--test-dir "${BUILD_DIR}" --output-on-failure)
+        fi
+        [ -z "${INCLUDE_RE}" ] || CTEST_ARGS+=(-R "${INCLUDE_RE}")
+        [ -z "${EXCLUDE_RE}" ] || CTEST_ARGS+=(-E "${EXCLUDE_RE}")
+
+        # Count first so an empty selection is a clear message rather than a bare
+        # ctest "No tests were found" exit code.
+        COUNT="$(ctest "${CTEST_ARGS[@]}" --show-only 2>/dev/null \
+                  | sed -n 's/^Total Tests: \([0-9]\+\)$/\1/p' | tail -1)"
+        COUNT="${COUNT:-0}"
+        echo "count=${COUNT}" >> "${GITHUB_OUTPUT}"
+        if [ "${COUNT}" -eq 0 ]; then
+          if [ "${FAIL_ON_NO_TESTS}" = "true" ]; then
+            echo "::error::the include/exclude filters matched no tests in ${BUILD_DIR}"
+            exit 1
+          fi
+          echo "::notice::no tests matched in ${BUILD_DIR}; nothing was run"
+          exit 0
+        fi
+        echo "running ${COUNT} test(s)"
+        ctest "${CTEST_ARGS[@]}"
+
+    - name: "List the registered tests"
+      # Informational, and on failure the most useful thing in the log: shows what
+      # ctest knows about in this cache, which is the quickest way to see whether a
+      # newly added register_fprime_ut took effect or whether a filter is stale.
+      if: always()
+      continue-on-error: true
+      shell: bash
+      env:
+        PRESET: ${{ inputs.preset }}
+        BUILD_DIR: ${{ inputs.build-dir }}
+      run: |
+        if [ -n "${PRESET}" ]; then
+          ctest --preset "${PRESET}" --show-only
+        else
+          ctest --test-dir "${BUILD_DIR}" --show-only
+        fi
