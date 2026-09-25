@@ -1,5 +1,7 @@
 if(FPRIME_PLATFORM STREQUAL "Samd21")
-    set(SAMD21_ONLY_CFG_OVERRIDES "${CMAKE_CURRENT_LIST_DIR}/OsDelegateMutex.hpp")
+    set(SAMD21_ONLY_CFG_OVERRIDES
+        CONFIGURATION_OVERRIDES "${CMAKE_CURRENT_LIST_DIR}/OsDelegateMutex.hpp"
+    )
 else()
     set(SAMD21_ONLY_CFG_OVERRIDES "")
 endif()
@@ -18,8 +20,7 @@ register_fprime_config(
         "${CMAKE_CURRENT_LIST_DIR}/I2cDriverConfig.hpp"
         "${CMAKE_CURRENT_LIST_DIR}/FramerConfig.hpp"
         "${CMAKE_CURRENT_LIST_DIR}/ThinBufferManagerConfig.hpp"
-    CONFIGURATION_OVERRIDES
-        ${SAMD21_ONLY_CFG_OVERRIDES}
+    ${SAMD21_ONLY_CFG_OVERRIDES}
     DEPENDS
         Fw_Types
     INTERFACE
