@@ -44,91 +44,56 @@ outputs:
 runs:
   using: "composite"
   steps:
-    - name: "Download the size report artifact (github.com)"
+    - name: "Download the size report artifact(s)"
       id: download
-      if: inputs.artifact-pattern == '' && github.server_url == 'https://github.com'
       continue-on-error: true
-      uses: actions/download-artifact@v4
-      with:
-        name: ${{ inputs.artifact-name }}
-        path: ${{ inputs.path }}
-        run-id: ${{ inputs.run-id }}
-        github-token: ${{ inputs.github-token }}
-
-    - name: "Download the size report artifact (GHES)"
-      id: download-ghes
-      if: inputs.artifact-pattern == '' && github.server_url != 'https://github.com'
-      continue-on-error: true
-      uses: actions/download-artifact@v3
-      with:
-        name: ${{ inputs.artifact-name }}
-        path: ${{ inputs.path }}
-        run-id: ${{ inputs.run-id }}
-        github-token: ${{ inputs.github-token }}
-
-    - name: "Download and merge the size report artifacts (github.com)"
-      id: download-many
-      if: inputs.artifact-pattern != '' && github.server_url == 'https://github.com'
-      continue-on-error: true
-      uses: actions/download-artifact@v4
-      with:
-        pattern: ${{ inputs.artifact-pattern }}
-        merge-multiple: true
-        path: ${{ inputs.path }}
-        run-id: ${{ inputs.run-id }}
-        github-token: ${{ inputs.github-token }}
-
-    - name: "Download every artifact from the run (GHES)"
-      id: download-all-ghes
-      if: inputs.artifact-pattern != '' && github.server_url != 'https://github.com'
-      continue-on-error: true
-      uses: actions/download-artifact@v3
-      with:
-        # `name` omitted: v3 has no server-side glob, so it fetches every artifact for
-        # the run instead, each into its own `${path}/<artifact-name>/` subdirectory.
-        # The next step filters and flattens client-side.
-        path: ${{ inputs.path }}
-        run-id: ${{ inputs.run-id }}
-        github-token: ${{ inputs.github-token }}
-
-    - name: "Merge the artifacts matching the pattern (GHES)"
-      id: download-many-ghes
-      if: >-
-        inputs.artifact-pattern != '' && github.server_url != 'https://github.com' &&
-        steps.download-all-ghes.outcome == 'success'
       shell: bash
       env:
+        API_URL: ${{ github.api_url }}
+        REPO: ${{ github.repository }}
+        RUN_ID: ${{ inputs.run-id }}
+        TOKEN: ${{ inputs.github-token }}
         PATTERN: ${{ inputs.artifact-pattern }}
+        NAME: ${{ inputs.artifact-name }}
         DIR: ${{ inputs.path }}
       run: |
         set -euo pipefail
-        # Flattens the subset of per-artifact subdirectories whose name matches
-        # $PATTERN up into $DIR, mirroring v4's `pattern` + `merge-multiple: true`.
-        # Non-matching artifacts (e.g. this run's build-artifacts upload) are left
-        # nested and ignored by the step below.
-        shopt -s nullglob
+        mkdir -p "$DIR"
+        pattern="${PATTERN:-$NAME}"
+        artifacts_json="$(curl -fsSL \
+          -H "Authorization: Bearer ${TOKEN}" \
+          -H "Accept: application/vnd.github+json" \
+          "${API_URL}/repos/${REPO}/actions/runs/${RUN_ID}/artifacts?per_page=100")"
         matched=0
-        for sub in "$DIR"/*/; do
-          name="$(basename "$sub")"
+        while IFS=$'\t' read -r name download_url; do
           case "$name" in
-            $PATTERN)
-              find "$sub" -mindepth 1 -maxdepth 1 -exec mv -t "$DIR" {} +
-              matched=1
-              ;;
+            $pattern) : ;;
+            *) continue ;;
           esac
-          rmdir "$sub" 2>/dev/null || true
-        done
+          redirect="$(curl -fsS -D - -o /dev/null \
+            -H "Authorization: Bearer ${TOKEN}" \
+            -H "Accept: application/vnd.github+json" \
+            "$download_url" | grep -i '^location:' | tail -1 | sed -E 's/^[Ll]ocation:[[:space:]]*//' | tr -d '\r')"
+          if [ -z "$redirect" ]; then
+            echo "::warning::artifact '$name' did not redirect to a download URL"
+            continue
+          fi
+          tmp="$(mktemp -d)"
+          curl -fsSL -o "$tmp/artifact.zip" "$redirect"
+          unzip -q -o "$tmp/artifact.zip" -d "$tmp"
+          rm -f "$tmp/artifact.zip"
+          find "$tmp" -mindepth 1 -maxdepth 1 -exec mv -t "$DIR" {} +
+          rm -rf "$tmp"
+          matched=1
+        done < <(printf '%s' "$artifacts_json" | jq -r '.artifacts[] | [.name, .archive_download_url] | @tsv')
         if [ "$matched" -eq 0 ]; then
-          echo "::warning::no artifact in this run matched pattern '$PATTERN'"
+          echo "::warning::no artifact on run $RUN_ID matched '$pattern'"
           exit 1
         fi
 
     - name: "Verify the pull request and post the comment(s)"
       id: comment
-      # Exactly one of the four download paths runs; the rest report 'skipped'.
-      if: >-
-        steps.download.outcome == 'success' || steps.download-ghes.outcome == 'success' ||
-        steps.download-many.outcome == 'success' || steps.download-many-ghes.outcome == 'success'
+      if: steps.download.outcome == 'success'
       uses: actions/github-script@v8
       env:
         ARTIFACT_PATH: ${{ inputs.path }}
@@ -253,8 +218,6 @@ runs:
           core.setOutput('posted', String(posted));
 
     - name: "Note a build that produced no report"
-      if: >-
-        steps.download.outcome != 'success' && steps.download-ghes.outcome != 'success' &&
-        steps.download-many.outcome != 'success' && steps.download-many-ghes.outcome != 'success'
+      if: steps.download.outcome != 'success'
       shell: bash
       run: echo "::notice::no size-report artifact on run ${{ inputs.run-id }}; nothing to comment"
