@@ -242,6 +242,11 @@ jobs:
         # `baseline-size/` would put entries at `size/...` when a baseline exists but at
         # the archive root when it does not -- silently breaking the reporter in precisely
         # the degraded case this design is supposed to handle.
+        #
+        # This workflow only ever runs on github.com's hosted runners (see `runs-on`
+        # above), never on a GHES instance, so v4 is correct here -- unlike
+        # post-size-comment, which is also invoked from GHES-hosted callers and has to
+        # stay on the legacy artifact API.
         uses: actions/upload-artifact@v4
         with:
           name: size-report
