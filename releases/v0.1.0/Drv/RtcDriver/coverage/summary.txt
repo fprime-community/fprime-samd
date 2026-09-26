@@ -1,0 +1,19 @@
+------------------------------------------------------------------------------
+                           GCC Code Coverage Report
+Directory: ../../../../..
+------------------------------------------------------------------------------
+File                                       Lines    Exec  Cover   Missing
+------------------------------------------------------------------------------
+lib/fprime-samd/fprime-samd/Drv/RtcDriver/DefaultRawTime.cpp
+                                               3       0     0%   14,17-18
+lib/fprime-samd/fprime-samd/Drv/RtcDriver/RawTime.cpp
+                                              34      18    52%   10-14,16,30-32,34,36-37,39-40,42,45
+lib/fprime-samd/fprime-samd/Drv/RtcDriver/RawTime.hpp
+                                               2       2   100%
+lib/fprime-samd/fprime-samd/Drv/RtcDriver/RtcDriver.cpp
+                                              64      59    92%   79-80,95-96,142
+lib/fprime-samd/fprime-samd/Drv/RtcDriver/RtcDriverHardwareStub.cpp
+                                              38      32    84%   33,35,37,39,59,61
+------------------------------------------------------------------------------
+TOTAL                                        141     111    78%
+------------------------------------------------------------------------------

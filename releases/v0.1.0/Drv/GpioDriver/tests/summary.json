@@ -1,0 +1,16 @@
+{
+  "status": "passed",
+  "tests": 1,
+  "passed": 1,
+  "failed": 0,
+  "skipped": 0,
+  "duration": 0.036,
+  "report": "tests/index.html",
+  "cases": [
+    {
+      "name": "fprime-samd_Drv_GpioDriver_ut_exe",
+      "status": "passed",
+      "duration": 0.036
+    }
+  ]
+}

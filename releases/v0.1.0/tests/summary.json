@@ -1,0 +1,51 @@
+{
+  "status": "passed",
+  "tests": 8,
+  "passed": 8,
+  "failed": 0,
+  "skipped": 0,
+  "duration": 0.872,
+  "report": "tests/index.html",
+  "cases": [
+    {
+      "name": "fprime-samd_Drv_AdcDriver_ut_exe",
+      "status": "passed",
+      "duration": 0.129
+    },
+    {
+      "name": "fprime-samd_Drv_RtcDriver_ut_exe",
+      "status": "passed",
+      "duration": 0.019
+    },
+    {
+      "name": "fprime-samd_Drv_UsartDriver_ut_exe",
+      "status": "passed",
+      "duration": 0.362
+    },
+    {
+      "name": "fprime-samd_Drv_I2cDriver_ut_exe",
+      "status": "passed",
+      "duration": 0.09
+    },
+    {
+      "name": "fprime-samd_Drv_GpioDriver_ut_exe",
+      "status": "passed",
+      "duration": 0.036
+    },
+    {
+      "name": "fprime-samd_Svc_ThinBufferManager_ut_exe",
+      "status": "passed",
+      "duration": 0.031
+    },
+    {
+      "name": "fprime-samd_Svc_Framer_ut_exe",
+      "status": "passed",
+      "duration": 0.024
+    },
+    {
+      "name": "fprime-samd_Svc_TmFramer_ut_exe",
+      "status": "passed",
+      "duration": 0.181
+    }
+  ]
+}

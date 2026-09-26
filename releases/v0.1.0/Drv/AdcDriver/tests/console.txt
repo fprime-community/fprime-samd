@@ -1,0 +1,242 @@
+# unit-test console output: Drv/AdcDriver
+
+==============================================================================
+PASSED  fprime-samd_Drv_AdcDriver_ut_exe  (0.13s)
+==============================================================================
+[STest::Random] Generated seed 569149 from system time
+[==========] Running 21 tests from 4 test suites.
+[----------] Global test environment set-up.
+[----------] 5 tests from Configure
+[ RUN      ] Configure.Configure
+
+***************************************
+configure() initializes ADC with all parameters and calls sync waits
+***************************************
+
+***************************************
+(RQ)       SAMD21-ADC-001: The AdcDriver shall configure the ADC peripheral with configurable voltage reference, resolution, hardware averaging, sampling time, and gain
+***************************************
+[       OK ] Configure.Configure (0 ms)
+[ RUN      ] Configure.AllReferences
+
+***************************************
+configure() works with all voltage reference options
+***************************************
+
+***************************************
+(RQ)       SAMD21-ADC-001: The AdcDriver shall configure the ADC peripheral with configurable voltage reference
+***************************************
+[       OK ] Configure.AllReferences (0 ms)
+[ RUN      ] Configure.AllResolutions
+
+***************************************
+configure() works with all resolution options (8/10/12-bit)
+***************************************
+
+***************************************
+(RQ)       SAMD21-ADC-001: The AdcDriver shall configure the ADC peripheral with configurable resolution
+***************************************
+[       OK ] Configure.AllResolutions (0 ms)
+[ RUN      ] Configure.AllSampleCounts
+
+***************************************
+configure() works with all hardware averaging sample counts
+***************************************
+
+***************************************
+(RQ)       SAMD21-ADC-001: The AdcDriver shall configure the ADC peripheral with configurable hardware averaging
+***************************************
+[       OK ] Configure.AllSampleCounts (0 ms)
+[ RUN      ] Configure.AllGains
+
+***************************************
+configure() works with all gain options (1X and DIV2)
+***************************************
+
+***************************************
+(RQ)       SAMD21-ADC-001: The AdcDriver shall configure the ADC peripheral with configurable gain
+***************************************
+[       OK ] Configure.AllGains (0 ms)
+[----------] 5 tests from Configure (0 ms total)
+
+[----------] 1 test from ConfigureChannel
+[ RUN      ] ConfigureChannel.Comprehensive
+
+***************************************
+configureChannel() handles external channels, internal channels (TEMP, BANDGAP), and SCALEDIOVCC
+***************************************
+
+***************************************
+(RQ)       SAMD21-ADC-002: The AdcDriver shall bind a readAdc port index to a physical ADC input channel via configureChannel
+***************************************
+[       OK ] ConfigureChannel.Comprehensive (0 ms)
+[----------] 1 test from ConfigureChannel (0 ms total)
+
+[----------] 8 tests from Conversion
+[ RUN      ] Conversion.NotConfigured
+
+***************************************
+readAdc() before configure() returns NOT_CONFIGURED
+***************************************
+
+***************************************
+(RQ)       SAMD21-ADC-004: The AdcDriver shall return ADC_NOT_CONFIGURED from readAdc without touching hardware if the peripheral is not configured
+***************************************
+[       OK ] Conversion.NotConfigured (0 ms)
+[ RUN      ] Conversion.ChannelNotConfigured
+
+***************************************
+readAdc() on unconfigured channel returns INVALID_CHANNEL
+***************************************
+
+***************************************
+(RQ)       SAMD21-ADC-004: The AdcDriver shall return ADC_INVALID_CHANNEL from readAdc without touching hardware if the requested port is not configured
+***************************************
+[       OK ] Conversion.ChannelNotConfigured (0 ms)
+[ RUN      ] Conversion.Busy
+
+***************************************
+readAdc() while conversion pending returns BUSY
+***************************************
+
+***************************************
+(RQ)       SAMD21-ADC-003: The AdcDriver shall return ADC_BUSY if a conversion is already in progress on any port
+***************************************
+[       OK ] Conversion.Busy (0 ms)
+[ RUN      ] Conversion.Completion
+
+***************************************
+Full conversion flow: readAdc → ISR → activeIn → result delivery
+***************************************
+
+***************************************
+(RQ)       SAMD21-ADC-003: The AdcDriver shall start an asynchronous conversion on readAdc
+***************************************
+
+***************************************
+(RQ)       SAMD21-ADC-006: The AdcDriver shall deliver every conversion result from the main context (via activeIn), not from interrupt context
+***************************************
+[       OK ] Conversion.Completion (0 ms)
+[ RUN      ] Conversion.MultipleChannels
+
+***************************************
+Sequential conversions across multiple channels with result delivery
+***************************************
+
+***************************************
+(RQ)       SAMD21-ADC-002: The AdcDriver shall bind a readAdc port index to a physical ADC input channel via configureChannel
+***************************************
+
+***************************************
+(RQ)       SAMD21-ADC-003: The AdcDriver shall start an asynchronous conversion on readAdc
+***************************************
+[       OK ] Conversion.MultipleChannels (0 ms)
+[ RUN      ] Conversion.ResultBoundaries
+
+***************************************
+Conversion handling across full ADC range (0, mid, max)
+***************************************
+
+***************************************
+(RQ)       SAMD21-ADC-006: The AdcDriver shall deliver every conversion result from the main context (via activeIn), not from interrupt context
+***************************************
+[       OK ] Conversion.ResultBoundaries (0 ms)
+[ RUN      ] Conversion.BeforeComplete
+
+***************************************
+activeIn() called before ISR completes does not deliver premature result
+***************************************
+
+***************************************
+(RQ)       SAMD21-ADC-006: The AdcDriver shall deliver a conversion result via activeIn only once the conversion has completed
+***************************************
+[       OK ] Conversion.BeforeComplete (0 ms)
+[ RUN      ] Conversion.MultipleactiveInIdle
+
+***************************************
+Multiple activeIn() calls while idle do not produce spurious results
+***************************************
+
+***************************************
+(RQ)       SAMD21-ADC-006: The AdcDriver shall deliver every conversion result exactly once from the main context (via activeIn)
+***************************************
+[       OK ] Conversion.MultipleactiveInIdle (0 ms)
+[----------] 8 tests from Conversion (0 ms total)
+
+[----------] 7 tests from Interrupt
+[ RUN      ] Interrupt.ResultReady
+
+***************************************
+handleInterrupt() processes RESRDY flag and stores result
+***************************************
+
+***************************************
+(RQ)       SAMD21-ADC-006: The AdcDriver shall deliver every conversion result from the main context (via activeIn), not from interrupt context
+***************************************
+[       OK ] Interrupt.ResultReady (0 ms)
+[ RUN      ] Interrupt.Overrun
+
+***************************************
+handleInterrupt() handles OVERRUN flag and still delivers result
+***************************************
+
+***************************************
+(RQ)       SAMD21-ADC-005: The AdcDriver shall report an overrun (ADC_OVERRUN) if the result register was not read before the next conversion completed
+***************************************
+[       OK ] Interrupt.Overrun (0 ms)
+[ RUN      ] Interrupt.BothFlags
+
+***************************************
+handleInterrupt() correctly handles both OVERRUN and RESRDY flags
+***************************************
+
+***************************************
+(RQ)       SAMD21-ADC-005: The AdcDriver shall report an overrun (ADC_OVERRUN) if the result register was not read before the next conversion completed
+***************************************
+[       OK ] Interrupt.BothFlags (0 ms)
+[ RUN      ] Interrupt.NoFlags
+
+***************************************
+handleInterrupt() with no flags set (spurious interrupt) is handled safely
+***************************************
+
+***************************************
+(RQ)       SAMD21-ADC-007: The AdcDriver shall ignore spurious interrupts (flags clear with a conversion requested) without corrupting driver state
+***************************************
+[       OK ] Interrupt.NoFlags (0 ms)
+[ RUN      ] Interrupt.MultipleTimes
+
+***************************************
+handleInterrupt() firing multiple times with same result
+***************************************
+
+***************************************
+(RQ)       SAMD21-ADC-007: The AdcDriver shall ignore repeated interrupts for an already-latched result without corrupting driver state
+***************************************
+[       OK ] Interrupt.MultipleTimes (0 ms)
+[ RUN      ] Interrupt.WithoutPendingConversion
+
+***************************************
+handleInterrupt() without pending conversion (spurious) does not deliver result
+***************************************
+
+***************************************
+(RQ)       SAMD21-ADC-007: The AdcDriver shall ignore spurious interrupts (no conversion pending) without corrupting driver state
+***************************************
+[       OK ] Interrupt.WithoutPendingConversion (0 ms)
+[ RUN      ] Interrupt.SpuriousWithOverrun
+
+***************************************
+handleInterrupt() spurious interrupt with overrun flag clears flags and doesn't corrupt state
+***************************************
+
+***************************************
+(RQ)       SAMD21-ADC-007: The AdcDriver shall ignore spurious interrupts (flags set with nothing requested) without corrupting driver state
+***************************************
+[       OK ] Interrupt.SpuriousWithOverrun (0 ms)
+[----------] 7 tests from Interrupt (0 ms total)
+
+[----------] Global test environment tear-down
+[==========] 21 tests from 4 test suites ran. (2 ms total)
+[  PASSED  ] 21 tests.
+

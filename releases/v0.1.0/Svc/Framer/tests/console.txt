@@ -1,0 +1,30 @@
+# unit-test console output: Svc/Framer
+
+==============================================================================
+PASSED  fprime-samd_Svc_Framer_ut_exe  (0.02s)
+==============================================================================
+[STest::Random] Generated seed 147212 from system time
+[==========] Running 6 tests from 2 test suites.
+[----------] Global test environment set-up.
+[----------] 5 tests from Nominal
+[ RUN      ] Nominal.SinglePacket
+[       OK ] Nominal.SinglePacket (1 ms)
+[ RUN      ] Nominal.MultiPacketAccumulation
+[       OK ] Nominal.MultiPacketAccumulation (0 ms)
+[ RUN      ] Nominal.BufferOverflow
+[       OK ] Nominal.BufferOverflow (0 ms)
+[ RUN      ] Nominal.DoubleBufferLifecycle
+[       OK ] Nominal.DoubleBufferLifecycle (0 ms)
+[ RUN      ] Nominal.SchedInFlush
+[       OK ] Nominal.SchedInFlush (0 ms)
+[----------] 5 tests from Nominal (2 ms total)
+
+[----------] 1 test from OffNominal
+[ RUN      ] OffNominal.Backpressure
+[       OK ] OffNominal.Backpressure (0 ms)
+[----------] 1 test from OffNominal (0 ms total)
+
+[----------] Global test environment tear-down
+[==========] 6 tests from 2 test suites ran. (2 ms total)
+[  PASSED  ] 6 tests.
+

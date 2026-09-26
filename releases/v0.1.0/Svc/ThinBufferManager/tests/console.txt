@@ -1,0 +1,24 @@
+# unit-test console output: Svc/ThinBufferManager
+
+==============================================================================
+PASSED  fprime-samd_Svc_ThinBufferManager_ut_exe  (0.03s)
+==============================================================================
+[==========] Running 3 tests from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 3 tests from Nominal
+[ RUN      ] Nominal.Setup
+[       OK ] Nominal.Setup (2 ms)
+[ RUN      ] Nominal.OneSize
+Returning buffer 3
+Returning buffer 1
+Returning buffer 0
+Returning buffer 2
+[       OK ] Nominal.OneSize (0 ms)
+[ RUN      ] Nominal.MultSize
+[       OK ] Nominal.MultSize (0 ms)
+[----------] 3 tests from Nominal (4 ms total)
+
+[----------] Global test environment tear-down
+[==========] 3 tests from 1 test suite ran. (4 ms total)
+[  PASSED  ] 3 tests.
+

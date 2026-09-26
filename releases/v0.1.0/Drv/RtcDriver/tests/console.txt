@@ -1,0 +1,94 @@
+# unit-test console output: Drv/RtcDriver
+
+==============================================================================
+PASSED  fprime-samd_Drv_RtcDriver_ut_exe  (0.02s)
+==============================================================================
+[STest::Random] Generated seed 606393 from system time
+[==========] Running 10 tests from 2 test suites.
+[----------] Global test environment set-up.
+[----------] 9 tests from Nominal
+[ RUN      ] Nominal.testConfigure
+
+***************************************
+(RQ)       SAMD21-RTC-001: The RtcDriver shall configure the RTC peripheral for periodic interrupts
+***************************************
+
+***************************************
+(RQ)       SAMD21-RTC-002: The RtcDriver shall support configurable interrupt periods (1-128 Hz)
+***************************************
+
+***************************************
+(RQ)       SAMD21-RTC-005: The RtcDriver shall support internal, external, and ULP clock sources
+***************************************
+[       OK ] Nominal.testConfigure (0 ms)
+[ RUN      ] Nominal.testEnable
+
+***************************************
+(RQ)       SAMD21-RTC-001: The RtcDriver shall configure the RTC peripheral for periodic interrupts
+***************************************
+[       OK ] Nominal.testEnable (0 ms)
+[ RUN      ] Nominal.testCycle
+
+***************************************
+(RQ)       SAMD21-RTC-004: The RtcDriver shall detect RTC interrupts via activeIn port
+***************************************
+
+***************************************
+(RQ)       SAMD21-RTC-006: The RtcDriver shall emit cycle signals via the CycleOut port
+***************************************
+[       OK ] Nominal.testCycle (0 ms)
+[ RUN      ] Nominal.testMultipleCycles
+
+***************************************
+(RQ)       SAMD21-RTC-004: The RtcDriver shall detect RTC interrupts via activeIn port
+***************************************
+
+***************************************
+(RQ)       SAMD21-RTC-006: The RtcDriver shall emit cycle signals via the CycleOut port
+***************************************
+[       OK ] Nominal.testMultipleCycles (0 ms)
+[ RUN      ] Nominal.testTimeNow
+
+***************************************
+(RQ)       SAMD21-RTC-007: The RtcDriver shall provide an Os::RawTime implementation
+***************************************
+[       OK ] Nominal.testTimeNow (0 ms)
+[ RUN      ] Nominal.testTimeNowUnconfigured
+
+***************************************
+(RQ)       SAMD21-RTC-007: The RtcDriver shall provide an Os::RawTime implementation (zero time when unconfigured)
+***************************************
+[       OK ] Nominal.testTimeNowUnconfigured (0 ms)
+[ RUN      ] Nominal.testTimeNowFunction
+
+***************************************
+(RQ)       SAMD21-RTC-007: The RtcDriver shall provide an Os::RawTime implementation (timeNow() derives time from the tick counter and hardware counter)
+***************************************
+[       OK ] Nominal.testTimeNowFunction (0 ms)
+[ RUN      ] Nominal.testSamd21RawTimeNow
+
+***************************************
+(RQ)       SAMD21-RTC-007: The RtcDriver shall provide an Os::RawTime implementation (Samd21RawTime::now() populates the handle)
+***************************************
+[       OK ] Nominal.testSamd21RawTimeNow (0 ms)
+[ RUN      ] Nominal.testSamd21RawTimeSerialization
+
+***************************************
+(RQ)       SAMD21-RTC-007: The RtcDriver shall provide an Os::RawTime implementation (Samd21RawTime serializes and deserializes in both endiannesses)
+***************************************
+[       OK ] Nominal.testSamd21RawTimeSerialization (0 ms)
+[----------] 9 tests from Nominal (1 ms total)
+
+[----------] 1 test from OffNominal
+[ RUN      ] OffNominal.testCycleOverrun
+
+***************************************
+(RQ)       SAMD21-RTC-008: The RtcDriver shall detect when processing exceeds the configured period
+***************************************
+[       OK ] OffNominal.testCycleOverrun (0 ms)
+[----------] 1 test from OffNominal (0 ms total)
+
+[----------] Global test environment tear-down
+[==========] 10 tests from 2 test suites ran. (1 ms total)
+[  PASSED  ] 10 tests.
+

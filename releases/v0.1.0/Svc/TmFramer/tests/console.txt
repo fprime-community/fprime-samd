@@ -1,0 +1,40 @@
+# unit-test console output: Svc/TmFramer
+
+==============================================================================
+PASSED  fprime-samd_Svc_TmFramer_ut_exe  (0.18s)
+==============================================================================
+[STest::Random] Generated seed 173514 from system time
+[==========] Running 11 tests from 2 test suites.
+[----------] Global test environment set-up.
+[----------] 8 tests from Nominal
+[ RUN      ] Nominal.NominalFraming
+[       OK ] Nominal.NominalFraming (1 ms)
+[ RUN      ] Nominal.MultiPacketAccumulation
+[       OK ] Nominal.MultiPacketAccumulation (0 ms)
+[ RUN      ] Nominal.DeadZoneAvoidance
+[       OK ] Nominal.DeadZoneAvoidance (0 ms)
+[ RUN      ] Nominal.BufferOverflow
+[       OK ] Nominal.BufferOverflow (0 ms)
+[ RUN      ] Nominal.DoubleBufferLifecycle
+[       OK ] Nominal.DoubleBufferLifecycle (0 ms)
+[ RUN      ] Nominal.SchedInFlush
+[       OK ] Nominal.SchedInFlush (0 ms)
+[ RUN      ] Nominal.PerApidSequenceCounts
+[       OK ] Nominal.PerApidSequenceCounts (0 ms)
+[ RUN      ] Nominal.FrameCountWrapAround
+[       OK ] Nominal.FrameCountWrapAround (15 ms)
+[----------] 8 tests from Nominal (17 ms total)
+
+[----------] 3 tests from OffNominal
+[ RUN      ] OffNominal.Backpressure
+[       OK ] OffNominal.Backpressure (0 ms)
+[ RUN      ] OffNominal.UnexpectedBufferReturn
+[       OK ] OffNominal.UnexpectedBufferReturn (137 ms)
+[ RUN      ] OffNominal.ApidTrackingOverflow
+[       OK ] OffNominal.ApidTrackingOverflow (0 ms)
+[----------] 3 tests from OffNominal (138 ms total)
+
+[----------] Global test environment tear-down
+[==========] 11 tests from 2 test suites ran. (156 ms total)
+[  PASSED  ] 11 tests.
+
