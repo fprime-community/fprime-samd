@@ -1,9 +1,9 @@
 # unit-test console output: Drv/UsartDriver
 
 ==============================================================================
-PASSED  fprime-samd_Drv_UsartDriver_ut_exe  (0.42s)
+PASSED  fprime-samd_Drv_UsartDriver_ut_exe  (0.37s)
 ==============================================================================
-[STest::Random] Generated seed 96055 from system time
+[STest::Random] Generated seed 674409 from system time
 [==========] Running 18 tests from 6 test suites.
 [----------] Global test environment set-up.
 [----------] 3 tests from Configure
@@ -41,7 +41,7 @@ configure() primes both RX buffers into the RX DMA channel
 (RQ)       SAMD21-UART-003: The UsartDriver shall implement double-buffering for continuous RX
 ***************************************
 [       OK ] Configure.QueuesRxBuffers (0 ms)
-[----------] 3 tests from Configure (2 ms total)
+[----------] 3 tests from Configure (1 ms total)
 
 [----------] 4 tests from Send
 [ RUN      ] Send.Nominal
@@ -87,8 +87,8 @@ TX DMA bus error asserts (invalid buffer pointer handed to DMA)
 ***************************************
 (RQ)       SAMD21-UART-002: The UsartDriver shall use DMA for transmission (an unrecoverable TX DMA bus error asserts)
 ***************************************
-[       OK ] Send.ChannelError (221 ms)
-[----------] 4 tests from Send (222 ms total)
+[       OK ] Send.ChannelError (165 ms)
+[----------] 4 tests from Send (166 ms total)
 
 [----------] 1 test from SendSync
 [ RUN      ] SendSync.Nominal
@@ -173,8 +173,8 @@ RX DMA bus error asserts (invalid buffer pointer handed to DMA)
 ***************************************
 (RQ)       SAMD21-UART-002: The UsartDriver shall use DMA for reception (an unrecoverable RX DMA bus error asserts)
 ***************************************
-[       OK ] Rx.ChannelError (161 ms)
-[----------] 7 tests from Rx (164 ms total)
+[       OK ] Rx.ChannelError (173 ms)
+[----------] 7 tests from Rx (177 ms total)
 
 [----------] 2 tests from Unconfigured
 [ RUN      ] Unconfigured.SchedIn
@@ -213,6 +213,6 @@ each SERCOM maps to its matching RX DMA trigger source
 [----------] 1 test from TriggerSource (0 ms total)
 
 [----------] Global test environment tear-down
-[==========] 18 tests from 6 test suites ran. (392 ms total)
+[==========] 18 tests from 6 test suites ran. (348 ms total)
 [  PASSED  ] 18 tests.
 
