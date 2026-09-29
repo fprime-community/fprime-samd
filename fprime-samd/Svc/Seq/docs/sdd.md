@@ -65,15 +65,14 @@ use `WAIT_TICKS` / `WAIT_UNTIL` for delays:
 
 ```
 ; SENSORS.seq
-R00:00:00 FFB_Tester.seq.RUN_ON_ERROR SENSORS_RECOVER
+R00:00:00 SamdReference.seq.RUN_ON_ERROR SENSORS_RECOVER
 
-R00:00:00 FFB_Tester.pwr1v8.READ_SENSE
-R00:00:00 FFB_Tester.pwr1v8.READ_VOLTAGE
-R00:00:00 FFB_Tester.pwr1v8.READ_POWER
+R00:00:00 SamdReference.adc.READ_CHANNEL 0
+R00:00:00 SamdReference.adc.READ_CHANNEL 1
 
 ; Loop: re-run this sequence, then wait 7 ticks (8Hz -> 1s cadence)
-R00:00:00 FFB_Tester.seq.RUN SENSORS
-R00:00:00 FFB_Tester.seq.WAIT_TICKS 7
+R00:00:00 SamdReference.seq.RUN SENSORS
+R00:00:00 SamdReference.seq.WAIT_TICKS 7
 ```
 
 ### 4.2 Build Pipeline
