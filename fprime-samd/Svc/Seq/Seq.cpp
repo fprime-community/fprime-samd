@@ -200,11 +200,7 @@ void Seq ::WAIT_TICKS_cmdHandler(FwOpcodeType opCode, U32 cmdSeq, U32 n) {
     this->cmdResponse_out(opCode, cmdSeq, Fw::CmdResponse::OK);
 }
 
-void Seq ::WAIT_UNTIL_cmdHandler(FwOpcodeType opCode,
-                                 U32 cmdSeq,
-                                 const TimeBase& timeBase,
-                                 U32 seconds,
-                                 U32 useconds) {
+void Seq ::WAIT_UNTIL_cmdHandler(FwOpcodeType opCode, U32 cmdSeq, const TimeBase& timeBase, U32 seconds, U32 useconds) {
     // Record the absolute wakeup and acknowledge. See WAIT_TICKS_cmdHandler for
     // the re-entrant handoff to commandResponseIn / SLEEPING.
     this->m_sleepKind = SleepKind::UNTIL;

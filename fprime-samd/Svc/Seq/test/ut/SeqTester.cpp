@@ -44,10 +44,7 @@ static const U32 fprime_seq_GENERIC_len = 49u;
 // Construction and destruction
 // ----------------------------------------------------------------------
 
-SeqTester ::SeqTester()
-    : SeqGTestBase("SeqTester", SeqTester::MAX_HISTORY_SIZE),
-      component("Seq"),
-      m_nowSeconds(0) {
+SeqTester ::SeqTester() : SeqGTestBase("SeqTester", SeqTester::MAX_HISTORY_SIZE), component("Seq"), m_nowSeconds(0) {
     this->initComponents();
     this->connectPorts();
 }

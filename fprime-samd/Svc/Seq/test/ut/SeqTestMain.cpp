@@ -4,9 +4,9 @@
 // \brief  cpp file for Seq component test main function
 // ======================================================================
 
-#include "SeqTester.hpp"
 #include "Fw/Test/UnitTest.hpp"
 #include "STest/Random/Random.hpp"
+#include "SeqTester.hpp"
 
 TEST(SequenceExecution, GenericSequence) {
     COMMENT("Execute the GENERIC action end to end, verifying command order, args, and byte offsets.");
