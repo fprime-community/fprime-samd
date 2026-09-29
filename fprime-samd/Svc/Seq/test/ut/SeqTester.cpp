@@ -58,8 +58,8 @@ SeqTester ::~SeqTester() {
 // ----------------------------------------------------------------------
 
 void SeqTester ::testGenericSequence() {
-    REQUIREMENT("MFPM-ACT-001");
-    REQUIREMENT("MFPM-ACT-002");
+    REQUIREMENT("SAMD21-SEQ-001");
+    REQUIREMENT("SAMD21-SEQ-002");
     this->configureWith(fprime_seq_GENERIC, fprime_seq_GENERIC_len);
     this->setNow(1000);
     this->run();
@@ -100,7 +100,7 @@ void SeqTester ::testGenericSequence() {
 }
 
 void SeqTester ::testRunCommandPendsUntilActive() {
-    REQUIREMENT("MFPM-ACT-004");
+    REQUIREMENT("SAMD21-SEQ-004");
     // A single command.
     ActionBuilder b;
     const U8 arg = 0x20;
@@ -122,8 +122,8 @@ void SeqTester ::testRunCommandPendsUntilActive() {
 }
 
 void SeqTester ::testImmediateDispatchOrder() {
-    REQUIREMENT("MFPM-ACT-001");
-    REQUIREMENT("MFPM-ACT-002");
+    REQUIREMENT("SAMD21-SEQ-001");
+    REQUIREMENT("SAMD21-SEQ-002");
     // Three back-to-back commands with distinct args.
     ActionBuilder b;
     const U8 a0 = 0xA0, a1 = 0xA1, a2 = 0xA2;
@@ -155,7 +155,7 @@ void SeqTester ::testImmediateDispatchOrder() {
 }
 
 void SeqTester ::testCommandFailureAborts() {
-    REQUIREMENT("MFPM-ACT-003");
+    REQUIREMENT("SAMD21-SEQ-003");
     ActionBuilder b;
     const U8 arg = 0x33;
     b.addCommand(OPCODE_A, &arg, 1);
@@ -191,7 +191,7 @@ void SeqTester ::testStrayResponseDropped() {
 }
 
 void SeqTester ::testPendingRunAfterCompletion() {
-    REQUIREMENT("MFPM-ACT-004");
+    REQUIREMENT("SAMD21-SEQ-004");
     // A one-command sequence.
     ActionBuilder b;
     const U8 arg = 0x55;
@@ -220,7 +220,7 @@ void SeqTester ::testPendingRunAfterCompletion() {
 }
 
 void SeqTester ::testInvalidCmdSizeFails() {
-    REQUIREMENT("MFPM-ACT-008");
+    REQUIREMENT("SAMD21-SEQ-008");
     // A cmdSize smaller than a bare opcode, but with enough trailing bytes that
     // it does NOT overrun the buffer. This isolates the lower-bound check
     // (cmdSize < sizeof(FwOpcodeType)) from the overrun check.
@@ -241,7 +241,7 @@ void SeqTester ::testInvalidCmdSizeFails() {
 }
 
 void SeqTester ::testCmdSizeOverrunsBufferFails() {
-    REQUIREMENT("MFPM-ACT-008");
+    REQUIREMENT("SAMD21-SEQ-008");
     // A cmdSize that claims more bytes than remain in the action buffer.
     ActionBuilder b;
     b.addU32(0x40);  // cmdSize = 64, far more than what follows
@@ -278,7 +278,7 @@ void SeqTester ::testEmptyAction() {
 }
 
 void SeqTester ::testTruncatedCmdSizeFails() {
-    REQUIREMENT("MFPM-ACT-008");
+    REQUIREMENT("SAMD21-SEQ-008");
     // Only 2 of the 4 cmdSize bytes are present, so the U32 read fails.
     ActionBuilder b;
     b.addByte(0x00);
@@ -299,7 +299,7 @@ void SeqTester ::testTruncatedCmdSizeFails() {
 // ----------------------------------------------------------------------
 
 void SeqTester ::testWaitTicksZeroResumesNextTick() {
-    REQUIREMENT("MFPM-ACT-006");
+    REQUIREMENT("SAMD21-SEQ-006");
     // A WAIT_TICKS(0) directive followed by one command.
     ActionBuilder b;
     const U8 arg = 0x20;
@@ -322,7 +322,7 @@ void SeqTester ::testWaitTicksZeroResumesNextTick() {
 }
 
 void SeqTester ::testWaitTicksBlocksNTicks() {
-    REQUIREMENT("MFPM-ACT-006");
+    REQUIREMENT("SAMD21-SEQ-006");
     ActionBuilder b;
     const U8 arg = 0x20;
     b.addWaitTicks();
@@ -348,7 +348,7 @@ void SeqTester ::testWaitTicksBlocksNTicks() {
 }
 
 void SeqTester ::testWaitTicksAtEndOfSequence() {
-    REQUIREMENT("MFPM-ACT-006");
+    REQUIREMENT("SAMD21-SEQ-006");
     // A WAIT_TICKS as the LAST command in the sequence: the wait advances the
     // program counter to the end of the buffer, so waking must finish cleanly
     // rather than deserializing a zero-length record off the end (which would
@@ -385,7 +385,7 @@ void SeqTester ::testWaitTicksAtEndOfSequence() {
 // ----------------------------------------------------------------------
 
 void SeqTester ::testWaitUntilSleepsUntilTime() {
-    REQUIREMENT("MFPM-ACT-006");
+    REQUIREMENT("SAMD21-SEQ-006");
     ActionBuilder b;
     const U8 arg = 0x20;
     b.addWaitUntil();
@@ -414,7 +414,7 @@ void SeqTester ::testWaitUntilSleepsUntilTime() {
 }
 
 void SeqTester ::testWaitUntilWakesOnExactTime() {
-    REQUIREMENT("MFPM-ACT-006");
+    REQUIREMENT("SAMD21-SEQ-006");
     ActionBuilder b;
     const U8 arg = 0x20;
     b.addWaitUntil();
@@ -438,7 +438,7 @@ void SeqTester ::testWaitUntilWakesOnExactTime() {
 }
 
 void SeqTester ::testWaitUntilPastResumesImmediately() {
-    REQUIREMENT("MFPM-ACT-006");
+    REQUIREMENT("SAMD21-SEQ-006");
     ActionBuilder b;
     const U8 arg = 0x20;
     b.addWaitUntil();
@@ -458,7 +458,7 @@ void SeqTester ::testWaitUntilPastResumesImmediately() {
 }
 
 void SeqTester ::testWaitUntilMismatchedBaseNeverWakes() {
-    REQUIREMENT("MFPM-ACT-006");
+    REQUIREMENT("SAMD21-SEQ-006");
     ActionBuilder b;
     const U8 arg = 0x20;
     b.addWaitUntil();
@@ -484,7 +484,7 @@ void SeqTester ::testWaitUntilMismatchedBaseNeverWakes() {
 // ----------------------------------------------------------------------
 
 void SeqTester ::testRunOnErrorStartsRecovery() {
-    REQUIREMENT("MFPM-ACT-005");
+    REQUIREMENT("SAMD21-SEQ-005");
     ActionBuilder b;
     const U8 arg = 0x33;
     b.addCommand(OPCODE_A, &arg, 1);
@@ -512,7 +512,7 @@ void SeqTester ::testRunOnErrorStartsRecovery() {
 }
 
 void SeqTester ::testRunOnErrorNotTriggeredOnSuccess() {
-    REQUIREMENT("MFPM-ACT-005");
+    REQUIREMENT("SAMD21-SEQ-005");
     ActionBuilder b;
     const U8 arg = 0x33;
     b.addCommand(OPCODE_A, &arg, 1);
@@ -537,7 +537,7 @@ void SeqTester ::testRunOnErrorNotTriggeredOnSuccess() {
 }
 
 void SeqTester ::testRunOnErrorClearsPendingRun() {
-    REQUIREMENT("MFPM-ACT-005");
+    REQUIREMENT("SAMD21-SEQ-005");
     ActionBuilder b;
     const U8 arg = 0x33;
     b.addCommand(OPCODE_A, &arg, 1);
@@ -557,7 +557,7 @@ void SeqTester ::testRunOnErrorClearsPendingRun() {
 }
 
 void SeqTester ::testRunOnErrorIsOneShot() {
-    REQUIREMENT("MFPM-ACT-005");
+    REQUIREMENT("SAMD21-SEQ-005");
     ActionBuilder b;
     const U8 arg = 0x33;
     b.addCommand(OPCODE_A, &arg, 1);
@@ -590,7 +590,7 @@ void SeqTester ::testRunOnErrorIsOneShot() {
 // ----------------------------------------------------------------------
 
 void SeqTester ::testCancelWhileSleeping() {
-    REQUIREMENT("MFPM-ACT-007");
+    REQUIREMENT("SAMD21-SEQ-007");
     // A sequence that waits.
     ActionBuilder b;
     b.addWaitTicks();
@@ -620,7 +620,7 @@ void SeqTester ::testCancelWhileSleeping() {
 }
 
 void SeqTester ::testCancelWhileAwaitingResponse() {
-    REQUIREMENT("MFPM-ACT-007");
+    REQUIREMENT("SAMD21-SEQ-007");
     // Two commands; we cancel after the first is dispatched but before its
     // response arrives.
     ActionBuilder b;
@@ -656,7 +656,7 @@ void SeqTester ::testCancelWhileAwaitingResponse() {
 }
 
 void SeqTester ::testCancelClearsPendingRun() {
-    REQUIREMENT("MFPM-ACT-007");
+    REQUIREMENT("SAMD21-SEQ-007");
     ActionBuilder b;
     const U8 arg = 0x33;
     b.addCommand(OPCODE_A, &arg, 1);
@@ -677,7 +677,7 @@ void SeqTester ::testCancelClearsPendingRun() {
 }
 
 void SeqTester ::testCancelResetsToStart() {
-    REQUIREMENT("MFPM-ACT-007");
+    REQUIREMENT("SAMD21-SEQ-007");
     // Two commands.
     ActionBuilder b;
     const U8 a0 = 0xA0, a1 = 0xA1;
@@ -706,7 +706,7 @@ void SeqTester ::testCancelResetsToStart() {
 }
 
 void SeqTester ::testCancelWhileIdleNoOp() {
-    REQUIREMENT("MFPM-ACT-007");
+    REQUIREMENT("SAMD21-SEQ-007");
     ActionBuilder b;
     const U8 arg = 0x44;
     b.addCommand(OPCODE_A, &arg, 1);
@@ -729,7 +729,7 @@ void SeqTester ::testCancelWhileIdleNoOp() {
 }
 
 void SeqTester ::testCancelClearsRunOnError() {
-    REQUIREMENT("MFPM-ACT-007");
+    REQUIREMENT("SAMD21-SEQ-007");
     ActionBuilder b;
     const U8 arg = 0x33;
     b.addCommand(OPCODE_A, &arg, 1);

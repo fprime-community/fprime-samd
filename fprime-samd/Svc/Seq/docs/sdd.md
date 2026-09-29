@@ -18,14 +18,14 @@ itself.
 
 | Name         | Description                                                                 | Validation |
 | ------------ | --------------------------------------------------------------------------- | ---------- |
-| MFPM-ACT-001 | Dispatch the commands of a named sequence in order, one at a time.          | Unit Test  |
-| MFPM-ACT-002 | Advance only after the in-flight command's response is `OK`.                | Unit Test  |
-| MFPM-ACT-003 | Abort the rest of the sequence when a command fails.                        | Unit Test  |
-| MFPM-ACT-004 | `RUN` pends a sequence; it starts once the component is idle.               | Unit Test  |
-| MFPM-ACT-005 | `RUN_ON_ERROR` arms a one-shot recovery sequence run on failure.            | Unit Test  |
-| MFPM-ACT-006 | `WAIT_TICKS` / `WAIT_UNTIL` block the sequence until their condition holds. | Unit Test  |
-| MFPM-ACT-007 | `CANCEL` stops execution and resets the program counter to the start.       | Unit Test  |
-| MFPM-ACT-008 | A malformed record is rejected and ends the sequence.                       | Unit Test  |
+| SAMD21-SEQ-001 | Dispatch the commands of a named sequence in order, one at a time.          | Unit Test  |
+| SAMD21-SEQ-002 | Advance only after the in-flight command's response is `OK`.                | Unit Test  |
+| SAMD21-SEQ-003 | Abort the rest of the sequence when a command fails.                        | Unit Test  |
+| SAMD21-SEQ-004 | `RUN` pends a sequence; it starts once the component is idle.               | Unit Test  |
+| SAMD21-SEQ-005 | `RUN_ON_ERROR` arms a one-shot recovery sequence run on failure.            | Unit Test  |
+| SAMD21-SEQ-006 | `WAIT_TICKS` / `WAIT_UNTIL` block the sequence until their condition holds. | Unit Test  |
+| SAMD21-SEQ-007 | `CANCEL` stops execution and resets the program counter to the start.       | Unit Test  |
+| SAMD21-SEQ-008 | A malformed record is rejected and ends the sequence.                       | Unit Test  |
 
 ## 3. Design
 
@@ -77,14 +77,49 @@ R00:00:00 SamdReference.seq.WAIT_TICKS 7
 
 ### 4.2 Build Pipeline
 
-`cmake/seqs.cmake`'s `fprime_add_static_sequence()` turns each
-`seqs/<NAME>.seq` into a linkable `fprime_seq_<NAME>[]` / `_len` symbol pair:
+`.seq` files are compiled by a build autocoder,
+`cmake/autocoder/seq.cmake`, registered project-wide via:
 
-1. `fprime-seqgen` assembles the `.seq` against the topology dictionary into
-   a `.bin`.
-2. `cmake/seq_to_c.py` strips the seqgen header/footer and each record's
+```cmake
+register_fprime_build_autocoder("autocoder/seq" OFF)
+```
+
+It turns each `.seq` passed as an `AUTOCODER_INPUT` into a linkable
+`fprime_seq_<NAME>[]` / `_len` symbol pair, compiled directly into the
+owning module — no separate library target needed:
+
+1. `fprime-seqgen` assembles the `.seq` against the *owning module's own*
+   dictionary into a `.bin`. The dictionary is read from that module's
+   `FPRIME_DICTIONARIES` target property, so the `.seq` file must be an
+   `AUTOCODER_INPUT` of the topology module itself (the one whose
+   `CMakeLists.txt` defines `topology.fpp`/`instances.fpp`), not the
+   deployment that links it — a `.seq` attached anywhere else would have no
+   dictionary to build against.
+2. `tools/seq_to_c.py` strips the seqgen header/footer and each record's
    descriptor + time tag, leaving the `(cmdSize, cmd)` list above, and emits
    a `.c`/`.h` pair.
+
+A deployment's `Top/CMakeLists.txt` lists its `.seq` files alongside
+`topology.fpp`:
+
+```cmake
+register_fprime_module(
+  AUTOCODER_INPUTS
+    "${CMAKE_CURRENT_LIST_DIR}/instances.fpp"
+    "${CMAKE_CURRENT_LIST_DIR}/topology.fpp"
+    "${CMAKE_CURRENT_LIST_DIR}/../seqs/STARTUP.seq"
+  SOURCES
+    "${CMAKE_CURRENT_LIST_DIR}/TopTopology.cpp"
+)
+```
+
+The generated `<NAME>.h` lands in the topology module's own binary
+directory, so `TopTopology.cpp` includes it module-root-relative, matching
+the autocoded topology headers:
+
+```cpp
+#include "Breadboard_Curiosity/Top/STARTUP.h"
+```
 
 ## 5. Commands
 
