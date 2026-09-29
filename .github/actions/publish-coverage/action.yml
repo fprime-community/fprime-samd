@@ -1,0 +1,109 @@
+name: "Publish the coverage site"
+description: >-
+  Renders the coverage site from measure-coverage's output and pushes it to the
+  GitHub Pages branch. A branch build publishes to the branch root; a tag build
+  publishes to releases/<tag>/ on the same branch, which is what makes a release's
+  report a permanent URL while keeping one Pages site.
+
+  Replaces nasa/fprime-actions/coverage-update. That action hardcodes the branch name
+  as <prefix>/<ref-name>, so a tag would land on coverage/<tag> -- a branch GitHub
+  Pages does not serve. It also renders upstream's five-column quality checklist,
+  which this repository does not want. The push itself is still upstream's
+  publish_baseline.sh: it creates the orphan branch on first use and re-mirrors and
+  retries on a non-fast-forward, so concurrent publishers cannot clobber each other.
+
+inputs:
+  modules-root:
+    description: "Directory the coverage output was produced in; must match measure-coverage."
+    required: false
+    default: "lib/fprime-samd/fprime-samd"
+  modules-jsonl:
+    description: "measure-coverage's modules-jsonl output."
+    required: true
+  pages-branch:
+    description: >-
+      Branch GitHub Pages serves. Fixed rather than derived from the ref: tag builds
+      have to land here too, or their reports would not be served.
+    required: false
+    default: "coverage/main"
+  release:
+    description: >-
+      Tag name to publish under releases/<tag>/. Empty for a branch build, which
+      publishes to the branch root instead.
+    required: false
+    default: ""
+  config-file:
+    description: "Checklist config holding the badge thresholds, relative to the workspace."
+    required: false
+    default: "lib/fprime-samd/.github/module-checklist.yml"
+  fprime-actions-path:
+    description: "Where measure-coverage checked nasa/fprime-actions out, relative to the workspace."
+    required: false
+    default: ".fprime-actions"
+
+outputs:
+  url-path:
+    description: "Path under the Pages site this run published to (empty string for the root)."
+    value: ${{ steps.publish.outputs.url-path }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: "Render and push"
+      id: publish
+      shell: bash
+      working-directory: ${{ inputs.modules-root }}
+      env:
+        PUBLISH_SH: ${{ github.workspace }}/${{ inputs.fprime-actions-path }}/coverage-common/scripts/publish_baseline.sh
+        SITE: ${{ github.workspace }}/lib/fprime-samd/.github/scripts/coverage_site.py
+        CONFIG: ${{ github.workspace }}/${{ inputs.config-file }}
+        MODULES_JSONL: ${{ inputs.modules-jsonl }}
+        PAGES_BRANCH: ${{ inputs.pages-branch }}
+        RELEASE: ${{ inputs.release }}
+        COMMIT_SHA: ${{ github.sha }}
+        REF_NAME: ${{ github.ref_name }}
+      run: |
+        set -euo pipefail
+
+        if [ -n "${RELEASE}" ]; then
+          echo "url-path=releases/${RELEASE}/" >> "${GITHUB_OUTPUT}"
+          COMMIT_PREFIX="release"
+        else
+          echo "url-path=" >> "${GITHUB_OUTPUT}"
+          COMMIT_PREFIX="coverage"
+        fi
+
+        # publish_baseline.sh prepares a worktree of PAGES_BRANCH (orphan on first
+        # use), exports BASELINE_DIR, runs the command below inside this same working
+        # directory, then commits and pushes -- retrying the whole thing if another
+        # publisher landed first.
+        bash "${PUBLISH_SH}" "${PAGES_BRANCH}" "${COMMIT_SHA}" "${COMMIT_PREFIX}" \
+          bash -c '
+            set -euo pipefail
+            if [ -n "${RELEASE}" ]; then
+              # Frozen copy for the tag, then re-render the root page so the new
+              # release appears in its release list. Re-rendering reads the root
+              # catalog.json already on the branch, so a tag build never has to
+              # re-measure the default branch.
+              python3 "${SITE}" publish \
+                --source . \
+                --dest "${BASELINE_DIR}/releases/${RELEASE}" \
+                --pages-root "${BASELINE_DIR}" \
+                --modules-jsonl "${MODULES_JSONL}" \
+                --ref "${RELEASE}" \
+                --ref-type tag \
+                --commit "${COMMIT_SHA}" \
+                --config "${CONFIG}"
+              python3 "${SITE}" reindex \
+                --dest "${BASELINE_DIR}" \
+                --config "${CONFIG}"
+            else
+              python3 "${SITE}" publish \
+                --source . \
+                --dest "${BASELINE_DIR}" \
+                --modules-jsonl "${MODULES_JSONL}" \
+                --ref "${REF_NAME}" \
+                --ref-type branch \
+                --commit "${COMMIT_SHA}" \
+                --config "${CONFIG}"
+            fi'

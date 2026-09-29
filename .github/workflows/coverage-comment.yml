@@ -1,0 +1,41 @@
+# Posts, and keeps updating, the sticky coverage comment produced by coverage-check.yml.
+#
+# Separate from coverage-check.yml because GitHub strips write permissions from
+# GITHUB_TOKEN on pull_request events from forks, so the job that runs fork content
+# cannot comment. workflow_run fires in this repository's context instead, and no fork
+# code executes here: this job only downloads the artifact the other workflow already
+# built and posts its contents.
+name: "Coverage Comment"
+
+on:
+  workflow_run:
+    workflows: [ "Coverage Check" ]
+    types: [ completed ]
+
+permissions:
+  contents: read
+
+concurrency:
+  # Per source run, and not cancel-in-progress: two completions of the same pull
+  # request must not race while upserting the same comment.
+  group: ${{ github.workflow }}-${{ github.event.workflow_run.id }}
+  cancel-in-progress: false
+
+jobs:
+  comment:
+    name: "Post the coverage comment"
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    # Skipping cancelled and failed runs avoids posting a comment built from partial
+    # data when the measuring job died before finishing.
+    if: >
+      github.event.workflow_run.event == 'pull_request' &&
+      github.event.workflow_run.conclusion == 'success'
+    permissions:
+      contents: read
+      # Required to download an artifact belonging to a different workflow run.
+      actions: read
+      pull-requests: write
+    steps:
+      - name: "Post or update the sticky comment"
+        uses: nasa/fprime-actions/coverage-comment@devel
