@@ -20,14 +20,15 @@ register_fprime_implementation(
     "${CMAKE_CURRENT_LIST_DIR}/sscanf_scan.cpp"
 )
 
-register_fprime_implementation(
-    Samd21_AssertHook_reset
-  IMPLEMENTS
-    Fw_AssertHook
+register_fprime_module(
+    fprime-samd_Overrides_ResetAssertHook
+  SOURCES
+    "${CMAKE_CURRENT_LIST_DIR}/ResetAssertHook.cpp"
+  HEADERS
+    "${CMAKE_CURRENT_LIST_DIR}/ResetAssertHook.hpp"
   DEPENDS
     Fw_Types
-  SOURCES
-    "${CMAKE_CURRENT_LIST_DIR}/reset_assert_hook.cpp"
+    Fw_Com
 )
 
 if (SAMD21_LTO)

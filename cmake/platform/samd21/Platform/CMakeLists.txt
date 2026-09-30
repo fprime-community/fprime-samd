@@ -20,6 +20,5 @@ register_fprime_config(
         Os_RawTime_Samd21
         Samd21_StringFormat_snprintf
         Samd21_StringScan_sscanf
-        Samd21_AssertHook_reset
     INTERFACE # No buildable files generated
 )
