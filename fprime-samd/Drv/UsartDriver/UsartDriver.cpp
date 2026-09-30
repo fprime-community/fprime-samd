@@ -293,54 +293,41 @@ void UsartDriver ::dmaQueueRxSend(const ThinBuffer& buffer) {
 }
 
 void UsartDriver ::dmaReplyTxIsr(const Samd21::Dma::Reply& reply) {
+    FW_ASSERT(reply.get_status() == Dma::Status::OK, this->m_sercom, static_cast<FwAssertArgType>(reply.get_status()));
     Fw::Success status;
-    switch (reply.get_status()) {
-        case Dma::Status::OK: {
-            CriticalSection cs;
-            status = this->m_queue.enqueue(Signal(SignalKind::TX_BUFFER_OK, 0));
-        }
-            FW_ASSERT(status == Fw::Success::SUCCESS, status);
-            break;
-        case Dma::Status::BUS_ERROR:
-            // We tried to transmit from a buffer on an invalid address
-            FW_ASSERT(false, this->m_sercom);
-            break;
-        default:
-            FW_ASSERT(false, static_cast<FwAssertArgType>(reply.get_status()));
+
+    {
+        CriticalSection cs;
+        status = this->m_queue.enqueue(Signal(SignalKind::TX_BUFFER_OK, 0));
     }
+
+    FW_ASSERT(status == Fw::Success::SUCCESS, status);
 }
 
 void UsartDriver ::dmaReplyRxIsr(const Samd21::Dma::Reply& reply) {
     Fw::Success status;
-    switch (reply.get_status()) {
-        case Dma::Status::OK:
-            // Make sure remaining bytes are consistent with our storage
-            FW_ASSERT(reply.get_remainingBytes() <= USART_RX_BUFFER_SIZE, reply.get_remainingBytes());
-            // Signal the high-RX watchdog that a full buffer just completed. schedIn
-            // compares this across ticks to decide whether RX is busy (and thus
-            // whether the suspend-inducing partial read is safe to run).
-            this->m_rx_activity++;
-            {
-                // Carry the absolute count of bytes filled in the current buffer (high-water mark)
-                // rather than a delta against m_active_processed. m_active_processed is only mutated
-                // in activeIn_handler, so reading it here (in an ISR) would race; the absolute count
-                // is computed purely from DMA state and the delta is resolved at consume time.
-                CriticalSection cs;
-                status = this->m_queue.enqueue(
-                    Signal(SignalKind::RX_BUFFER_DONE,
-                           static_cast<U16>(USART_RX_BUFFER_SIZE - static_cast<U16>(reply.get_remainingBytes()))));
-            }
-            // TODO(tumbar) If we are Rx-ing too fast, this will assert
-            //              Maybe a better thing to do is to drop this buffer?
-            FW_ASSERT(status == Fw::Success::SUCCESS, status);
-            break;
-        case Dma::Status::BUS_ERROR:
-            // We tried to receive to a buffer on an invalid address
-            FW_ASSERT(false, this->m_sercom);
-            break;
-        default:
-            FW_ASSERT(false, static_cast<FwAssertArgType>(reply.get_status()));
+    // Make sure remaining bytes are consistent with our storage
+    FW_ASSERT(reply.get_remainingBytes() <= USART_RX_BUFFER_SIZE, reply.get_remainingBytes());
+    FW_ASSERT(reply.get_status() == Dma::Status::OK, static_cast<FwAssertArgType>(reply.get_status()));
+
+    // Signal the high-RX watchdog that a full buffer just completed. schedIn
+    // compares this across ticks to decide whether RX is busy (and thus
+     // whether the suspend-inducing partial read is safe to run).
+    this->m_rx_activity++;
+    {
+        // Carry the absolute count of bytes filled in the current buffer (high-water mark)
+        // rather than a delta against m_active_processed. m_active_processed is only mutated
+        // in activeIn_handler, so reading it here (in an ISR) would race; the absolute count
+        // is computed purely from DMA state and the delta is resolved at consume time.
+        CriticalSection cs;
+        status = this->m_queue.enqueue(
+        Signal(SignalKind::RX_BUFFER_DONE,
+               static_cast<U16>(USART_RX_BUFFER_SIZE - static_cast<U16>(reply.get_remainingBytes()))));
     }
+
+    // TODO(tumbar) If we are Rx-ing too fast, this will assert
+    //              Maybe a better thing to do is to drop this buffer?
+    FW_ASSERT(status == Fw::Success::SUCCESS, status);
 }
 
 }  // namespace Samd21
