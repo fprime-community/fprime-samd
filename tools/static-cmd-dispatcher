@@ -93,7 +93,7 @@ def generate_ac_functions(
 
                     dest_ci = connection.to.underlying_endpoint.port.interface_instance
                     assert isinstance(
-                        dest_ci, fpp.ComponentInterfaceInstance
+                        dest_ci, fpp.InterfaceInstance.Component
                     ), "unflattened topology"
 
                     # Dump all the base_id + opcode for this instance
