@@ -32,7 +32,7 @@ pre {
   white-space: pre-wrap; word-break: break-word;
 }
 .empty { color: #57606a; padding: 0.75rem 1rem; border-top: 1px solid #d0d7de; margin: 0; }
-</style></head><body><h1>Unit-test console output &mdash; <code>Drv/I2cDriver</code></h1><div class="meta"><span class="pill passed">passed</span> 1 passed &middot; 0.07s &middot; <a href="../../../index.html">← back to the module list</a> &middot; <a href="console.txt">plain text</a></div><details><summary><span class="pill passed">passed</span><span class="name">fprime-samd_Drv_I2cDriver_ut_exe</span><span class="time">0.07s</span></summary><pre>[STest::Random] Generated seed 51737 from system time
+</style></head><body><h1>Unit-test console output &mdash; <code>Drv/I2cDriver</code></h1><div class="meta"><span class="pill passed">passed</span> 1 passed &middot; 0.08s &middot; <a href="../../../index.html">← back to the module list</a> &middot; <a href="console.txt">plain text</a></div><details><summary><span class="pill passed">passed</span><span class="name">fprime-samd_Drv_I2cDriver_ut_exe</span><span class="time">0.08s</span></summary><pre>[STest::Random] Generated seed 877249 from system time
 [==========] Running 39 tests from 10 test suites.
 [----------] Global test environment set-up.
 [----------] 3 tests from Configure
@@ -103,7 +103,7 @@ read() while busy is rejected with OTHER_ERR
 (RQ)       SAMD21-I2C-005: The I2cDriver shall reject a new request that arrives while a transaction is in progress, returning I2C_OTHER_ERR on the matching completion callback
 ***************************************
 [       OK ] Read.Busy (0 ms)
-[----------] 3 tests from Read (3 ms total)
+[----------] 3 tests from Read (2 ms total)
 
 [----------] 3 tests from Write
 [ RUN      ] Write.Nominal
@@ -156,7 +156,7 @@ writeRead() queues both DMA transfers and writes without a STOP
 ***************************************
 (RQ)       SAMD21-I2C-003: The I2cDriver shall implement writeRead as a repeated START with no intervening STOP
 ***************************************
-[       OK ] WriteRead.Nominal (0 ms)
+[       OK ] WriteRead.Nominal (1 ms)
 [ RUN      ] WriteRead.FullSequence
 
 ***************************************
@@ -170,7 +170,7 @@ write-read walks write DMA -&gt; master-on-bus -&gt; read DMA -&gt; OK
 ***************************************
 (RQ)       SAMD21-I2C-006: The I2cDriver shall deliver every completion callback from the main context (via activeIn), not from interrupt context
 ***************************************
-[       OK ] WriteRead.FullSequence (0 ms)
+[       OK ] WriteRead.FullSequence (1 ms)
 [ RUN      ] WriteRead.Busy
 
 ***************************************
@@ -180,7 +180,7 @@ writeRead() while busy is rejected with OTHER_ERR
 ***************************************
 (RQ)       SAMD21-I2C-005: The I2cDriver shall reject a new request that arrives while a transaction is in progress, returning I2C_OTHER_ERR on the matching completion callback
 ***************************************
-[       OK ] WriteRead.Busy (0 ms)
+[       OK ] WriteRead.Busy (1 ms)
 [ RUN      ] WriteRead.PointerNack
 
 ***************************************
@@ -211,7 +211,7 @@ the stale SERCOM interrupt after an inline handoff is a benign no-op, not an ass
 (RQ)       SAMD21-I2C-003: The I2cDriver shall implement writeRead as a repeated START with no intervening STOP (a stale SERCOM interrupt after the inline handoff is a benign no-op)
 ***************************************
 [       OK ] WriteRead.MbAlreadyLatchedSpuriousIsr (0 ms)
-[----------] 6 tests from WriteRead (5 ms total)
+[----------] 6 tests from WriteRead (6 ms total)
 
 [----------] 8 tests from Isr
 [ RUN      ] Isr.ErrorIdleUnexpected
@@ -253,7 +253,7 @@ an error while writing a write-read aborts both channels, replies WRITE_ERR
 ***************************************
 (RQ)       SAMD21-I2C-004: The I2cDriver shall report bus errors as events and fail the in-flight transaction with the appropriate status (I2C_WRITE_ERR during the write half of a write-read)
 ***************************************
-[       OK ] Isr.ErrorDuringWriteReadWriting (1 ms)
+[       OK ] Isr.ErrorDuringWriteReadWriting (0 ms)
 [ RUN      ] Isr.ErrorDuringWriteReadReading
 
 ***************************************
@@ -294,7 +294,7 @@ an error while in WRITE_READ_WRITING_WAIT disables the armed MB interrupt (leak 
 (RQ)       SAMD21-I2C-004: The I2cDriver shall fail the in-flight transaction with the appropriate status and return to service (the error path disables the armed MB interrupt)
 ***************************************
 [       OK ] Isr.ErrorDuringWriteReadWaitDisablesMb (1 ms)
-[----------] 8 tests from Isr (8 ms total)
+[----------] 8 tests from Isr (7 ms total)
 
 [----------] 7 tests from StallWatchdog
 [ RUN      ] StallWatchdog.NoRecoveryBeforeThreshold
@@ -400,7 +400,7 @@ a DMA reply while IDLE is silently ignored
 (RQ)       SAMD21-I2C-006: The I2cDriver shall deliver completion callbacks only for transactions it has in flight (a DMA reply while IDLE is ignored)
 ***************************************
 [       OK ] DmaReply.IdleIgnored (0 ms)
-[----------] 3 tests from DmaReply (3 ms total)
+[----------] 3 tests from DmaReply (2 ms total)
 
 [----------] 3 tests from Boundary
 [ RUN      ] Boundary.WriteMaxPayload
@@ -437,7 +437,7 @@ both phases of a write-read target the max legal 7-bit address 0x7F
 (RQ)       SAMD21-I2C-003: The I2cDriver shall implement writeRead as a repeated START with no intervening STOP (both halves target the same address)
 ***************************************
 [       OK ] Boundary.WriteReadMaxAddress (0 ms)
-[----------] 3 tests from Boundary (3 ms total)
+[----------] 3 tests from Boundary (2 ms total)
 
 [----------] 2 tests from Telemetry
 [ RUN      ] Telemetry.BusStatus
@@ -449,7 +449,7 @@ reportTelemetryIn maps the bus status registers to channels
 ***************************************
 (RQ)       SAMD21-I2C-004: The I2cDriver shall count bus errors in telemetry
 ***************************************
-[       OK ] Telemetry.BusStatus (0 ms)
+[       OK ] Telemetry.BusStatus (1 ms)
 [ RUN      ] Telemetry.DeviceOnBus
 
 ***************************************
@@ -459,7 +459,7 @@ both SB and MB set maps to MASTER_AND_SLAVE_ON_BUS
 ***************************************
 (RQ)       SAMD21-I2C-004: The I2cDriver shall report bus state in telemetry
 ***************************************
-[       OK ] Telemetry.DeviceOnBus (0 ms)
+[       OK ] Telemetry.DeviceOnBus (1 ms)
 [----------] 2 tests from Telemetry (2 ms total)
 
 [----------] 1 test from Command
@@ -476,6 +476,6 @@ CLEAR_ERRORS resets the error counter and responds OK
 [----------] 1 test from Command (1 ms total)
 
 [----------] Global test environment tear-down
-[==========] 39 tests from 10 test suites ran. (43 ms total)
+[==========] 39 tests from 10 test suites ran. (42 ms total)
 [  PASSED  ] 39 tests.
 </pre></details></body></html>
