@@ -11,3 +11,6 @@ Tester.*
 seed-history
 
 __pycache__
+
+build/
+*.egg-info/
