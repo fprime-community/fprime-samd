@@ -1,0 +1,2 @@
+# Microchip Curiosity Nano nEDBG (CMSIS-DAP + CDC): expose the target UART as /dev/samd21-curiosity
+SUBSYSTEM=="tty", ATTRS{idVendor}=="03eb", ATTRS{idProduct}=="2175", ENV{ID_USB_INTERFACE_NUM}=="01", SYMLINK+="samd21-curiosity", MODE="0660", GROUP="dialout"
