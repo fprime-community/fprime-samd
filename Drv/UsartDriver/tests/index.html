@@ -32,7 +32,7 @@ pre {
   white-space: pre-wrap; word-break: break-word;
 }
 .empty { color: #57606a; padding: 0.75rem 1rem; border-top: 1px solid #d0d7de; margin: 0; }
-</style></head><body><h1>Unit-test console output &mdash; <code>Drv/UsartDriver</code></h1><div class="meta"><span class="pill passed">passed</span> 1 passed &middot; 0.35s &middot; <a href="../../../index.html">← back to the module list</a> &middot; <a href="console.txt">plain text</a></div><details><summary><span class="pill passed">passed</span><span class="name">fprime-samd_Drv_UsartDriver_ut_exe</span><span class="time">0.35s</span></summary><pre>[STest::Random] Generated seed 516377 from system time
+</style></head><body><h1>Unit-test console output &mdash; <code>Drv/UsartDriver</code></h1><div class="meta"><span class="pill passed">passed</span> 1 passed &middot; 0.55s &middot; <a href="../../../index.html">← back to the module list</a> &middot; <a href="console.txt">plain text</a></div><details><summary><span class="pill passed">passed</span><span class="name">fprime-samd_Drv_UsartDriver_ut_exe</span><span class="time">0.55s</span></summary><pre>[STest::Random] Generated seed 472453 from system time
 [==========] Running 18 tests from 6 test suites.
 [----------] Global test environment set-up.
 [----------] 3 tests from Configure
@@ -116,8 +116,8 @@ TX DMA bus error asserts (invalid buffer pointer handed to DMA)
 ***************************************
 (RQ)       SAMD21-UART-002: The UsartDriver shall use DMA for transmission (an unrecoverable TX DMA bus error asserts)
 ***************************************
-[       OK ] Send.ChannelError (155 ms)
-[----------] 4 tests from Send (156 ms total)
+[       OK ] Send.ChannelError (247 ms)
+[----------] 4 tests from Send (249 ms total)
 
 [----------] 1 test from SendSync
 [ RUN      ] SendSync.Nominal
@@ -202,8 +202,8 @@ RX DMA bus error asserts (invalid buffer pointer handed to DMA)
 ***************************************
 (RQ)       SAMD21-UART-002: The UsartDriver shall use DMA for reception (an unrecoverable RX DMA bus error asserts)
 ***************************************
-[       OK ] Rx.ChannelError (159 ms)
-[----------] 7 tests from Rx (162 ms total)
+[       OK ] Rx.ChannelError (261 ms)
+[----------] 7 tests from Rx (265 ms total)
 
 [----------] 2 tests from Unconfigured
 [ RUN      ] Unconfigured.SchedIn
@@ -226,7 +226,7 @@ activeIn before configure() is a safe no-op
 (RQ)       SAMD21-UART-005: The UsartDriver shall queue TX requests with asynchronous completion (an activeIn tick before configure() delivers nothing)
 ***************************************
 [       OK ] Unconfigured.ActiveIn (0 ms)
-[----------] 2 tests from Unconfigured (0 ms total)
+[----------] 2 tests from Unconfigured (1 ms total)
 
 [----------] 1 test from TriggerSource
 [ RUN      ] TriggerSource.Mapping
@@ -238,10 +238,10 @@ each SERCOM maps to its matching RX DMA trigger source
 ***************************************
 (RQ)       SAMD21-UART-002: The UsartDriver shall use DMA for both transmission and reception (the correct DMA trigger is selected per SERCOM)
 ***************************************
-[       OK ] TriggerSource.Mapping (0 ms)
-[----------] 1 test from TriggerSource (0 ms total)
+[       OK ] TriggerSource.Mapping (1 ms)
+[----------] 1 test from TriggerSource (1 ms total)
 
 [----------] Global test environment tear-down
-[==========] 18 tests from 6 test suites ran. (322 ms total)
+[==========] 18 tests from 6 test suites ran. (521 ms total)
 [  PASSED  ] 18 tests.
 </pre></details></body></html>
