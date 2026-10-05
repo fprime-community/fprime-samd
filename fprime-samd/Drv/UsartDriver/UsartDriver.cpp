@@ -312,7 +312,7 @@ void UsartDriver ::dmaReplyRxIsr(const Samd21::Dma::Reply& reply) {
 
     // Signal the high-RX watchdog that a full buffer just completed. schedIn
     // compares this across ticks to decide whether RX is busy (and thus
-     // whether the suspend-inducing partial read is safe to run).
+    // whether the suspend-inducing partial read is safe to run).
     this->m_rx_activity++;
     {
         // Carry the absolute count of bytes filled in the current buffer (high-water mark)
@@ -321,8 +321,8 @@ void UsartDriver ::dmaReplyRxIsr(const Samd21::Dma::Reply& reply) {
         // is computed purely from DMA state and the delta is resolved at consume time.
         CriticalSection cs;
         status = this->m_queue.enqueue(
-        Signal(SignalKind::RX_BUFFER_DONE,
-               static_cast<U16>(USART_RX_BUFFER_SIZE - static_cast<U16>(reply.get_remainingBytes()))));
+            Signal(SignalKind::RX_BUFFER_DONE,
+                   static_cast<U16>(USART_RX_BUFFER_SIZE - static_cast<U16>(reply.get_remainingBytes()))));
     }
 
     // TODO(tumbar) If we are Rx-ing too fast, this will assert
