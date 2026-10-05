@@ -34,9 +34,7 @@ class RawTime : public RawTimeInterface {
     //! default constructor; the parameter exists to satisfy RawTimeInterface's required signature.
     //!
     //! \param source: clock source (ignored)
-    explicit RawTime(RawTimeSource source) {
-        static_cast<void>(source);
-    }
+    explicit RawTime(RawTimeSource source) { static_cast<void>(source); }
 
     //! \brief destructor
     //!
