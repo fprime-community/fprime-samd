@@ -59,15 +59,21 @@ jobs:
       - name: "Build and run this library's unit tests"
         uses: ./lib/fprime-samd/.github/actions/unit-tests
         with:
-          # Gate on fprime-samd's own tests. The harness's `native-ut` test preset is
-          # used so its exclusions still apply, and `-R` narrows the run to this
-          # library so an unrelated harness test cannot be charged to a pull request
-          # here. The harness's full suite is its own CI's job.
           preset: native-ut
           include: "^fprime-samd_"
 
       - name: "Build the native-ut all target"
-        # Catches any module that stops compiling for a native platform even though no
-        # unit test covers it -- the FPP has to parse and autocode for something other
-        # than Samd21, which is a real source of breakage in a cross-targeted library.
         run: ninja -C build-fprime-automatic-native-ut all
+
+      - name: "Install gcovr"
+        shell: bash
+        run: pip install gcovr
+
+      - name: "Coverage: StaticTlmPacketizer / StaticCmdDispatcher via the harness's CmdTlmTest topology"
+        uses: ./lib/fprime-samd/.github/actions/attach-coverage
+        with:
+          module: CmdTlmTest/Top
+          attach: |
+            lib/fprime-samd/fprime-samd/Svc/StaticTlmPacketizer
+            lib/fprime-samd/fprime-samd/Svc/StaticCmdDispatcher
+          summary-title: "StaticTlmPacketizer / StaticCmdDispatcher coverage (via CmdTlmTest)"
