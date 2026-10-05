@@ -266,7 +266,7 @@ class SeqTester final : public SeqGTestBase {
     Seq component;
 
     //! Backing storage for the action list handed to configure()
-    Seq::Action m_actions[SeqNames::NUM_CONSTANTS];
+    Seq::Sequence m_actions[SeqNames::NUM_CONSTANTS];
 
     //! Current test time in seconds (fed to the component via setTestTime).
     U32 m_nowSeconds;

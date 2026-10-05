@@ -26,22 +26,22 @@ class Seq final : public SeqComponentBase {
     //! Destroy Seq object
     ~Seq();
 
-    //! A single hard-coded action: a pointer to its binary blob and the blob length
-    struct Action {
-        Action() : m_data(nullptr), m_len(0) {}
-        Action(const U8* data, U32 len) : m_data(data), m_len(len) {}
+    //! A single hard-coded sequence: a pointer to its binary blob and the blob length
+    struct Sequence {
+        Sequence() : m_data(nullptr), m_len(0) {}
+        Sequence(const U8* data, U32 len) : m_data(data), m_len(len) {}
 
-        const U8* m_data;  //!< Pointer to the action binary (typically in flash)
-        U32 m_len;         //!< Length of the action binary in bytes
+        const U8* m_data;  //!< Pointer to the sequence binary (typically in flash)
+        U32 m_len;         //!< Length of the sequence binary in bytes
     };
 
-    //! Configure the action list.
-    //! \a actions must point at an array of exactly SeqNames::NUM_CONSTANTS
+    //! Configure the sequence list.
+    //! \a sequences must point at an array of exactly SeqNames::NUM_CONSTANTS
     //! entries, indexed by the SeqNames enum value. The array and the
     //! binaries it references must remain valid for the lifetime of the component.
-    void configure(const Action* actions);
+    void configure(const Sequence* sequences);
 
-    //! Pend an action to run when the MCU boots into the main loop
+    //! Pend a sequence to run when the MCU boots into the main loop
     void run(const Samd21::SeqNames& name);
 
   private:
@@ -163,10 +163,10 @@ class Seq final : public SeqComponentBase {
         UNTIL,  //!< Waiting for the FSW clock to reach an absolute time (WAIT_UNTIL)
     };
 
-    const Action* m_actions;  //!< The configured action list (NUM_CONSTANTS long)
-    U16 m_offset;             //!< Current offset in bytes from the active action table
-    U8 m_tableIdx;            //!< Index of the active table
-    volatile State m_state;   //!< Whether an action is currently executing
+    const Sequence* m_sequences;  //!< The configured action list (NUM_CONSTANTS long)
+    U16 m_offset;                 //!< Current offset in bytes from the active action table
+    U8 m_tableIdx;                //!< Index of the active table
+    volatile State m_state;       //!< Whether an action is currently executing
     U8 m_pendingTableIdx;  //!< NUM_CONSTANTS indicates nothing to run. Otherwise once this component enters idle, start
                            //!< this sequence
     U8 m_runOnErrorTableIdx;  //!< NUM_CONSTANTS indicates none. Otherwise the table to pend when a command fails

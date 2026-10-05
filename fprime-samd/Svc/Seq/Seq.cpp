@@ -16,9 +16,9 @@ namespace Samd21 {
 // Component construction and destruction
 // ----------------------------------------------------------------------
 
-Seq ::Seq(const char* const compName)
+Seq::Seq(const char* const compName)
     : SeqComponentBase(compName),
-      m_actions(nullptr),
+      m_sequences(nullptr),
       m_offset(),
       m_tableIdx(),
       m_state(),
@@ -30,13 +30,13 @@ Seq ::Seq(const char* const compName)
       m_waitSeconds(0),
       m_waitUseconds(0) {}
 
-Seq ::~Seq() {}
+Seq::~Seq() {}
 
-void Seq ::configure(const Action* actions) {
-    FW_ASSERT(actions != nullptr);
-    FW_ASSERT(this->m_actions == nullptr);
+void Seq::configure(const Sequence* sequences) {
+    FW_ASSERT(sequences != nullptr);
+    FW_ASSERT(this->m_sequences == nullptr);
 
-    this->m_actions = actions;
+    this->m_sequences = sequences;
     this->m_tableIdx = Samd21::SeqNames();
     this->m_offset = 0;
     this->m_state = State::IDLE;
@@ -53,7 +53,7 @@ void Seq::run(const Samd21::SeqNames& name) {
 // Handler implementations for typed input ports
 // ----------------------------------------------------------------------
 
-bool Seq ::activeIn_handler(FwIndexType portNum, U32 context) {
+bool Seq::activeIn_handler(FwIndexType portNum, U32 context) {
     if (this->m_state == State::PENDING_NEXT) {
         this->next();
 
@@ -76,10 +76,10 @@ bool Seq ::activeIn_handler(FwIndexType portNum, U32 context) {
     }
 }
 
-void Seq ::commandResponseIn_handler(FwIndexType portNum,
-                                     FwOpcodeType opCode,
-                                     U32 cmdSeq,
-                                     const Fw::CmdResponse& response) {
+void Seq::commandResponseIn_handler(FwIndexType portNum,
+                                    FwOpcodeType opCode,
+                                    U32 cmdSeq,
+                                    const Fw::CmdResponse& response) {
     if (this->m_state != State::AWAITING_RESPONSE) {
         this->log_WARNING_HI_DroppingStrayResponse(opCode, cmdSeq, response);
         return;
@@ -112,7 +112,7 @@ void Seq ::commandResponseIn_handler(FwIndexType portNum,
     }
 }
 
-void Seq ::schedIn_handler(FwIndexType portNum, U32 context) {
+void Seq::schedIn_handler(FwIndexType portNum, U32 context) {
     if (this->m_state != State::SLEEPING) {
         return;
     }
@@ -157,15 +157,15 @@ void Seq ::schedIn_handler(FwIndexType portNum, U32 context) {
 // Handler implementations for commands
 // ----------------------------------------------------------------------
 
-void Seq ::RUN_cmdHandler(FwOpcodeType opCode, U32 cmdSeq, const Samd21::SeqNames& table) {
-    FW_ASSERT(this->m_actions != nullptr);
+void Seq::RUN_cmdHandler(FwOpcodeType opCode, U32 cmdSeq, const Samd21::SeqNames& table) {
+    FW_ASSERT(this->m_sequences != nullptr);
 
     this->m_pendingTableIdx = table;
     this->cmdResponse_out(opCode, cmdSeq, Fw::CmdResponse::OK);
 }
 
-void Seq ::RUN_ON_ERROR_cmdHandler(FwOpcodeType opCode, U32 cmdSeq, const Samd21::SeqNames& table) {
-    FW_ASSERT(this->m_actions != nullptr);
+void Seq::RUN_ON_ERROR_cmdHandler(FwOpcodeType opCode, U32 cmdSeq, const Samd21::SeqNames& table) {
+    FW_ASSERT(this->m_sequences != nullptr);
 
     // Arm the recovery table and clear any pending normal RUN.
     this->m_runOnErrorTableIdx = table;
@@ -173,7 +173,7 @@ void Seq ::RUN_ON_ERROR_cmdHandler(FwOpcodeType opCode, U32 cmdSeq, const Samd21
     this->cmdResponse_out(opCode, cmdSeq, Fw::CmdResponse::OK);
 }
 
-void Seq ::CANCEL_cmdHandler(FwOpcodeType opCode, U32 cmdSeq) {
+void Seq::CANCEL_cmdHandler(FwOpcodeType opCode, U32 cmdSeq) {
     // Stop whatever is executing or pending and reset the program counter to the
     // start of the sequence. Nothing is dispatched. If a command was already in
     // flight (AWAITING_RESPONSE), its response will arrive after we return to
@@ -191,7 +191,7 @@ void Seq ::CANCEL_cmdHandler(FwOpcodeType opCode, U32 cmdSeq) {
     this->cmdResponse_out(opCode, cmdSeq, Fw::CmdResponse::OK);
 }
 
-void Seq ::WAIT_TICKS_cmdHandler(FwOpcodeType opCode, U32 cmdSeq, U32 n) {
+void Seq::WAIT_TICKS_cmdHandler(FwOpcodeType opCode, U32 cmdSeq, U32 n) {
     // Record the wait and acknowledge. This handler runs re-entrantly while the
     // dispatched WAIT_TICKS command is AWAITING_RESPONSE; the OK response below
     // drives commandResponseIn, which observes m_sleepKind and enters SLEEPING.
@@ -200,7 +200,7 @@ void Seq ::WAIT_TICKS_cmdHandler(FwOpcodeType opCode, U32 cmdSeq, U32 n) {
     this->cmdResponse_out(opCode, cmdSeq, Fw::CmdResponse::OK);
 }
 
-void Seq ::WAIT_UNTIL_cmdHandler(FwOpcodeType opCode, U32 cmdSeq, const TimeBase& timeBase, U32 seconds, U32 useconds) {
+void Seq::WAIT_UNTIL_cmdHandler(FwOpcodeType opCode, U32 cmdSeq, const TimeBase& timeBase, U32 seconds, U32 useconds) {
     // Record the absolute wakeup and acknowledge. See WAIT_TICKS_cmdHandler for
     // the re-entrant handoff to commandResponseIn / SLEEPING.
     this->m_sleepKind = SleepKind::UNTIL;
@@ -214,15 +214,15 @@ void Seq ::WAIT_UNTIL_cmdHandler(FwOpcodeType opCode, U32 cmdSeq, const TimeBase
 // Helper functions
 // ----------------------------------------------------------------------
 
-bool Seq ::hasMoreRecordsInternal() const {
-    return this->m_offset < this->m_actions[this->m_tableIdx].m_len;
+bool Seq::hasMoreRecordsInternal() const {
+    return this->m_offset < this->m_sequences[this->m_tableIdx].m_len;
 }
 
-U16 Seq ::deserializeRecord(Fw::ExternalSerializeBuffer& cmd) {
-    Fw::ExternalSerializeBuffer buffer(const_cast<U8*>(this->m_actions[this->m_tableIdx].m_data),
-                                       this->m_actions[this->m_tableIdx].m_len);
+U16 Seq::deserializeRecord(Fw::ExternalSerializeBuffer& cmd) {
+    Fw::ExternalSerializeBuffer buffer(const_cast<U8*>(this->m_sequences[this->m_tableIdx].m_data),
+                                       this->m_sequences[this->m_tableIdx].m_len);
 
-    buffer.moveSerToOffset(this->m_actions[this->m_tableIdx].m_len);
+    buffer.moveSerToOffset(this->m_sequences[this->m_tableIdx].m_len);
     buffer.moveDeserToOffset(this->m_offset);
 
     // Command size: the number of bytes spanning the opcode plus its arguments.
@@ -242,17 +242,17 @@ U16 Seq ::deserializeRecord(Fw::ExternalSerializeBuffer& cmd) {
     FW_ASSERT(status == Fw::FW_SERIALIZE_OK, status);
 
     // Bytes consumed by this record (delta from the record start offset).
-    return static_cast<U16>((this->m_actions[this->m_tableIdx].m_len - buffer.getDeserializeSizeLeft()) -
+    return static_cast<U16>((this->m_sequences[this->m_tableIdx].m_len - buffer.getDeserializeSizeLeft()) -
                             this->m_offset);
 }
 
-void Seq ::dispatchRecord(const Fw::ExternalSerializeBuffer& cmdBuf, U32 cmdSeq) {
+void Seq::dispatchRecord(const Fw::ExternalSerializeBuffer& cmdBuf, U32 cmdSeq) {
     // Copy the args into a local "owned" spot
     Fw::ComBuffer cmd(cmdBuf.getBuffAddr(), cmdBuf.getSize());
     this->commandOut_out(0, cmd, cmdSeq);
 }
 
-void Seq ::next() {
+void Seq::next() {
     // The program counter can already be at the end of the buffer when the last
     // command in a sequence is a WAIT_* directive: the wait advanced the offset
     // past the final command, and schedIn calls next() once the wait expires.

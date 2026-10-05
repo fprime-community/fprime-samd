@@ -759,7 +759,7 @@ void SeqTester ::testCancelClearsRunOnError() {
 
 void SeqTester ::configureWith(const U8* data, U32 len) {
     for (U32 i = 0; i < SeqNames::NUM_CONSTANTS; i++) {
-        this->m_actions[i] = Seq::Action(data, len);
+        this->m_actions[i] = Seq::Sequence(data, len);
     }
     this->component.configure(this->m_actions);
 }
