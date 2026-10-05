@@ -37,6 +37,30 @@ register_fprime_library(
         config-fprime-samd
 )
 
+# Os::RawTime is compile-time aliased directly to Samd21::RawTime (see
+# default/samd-config/OsSelection.hpp). The implementation module below only exists to satisfy
+# Os_RawTime's REQUIRES_IMPLEMENTATIONS; its getDelegate() goes unused since the alias bypasses it.
+register_fprime_module(
+      Os_RawTime_Samd21_Implementation
+    SOURCES
+        "${CMAKE_CURRENT_LIST_DIR}/RawTime.cpp"
+    HEADERS
+        "${CMAKE_CURRENT_LIST_DIR}/RawTime.hpp"
+    DEPENDS
+        Fw_Time
+        Fw_Types
+        Os_RawTime
+)
+
+register_fprime_implementation(
+    Os_RawTime_Samd21
+  IMPLEMENTS
+    Os_RawTime
+  DEPENDS
+    Os_RawTime_Samd21_Implementation
+  INTERFACE
+)
+
 # Disable LTO for ISR file to ensure RTC_Handler ISR is not optimized away
 if (SAMD21_LTO)
     set_source_files_properties(
@@ -44,8 +68,6 @@ if (SAMD21_LTO)
         PROPERTIES COMPILE_FLAGS "-fno-lto"
     )
 endif()
-
-register_os_implementation("RawTime" Samd21)
 
 ### Unit Tests ###
 register_fprime_ut(

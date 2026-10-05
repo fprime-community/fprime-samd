@@ -1,0 +1,31 @@
+[build-system]
+requires = ["setuptools", "setuptools_scm[toml]>=6.2", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "fprime-samd-ci"
+dynamic = ["version"]
+description = "F Prime CI plugin for SAMD21 targets"
+readme = "README.md"
+requires-python = ">=3.8"
+keywords = ["fprime", "embedded", "nasa", "flight", "software", "samd21"]
+classifiers = [
+    "Intended Audience :: Developers",
+    "Operating System :: Unix",
+    "Operating System :: POSIX",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: Apache Software License",
+]
+dependencies = [
+    "fprime-ci"
+]
+
+[project.urls]
+Repository = "https://github.com/fprime-community/fprime-samd"
+
+[project.entry-points.fprime_gds]
+samd_ci = "fprime_samd_ci.plugins.samd_ci:SamdCi"
+
+[tool.setuptools_scm]
+root = ".."
