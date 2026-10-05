@@ -70,7 +70,7 @@ jobs:
         run: pip install gcovr
 
       - name: "Coverage: StaticTlmPacketizer / StaticCmdDispatcher via the harness's CmdTlmTest topology"
-        uses: ./lib/fprime-samd/.github/actions/coverage
+        uses: ./lib/fprime-samd/.github/actions/attach-coverage
         with:
           module: CmdTlmTest/Top
           attach: |
