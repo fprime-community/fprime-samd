@@ -1,9 +1,9 @@
 # unit-test console output: Drv/RtcDriver
 
 ==============================================================================
-PASSED  fprime-samd_Drv_RtcDriver_ut_exe  (0.03s)
+PASSED  fprime-samd_Drv_RtcDriver_ut_exe  (0.02s)
 ==============================================================================
-[STest::Random] Generated seed 444827 from system time
+[STest::Random] Generated seed 468335 from system time
 [==========] Running 10 tests from 2 test suites.
 [----------] Global test environment set-up.
 [----------] 9 tests from Nominal
@@ -77,7 +77,7 @@ PASSED  fprime-samd_Drv_RtcDriver_ut_exe  (0.03s)
 (RQ)       SAMD21-RTC-007: The RtcDriver shall provide an Os::RawTime implementation (Samd21RawTime serializes and deserializes in both endiannesses)
 ***************************************
 [       OK ] Nominal.testSamd21RawTimeSerialization (0 ms)
-[----------] 9 tests from Nominal (1 ms total)
+[----------] 9 tests from Nominal (2 ms total)
 
 [----------] 1 test from OffNominal
 [ RUN      ] OffNominal.testCycleOverrun

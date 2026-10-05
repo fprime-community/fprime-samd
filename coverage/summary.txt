@@ -19,7 +19,7 @@ lib/fprime-samd/fprime-samd/Drv/I2cDriver/I2cDriverHardwareStub.cpp
 lib/fprime-samd/fprime-samd/Drv/RtcDriver/RawTime.cpp
                                               34       0     0%   10-14,16,20-21,24-27,30-32,34,36-37,39-40,42,45,48-52,54,57-61,63
 lib/fprime-samd/fprime-samd/Drv/RtcDriver/RawTime.hpp
-                                               2       0     0%   29,33
+                                               2       0     0%   29,41
 lib/fprime-samd/fprime-samd/Drv/RtcDriver/RtcDriver.cpp
                                               64       0     0%   18-19,21,23-25,27-28,33,35,38-40,42-43,46-47,50,62,64-66,69-70,78-80,85-96,101,104,107-110,112-114,117-118,120,122-123,125,127,130-132,134-135,138-139,142,145
 lib/fprime-samd/fprime-samd/Drv/RtcDriver/RtcDriverHardwareStub.cpp

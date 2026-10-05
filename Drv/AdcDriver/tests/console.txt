@@ -1,9 +1,9 @@
 # unit-test console output: Drv/AdcDriver
 
 ==============================================================================
-PASSED  fprime-samd_Drv_AdcDriver_ut_exe  (0.04s)
+PASSED  fprime-samd_Drv_AdcDriver_ut_exe  (0.12s)
 ==============================================================================
-[STest::Random] Generated seed 416109 from system time
+[STest::Random] Generated seed 433552 from system time
 [==========] Running 21 tests from 4 test suites.
 [----------] Global test environment set-up.
 [----------] 5 tests from Configure
@@ -161,7 +161,7 @@ Multiple activeIn() calls while idle do not produce spurious results
 (RQ)       SAMD21-ADC-006: The AdcDriver shall deliver every conversion result exactly once from the main context (via activeIn)
 ***************************************
 [       OK ] Conversion.MultipleactiveInIdle (0 ms)
-[----------] 8 tests from Conversion (0 ms total)
+[----------] 8 tests from Conversion (1 ms total)
 
 [----------] 7 tests from Interrupt
 [ RUN      ] Interrupt.ResultReady

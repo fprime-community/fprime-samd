@@ -3,7 +3,7 @@
 ==============================================================================
 PASSED  fprime-samd_Svc_Framer_ut_exe  (0.03s)
 ==============================================================================
-[STest::Random] Generated seed 167658 from system time
+[STest::Random] Generated seed 149622 from system time
 [==========] Running 6 tests from 2 test suites.
 [----------] Global test environment set-up.
 [----------] 5 tests from Nominal
