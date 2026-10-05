@@ -73,6 +73,13 @@ jobs:
           python3 -m compileall -q lib/fprime-samd/.github/scripts
           python3 lib/fprime-samd/.github/scripts/size_report.py --help > /dev/null
           python3 lib/fprime-samd/.github/scripts/size_report.py selftest
+          # coverage_site.py's self-test pins the published layout as well as the
+          # rendering. coverage-check reads that layout out of the Pages branch, and a
+          # moved path makes it report every module as new instead of failing.
+          python3 lib/fprime-samd/.github/scripts/coverage_site.py --help > /dev/null
+          python3 lib/fprime-samd/.github/scripts/coverage_site.py selftest
+          python3 lib/fprime-samd/.github/scripts/ut_console.py --help > /dev/null
+          python3 lib/fprime-samd/.github/scripts/ut_console.py selftest
 
       - name: "Check the composite actions parse"
         # A malformed action.yml is otherwise only discovered when a consumer's workflow

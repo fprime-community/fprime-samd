@@ -1,0 +1,95 @@
+name: "Run coverage for a module, attaching sources exercised only indirectly"
+description: >-
+  Runs `fprime-util check --coverage` for a single module context and widens the
+  gcovr filter to also attribute coverage to additional source paths. This exists
+  for components with no `register_fprime_ut` of their own because their only
+  exercise is a deployment-level or integration-style test topology (e.g.
+  Svc/StaticTlmPacketizer and Svc/StaticCmdDispatcher, which are driven by a
+  harness's CmdTlmTest test topology rather than by a unit test under their own
+  directory). `fprime-util check -p <module> --coverage` on its own would scope
+  gcovr's `--filter` to just <module>'s own path, so an attached component's
+  coverage would never show up even though the .gcda data for it exists in the
+  same build cache.
+
+inputs:
+  build-dir:
+    description: "Generated native-ut build cache."
+    required: false
+    default: "build-fprime-automatic-native-ut"
+  module:
+    description: >-
+      Module context passed to `fprime-util check -p`, e.g. "CmdTlmTest/Top". This
+      is the module whose own register_fprime_ut is actually run.
+    required: true
+  attach:
+    description: >-
+      Newline-separated list of additional paths, relative to the repository root,
+      whose coverage should be attributed to this report even though they are not
+      <module> itself. Typically components with no unit test of their own that are
+      only exercised by <module>'s test. Each entry becomes a gcovr --filter, which
+      gcovr OR's together, so nothing already covered by <module>'s own filter is
+      lost.
+    required: false
+    default: ""
+  extra-args:
+    description: "Additional pass-through arguments appended to the gcovr invocation."
+    required: false
+    default: ""
+  summary-title:
+    description: "Heading written above the coverage table in the job summary."
+    required: false
+    default: "Coverage"
+
+outputs:
+  summary-file:
+    description: "Path to the gcovr text summary this run produced."
+    value: ${{ steps.coverage.outputs.summary-file }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: "Run fprime-util check --coverage with the attached filters"
+      id: coverage
+      shell: bash
+      env:
+        BUILD_DIR: ${{ inputs.build-dir }}
+        MODULE: ${{ inputs.module }}
+        ATTACH: ${{ inputs.attach }}
+        EXTRA_ARGS: ${{ inputs.extra-args }}
+        SUMMARY_TITLE: ${{ inputs.summary-title }}
+      run: |
+        set -uo pipefail
+        if ! command -v gcovr >/dev/null 2>&1; then
+          echo "::error::gcovr is not installed; add it to the job before calling this action (e.g. 'pip install gcovr')"
+          exit 1
+        fi
+        if [ ! -d "${BUILD_DIR}" ]; then
+          echo "::error::no build cache at ${BUILD_DIR}; run 'fprime-util generate --ut' first"
+          exit 1
+        fi
+
+        # Each attached path becomes its own --filter. gcovr ORs --filter entries
+        # together, and fprime-util's gcovr wrapper always keeps its own
+        # module-scoped --filter too, so this only ever adds coverage, never
+        # narrows what --module already reports.
+        FILTER_ARGS=()
+        while IFS= read -r path; do
+          [ -n "${path}" ] || continue
+          FILTER_ARGS+=("--filter" "$(pwd)/${path}")
+        done <<< "${ATTACH}"
+
+        printf 'running coverage for module "%s", attaching %d extra path(s)\n' "${MODULE}" "${#FILTER_ARGS[@]}"
+
+        # shellcheck disable=SC2086
+        fprime-util check -p "${MODULE}" --coverage --pass-through "${FILTER_ARGS[@]}" ${EXTRA_ARGS}
+
+        SUMMARY_FILE="${MODULE}/coverage/summary.txt"
+        echo "summary-file=${SUMMARY_FILE}" >> "${GITHUB_OUTPUT}"
+        if [ -f "${SUMMARY_FILE}" ] && [ -n "${GITHUB_STEP_SUMMARY:-}" ]; then
+          {
+            echo "### ${SUMMARY_TITLE}"
+            echo '```'
+            cat "${SUMMARY_FILE}"
+            echo '```'
+          } >> "${GITHUB_STEP_SUMMARY}"
+        fi

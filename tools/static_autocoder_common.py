@@ -63,7 +63,7 @@ def generated_suffix(rules: str) -> str:
     return suffixes[0]
 
 
-def output_for(directory: str, node: fpp.DefTopology, suffix: str) -> Path:
+def output_for(directory: str, node: fpp.ast.DefTopology, suffix: str) -> Path:
     """Path of the file generated for a DefTopology node"""
     return Path(directory) / f"{node.name}{suffix}"
 
@@ -90,7 +90,7 @@ def all_annotated_components(
 
 def find_all_component_instances(
     topology: fpp.Topology, component: fpp.Component
-) -> Iterator[fpp.ComponentInterfaceInstance]:
+) -> Iterator[fpp.InterfaceInstance.Component]:
     for ci in topology.component_instance_map:
         if ci.component and ci.component.node.node_id == component.node.node_id:
             yield ci
@@ -98,7 +98,7 @@ def find_all_component_instances(
 
 def get_singleton_instance(
     topology: fpp.Topology, component: fpp.Component
-) -> Optional[fpp.ComponentInterfaceInstance]:
+) -> Optional[fpp.InterfaceInstance.Component]:
     instances = list(find_all_component_instances(topology, component))
     if len(instances) > 1:
         raise fpp.DiagnosticError(

@@ -1,0 +1,106 @@
+# Per-module code-coverage report for pull requests.
+#
+# Measures every fprime-samd module, compares it against the coverage/main baseline
+# branch that coverage-update.yml publishes, and uploads the resulting comment body
+# as a workflow artifact. The sticky comment itself is posted by coverage-comment.yml,
+# which runs on workflow_run with pull-requests: write.
+#
+# The split exists because GitHub strips write permissions from GITHUB_TOKEN on
+# pull_request events from forks -- silently, ignoring the `permissions:` block. This
+# workflow is the half that executes fork content, so it only ever needs read access.
+name: "Coverage Check"
+
+# pull_request only: the comparison stages a comment artifact keyed by pull-request
+# number and hard-errors without one, so there is nothing for a manual dispatch to do.
+# Use coverage-update.yml's workflow_dispatch to refresh the baseline instead.
+on:
+  pull_request:
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+env:
+  # The harness fprime-samd's unit tests are built and run inside. Kept identical to
+  # unit-tests.yml so coverage measures the same build those tests pass in.
+  HARNESS_REPO: fprime-community/fprime-samd-reference
+  HARNESS_REF: main
+
+jobs:
+  coverage-check:
+    name: "Coverage [PR]"
+    # ubuntu-24.04 for gcov-13. gcov-11 (the 22.04 default) has counter-overflow bugs
+    # and pathological slowness on templated test code that can turn a 30 s coverage
+    # run into a 30+ minute one; both are fixed in gcc-12+.
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    steps:
+      - name: "Checkout the harness"
+        uses: actions/checkout@v5
+        with:
+          repository: ${{ env.HARNESS_REPO }}
+          ref: ${{ env.HARNESS_REF }}
+          filter: blob:none
+
+      - name: "Initialise the harness's other submodules"
+        shell: bash
+        run: |
+          git submodule update --init --recursive --filter=blob:none \
+            lib/fprime lib/fprime-baremetal
+
+      - name: "Check this commit out as lib/fprime-samd"
+        uses: actions/checkout@v5
+        with:
+          path: lib/fprime-samd
+          # The publishers fetch and worktree the coverage/<ref> baseline branch out of
+          # this checkout, so it needs full history rather than a single commit.
+          fetch-depth: 0
+          filter: blob:none
+
+      - name: "Report what is being measured"
+        shell: bash
+        run: |
+          echo "harness  ${HARNESS_REPO}@$(git rev-parse HEAD)"
+          echo "library  ${GITHUB_REPOSITORY}@$(git -C lib/fprime-samd rev-parse HEAD)"
+
+      - name: "Set up F Prime"
+        uses: ./lib/fprime-samd/.github/actions/setup-fprime
+
+      - name: "Generate the native unit-test build cache"
+        # FPRIME_ENABLE_UT_COVERAGE defaults ON, so this cache is already instrumented
+        # with -fprofile-arcs -ftest-coverage; no extra generate flags are needed.
+        run: fprime-util generate --ut
+
+      - name: "Build and run this library's unit tests"
+        id: ut
+        uses: ./lib/fprime-samd/.github/actions/unit-tests
+        with:
+          # Captures each test's console output, which becomes the site's per-module
+          # "Unit tests" links.
+          output-junit: ${{ runner.temp }}/fprime-samd-coverage/ut-junit.xml
+          # One ctest invocation over the whole library, which is what leaves a
+          # complete set of *.gcda behind for the library-wide number. Same filters as
+          # unit-tests.yml: the harness's own suite is its own CI's job.
+          preset: native-ut
+          include: "^fprime-samd_"
+
+      - name: "Coverage"
+        id: cov
+        uses: ./lib/fprime-samd/.github/actions/measure-coverage
+        with:
+          junit: ${{ steps.ut.outputs.junit-path }}
+
+      - name: "Compare against the coverage/main baseline"
+        uses: nasa/fprime-actions/coverage-check@devel
+        with:
+          working-directory: lib/fprime-samd/fprime-samd
+          modules-jsonl: ${{ steps.cov.outputs.modules-jsonl }}
+          # Report only, for now. Flip to 'true' once the baseline has settled and a
+          # per-module drop should block a merge.
+          fail-on-regression: 'false'

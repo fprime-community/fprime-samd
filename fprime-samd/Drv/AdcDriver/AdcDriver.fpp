@@ -1,4 +1,3 @@
-
 module Samd21 {
     @ A driver for the SAMD21 Analog to Digital Converter Peripheral
     passive component AdcDriver {
@@ -11,6 +10,8 @@ module Samd21 {
 
         @ Schedule input from rate group (checks for completed conversions)
         sync input port activeIn: Svc.ActiveSched
+
+        match readAdc with adcResult
 
     }
 }

@@ -1,0 +1,188 @@
+name: "F Prime coverage for fprime-samd's modules"
+description: >-
+  Produces gcovr coverage for every fprime-samd module, in the on-disk layout the
+  consumers expect -- `nasa/fprime-actions/coverage-check` for the pull-request
+  comparison, and the local `publish-coverage` for the site: a `coverage/` directory
+  per module, plus a library-wide `coverage/` at the modules root. Emits the
+  JSON-Lines module list both of them require.
+
+  This stands in for `nasa/fprime-actions/coverage-common`, which cannot be used
+  verbatim here. That action derives its library-wide number from
+  `fprime-util check --all --coverage`, whose gcovr filter is the *project* root --
+  in this repository's CI that is the harness (fprime-samd-reference), so the
+  headline figure would cover lib/fprime, lib/fprime-baremetal and the harness's
+  own deployments rather than fprime-samd, and `--all` would additionally gate this
+  repository's pull requests on the harness's unrelated unit tests. Everything
+  downstream of this action -- the module list, the per-module `coverage/` layout,
+  the comparison, the catalog and the published site -- is upstream's, unmodified.
+
+inputs:
+  modules-root:
+    description: >-
+      Directory to discover modules under, relative to the workspace. Module paths in
+      the published site are relative to this, so pointing it at the inner
+      `fprime-samd/` directory (rather than the repository root) is what makes the
+      site's top-level groups Drv/Svc/Os instead of one `fprime-samd` group.
+    required: false
+    default: "lib/fprime-samd/fprime-samd"
+  build-cache:
+    description: "Generated native-ut build cache, relative to the workspace."
+    required: false
+    default: "build-fprime-automatic-native-ut"
+  fprime-actions-repo:
+    description: "Repository supplying discover.py / run_coverage.py."
+    required: false
+    default: "nasa/fprime-actions"
+  fprime-actions-ref:
+    description: >-
+      Ref of that repository. `devel` rather than a pinned SHA for the same reason
+      unit-tests.yml floats HARNESS_REF: an upstream fix does not require a commit
+      here. Pin it if you would rather an upstream regression could not turn this
+      job red.
+    required: false
+    default: "devel"
+  fprime-actions-path:
+    description: "Where to check that repository out, relative to the workspace."
+    required: false
+    default: ".fprime-actions"
+  junit:
+    description: >-
+      ctest JUnit report from the unit-test run, as produced by the unit-tests action's
+      output-junit input. Split into the per-module console-log pages the site's
+      "Unit tests" column links to. Empty, or a path that does not exist, skips those
+      pages and the column reads "no log".
+    required: false
+    default: ""
+  module-prefix:
+    description: >-
+      F Prime module-name prefix for this library, used to map a ctest test name back
+      to a module directory: Drv/GpioDriver builds <prefix>_Drv_GpioDriver_ut_exe.
+    required: false
+    default: "fprime-samd"
+  strict:
+    description: >-
+      When 'true', fail if any module's coverage run fails. Default 'false' matches
+      upstream: a failed module surfaces as "no coverage recorded" on the site rather
+      than reddening the whole job.
+    required: false
+    default: "false"
+  debug:
+    description: "Forward gcovr's -v to the per-module runs."
+    required: false
+    default: "false"
+
+outputs:
+  modules-jsonl:
+    description: "Absolute path to the JSON-Lines module list, for the publishers."
+    value: ${{ steps.discover.outputs.modules-jsonl }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: "Checkout the upstream coverage scripts"
+      uses: actions/checkout@v5
+      with:
+        repository: ${{ inputs.fprime-actions-repo }}
+        ref: ${{ inputs.fprime-actions-ref }}
+        path: ${{ inputs.fprime-actions-path }}
+        filter: blob:none
+
+    - name: "Discover fprime-samd's modules"
+      id: discover
+      shell: bash
+      working-directory: ${{ inputs.modules-root }}
+      env:
+        SCRIPTS: ${{ github.workspace }}/${{ inputs.fprime-actions-path }}/coverage-common/scripts
+      run: |
+        set -euo pipefail
+        OUT_DIR="${RUNNER_TEMP}/fprime-samd-coverage"
+        mkdir -p "${OUT_DIR}"
+        # A module is a directory whose CMakeLists.txt calls register_fprime_module()
+        # or register_fprime_library(); has_ut records whether it also calls
+        # register_fprime_ut(). Autocoder-only modules (no hand-written C/C++) are
+        # excluded, as upstream does.
+        python3 "${SCRIPTS}/discover.py" --root . > "${OUT_DIR}/modules.jsonl"
+        echo "modules-jsonl=${OUT_DIR}/modules.jsonl" >> "${GITHUB_OUTPUT}"
+        echo "discovered $(wc -l < "${OUT_DIR}/modules.jsonl") module(s)"
+        cat "${OUT_DIR}/modules.jsonl"
+
+    - name: "Library-wide coverage"
+      shell: bash
+      working-directory: ${{ inputs.modules-root }}
+      env:
+        BUILD_CACHE: ${{ github.workspace }}/${{ inputs.build-cache }}
+      run: |
+        set -euo pipefail
+        # Must run BEFORE the per-module step. F Prime registers a clean.cmake as a
+        # TEST_INCLUDE_FILES property that deletes every *.gcda under the build cache
+        # when ctest starts, so only the most recently run test's data survives. The
+        # caller has just run this library's whole suite in one ctest invocation, so
+        # right now the cache holds all of it; the per-module step below re-runs each
+        # module individually and measures it immediately, which is why per-module
+        # numbers stay correct despite the wipe.
+        #
+        # gcovr is invoked directly rather than through `fprime-util check --all
+        # --coverage` because fprime-util filters a global run to the project root,
+        # which in this CI is the harness. Filtering to the modules root instead is
+        # what makes this number fprime-samd's. The exclusions mirror fprime-util's
+        # own defaults (fprime/fbuild/gcovr.py): unit-test sources and the GTest
+        # harness are not part of what coverage is measuring. Autocode is excluded
+        # implicitly -- it is generated into the build cache, outside --filter.
+        mkdir -p coverage
+        gcovr \
+          --root "${GITHUB_WORKSPACE}" \
+          "${BUILD_CACHE}" \
+          --filter "$(pwd)" \
+          --exclude '.*/test/.*' \
+          --exclude '.*/GTest/.*' \
+          --print-summary \
+          --txt coverage/summary.txt \
+          --json-summary coverage/summary.json \
+          --html-details coverage/coverage-all.html \
+          --gcov-ignore-parse-errors=negative_hits.warn_once_per_file
+
+    - name: "Per-module coverage"
+      shell: bash
+      working-directory: ${{ inputs.modules-root }}
+      env:
+        SCRIPTS: ${{ github.workspace }}/${{ inputs.fprime-actions-path }}/coverage-common/scripts
+        MODULES_JSONL: ${{ steps.discover.outputs.modules-jsonl }}
+        STRICT: ${{ inputs.strict }}
+        DEBUG: ${{ inputs.debug }}
+      run: |
+        set -uo pipefail
+        FLAGS=""
+        [ "${STRICT}" != "true" ] || FLAGS="${FLAGS} --strict"
+        [ "${DEBUG}" != "true" ] || FLAGS="${FLAGS} --debug"
+        # `fprime-util check --coverage` per module directory. fprime-util locates the
+        # harness by walking up for a CMakeLists.txt with a project() call, so no -r
+        # is needed, and it scopes each gcovr run to the module -- the numbers the
+        # site's per-module rows and the pull-request comment are built from. Modules
+        # with no register_fprime_ut() are skipped and render as "no coverage".
+        python3 "${SCRIPTS}/run_coverage.py" \
+          --root . \
+          --modules-jsonl "${MODULES_JSONL}" \
+          ${FLAGS}
+
+    - name: "Unit-test console logs"
+      if: inputs.junit != ''
+      shell: bash
+      working-directory: ${{ inputs.modules-root }}
+      env:
+        UT_CONSOLE: ${{ github.workspace }}/lib/fprime-samd/.github/scripts/ut_console.py
+        MODULES_JSONL: ${{ steps.discover.outputs.modules-jsonl }}
+        JUNIT: ${{ inputs.junit }}
+        MODULE_PREFIX: ${{ inputs.module-prefix }}
+        LABEL: ${{ github.repository }}@${{ github.ref_name }}
+      run: |
+        set -euo pipefail
+        # Writes <module>/tests/ alongside <module>/coverage/, so the site publisher
+        # mirrors both the same way. Uses the JUnit report from the single whole-suite
+        # ctest run, not the per-module re-runs above: that run is the one that gates
+        # the build, and one report covers every module.
+        python3 "${UT_CONSOLE}" split \
+          --junit "${JUNIT}" \
+          --modules-jsonl "${MODULES_JSONL}" \
+          --dest . \
+          --module-prefix "${MODULE_PREFIX}" \
+          --label "${LABEL}"
