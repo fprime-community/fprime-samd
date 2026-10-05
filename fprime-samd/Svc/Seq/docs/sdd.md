@@ -4,7 +4,7 @@ A component for dispatching a static command list on a schedule.
 
 ## 1. Introduction
 
-`Seq` runs pre-built command sequences ("action tables") stored in
+`Seq` runs pre-built command sequences stored in
 flash. Sequences are compiled at build time from `.seq` files into byte blobs
 — there's no filesystem or spare RAM to hold an uplinked sequence, so
 everything is static and selected by name (`Samd21.SeqNames`).
@@ -178,10 +178,10 @@ connections {
 
 ```cpp
 // Indexed by SeqNames
-static const Samd21::Seq::Action seqs[Samd21::SeqNames::NUM_CONSTANTS] = {
-    Samd21::Seq::Action(fprime_seq_STARTUP, fprime_seq_STARTUP_len),
-    Samd21::Seq::Action(fprime_seq_SENSORS, fprime_seq_SENSORS_len),
-    Samd21::Seq::Action(fprime_seq_SENSORS_RECOVER, fprime_seq_SENSORS_RECOVER_len),
+static const Samd21::Seq::Sequence seqs[Samd21::SeqNames::NUM_CONSTANTS] = {
+    Samd21::Seq::Sequence(fprime_seq_STARTUP, fprime_seq_STARTUP_len),
+    Samd21::Seq::Sequence(fprime_seq_SENSORS, fprime_seq_SENSORS_len),
+    Samd21::Seq::Sequence(fprime_seq_SENSORS_RECOVER, fprime_seq_SENSORS_RECOVER_len),
 };
 
 seq.configure(seqs);
