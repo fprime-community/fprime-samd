@@ -1,9 +1,9 @@
 # unit-test console output: Drv/GpioDriver
 
 ==============================================================================
-PASSED  fprime-samd_Drv_GpioDriver_ut_exe  (0.02s)
+PASSED  fprime-samd_Drv_GpioDriver_ut_exe  (0.03s)
 ==============================================================================
-[STest::Random] Generated seed 947823 from system time
+[STest::Random] Generated seed 149768 from system time
 [==========] Running 13 tests from 2 test suites.
 [----------] Global test environment set-up.
 [----------] 7 tests from Nominal
@@ -53,7 +53,7 @@ PASSED  fprime-samd_Drv_GpioDriver_ut_exe  (0.02s)
 (RQ)       GPIO-008: On each configured edge, the driver shall emit a cycle on the gpioInterrupt output port when it is connected
 ***************************************
 [       OK ] Nominal.testInterruptFiresWhenConnected (0 ms)
-[----------] 7 tests from Nominal (0 ms total)
+[----------] 7 tests from Nominal (1 ms total)
 
 [----------] 6 tests from OffNominal
 [ RUN      ] OffNominal.testWriteUnconfigured
