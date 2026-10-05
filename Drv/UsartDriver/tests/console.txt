@@ -3,7 +3,7 @@
 ==============================================================================
 PASSED  fprime-samd_Drv_UsartDriver_ut_exe  (0.32s)
 ==============================================================================
-[STest::Random] Generated seed 616634 from system time
+[STest::Random] Generated seed 572434 from system time
 [==========] Running 18 tests from 6 test suites.
 [----------] Global test environment set-up.
 [----------] 3 tests from Configure
@@ -87,8 +87,8 @@ TX DMA bus error asserts (invalid buffer pointer handed to DMA)
 ***************************************
 (RQ)       SAMD21-UART-002: The UsartDriver shall use DMA for transmission (an unrecoverable TX DMA bus error asserts)
 ***************************************
-[       OK ] Send.ChannelError (164 ms)
-[----------] 4 tests from Send (165 ms total)
+[       OK ] Send.ChannelError (152 ms)
+[----------] 4 tests from Send (153 ms total)
 
 [----------] 1 test from SendSync
 [ RUN      ] SendSync.Nominal
@@ -173,8 +173,8 @@ RX DMA bus error asserts (invalid buffer pointer handed to DMA)
 ***************************************
 (RQ)       SAMD21-UART-002: The UsartDriver shall use DMA for reception (an unrecoverable RX DMA bus error asserts)
 ***************************************
-[       OK ] Rx.ChannelError (128 ms)
-[----------] 7 tests from Rx (130 ms total)
+[       OK ] Rx.ChannelError (140 ms)
+[----------] 7 tests from Rx (141 ms total)
 
 [----------] 2 tests from Unconfigured
 [ RUN      ] Unconfigured.SchedIn
@@ -197,7 +197,7 @@ activeIn before configure() is a safe no-op
 (RQ)       SAMD21-UART-005: The UsartDriver shall queue TX requests with asynchronous completion (an activeIn tick before configure() delivers nothing)
 ***************************************
 [       OK ] Unconfigured.ActiveIn (0 ms)
-[----------] 2 tests from Unconfigured (1 ms total)
+[----------] 2 tests from Unconfigured (0 ms total)
 
 [----------] 1 test from TriggerSource
 [ RUN      ] TriggerSource.Mapping
@@ -213,6 +213,6 @@ each SERCOM maps to its matching RX DMA trigger source
 [----------] 1 test from TriggerSource (0 ms total)
 
 [----------] Global test environment tear-down
-[==========] 18 tests from 6 test suites ran. (300 ms total)
+[==========] 18 tests from 6 test suites ran. (299 ms total)
 [  PASSED  ] 18 tests.
 

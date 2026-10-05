@@ -3,7 +3,7 @@
 ==============================================================================
 PASSED  fprime-samd_Drv_GpioDriver_ut_exe  (0.02s)
 ==============================================================================
-[STest::Random] Generated seed 990968 from system time
+[STest::Random] Generated seed 947823 from system time
 [==========] Running 13 tests from 2 test suites.
 [----------] Global test environment set-up.
 [----------] 7 tests from Nominal

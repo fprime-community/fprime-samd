@@ -1,9 +1,9 @@
 # unit-test console output: Drv/I2cDriver
 
 ==============================================================================
-PASSED  fprime-samd_Drv_I2cDriver_ut_exe  (0.05s)
+PASSED  fprime-samd_Drv_I2cDriver_ut_exe  (0.06s)
 ==============================================================================
-[STest::Random] Generated seed 939750 from system time
+[STest::Random] Generated seed 897144 from system time
 [==========] Running 39 tests from 10 test suites.
 [----------] Global test environment set-up.
 [----------] 3 tests from Configure
@@ -26,7 +26,7 @@ configure() forwards every parameter to the HAL
 ***************************************
 (RQ)       SAMD21-I2C-001: The I2cDriver shall configure a SERCOM peripheral for I2C host operation with configurable SCL frequency, SDA hold, and pin usage
 ***************************************
-[       OK ] Configure.AllParameters (0 ms)
+[       OK ] Configure.AllParameters (1 ms)
 [ RUN      ] Configure.RegistersIsr
 
 ***************************************
@@ -37,7 +37,7 @@ configure() registers the component's ISR trampoline
 (RQ)       SAMD21-I2C-001: The I2cDriver shall configure a SERCOM peripheral for I2C host operation (the driver's ISR trampoline is registered for its SERCOM)
 ***************************************
 [       OK ] Configure.RegistersIsr (0 ms)
-[----------] 3 tests from Configure (3 ms total)
+[----------] 3 tests from Configure (4 ms total)
 
 [----------] 3 tests from Read
 [ RUN      ] Read.Nominal
@@ -49,7 +49,7 @@ read() queues an RX DMA transfer and kicks off the peripheral
 ***************************************
 (RQ)       SAMD21-I2C-002: The I2cDriver shall perform 7-bit-addressed read transactions using DMA for the data payload
 ***************************************
-[       OK ] Read.Nominal (0 ms)
+[       OK ] Read.Nominal (1 ms)
 [ RUN      ] Read.Completion
 
 ***************************************
@@ -73,8 +73,8 @@ read() while busy is rejected with OTHER_ERR
 ***************************************
 (RQ)       SAMD21-I2C-005: The I2cDriver shall reject a new request that arrives while a transaction is in progress, returning I2C_OTHER_ERR on the matching completion callback
 ***************************************
-[       OK ] Read.Busy (0 ms)
-[----------] 3 tests from Read (1 ms total)
+[       OK ] Read.Busy (1 ms)
+[----------] 3 tests from Read (3 ms total)
 
 [----------] 3 tests from Write
 [ RUN      ] Write.Nominal
@@ -447,6 +447,6 @@ CLEAR_ERRORS resets the error counter and responds OK
 [----------] 1 test from Command (0 ms total)
 
 [----------] Global test environment tear-down
-[==========] 39 tests from 10 test suites ran. (22 ms total)
+[==========] 39 tests from 10 test suites ran. (26 ms total)
 [  PASSED  ] 39 tests.
 
