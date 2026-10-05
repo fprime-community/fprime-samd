@@ -22,15 +22,25 @@ Samd21RawTimeHandle timeNow();
 //!
 //! Stub implementation of `RawTimeInterface`.
 //!
-class Samd21RawTime : public RawTimeInterface {
+class RawTime : public RawTimeInterface {
   public:
     //! \brief constructor
     //!
-    Samd21RawTime() = default;
+    RawTime() = default;
+
+    //! \brief constructor selecting the clock source
+    //!
+    //! The SAMD21 RTC only ever provides a single clock source, so this just forwards to the
+    //! default constructor; the parameter exists to satisfy RawTimeInterface's required signature.
+    //!
+    //! \param source: clock source (ignored)
+    explicit RawTime(RawTimeSource source) {
+        static_cast<void>(source);
+    }
 
     //! \brief destructor
     //!
-    ~Samd21RawTime() override = default;
+    ~RawTime() override = default;
 
     //! \brief return the underlying RawTime handle (implementation specific)
     //! \return internal RawTime handle representation
