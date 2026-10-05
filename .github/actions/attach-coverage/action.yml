@@ -81,7 +81,7 @@ runs:
         printf 'running coverage for module "%s", attaching %d extra path(s)\n' "${MODULE}" "${#FILTER_ARGS[@]}"
 
         # shellcheck disable=SC2086
-        fprime-util check -p "${MODULE}" --coverage -- "${FILTER_ARGS[@]}" ${EXTRA_ARGS}
+        fprime-util check -p "${MODULE}" --coverage --pass-through "${FILTER_ARGS[@]}" ${EXTRA_ARGS}
 
         SUMMARY_FILE="${MODULE}/coverage/summary.txt"
         echo "summary-file=${SUMMARY_FILE}" >> "${GITHUB_OUTPUT}"
