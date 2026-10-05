@@ -32,7 +32,7 @@ pre {
   white-space: pre-wrap; word-break: break-word;
 }
 .empty { color: #57606a; padding: 0.75rem 1rem; border-top: 1px solid #d0d7de; margin: 0; }
-</style></head><body><h1>Unit-test console output &mdash; <code>Drv/UsartDriver</code></h1><div class="meta"><span class="pill passed">passed</span> 1 passed &middot; 0.50s &middot; <a href="../../../index.html">← back to the module list</a> &middot; <a href="console.txt">plain text</a></div><details><summary><span class="pill passed">passed</span><span class="name">fprime-samd_Drv_UsartDriver_ut_exe</span><span class="time">0.50s</span></summary><pre>[STest::Random] Generated seed 493339 from system time
+</style></head><body><h1>Unit-test console output &mdash; <code>Drv/UsartDriver</code></h1><div class="meta"><span class="pill passed">passed</span> 1 passed &middot; 0.32s &middot; <a href="../../../index.html">← back to the module list</a> &middot; <a href="console.txt">plain text</a></div><details><summary><span class="pill passed">passed</span><span class="name">fprime-samd_Drv_UsartDriver_ut_exe</span><span class="time">0.32s</span></summary><pre>[STest::Random] Generated seed 616634 from system time
 [==========] Running 18 tests from 6 test suites.
 [----------] Global test environment set-up.
 [----------] 3 tests from Configure
@@ -45,7 +45,7 @@ configure() programs the SERCOM once and announces readiness
 ***************************************
 (RQ)       SAMD21-UART-001: The UsartDriver shall configure SERCOM peripherals for USART operation
 ***************************************
-[       OK ] Configure.Nominal (2 ms)
+[       OK ] Configure.Nominal (1 ms)
 [ RUN      ] Configure.AllParameters
 
 ***************************************
@@ -70,7 +70,7 @@ configure() primes both RX buffers into the RX DMA channel
 (RQ)       SAMD21-UART-003: The UsartDriver shall implement double-buffering for continuous RX
 ***************************************
 [       OK ] Configure.QueuesRxBuffers (0 ms)
-[----------] 3 tests from Configure (3 ms total)
+[----------] 3 tests from Configure (2 ms total)
 
 [----------] 4 tests from Send
 [ RUN      ] Send.Nominal
@@ -116,8 +116,8 @@ TX DMA bus error asserts (invalid buffer pointer handed to DMA)
 ***************************************
 (RQ)       SAMD21-UART-002: The UsartDriver shall use DMA for transmission (an unrecoverable TX DMA bus error asserts)
 ***************************************
-[       OK ] Send.ChannelError (226 ms)
-[----------] 4 tests from Send (228 ms total)
+[       OK ] Send.ChannelError (164 ms)
+[----------] 4 tests from Send (165 ms total)
 
 [----------] 1 test from SendSync
 [ RUN      ] SendSync.Nominal
@@ -202,8 +202,8 @@ RX DMA bus error asserts (invalid buffer pointer handed to DMA)
 ***************************************
 (RQ)       SAMD21-UART-002: The UsartDriver shall use DMA for reception (an unrecoverable RX DMA bus error asserts)
 ***************************************
-[       OK ] Rx.ChannelError (222 ms)
-[----------] 7 tests from Rx (226 ms total)
+[       OK ] Rx.ChannelError (128 ms)
+[----------] 7 tests from Rx (130 ms total)
 
 [----------] 2 tests from Unconfigured
 [ RUN      ] Unconfigured.SchedIn
@@ -238,10 +238,10 @@ each SERCOM maps to its matching RX DMA trigger source
 ***************************************
 (RQ)       SAMD21-UART-002: The UsartDriver shall use DMA for both transmission and reception (the correct DMA trigger is selected per SERCOM)
 ***************************************
-[       OK ] TriggerSource.Mapping (1 ms)
-[----------] 1 test from TriggerSource (1 ms total)
+[       OK ] TriggerSource.Mapping (0 ms)
+[----------] 1 test from TriggerSource (0 ms total)
 
 [----------] Global test environment tear-down
-[==========] 18 tests from 6 test suites ran. (462 ms total)
+[==========] 18 tests from 6 test suites ran. (300 ms total)
 [  PASSED  ] 18 tests.
 </pre></details></body></html>
