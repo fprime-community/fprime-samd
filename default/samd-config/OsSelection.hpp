@@ -8,12 +8,13 @@
 // Os::DelegateMutex/Os::DelegateConditionVariable indirection (see fprime's own
 // config/OsDelegateMutex.hpp for the general mechanism and its compile-time-selection example).
 // ======================================================================
-#ifndef SAMD_CONFIG_OS_DELEGATEMUTEX_HPP
-#define SAMD_CONFIG_OS_DELEGATEMUTEX_HPP
+#ifndef CONFIG_OSSELECTION_HPP
+#define CONFIG_OSSELECTION_HPP
 
 namespace Os {
 namespace Samd21 {
 class Mutex;
+class RawTime;
 }  // namespace Samd21
 namespace Stub {
 namespace Mutex {
@@ -22,12 +23,18 @@ class StubConditionVariable;
 }  // namespace Stub
 }  // namespace Os
 
+//!< Forward declarations of the link-time delegates
+//!< Default: select the implementations at link time
 namespace Os {
+
 using Mutex = Os::Samd21::Mutex;
 using ConditionVariable = Os::Stub::Mutex::StubConditionVariable;
+using RawTime = Os::Samd21::RawTime;
+
 }  // namespace Os
 
+#define OS_RAW_TIME_HEADER "fprime-samd/Drv/RtcDriver/RawTime.hpp"
 #define OS_MUTEX_HEADER "fprime-samd/Os/Mutex.hpp"
 #define OS_CONDITION_VARIABLE_HEADER "Os/Stub/ConditionVariable.hpp"
 
-#endif  // SAMD_CONFIG_OS_DELEGATEMUTEX_HPP
+#endif  // CONFIG_OSSELECTION_HPP

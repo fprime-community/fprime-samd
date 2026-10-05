@@ -17,17 +17,17 @@ bool isNewer(const Samd21RawTimeHandle& a, const Samd21RawTimeHandle& b) {
     }
 }
 
-RawTimeHandle* Samd21RawTime::getHandle() {
+RawTimeHandle* RawTime::getHandle() {
     return &this->m_handle;
 }
 
-RawTime::Status Samd21RawTime::now() {
+RawTime::Status RawTime::now() {
     auto now = timeNow();
     this->m_handle = now;
     return Status::OP_OK;
 }
 
-RawTime::Status Samd21RawTime::getTimeInterval(const Os::RawTime& other, Fw::TimeInterval& interval) const {
+RawTime::Status RawTime::getTimeInterval(const Os::RawTime& other, Fw::TimeInterval& interval) const {
     interval.set(0, 0);
     const Samd21RawTimeHandle& my_handle = this->m_handle;
     const Samd21RawTimeHandle& other_handle =
@@ -45,7 +45,7 @@ RawTime::Status Samd21RawTime::getTimeInterval(const Os::RawTime& other, Fw::Tim
     return Status::OP_OK;
 }
 
-Fw::SerializeStatus Samd21RawTime::serializeTo(Fw::SerialBufferBase& buffer, Fw::Endianness mode) const {
+Fw::SerializeStatus RawTime::serializeTo(Fw::SerialBufferBase& buffer, Fw::Endianness mode) const {
     Fw::SerializeStatus status = Fw::SerializeStatus::FW_SERIALIZE_OK;
     status = buffer.serializeFrom(this->m_handle.m_seconds, mode);
     if (status == Fw::FW_SERIALIZE_OK) {
@@ -54,7 +54,7 @@ Fw::SerializeStatus Samd21RawTime::serializeTo(Fw::SerialBufferBase& buffer, Fw:
     return status;
 }
 
-Fw::SerializeStatus Samd21RawTime::deserializeFrom(Fw::SerialBufferBase& buffer, Fw::Endianness mode) {
+Fw::SerializeStatus RawTime::deserializeFrom(Fw::SerialBufferBase& buffer, Fw::Endianness mode) {
     Fw::SerializeStatus status = Fw::SerializeStatus::FW_SERIALIZE_OK;
     status = buffer.deserializeTo(this->m_handle.m_seconds, mode);
     if (status == Fw::FW_SERIALIZE_OK) {

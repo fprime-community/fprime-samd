@@ -39,15 +39,15 @@ def tlm_packet_offsets(dictionary: fpp.Dictionary, tlm_id: int):
                 ].tlm_channel.channel_type.serialized_size
 
 
-def assert_fixed_width(ty: fpp.Type):
+def assert_fixed_width(ty: fpp.Type.Variant):
     match ty:
-        case fpp.StringType():
+        case fpp.Type.String():
             raise fpp.DiagnosticError(
                 fpp.Diagnostic(
                     "Only fixed-width serializables are supported in static telemetry packets"
                 )
             )
-        case fpp.StructType() as s:
+        case fpp.Type.Struct() as s:
             for name, member in s.anon_struct.members:
                 try:
                     assert_fixed_width(member)
@@ -58,7 +58,7 @@ def assert_fixed_width(ty: fpp.Type):
                     )
                     e.diagnostic.add_annotation("in struct member", span=member_span)
                     raise
-        case fpp.ArrayType() as a:
+        case fpp.Type.Array() as a:
             try:
                 assert_fixed_width(a.anon_array.elt_type)
             except fpp.DiagnosticError as e:
@@ -66,7 +66,7 @@ def assert_fixed_width(ty: fpp.Type):
                     "element of array", span=a.node.elt_type.span
                 )
                 raise
-        case fpp.AliasType() as a:
+        case fpp.Type.Alias() as a:
             try:
                 assert_fixed_width(a.alias_type)
             except fpp.DiagnosticError as e:
