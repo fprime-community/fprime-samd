@@ -195,3 +195,10 @@ seq.run(Samd21::SeqNames::STARTUP);  // starts on first activeIn tick
 
 - Sequence length limited to 64KB (`U16` program counter).
 - No telemetry. Execution is observable only via events.
+
+## 9. Tested Configurations
+
+| Platform              | Notes                                      |
+| --------------------- | ------------------------------------------- |
+| `microchip_curiosity` | Ran a single sequence for smoke testing |
+| `ncc`                 | Multiple sequences with a loop background sequence and a fail response sequence. |

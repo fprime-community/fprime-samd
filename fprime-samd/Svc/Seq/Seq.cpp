@@ -64,6 +64,7 @@ bool Seq::activeIn_handler(FwIndexType portNum, U32 context) {
         this->log_ACTIVITY_LO_StartingSequence(Samd21::SeqNames(this->m_pendingTableIdx));
 
         // Set up the sequence
+        FW_ASSERT(this->m_pendingTableIdx < SeqNames::NUM_CONSTANTS, this->m_pendingTableIdx);
         this->m_tableIdx = this->m_pendingTableIdx;
         this->m_pendingTableIdx = SeqNames::NUM_CONSTANTS;
         this->m_offset = 0;
