@@ -341,7 +341,7 @@ void RtcDriverTester::testSamd21RawTimeNow() {
     this->setRtcCounter(16384);  // Half second
 
     // Create Samd21RawTime instance and call now()
-    Os::Samd21::Samd21RawTime rawTime;
+    Os::Samd21::RawTime rawTime;
     Os::RawTime::Status status = rawTime.now();
 
     // Verify success
@@ -374,7 +374,7 @@ void RtcDriverTester::testSamd21RawTimeSerialization() {
     this->setRtcCounter(8192);  // 0.25s
 
     // Create and populate RawTime
-    Os::Samd21::Samd21RawTime originalTime;
+    Os::Samd21::RawTime originalTime;
     ASSERT_EQ(originalTime.now(), Os::RawTime::Status::OP_OK);
 
     // Serialize to buffer (big endian)
@@ -388,7 +388,7 @@ void RtcDriverTester::testSamd21RawTimeSerialization() {
     ASSERT_EQ(serBuffer.getSize(), 8U);
 
     // Deserialize into new instance
-    Os::Samd21::Samd21RawTime deserializedTime;
+    Os::Samd21::RawTime deserializedTime;
     serStatus = deserializedTime.deserializeFrom(serBuffer);
     ASSERT_EQ(serStatus, Fw::SerializeStatus::FW_SERIALIZE_OK);
 
@@ -406,7 +406,7 @@ void RtcDriverTester::testSamd21RawTimeSerialization() {
     serStatus = originalTime.serializeTo(serBuffer, Fw::Endianness::LITTLE);
     ASSERT_EQ(serStatus, Fw::SerializeStatus::FW_SERIALIZE_OK);
 
-    Os::Samd21::Samd21RawTime littleEndianTime;
+    Os::Samd21::RawTime littleEndianTime;
     serStatus = littleEndianTime.deserializeFrom(serBuffer, Fw::Endianness::LITTLE);
     ASSERT_EQ(serStatus, Fw::SerializeStatus::FW_SERIALIZE_OK);
 
