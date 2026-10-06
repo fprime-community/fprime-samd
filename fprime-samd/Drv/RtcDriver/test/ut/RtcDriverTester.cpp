@@ -123,8 +123,8 @@ void RtcDriverTester::testConfigureAssertsOnInvalidRate() {
     this->resetTest();
 
     const RtcDriver::TickRate invalid_rate = static_cast<RtcDriver::TickRate>(3);
-    ASSERT_DEATH_IF_SUPPORTED(
-        this->component.configure(RtcDriver::ClockSource::InternalOscillator, invalid_rate), "Assert:");
+    ASSERT_DEATH_IF_SUPPORTED(this->component.configure(RtcDriver::ClockSource::InternalOscillator, invalid_rate),
+                              "Assert:");
 }
 
 void RtcDriverTester::testConfigureAssertsOnInvalidClockSource() {
