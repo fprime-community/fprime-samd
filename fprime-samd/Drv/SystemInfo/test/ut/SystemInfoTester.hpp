@@ -22,9 +22,6 @@ class SystemInfoTester : public SystemInfoGTestBase {
     // Test instance ID
     static constexpr FwEnumStoreType TEST_INSTANCE_ID = 0;
 
-    // Command sequence number used by tests that do not care about the value
-    static constexpr U32 TEST_CMD_SEQ = 0;
-
     // Construction and destruction
     SystemInfoTester();
     ~SystemInfoTester();
@@ -48,11 +45,10 @@ class SystemInfoTester : public SystemInfoGTestBase {
     //! Reset test and stub hardware state between tests
     void resetTest();
 
-    //! Issue EMIT_SYSTEM_INFO and assert the event, every channel and the command
-    //! response all carry the expected reset reason and build commits
+    //! Call emit() and assert the event and every channel carry the expected reset
+    //! reason and build commits
     //! \param reason Reset reason the stub HAL is reporting
-    //! \param cmdSeq Command sequence number to send
-    void assertEmitReports(ResetReason reason, U32 cmdSeq);
+    void assertEmitReports(ResetReason reason);
 };
 
 }  // namespace Samd21

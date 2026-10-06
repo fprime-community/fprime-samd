@@ -38,10 +38,10 @@ void SystemInfoTester::resetTest() {
     SystemInfoHardware::resetSystemInfoState();
 }
 
-void SystemInfoTester::assertEmitReports(ResetReason reason, U32 cmdSeq) {
+void SystemInfoTester::assertEmitReports(ResetReason reason) {
     SystemInfoHardware::setResetReason(reason);
 
-    this->sendCmd_EMIT_SYSTEM_INFO(SystemInfoTester::TEST_INSTANCE_ID, cmdSeq);
+    this->component.emit();
 
     ASSERT_EVENTS_SIZE(1);
     ASSERT_EVENTS_SystemInfo_SIZE(1);
@@ -59,9 +59,6 @@ void SystemInfoTester::assertEmitReports(ResetReason reason, U32 cmdSeq) {
     ASSERT_TLM_FprimeCommit(0, SystemInfoVersion::FPRIME_COMMIT);
     ASSERT_TLM_SamdCommit_SIZE(1);
     ASSERT_TLM_SamdCommit(0, SystemInfoVersion::SAMD_COMMIT);
-
-    ASSERT_CMD_RESPONSE_SIZE(1);
-    ASSERT_CMD_RESPONSE(0, SystemInfoComponentBase::OPCODE_EMIT_SYSTEM_INFO, cmdSeq, Fw::CmdResponse::OK);
 }
 
 // ----------------------------------------------------------------------
@@ -69,13 +66,13 @@ void SystemInfoTester::assertEmitReports(ResetReason reason, U32 cmdSeq) {
 // ----------------------------------------------------------------------
 
 void SystemInfoTester::testEmitSystemInfoReportsResetReason() {
-    REQUIREMENT("SAMD21-HEALTH-001: SystemInfo shall report the cause of the most recent reset on command");
+    REQUIREMENT("SAMD21-HEALTH-001: SystemInfo shall report the cause of the most recent reset when emit() is called");
 
-    // The reason the HAL yields must reach the event, the channel and a successful command
-    // response, for every reason the HAL can produce
+    // The reason the HAL yields must reach the event and the channel, for every reason the
+    // HAL can produce
     for (const auto reason : ALL_RESET_REASONS) {
         this->resetTest();
-        this->assertEmitReports(reason, SystemInfoTester::TEST_CMD_SEQ);
+        this->assertEmitReports(reason);
     }
 }
 
@@ -83,7 +80,7 @@ void SystemInfoTester::testCommitStampsAreReported() {
     REQUIREMENT("SAMD21-HEALTH-002: SystemInfo shall report the build commits of the project, fprime and fprime-samd");
 
     this->resetTest();
-    this->assertEmitReports(ResetReason::POWER_ON, SystemInfoTester::TEST_CMD_SEQ);
+    this->assertEmitReports(ResetReason::POWER_ON);
 
     // assertEmitReports checks all four event arguments at once; pull the commits out
     // individually so a mismatch names the offending field
@@ -98,10 +95,10 @@ void SystemInfoTester::testHardwareQueriedOncePerCommand() {
 
     ASSERT_EQ(SystemInfoHardware::getSystemInfoState().get_reset_reason_count, 0u);
 
-    // The component must read the reset cause fresh on each command rather than caching it
-    // at construction, so the count tracks the command count exactly
+    // The component must read the reset cause fresh on each call rather than caching it
+    // at construction, so the count tracks the number of emit() calls exactly
     for (U32 expected_count = 1; expected_count <= 3; expected_count++) {
-        this->sendCmd_EMIT_SYSTEM_INFO(SystemInfoTester::TEST_INSTANCE_ID, expected_count);
+        this->component.emit();
         ASSERT_EQ(SystemInfoHardware::getSystemInfoState().get_reset_reason_count, expected_count);
     }
 }
@@ -109,25 +106,22 @@ void SystemInfoTester::testHardwareQueriedOncePerCommand() {
 void SystemInfoTester::testRepeatedEmit() {
     this->resetTest();
 
-    // Each command appends one event, one channel update and one response, and the
-    // sequence number is echoed back per command
-    const U32 command_count = 3;
-    for (U32 i = 0; i < command_count; i++) {
+    // Each call appends one event and one channel update
+    const U32 call_count = 3;
+    for (U32 i = 0; i < call_count; i++) {
         SystemInfoHardware::setResetReason(ResetReason::EXTERNAL);
-        this->sendCmd_EMIT_SYSTEM_INFO(SystemInfoTester::TEST_INSTANCE_ID, i);
+        this->component.emit();
     }
 
-    ASSERT_EVENTS_SystemInfo_SIZE(command_count);
-    ASSERT_TLM_ResetCause_SIZE(command_count);
-    ASSERT_TLM_ProjectCommit_SIZE(command_count);
-    ASSERT_CMD_RESPONSE_SIZE(command_count);
+    ASSERT_EVENTS_SystemInfo_SIZE(call_count);
+    ASSERT_TLM_ResetCause_SIZE(call_count);
+    ASSERT_TLM_ProjectCommit_SIZE(call_count);
 
-    for (U32 i = 0; i < command_count; i++) {
+    for (U32 i = 0; i < call_count; i++) {
         ASSERT_EVENTS_SystemInfo(i, ResetReason::EXTERNAL, SystemInfoVersion::PROJECT_COMMIT,
                                  SystemInfoVersion::FPRIME_COMMIT, SystemInfoVersion::SAMD_COMMIT);
         ASSERT_TLM_ResetCause(i, ResetReason::EXTERNAL);
         ASSERT_TLM_ProjectCommit(i, SystemInfoVersion::PROJECT_COMMIT);
-        ASSERT_CMD_RESPONSE(i, SystemInfoComponentBase::OPCODE_EMIT_SYSTEM_INFO, i, Fw::CmdResponse::OK);
     }
 }
 
