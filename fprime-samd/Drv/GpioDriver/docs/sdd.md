@@ -83,7 +83,7 @@ there is no separate `mode` argument.
 - `group` — `Group::PA` or `Group::PB`.
 - `pin` — `Pin::PIN_0` .. `Pin::PIN_31`.
 
-Example (from `Breadboard_Curiosity` topology, `startTasks` phase):
+Example (from `Breadboard` topology, `startTasks` phase):
 
 ```cpp
 inPA23.configureInput(Samd21::GpioDriver::Group::PA,
