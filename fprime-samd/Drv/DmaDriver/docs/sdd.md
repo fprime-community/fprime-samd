@@ -110,6 +110,8 @@ struct Reply {
 
 This port is invoked **from ISR context** and must connect to a `sync input` handler that immediately returns (no blocking operations, no complex logic).
 
+**Ordering guarantee:** `handleInterrupt` finishes all channel bookkeeping before any reply is emitted: the completed descriptor is released, the channel's in-flight state is updated, and the TCMPL/TERR/SUSP flags are cleared. Only then are the (OK or BUS_ERROR) replies delivered. A reply handler may therefore queue a new transaction — on the completing channel or on any other — and will observe the channel idle (or anchored on the chain boundary). Replying before the bookkeeping settled allowed a callback to append to a chain that the remainder of the ISR then detached, which asserted on the next TCMPL.
+
 #### 3.4.3 Writeback State
 
 The `readWritebackIn` port returns a `Dma.Writeback` struct providing in-flight transfer state:
