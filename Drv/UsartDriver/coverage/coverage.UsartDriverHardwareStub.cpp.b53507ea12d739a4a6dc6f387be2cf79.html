@@ -26,7 +26,7 @@
     </tr>
     <tr>
       <th scope="row">Date:</th>
-      <td>2026-10-06 17:08:16</td>
+      <td>2026-10-06 17:33:54</td>
     </tr>
   </table>
 </div>
@@ -70,12 +70,12 @@
       <th>Call count</th>
       <th>Block coverage</th>
     </tr>
-    <tr><td><a href="#l69">Samd21::UsartHardware::UsartHal::checkAndClearRxOverflow(Samd21::SercomKind) (line 69)</a></td><td>called 6 times</td><td>75.0%</td></tr>
-    <tr><td><a href="#l32">Samd21::UsartHardware::UsartHal::configure(Samd21::SercomKind, Samd21::UsartDriver::RxPinOut, Samd21::UsartDriver::TxPinOut, Samd21::UsartDriver::ClockMode, Samd21::UsartDriver::CommunicationMode, Samd21::UsartDriver::BaudRate, Samd21::UsartDriver::DataOrder, Samd21::UsartDriver::DataBits, Samd21::UsartDriver::StopBits, Samd21::UsartDriver::Parity) (line 32)</a></td><td>called 21 times</td><td>100.0%</td></tr>
-    <tr><td><a href="#l65">Samd21::UsartHardware::UsartHal::getDataRegisterAddress(Samd21::SercomKind) (line 65)</a></td><td>called 53 times</td><td>100.0%</td></tr>
+    <tr><td><a href="#l69">Samd21::UsartHardware::UsartHal::checkAndClearRxOverflow(Samd21::SercomKind) (line 69)</a></td><td>called 7 times</td><td>75.0%</td></tr>
+    <tr><td><a href="#l32">Samd21::UsartHardware::UsartHal::configure(Samd21::SercomKind, Samd21::UsartDriver::RxPinOut, Samd21::UsartDriver::TxPinOut, Samd21::UsartDriver::ClockMode, Samd21::UsartDriver::CommunicationMode, Samd21::UsartDriver::BaudRate, Samd21::UsartDriver::DataOrder, Samd21::UsartDriver::DataBits, Samd21::UsartDriver::StopBits, Samd21::UsartDriver::Parity) (line 32)</a></td><td>called 22 times</td><td>100.0%</td></tr>
+    <tr><td><a href="#l65">Samd21::UsartHardware::UsartHal::getDataRegisterAddress(Samd21::SercomKind) (line 65)</a></td><td>called 55 times</td><td>100.0%</td></tr>
     <tr><td><a href="#l56">Samd21::UsartHardware::UsartHal::sendSync(Samd21::SercomKind, unsigned char const*, unsigned int) (line 56)</a></td><td>called 1 time</td><td>80.0%</td></tr>
-    <tr><td><a href="#l21">Samd21::UsartHardware::getStubState() (line 21)</a></td><td>called 40 times</td><td>100.0%</td></tr>
-    <tr><td><a href="#l25">Samd21::UsartHardware::resetStubState() (line 25)</a></td><td>called 18 times</td><td>56.0%</td></tr>
+    <tr><td><a href="#l21">Samd21::UsartHardware::getStubState() (line 21)</a></td><td>called 43 times</td><td>100.0%</td></tr>
+    <tr><td><a href="#l25">Samd21::UsartHardware::resetStubState() (line 25)</a></td><td>called 19 times</td><td>56.0%</td></tr>
   </table>
 </details>
 
@@ -233,14 +233,14 @@
       <td class="lineno"><a id="l21" href="#l21">21</a></td>
       <td class="linebranch">
       </td>
-      <td class="linecount coveredLine">40</td>
+      <td class="linecount coveredLine">43</td>
       <td class="src coveredLine"><span class="n">StubState</span><span class="o">&amp;</span><span class="w"> </span><span class="nf">getStubState</span><span class="p">()</span><span class="w"> </span><span class="p">{</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l22" href="#l22">22</a></td>
       <td class="linebranch">
       </td>
-      <td class="linecount coveredLine">40</td>
+      <td class="linecount coveredLine">43</td>
       <td class="src coveredLine"><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">s_state</span><span class="p">;</span></td>
     </tr>
     <tr class="source-line">
@@ -261,7 +261,7 @@
       <td class="lineno"><a id="l25" href="#l25">25</a></td>
       <td class="linebranch">
       </td>
-      <td class="linecount coveredLine">18</td>
+      <td class="linecount coveredLine">19</td>
       <td class="src coveredLine"><span class="kt">void</span><span class="w"> </span><span class="nf">resetStubState</span><span class="p">()</span><span class="w"> </span><span class="p">{</span></td>
     </tr>
     <tr class="source-line">
@@ -291,22 +291,22 @@
         <details class="linebranchDetails">
           <summary class="linebranchSummary">3/5</summary>
           <div class="linebranchContents">
-            <div class="takenBranch">&check; Branch 2 taken 18 times.</div>
-            <div class="takenBranch">&check; Branch 5 taken 18 times.</div>
-            <div class="takenBranch">&check; Branch 9 taken 18 times.</div>
+            <div class="takenBranch">&check; Branch 2 taken 19 times.</div>
+            <div class="takenBranch">&check; Branch 5 taken 19 times.</div>
+            <div class="takenBranch">&check; Branch 9 taken 19 times.</div>
             <div class="notTakenBranch">&cross; Branch 14 not taken.</div>
             <div class="notTakenBranch">&cross; Branch 15 not taken.</div>
           </div>
         </details>
       </td>
-      <td class="linecount partialCoveredLine">18</td>
+      <td class="linecount partialCoveredLine">19</td>
       <td class="src partialCoveredLine"><span class="w">    </span><span class="n">s_state</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">StubState</span><span class="p">{};</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l30" href="#l30">30</a></td>
       <td class="linebranch">
       </td>
-      <td class="linecount coveredLine">18</td>
+      <td class="linecount coveredLine">19</td>
       <td class="src coveredLine"><span class="p">}</span></td>
     </tr>
     <tr class="source-line">
@@ -320,7 +320,7 @@
       <td class="lineno"><a id="l32" href="#l32">32</a></td>
       <td class="linebranch">
       </td>
-      <td class="linecount coveredLine">21</td>
+      <td class="linecount coveredLine">22</td>
       <td class="src coveredLine"><span class="kt">void</span><span class="w"> </span><span class="nf">UsartHal::configure</span><span class="p">(</span><span class="n">SercomKind</span><span class="w"> </span><span class="n">sercom</span><span class="p">,</span></td>
     </tr>
     <tr class="source-line">
@@ -390,91 +390,91 @@
       <td class="lineno"><a id="l42" href="#l42">42</a></td>
       <td class="linebranch">
       </td>
-      <td class="linecount coveredLine">21</td>
+      <td class="linecount coveredLine">22</td>
       <td class="src coveredLine"><span class="w">    </span><span class="n">s_state</span><span class="p">.</span><span class="n">configured</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">true</span><span class="p">;</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l43" href="#l43">43</a></td>
       <td class="linebranch">
       </td>
-      <td class="linecount coveredLine">21</td>
+      <td class="linecount coveredLine">22</td>
       <td class="src coveredLine"><span class="w">    </span><span class="n">s_state</span><span class="p">.</span><span class="n">configure_count</span><span class="o">++</span><span class="p">;</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l44" href="#l44">44</a></td>
       <td class="linebranch">
       </td>
-      <td class="linecount coveredLine">21</td>
+      <td class="linecount coveredLine">22</td>
       <td class="src coveredLine"><span class="w">    </span><span class="n">s_state</span><span class="p">.</span><span class="n">sercom</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">sercom</span><span class="p">;</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l45" href="#l45">45</a></td>
       <td class="linebranch">
       </td>
-      <td class="linecount coveredLine">21</td>
+      <td class="linecount coveredLine">22</td>
       <td class="src coveredLine"><span class="w">    </span><span class="n">s_state</span><span class="p">.</span><span class="n">rx</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">rx</span><span class="p">;</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l46" href="#l46">46</a></td>
       <td class="linebranch">
       </td>
-      <td class="linecount coveredLine">21</td>
+      <td class="linecount coveredLine">22</td>
       <td class="src coveredLine"><span class="w">    </span><span class="n">s_state</span><span class="p">.</span><span class="n">tx</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">tx</span><span class="p">;</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l47" href="#l47">47</a></td>
       <td class="linebranch">
       </td>
-      <td class="linecount coveredLine">21</td>
+      <td class="linecount coveredLine">22</td>
       <td class="src coveredLine"><span class="w">    </span><span class="n">s_state</span><span class="p">.</span><span class="n">clock</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">clock</span><span class="p">;</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l48" href="#l48">48</a></td>
       <td class="linebranch">
       </td>
-      <td class="linecount coveredLine">21</td>
+      <td class="linecount coveredLine">22</td>
       <td class="src coveredLine"><span class="w">    </span><span class="n">s_state</span><span class="p">.</span><span class="n">mode</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">mode</span><span class="p">;</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l49" href="#l49">49</a></td>
       <td class="linebranch">
       </td>
-      <td class="linecount coveredLine">21</td>
+      <td class="linecount coveredLine">22</td>
       <td class="src coveredLine"><span class="w">    </span><span class="n">s_state</span><span class="p">.</span><span class="n">baud_rate</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">baud_rate</span><span class="p">;</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l50" href="#l50">50</a></td>
       <td class="linebranch">
       </td>
-      <td class="linecount coveredLine">21</td>
+      <td class="linecount coveredLine">22</td>
       <td class="src coveredLine"><span class="w">    </span><span class="n">s_state</span><span class="p">.</span><span class="n">data_order</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">data_order</span><span class="p">;</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l51" href="#l51">51</a></td>
       <td class="linebranch">
       </td>
-      <td class="linecount coveredLine">21</td>
+      <td class="linecount coveredLine">22</td>
       <td class="src coveredLine"><span class="w">    </span><span class="n">s_state</span><span class="p">.</span><span class="n">data_bits</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">data_bits</span><span class="p">;</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l52" href="#l52">52</a></td>
       <td class="linebranch">
       </td>
-      <td class="linecount coveredLine">21</td>
+      <td class="linecount coveredLine">22</td>
       <td class="src coveredLine"><span class="w">    </span><span class="n">s_state</span><span class="p">.</span><span class="n">stop_bits</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">stop_bits</span><span class="p">;</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l53" href="#l53">53</a></td>
       <td class="linebranch">
       </td>
-      <td class="linecount coveredLine">21</td>
+      <td class="linecount coveredLine">22</td>
       <td class="src coveredLine"><span class="w">    </span><span class="n">s_state</span><span class="p">.</span><span class="n">parity</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">parity</span><span class="p">;</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l54" href="#l54">54</a></td>
       <td class="linebranch">
       </td>
-      <td class="linecount coveredLine">21</td>
+      <td class="linecount coveredLine">22</td>
       <td class="src coveredLine"><span class="p">}</span></td>
     </tr>
     <tr class="source-line">
@@ -569,14 +569,14 @@
       <td class="lineno"><a id="l65" href="#l65">65</a></td>
       <td class="linebranch">
       </td>
-      <td class="linecount coveredLine">53</td>
+      <td class="linecount coveredLine">55</td>
       <td class="src coveredLine"><span class="n">U32</span><span class="w"> </span><span class="nf">UsartHal::getDataRegisterAddress</span><span class="p">(</span><span class="n">SercomKind</span><span class="w"> </span><span class="n">sercom</span><span class="p">)</span><span class="w"> </span><span class="p">{</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l66" href="#l66">66</a></td>
       <td class="linebranch">
       </td>
-      <td class="linecount coveredLine">53</td>
+      <td class="linecount coveredLine">55</td>
       <td class="src coveredLine"><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">s_state</span><span class="p">.</span><span class="n">data_register_address</span><span class="p">;</span></td>
     </tr>
     <tr class="source-line">
@@ -597,14 +597,14 @@
       <td class="lineno"><a id="l69" href="#l69">69</a></td>
       <td class="linebranch">
       </td>
-      <td class="linecount coveredLine">6</td>
+      <td class="linecount coveredLine">7</td>
       <td class="src coveredLine"><span class="kt">bool</span><span class="w"> </span><span class="nf">UsartHal::checkAndClearRxOverflow</span><span class="p">(</span><span class="n">SercomKind</span><span class="w"> </span><span class="n">sercom</span><span class="p">)</span><span class="w"> </span><span class="p">{</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l70" href="#l70">70</a></td>
       <td class="linebranch">
       </td>
-      <td class="linecount coveredLine">6</td>
+      <td class="linecount coveredLine">7</td>
       <td class="src coveredLine"><span class="w">    </span><span class="n">s_state</span><span class="p">.</span><span class="n">rx_overflow_check_count</span><span class="o">++</span><span class="p">;</span></td>
     </tr>
     <tr class="source-line">
@@ -614,11 +614,11 @@
           <summary class="linebranchSummary">1/2</summary>
           <div class="linebranchContents">
             <div class="notTakenBranch">&cross; Branch 0 not taken.</div>
-            <div class="takenBranch">&check; Branch 1 taken 6 times.</div>
+            <div class="takenBranch">&check; Branch 1 taken 7 times.</div>
           </div>
         </details>
       </td>
-      <td class="linecount partialCoveredLine">6</td>
+      <td class="linecount partialCoveredLine">7</td>
       <td class="src partialCoveredLine"><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">s_state</span><span class="p">.</span><span class="n">rx_overflow</span><span class="p">;</span></td>
     </tr>
     <tr class="source-line">

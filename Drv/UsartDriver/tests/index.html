@@ -32,8 +32,8 @@ pre {
   white-space: pre-wrap; word-break: break-word;
 }
 .empty { color: #57606a; padding: 0.75rem 1rem; border-top: 1px solid #d0d7de; margin: 0; }
-</style></head><body><h1>Unit-test console output &mdash; <code>Drv/UsartDriver</code></h1><div class="meta"><span class="pill passed">passed</span> 1 passed &middot; 0.45s &middot; <a href="../../../index.html">← back to the module list</a> &middot; <a href="console.txt">plain text</a></div><details><summary><span class="pill passed">passed</span><span class="name">fprime-samd_Drv_UsartDriver_ut_exe</span><span class="time">0.45s</span></summary><pre>[STest::Random] Generated seed 120985 from system time
-[==========] Running 18 tests from 6 test suites.
+</style></head><body><h1>Unit-test console output &mdash; <code>Drv/UsartDriver</code></h1><div class="meta"><span class="pill passed">passed</span> 1 passed &middot; 0.50s &middot; <a href="../../../index.html">← back to the module list</a> &middot; <a href="console.txt">plain text</a></div><details><summary><span class="pill passed">passed</span><span class="name">fprime-samd_Drv_UsartDriver_ut_exe</span><span class="time">0.50s</span></summary><pre>[STest::Random] Generated seed 251630 from system time
+[==========] Running 19 tests from 6 test suites.
 [----------] Global test environment set-up.
 [----------] 3 tests from Configure
 [ RUN      ] Configure.Nominal
@@ -116,8 +116,8 @@ TX DMA bus error asserts (invalid buffer pointer handed to DMA)
 ***************************************
 (RQ)       SAMD21-UART-002: The UsartDriver shall use DMA for transmission (an unrecoverable TX DMA bus error asserts)
 ***************************************
-[       OK ] Send.ChannelError (210 ms)
-[----------] 4 tests from Send (212 ms total)
+[       OK ] Send.ChannelError (234 ms)
+[----------] 4 tests from Send (235 ms total)
 
 [----------] 1 test from SendSync
 [ RUN      ] SendSync.Nominal
@@ -130,9 +130,9 @@ sendSync() transmits synchronously through the HAL with no DMA
 (RQ)       SAMD21-UART-006: The UsartDriver shall provide synchronous blocking transmission for early boot diagnostics
 ***************************************
 [       OK ] SendSync.Nominal (0 ms)
-[----------] 1 test from SendSync (1 ms total)
+[----------] 1 test from SendSync (0 ms total)
 
-[----------] 7 tests from Rx
+[----------] 8 tests from Rx
 [ RUN      ] Rx.SchedInNoData
 
 ***************************************
@@ -153,6 +153,16 @@ schedIn forwards newly-received bytes and emits RxPartial
 (RQ)       SAMD21-UART-004: The UsartDriver shall poll the in-progress RX transfer on each rate group tick to extract partial RX frames
 ***************************************
 [       OK ] Rx.SchedInPartial (0 ms)
+[ RUN      ] Rx.SchedInRxOverflow
+
+***************************************
+schedIn detects a SERCOM RX overflow and counts it in telemetry
+***************************************
+
+***************************************
+(RQ)       SAMD21-UART-004: The UsartDriver shall detect a SERCOM RX hardware overflow on each rate group tick and count it in the rxOverflows telemetry channel
+***************************************
+[       OK ] Rx.SchedInRxOverflow (0 ms)
 [ RUN      ] Rx.MultiplePartials
 
 ***************************************
@@ -202,8 +212,8 @@ RX DMA bus error asserts (invalid buffer pointer handed to DMA)
 ***************************************
 (RQ)       SAMD21-UART-002: The UsartDriver shall use DMA for reception (an unrecoverable RX DMA bus error asserts)
 ***************************************
-[       OK ] Rx.ChannelError (192 ms)
-[----------] 7 tests from Rx (196 ms total)
+[       OK ] Rx.ChannelError (218 ms)
+[----------] 8 tests from Rx (222 ms total)
 
 [----------] 2 tests from Unconfigured
 [ RUN      ] Unconfigured.SchedIn
@@ -242,6 +252,6 @@ each SERCOM maps to its matching RX DMA trigger source
 [----------] 1 test from TriggerSource (0 ms total)
 
 [----------] Global test environment tear-down
-[==========] 18 tests from 6 test suites ran. (416 ms total)
-[  PASSED  ] 18 tests.
+[==========] 19 tests from 6 test suites ran. (465 ms total)
+[  PASSED  ] 19 tests.
 </pre></details></body></html>

@@ -3,7 +3,7 @@
 ==============================================================================
 PASSED  fprime-samd_Drv_GpioDriver_ut_exe  (0.03s)
 ==============================================================================
-[STest::Random] Generated seed 652525 from system time
+[STest::Random] Generated seed 830337 from system time
 [==========] Running 13 tests from 2 test suites.
 [----------] Global test environment set-up.
 [----------] 7 tests from Nominal
@@ -12,7 +12,7 @@ PASSED  fprime-samd_Drv_GpioDriver_ut_exe  (0.03s)
 ***************************************
 (RQ)       GPIO-001: configureOutput shall bind the instance to one group/pin and forward the configuration to the PORT peripheral
 ***************************************
-[       OK ] Nominal.testConfigureOutput (0 ms)
+[       OK ] Nominal.testConfigureOutput (1 ms)
 [ RUN      ] Nominal.testConfigureInput
 
 ***************************************

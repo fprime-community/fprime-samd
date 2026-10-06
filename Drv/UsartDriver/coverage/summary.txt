@@ -5,11 +5,11 @@ Directory: ../../../../..
 File                                       Lines    Exec  Cover   Missing
 ------------------------------------------------------------------------------
 lib/fprime-samd/fprime-samd/Drv/UsartDriver/UsartDriver.cpp
-                                             172     157    91%   90,185-188,209-212,215-216,229-230,249-250
+                                             168     158    94%   185-186,207-208,211-212,225-226,245-246
 lib/fprime-samd/fprime-samd/Drv/UsartDriver/UsartDriver.hpp
                                                2       2   100%
 lib/fprime-samd/fprime-samd/Drv/UsartDriver/UsartDriverHardwareStub.cpp
                                               31      31   100%
 ------------------------------------------------------------------------------
-TOTAL                                        205     190    92%
+TOTAL                                        201     191    95%
 ------------------------------------------------------------------------------
