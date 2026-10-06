@@ -26,7 +26,7 @@
     </tr>
     <tr>
       <th scope="row">Date:</th>
-      <td>2026-10-05 22:48:49</td>
+      <td>2026-10-06 17:08:13</td>
     </tr>
   </table>
 </div>
@@ -71,16 +71,16 @@
       <th>Block coverage</th>
     </tr>
     <tr><td><a href="#l59">Samd21::RtcHardware::RtcHal::clearRtcInterrupt() (line 59)</a></td><td>not called</td><td>0.0%</td></tr>
-    <tr><td><a href="#l41">Samd21::RtcHardware::RtcHal::configureGclk(Samd21::RtcDriver::ClockSource) (line 41)</a></td><td>called 33 times</td><td>100.0%</td></tr>
-    <tr><td><a href="#l45">Samd21::RtcHardware::RtcHal::configureRtc(unsigned int, Samd21::RtcDriver::TickRate) (line 45)</a></td><td>called 33 times</td><td>100.0%</td></tr>
-    <tr><td><a href="#l50">Samd21::RtcHardware::RtcHal::enableRtc() (line 50)</a></td><td>called 9 times</td><td>100.0%</td></tr>
+    <tr><td><a href="#l41">Samd21::RtcHardware::RtcHal::configureGclk(Samd21::RtcDriver::ClockSource) (line 41)</a></td><td>called 36 times</td><td>100.0%</td></tr>
+    <tr><td><a href="#l45">Samd21::RtcHardware::RtcHal::configureRtc(unsigned int, Samd21::RtcDriver::TickRate) (line 45)</a></td><td>called 36 times</td><td>100.0%</td></tr>
+    <tr><td><a href="#l50">Samd21::RtcHardware::RtcHal::enableRtc() (line 50)</a></td><td>called 11 times</td><td>100.0%</td></tr>
     <tr><td><a href="#l54">Samd21::RtcHardware::RtcHal::readRtcCounter() (line 54)</a></td><td>called 10 times</td><td>100.0%</td></tr>
     <tr><td><a href="#l33">Samd21::RtcHardware::RtcHal::waitForGclk() (line 33)</a></td><td>not called</td><td>0.0%</td></tr>
     <tr><td><a href="#l37">Samd21::RtcHardware::RtcHal::waitForRtcMode0() (line 37)</a></td><td>not called</td><td>0.0%</td></tr>
-    <tr><td><a href="#l29">Samd21::RtcHardware::getRtcState() (line 29)</a></td><td>called 99 times</td><td>100.0%</td></tr>
-    <tr><td><a href="#l77">Samd21::RtcHardware::resetRtcState() (line 77)</a></td><td>called 35 times</td><td>100.0%</td></tr>
+    <tr><td><a href="#l29">Samd21::RtcHardware::getRtcState() (line 29)</a></td><td>called 113 times</td><td>100.0%</td></tr>
+    <tr><td><a href="#l77">Samd21::RtcHardware::resetRtcState() (line 77)</a></td><td>called 41 times</td><td>100.0%</td></tr>
     <tr><td><a href="#l89">Samd21::RtcHardware::setRtcCounter(unsigned int) (line 89)</a></td><td>called 10 times</td><td>100.0%</td></tr>
-    <tr><td><a href="#l64">Samd21::RtcHardware::simulateRtcInterrupt() (line 64)</a></td><td>called 7 times</td><td>94.0%</td></tr>
+    <tr><td><a href="#l64">Samd21::RtcHardware::simulateRtcInterrupt() (line 64)</a></td><td>called 10 times</td><td>94.0%</td></tr>
   </table>
 </details>
 
@@ -294,14 +294,14 @@
       <td class="lineno"><a id="l29" href="#l29">29</a></td>
       <td class="linebranch">
       </td>
-      <td class="linecount coveredLine">99</td>
+      <td class="linecount coveredLine">113</td>
       <td class="src coveredLine"><span class="n">RtcState</span><span class="o">&amp;</span><span class="w"> </span><span class="nf">getRtcState</span><span class="p">()</span><span class="w"> </span><span class="p">{</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l30" href="#l30">30</a></td>
       <td class="linebranch">
       </td>
-      <td class="linecount coveredLine">99</td>
+      <td class="linecount coveredLine">113</td>
       <td class="src coveredLine"><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">g_rtc_state</span><span class="p">;</span></td>
     </tr>
     <tr class="source-line">
@@ -378,7 +378,7 @@
       <td class="lineno"><a id="l41" href="#l41">41</a></td>
       <td class="linebranch">
       </td>
-      <td class="linecount coveredLine">33</td>
+      <td class="linecount coveredLine">36</td>
       <td class="src coveredLine"><span class="kt">void</span><span class="w"> </span><span class="nf">RtcHal::configureGclk</span><span class="p">(</span><span class="n">RtcDriver</span><span class="o">::</span><span class="n">ClockSource</span><span class="w"> </span><span class="n">clock_source</span><span class="p">)</span><span class="w"> </span><span class="p">{</span></td>
     </tr>
     <tr class="source-line">
@@ -392,7 +392,7 @@
       <td class="lineno"><a id="l43" href="#l43">43</a></td>
       <td class="linebranch">
       </td>
-      <td class="linecount coveredLine">33</td>
+      <td class="linecount coveredLine">36</td>
       <td class="src coveredLine"><span class="p">}</span></td>
     </tr>
     <tr class="source-line">
@@ -406,7 +406,7 @@
       <td class="lineno"><a id="l45" href="#l45">45</a></td>
       <td class="linebranch">
       </td>
-      <td class="linecount coveredLine">33</td>
+      <td class="linecount coveredLine">36</td>
       <td class="src coveredLine"><span class="kt">void</span><span class="w"> </span><span class="nf">RtcHal::configureRtc</span><span class="p">(</span><span class="n">U32</span><span class="w"> </span><span class="n">clock_rate_hz</span><span class="p">,</span><span class="w"> </span><span class="n">RtcDriver</span><span class="o">::</span><span class="n">TickRate</span><span class="w"> </span><span class="n">rate</span><span class="p">)</span><span class="w"> </span><span class="p">{</span></td>
     </tr>
     <tr class="source-line">
@@ -420,14 +420,14 @@
       <td class="lineno"><a id="l47" href="#l47">47</a></td>
       <td class="linebranch">
       </td>
-      <td class="linecount coveredLine">33</td>
+      <td class="linecount coveredLine">36</td>
       <td class="src coveredLine"><span class="w">    </span><span class="n">g_rtc_counter</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l48" href="#l48">48</a></td>
       <td class="linebranch">
       </td>
-      <td class="linecount coveredLine">33</td>
+      <td class="linecount coveredLine">36</td>
       <td class="src coveredLine"><span class="p">}</span></td>
     </tr>
     <tr class="source-line">
@@ -441,7 +441,7 @@
       <td class="lineno"><a id="l50" href="#l50">50</a></td>
       <td class="linebranch">
       </td>
-      <td class="linecount coveredLine">9</td>
+      <td class="linecount coveredLine">11</td>
       <td class="src coveredLine"><span class="kt">void</span><span class="w"> </span><span class="nf">RtcHal::enableRtc</span><span class="p">()</span><span class="w"> </span><span class="p">{</span></td>
     </tr>
     <tr class="source-line">
@@ -455,7 +455,7 @@
       <td class="lineno"><a id="l52" href="#l52">52</a></td>
       <td class="linebranch">
       </td>
-      <td class="linecount coveredLine">9</td>
+      <td class="linecount coveredLine">11</td>
       <td class="src coveredLine"><span class="p">}</span></td>
     </tr>
     <tr class="source-line">
@@ -539,14 +539,14 @@
       <td class="lineno"><a id="l64" href="#l64">64</a></td>
       <td class="linebranch">
       </td>
-      <td class="linecount coveredLine">7</td>
+      <td class="linecount coveredLine">10</td>
       <td class="src coveredLine"><span class="kt">void</span><span class="w"> </span><span class="nf">simulateRtcInterrupt</span><span class="p">()</span><span class="w"> </span><span class="p">{</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l65" href="#l65">65</a></td>
       <td class="linebranch">
       </td>
-      <td class="linecount coveredLine">7</td>
+      <td class="linecount coveredLine">10</td>
       <td class="src coveredLine"><span class="w">    </span><span class="n">RtcState</span><span class="o">&amp;</span><span class="w"> </span><span class="n">state</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">getRtcState</span><span class="p">();</span></td>
     </tr>
     <tr class="source-line">
@@ -563,20 +563,20 @@
           <summary class="linebranchSummary">3/4</summary>
           <div class="linebranchContents">
             <div class="notTakenBranch">&cross; Branch 1 not taken.</div>
-            <div class="takenBranch">&check; Branch 2 taken 7 times.</div>
-            <div class="takenBranch">&check; Branch 3 taken 1 times.</div>
+            <div class="takenBranch">&check; Branch 2 taken 10 times.</div>
+            <div class="takenBranch">&check; Branch 3 taken 4 times.</div>
             <div class="takenBranch">&check; Branch 4 taken 6 times.</div>
           </div>
         </details>
       </td>
-      <td class="linecount partialCoveredLine">7</td>
+      <td class="linecount partialCoveredLine">10</td>
       <td class="src partialCoveredLine"><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">state</span><span class="p">.</span><span class="n">deadline_reached</span><span class="p">)</span><span class="w"> </span><span class="p">{</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l68" href="#l68">68</a></td>
       <td class="linebranch">
       </td>
-      <td class="linecount coveredLine">1</td>
+      <td class="linecount coveredLine">4</td>
       <td class="src coveredLine"><span class="w">        </span><span class="n">state</span><span class="p">.</span><span class="n">deadline_exceeded</span><span class="o">++</span><span class="p">;</span></td>
     </tr>
     <tr class="source-line">
@@ -597,28 +597,28 @@
       <td class="lineno"><a id="l71" href="#l71">71</a></td>
       <td class="linebranch">
       </td>
-      <td class="linecount coveredLine">7</td>
+      <td class="linecount coveredLine">10</td>
       <td class="src coveredLine"><span class="w">    </span><span class="n">state</span><span class="p">.</span><span class="n">deadline_reached</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">false</span><span class="p">;</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l72" href="#l72">72</a></td>
       <td class="linebranch">
       </td>
-      <td class="linecount coveredLine">7</td>
+      <td class="linecount coveredLine">10</td>
       <td class="src coveredLine"><span class="w">    </span><span class="n">state</span><span class="p">.</span><span class="n">wakeup_interrupt</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">true</span><span class="p">;</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l73" href="#l73">73</a></td>
       <td class="linebranch">
       </td>
-      <td class="linecount coveredLine">7</td>
+      <td class="linecount coveredLine">10</td>
       <td class="src coveredLine"><span class="w">    </span><span class="n">state</span><span class="p">.</span><span class="n">n_ticks</span><span class="o">++</span><span class="p">;</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l74" href="#l74">74</a></td>
       <td class="linebranch">
       </td>
-      <td class="linecount coveredLine">7</td>
+      <td class="linecount coveredLine">10</td>
       <td class="src coveredLine"><span class="p">}</span></td>
     </tr>
     <tr class="source-line">
@@ -639,70 +639,70 @@
       <td class="lineno"><a id="l77" href="#l77">77</a></td>
       <td class="linebranch">
       </td>
-      <td class="linecount coveredLine">35</td>
+      <td class="linecount coveredLine">41</td>
       <td class="src coveredLine"><span class="kt">void</span><span class="w"> </span><span class="nf">resetRtcState</span><span class="p">()</span><span class="w"> </span><span class="p">{</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l78" href="#l78">78</a></td>
       <td class="linebranch">
       </td>
-      <td class="linecount coveredLine">35</td>
+      <td class="linecount coveredLine">41</td>
       <td class="src coveredLine"><span class="w">    </span><span class="n">g_rtc_state</span><span class="p">.</span><span class="n">wakeup_interrupt</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">false</span><span class="p">;</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l79" href="#l79">79</a></td>
       <td class="linebranch">
       </td>
-      <td class="linecount coveredLine">35</td>
+      <td class="linecount coveredLine">41</td>
       <td class="src coveredLine"><span class="w">    </span><span class="n">g_rtc_state</span><span class="p">.</span><span class="n">deadline_reached</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">false</span><span class="p">;</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l80" href="#l80">80</a></td>
       <td class="linebranch">
       </td>
-      <td class="linecount coveredLine">35</td>
+      <td class="linecount coveredLine">41</td>
       <td class="src coveredLine"><span class="w">    </span><span class="n">g_rtc_state</span><span class="p">.</span><span class="n">deadline_exceeded</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l81" href="#l81">81</a></td>
       <td class="linebranch">
       </td>
-      <td class="linecount coveredLine">35</td>
+      <td class="linecount coveredLine">41</td>
       <td class="src coveredLine"><span class="w">    </span><span class="n">g_rtc_state</span><span class="p">.</span><span class="n">configured</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">false</span><span class="p">;</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l82" href="#l82">82</a></td>
       <td class="linebranch">
       </td>
-      <td class="linecount coveredLine">35</td>
+      <td class="linecount coveredLine">41</td>
       <td class="src coveredLine"><span class="w">    </span><span class="n">g_rtc_state</span><span class="p">.</span><span class="n">n_ticks</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l83" href="#l83">83</a></td>
       <td class="linebranch">
       </td>
-      <td class="linecount coveredLine">35</td>
+      <td class="linecount coveredLine">41</td>
       <td class="src coveredLine"><span class="w">    </span><span class="n">g_rtc_state</span><span class="p">.</span><span class="n">rate_hz</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">RtcDriver</span><span class="o">::</span><span class="n">TickRate</span><span class="o">::</span><span class="n">TICK_1_HZ</span><span class="p">;</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l84" href="#l84">84</a></td>
       <td class="linebranch">
       </td>
-      <td class="linecount coveredLine">35</td>
+      <td class="linecount coveredLine">41</td>
       <td class="src coveredLine"><span class="w">    </span><span class="n">g_rtc_state</span><span class="p">.</span><span class="n">clock_rate_hz</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l85" href="#l85">85</a></td>
       <td class="linebranch">
       </td>
-      <td class="linecount coveredLine">35</td>
+      <td class="linecount coveredLine">41</td>
       <td class="src coveredLine"><span class="w">    </span><span class="n">g_rtc_counter</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l86" href="#l86">86</a></td>
       <td class="linebranch">
       </td>
-      <td class="linecount coveredLine">35</td>
+      <td class="linecount coveredLine">41</td>
       <td class="src coveredLine"><span class="p">}</span></td>
     </tr>
     <tr class="source-line">

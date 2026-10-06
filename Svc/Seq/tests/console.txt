@@ -1,9 +1,9 @@
 # unit-test console output: Svc/Seq
 
 ==============================================================================
-PASSED  fprime-samd_Svc_Seq_ut_exe  (0.04s)
+PASSED  fprime-samd_Svc_Seq_ut_exe  (0.05s)
 ==============================================================================
-[STest::Random] Generated seed 418675 from system time
+[STest::Random] Generated seed 21836 from system time
 [==========] Running 27 tests from 5 test suites.
 [----------] Global test environment set-up.
 [----------] 10 tests from SequenceExecution
@@ -20,7 +20,7 @@ Execute the GENERIC action end to end, verifying command order, args, and byte o
 ***************************************
 (RQ)       SAMD21-SEQ-002
 ***************************************
-[       OK ] SequenceExecution.GenericSequence (1 ms)
+[       OK ] SequenceExecution.GenericSequence (2 ms)
 [ RUN      ] SequenceExecution.RunCommandPendsUntilActive
 
 ***************************************
@@ -107,7 +107,7 @@ A command truncated within the cmdSize field emits InvalidSequence.
 (RQ)       SAMD21-SEQ-008
 ***************************************
 [       OK ] SequenceExecution.TruncatedCmdSizeFails (0 ms)
-[----------] 10 tests from SequenceExecution (6 ms total)
+[----------] 10 tests from SequenceExecution (8 ms total)
 
 [----------] 3 tests from WaitTicks
 [ RUN      ] WaitTicks.ZeroResumesNextTick
@@ -140,7 +140,7 @@ A WAIT_TICKS at the end of a sequence finishes cleanly without a spurious Invali
 (RQ)       SAMD21-SEQ-006
 ***************************************
 [       OK ] WaitTicks.AtEndOfSequence (0 ms)
-[----------] 3 tests from WaitTicks (1 ms total)
+[----------] 3 tests from WaitTicks (2 ms total)
 
 [----------] 4 tests from WaitUntil
 [ RUN      ] WaitUntil.SleepsUntilTime
@@ -268,7 +268,7 @@ A RUN after CANCEL re-executes the sequence from the first command.
 ***************************************
 (RQ)       SAMD21-SEQ-007
 ***************************************
-[       OK ] Cancel.ResetsToStart (0 ms)
+[       OK ] Cancel.ResetsToStart (1 ms)
 [ RUN      ] Cancel.WhileIdleNoOp
 
 ***************************************
@@ -288,10 +288,10 @@ CANCEL clears an armed RUN_ON_ERROR recovery table.
 ***************************************
 (RQ)       SAMD21-SEQ-007
 ***************************************
-[       OK ] Cancel.ClearsRunOnError (0 ms)
-[----------] 6 tests from Cancel (3 ms total)
+[       OK ] Cancel.ClearsRunOnError (1 ms)
+[----------] 6 tests from Cancel (5 ms total)
 
 [----------] Global test environment tear-down
-[==========] 27 tests from 5 test suites ran. (17 ms total)
+[==========] 27 tests from 5 test suites ran. (22 ms total)
 [  PASSED  ] 27 tests.
 

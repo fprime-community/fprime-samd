@@ -1,0 +1,31 @@
+# unit-test console output: Drv/SystemInfo
+
+==============================================================================
+PASSED  fprime-samd_Drv_SystemInfo_ut_exe  (0.03s)
+==============================================================================
+[STest::Random] Generated seed 684579 from system time
+[==========] Running 4 tests from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 4 tests from Nominal
+[ RUN      ] Nominal.testEmitSystemInfoReportsResetReason
+
+***************************************
+(RQ)       SAMD21-HEALTH-001: SystemInfo shall report the cause of the most recent reset when emit() is called
+***************************************
+[       OK ] Nominal.testEmitSystemInfoReportsResetReason (1 ms)
+[ RUN      ] Nominal.testCommitStampsAreReported
+
+***************************************
+(RQ)       SAMD21-HEALTH-002: SystemInfo shall report the build commits of the project, fprime and fprime-samd
+***************************************
+[       OK ] Nominal.testCommitStampsAreReported (0 ms)
+[ RUN      ] Nominal.testHardwareQueriedOncePerCommand
+[       OK ] Nominal.testHardwareQueriedOncePerCommand (0 ms)
+[ RUN      ] Nominal.testRepeatedEmit
+[       OK ] Nominal.testRepeatedEmit (0 ms)
+[----------] 4 tests from Nominal (2 ms total)
+
+[----------] Global test environment tear-down
+[==========] 4 tests from 1 test suite ran. (2 ms total)
+[  PASSED  ] 4 tests.
+
