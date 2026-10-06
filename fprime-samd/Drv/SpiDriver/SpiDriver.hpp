@@ -85,6 +85,19 @@ class SpiDriver final : public SpiDriverComponentBase {
     };
 
     //! Configure a SERCOM device for SPI Master (host) mode.
+    //! Compute the BAUD register value for SPI host mode.
+    //!
+    //! In SPI host operation the baud-rate generator runs in Synchronous mode with
+    //! the 8-bit BAUD register (§27.6.2.3). From the Synchronous row of the Baud
+    //! Rate Equations table (§25.6.2.3):
+    //!
+    //!     fBAUD = fref / (2*(BAUD + 1))   =>   BAUD = fref/(2*fBAUD) - 1
+    //!
+    //! where fref is the GCLK_SERCOMx_CORE frequency (f_ref_hz). The result is
+    //! rounded so the real SCK never exceeds the requested rate. Asserts when the
+    //! rate is zero, above fref/2, or too slow for the 8-bit BAUD register.
+    static U8 calculateBaud(U32 f_ref_hz, U32 baud_rate_khz);
+
     void configure(SercomKind sercom,
                    U32 baud_rate_khz,
                    DataOrder data_order,
