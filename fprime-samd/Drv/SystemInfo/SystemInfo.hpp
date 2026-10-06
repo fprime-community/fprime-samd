@@ -24,17 +24,8 @@ class SystemInfo final : public SystemInfoComponentBase {
     //! Destroy SystemInfo object
     ~SystemInfo();
 
-  private:
-    // ----------------------------------------------------------------------
-    // Handler implementations for commands
-    // ----------------------------------------------------------------------
-
-    //! Handler implementation for command EMIT_SYSTEM_INFO
-    //!
     //! Emit the system information event
-    void EMIT_SYSTEM_INFO_cmdHandler(FwOpcodeType opCode,  //!< The opcode
-                                     U32 cmdSeq            //!< The command sequence number
-                                     ) override;
+    void emit();
 };
 
 }  // namespace Samd21

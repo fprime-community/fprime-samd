@@ -23,7 +23,7 @@ SystemInfo::~SystemInfo() {}
 // Handler implementations for commands
 // ----------------------------------------------------------------------
 
-void SystemInfo::EMIT_SYSTEM_INFO_cmdHandler(FwOpcodeType opCode, U32 cmdSeq) {
+void SystemInfo::emit() {
     const ResetReason resetReason = SystemInfoHardware::SystemInfoHal::getResetReason();
 
     this->log_ACTIVITY_HI_SystemInfo(resetReason, SystemInfoVersion::PROJECT_COMMIT, SystemInfoVersion::FPRIME_COMMIT,
@@ -33,8 +33,6 @@ void SystemInfo::EMIT_SYSTEM_INFO_cmdHandler(FwOpcodeType opCode, U32 cmdSeq) {
     this->tlmWrite_ProjectCommit(SystemInfoVersion::PROJECT_COMMIT);
     this->tlmWrite_FprimeCommit(SystemInfoVersion::FPRIME_COMMIT);
     this->tlmWrite_SamdCommit(SystemInfoVersion::SAMD_COMMIT);
-
-    this->cmdResponse_out(opCode, cmdSeq, Fw::CmdResponse::OK);
 }
 
 }  // namespace Samd21

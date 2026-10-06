@@ -2,9 +2,6 @@ module Samd21 {
     @ A component for reporting system information about the SAMD21 MCU
     passive component SystemInfo {
 
-        @ Emit the system information event
-        sync command EMIT_SYSTEM_INFO
-
         @ System information is reported one field per channel. A single struct-valued
         @ channel would serialize to 28 bytes and not fit FW_TLM_BUFFER_MAX_SIZE; each
         @ channel below fits an 8 byte buffer.
@@ -37,9 +34,6 @@ module Samd21 {
 
         @ Enables event handling
         import Fw.Event
-
-        @ Enables command handling
-        import Fw.Command
 
         @ Enables telemetry channels handling
         import Fw.Channel
