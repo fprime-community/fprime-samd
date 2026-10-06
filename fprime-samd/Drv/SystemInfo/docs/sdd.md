@@ -111,7 +111,7 @@ outputs to wire.
 | Build                      | Hardware source used          | Reset reasons exercised                                                   |
 | --------------------------- | ------------------------------ | --------------------------------------------------------------------------- |
 | `native-ut` (Linux)         | `SystemInfoHardwareStub.cpp`  | All of `ResetReason`: `POWER_ON`, `BROWN_OUT_12`, `BROWN_OUT_33`, `EXTERNAL`, `SYSTEM`, `WATCHDOG_TIMER`, `UNKNOWN` |
-| `microchip_curiosity` (SAMD21G17A) | `SystemInfoHardware.cpp` | Not yet exercised against real `RCAUSE` resets; `SystemInfo` is instantiated (as `systemInfo`) in the `FFB` deployment topology but not `Breadboard` |
+| `microchip_curiosity` (SAMD21G17A), `ncc` (SAMD21J17D) | `SystemInfoHardware.cpp` | Exercised on both J17 and G17 variants |
 
 ## 10. Limitations
 

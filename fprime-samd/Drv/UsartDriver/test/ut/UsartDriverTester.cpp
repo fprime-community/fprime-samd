@@ -337,6 +337,24 @@ void UsartDriverTester::testSchedInPartial() {
     ASSERT_EQ(this->fromPortHistory_recv->at(0).status, Drv::ByteStreamStatus::OP_OK);
 }
 
+void UsartDriverTester::testSchedInRxOverflow() {
+    REQUIREMENT(
+        "SAMD21-UART-004: The UsartDriver shall detect a SERCOM RX hardware overflow on each rate group "
+        "tick and count it in the rxOverflows telemetry channel");
+    this->resetTest();
+    this->configureStandard();
+    this->clearHistory();
+
+    // Simulate a SERCOM RX overflow flagged by the hardware.
+    this->stub().rx_overflow = true;
+    this->setRxRemainingBytes(USART_RX_BUFFER_SIZE);
+    this->invoke_to_schedIn(0, 0);
+
+    ASSERT_EQ(this->stub().rx_overflow_check_count, 1U);
+    ASSERT_TLM_rxOverflows_SIZE(1);
+    ASSERT_TLM_rxOverflows(0, 1U);
+}
+
 void UsartDriverTester::testRxMultiplePartials() {
     REQUIREMENT(
         "SAMD21-UART-004: The UsartDriver shall poll the in-progress RX transfer on each rate group tick "

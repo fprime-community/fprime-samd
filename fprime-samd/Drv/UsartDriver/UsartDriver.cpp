@@ -24,7 +24,7 @@ namespace Samd21 {
 // Component construction and destruction
 // ----------------------------------------------------------------------
 
-UsartDriver ::UsartDriver(const char* const compName)
+UsartDriver::UsartDriver(const char* const compName)
     : UsartDriverComponentBase(compName),
       m_sercom(SercomKind::SERCOM_0),
       m_active_rx(RxDmaBufferID::INVALID),
@@ -37,18 +37,18 @@ UsartDriver ::UsartDriver(const char* const compName)
       m_rxBytes(0),
       m_txBytes(0) {}
 
-UsartDriver ::~UsartDriver() = default;
+UsartDriver::~UsartDriver() = default;
 
-void UsartDriver ::configure(SercomKind sercom,
-                             RxPinOut rx,
-                             TxPinOut tx,
-                             ClockMode clock,
-                             CommunicationMode mode,
-                             BaudRate baud_rate,
-                             DataOrder data_order,
-                             DataBits data_bits,
-                             StopBits stop_bits,
-                             Parity parity) {
+void UsartDriver::configure(SercomKind sercom,
+                            RxPinOut rx,
+                            TxPinOut tx,
+                            ClockMode clock,
+                            CommunicationMode mode,
+                            BaudRate baud_rate,
+                            DataOrder data_order,
+                            DataBits data_bits,
+                            StopBits stop_bits,
+                            Parity parity) {
     FW_ASSERT(!this->m_configured, sercom.e);
 
     // Store configuration
@@ -81,7 +81,7 @@ void UsartDriver ::configure(SercomKind sercom,
 // Handler implementations for typed input ports
 // ----------------------------------------------------------------------
 
-void UsartDriver ::schedIn_handler(FwIndexType portNum, U32 context) {
+void UsartDriver::schedIn_handler(FwIndexType portNum, U32 context) {
     if (this->m_configured) {
         // Check the SERCOM RX hardware overflow flag. This is a plain register
         // read (no channel suspend) and is safe to do at any RX rate; it tells us
@@ -130,7 +130,7 @@ void UsartDriver ::schedIn_handler(FwIndexType portNum, U32 context) {
     }
 }
 
-bool UsartDriver ::activeIn_handler(FwIndexType portNum, U32 context) {
+bool UsartDriver::activeIn_handler(FwIndexType portNum, U32 context) {
     if (this->m_configured) {
         // Tracks whether we actually dequeued (and processed) any signal this
         // tick. Returned to the caller so the cycler knows whether to re-invoke
@@ -182,10 +182,8 @@ bool UsartDriver ::activeIn_handler(FwIndexType portNum, U32 context) {
                         case RxDmaBufferID::B:
                             thickBuffer = Fw::Buffer(this->m_rx[1].data + this->m_active_processed, newBytes);
                             break;
-                        case RxDmaBufferID::INVALID:
-                            break;
                         default:
-                            FW_ASSERT(false);
+                            FW_ASSERT(false, static_cast<FwAssertArgType>(this->m_active_rx));
                     }
 
                     switch (signal.kind) {
@@ -206,10 +204,8 @@ bool UsartDriver ::activeIn_handler(FwIndexType portNum, U32 context) {
                                     this->m_active_rx = RxDmaBufferID::A;
                                     this->m_active_processed = 0;
                                     break;
-                                case RxDmaBufferID::INVALID:
-                                    FW_ASSERT(false, static_cast<FwAssertArgType>(this->m_active_rx));
                                 default:
-                                    FW_ASSERT(false);
+                                    FW_ASSERT(false, static_cast<FwAssertArgType>(this->m_active_rx));
                             }
                             break;
                         default:
@@ -238,7 +234,7 @@ bool UsartDriver ::activeIn_handler(FwIndexType portNum, U32 context) {
     return false;
 }
 
-void UsartDriver ::dmaReplyIn_handler(FwIndexType portNum, const Samd21::Dma::Reply& reply) {
+void UsartDriver::dmaReplyIn_handler(FwIndexType portNum, const Samd21::Dma::Reply& reply) {
     switch (portNum) {
         case UsartDriver_DmaChannel::TX:
             this->dmaReplyTxIsr(reply);
@@ -251,13 +247,13 @@ void UsartDriver ::dmaReplyIn_handler(FwIndexType portNum, const Samd21::Dma::Re
     }
 }
 
-void UsartDriver ::recvReturnIn_handler(FwIndexType portNum, Fw::Buffer& fwBuffer) {
+void UsartDriver::recvReturnIn_handler(FwIndexType portNum, Fw::Buffer& fwBuffer) {
     // The downstream process gave us our buffer back
     // These buffers are always in the DMA, this is a no-op
     // Do we need overrun detection here?
 }
 
-void UsartDriver ::send_handler(FwIndexType portNum, Fw::Buffer& fwBuffer) {
+void UsartDriver::send_handler(FwIndexType portNum, Fw::Buffer& fwBuffer) {
     FW_ASSERT(this->m_configured);
 
     auto status = this->m_tx_queue.enqueue(ThinBuffer(fwBuffer));
@@ -278,12 +274,12 @@ void UsartDriver ::send_handler(FwIndexType portNum, Fw::Buffer& fwBuffer) {
     }
 }
 
-Drv::ByteStreamStatus UsartDriver ::sendSync_handler(FwIndexType portNum, Fw::Buffer& sendBuffer) {
+Drv::ByteStreamStatus UsartDriver::sendSync_handler(FwIndexType portNum, Fw::Buffer& sendBuffer) {
     UsartHardware::UsartHal::sendSync(this->m_sercom, sendBuffer.getData(), sendBuffer.getSize());
     return Drv::ByteStreamStatus::OP_OK;
 }
 
-void UsartDriver ::dmaQueueRxSend(const ThinBuffer& buffer) {
+void UsartDriver::dmaQueueRxSend(const ThinBuffer& buffer) {
     this->dmaQueueOut_out(
         UsartDriver_DmaChannel::RX, SercomUtil::rxDmaTrigger(m_sercom), Dma::TransactionType::BEAT,
         Dma::Priority::PRIORITY_0, UsartHardware::UsartHal::getDataRegisterAddress(m_sercom),
@@ -292,7 +288,7 @@ void UsartDriver ::dmaQueueRxSend(const ThinBuffer& buffer) {
         /* incrementDestination */ true, Dma::AddressIncrementStepSize::SIZE_1, Dma::StepSelection::DESTINATION);
 }
 
-void UsartDriver ::dmaReplyTxIsr(const Samd21::Dma::Reply& reply) {
+void UsartDriver::dmaReplyTxIsr(const Samd21::Dma::Reply& reply) {
     FW_ASSERT(reply.get_status() == Dma::Status::OK, this->m_sercom, static_cast<FwAssertArgType>(reply.get_status()));
     Fw::Success status;
 
@@ -304,7 +300,7 @@ void UsartDriver ::dmaReplyTxIsr(const Samd21::Dma::Reply& reply) {
     FW_ASSERT(status == Fw::Success::SUCCESS, status);
 }
 
-void UsartDriver ::dmaReplyRxIsr(const Samd21::Dma::Reply& reply) {
+void UsartDriver::dmaReplyRxIsr(const Samd21::Dma::Reply& reply) {
     Fw::Success status;
     // Make sure remaining bytes are consistent with our storage
     FW_ASSERT(reply.get_remainingBytes() <= USART_RX_BUFFER_SIZE, reply.get_remainingBytes());
