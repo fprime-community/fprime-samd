@@ -29,8 +29,6 @@ void SystemInfo::EMIT_SYSTEM_INFO_cmdHandler(FwOpcodeType opCode, U32 cmdSeq) {
     this->log_ACTIVITY_HI_SystemInfo(resetReason, SystemInfoVersion::PROJECT_COMMIT, SystemInfoVersion::FPRIME_COMMIT,
                                      SystemInfoVersion::SAMD_COMMIT);
 
-    // Reported field by field: a single struct-valued channel would not fit
-    // FW_TLM_BUFFER_MAX_SIZE
     this->tlmWrite_ResetCause(resetReason);
     this->tlmWrite_ProjectCommit(SystemInfoVersion::PROJECT_COMMIT);
     this->tlmWrite_FprimeCommit(SystemInfoVersion::FPRIME_COMMIT);
