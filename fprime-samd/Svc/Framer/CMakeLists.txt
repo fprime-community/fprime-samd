@@ -21,6 +21,7 @@ register_fprime_library(
         "${CMAKE_CURRENT_LIST_DIR}/Framer.cpp"
   DEPENDS
       Svc_FprimeProtocol
+      fprime-samd_Drv_Types
       config-fprime-samd
 )
 
@@ -34,5 +35,6 @@ register_fprime_ut(
     DEPENDS
         STest
         Svc_FprimeProtocol
+        fprime-samd_Drv_Types
     UT_AUTO_HELPERS
 )
