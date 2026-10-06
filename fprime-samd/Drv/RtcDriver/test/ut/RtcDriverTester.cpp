@@ -104,6 +104,38 @@ void RtcDriverTester::testConfigure() {
     }
 }
 
+void RtcDriverTester::testConfigureAssertsOnDoubleConfigure() {
+    REQUIREMENT("SAMD21-RTC-001: The RtcDriver shall configure the RTC peripheral for periodic interrupts");
+
+    this->resetTest();
+
+    this->component.configure(RtcDriver::ClockSource::InternalOscillator, RtcDriver::TickRate::TICK_1_HZ);
+
+    // Configuring a second time without resetting the hardware state is a programming error
+    ASSERT_DEATH_IF_SUPPORTED(
+        this->component.configure(RtcDriver::ClockSource::InternalOscillator, RtcDriver::TickRate::TICK_1_HZ),
+        "Assert:");
+}
+
+void RtcDriverTester::testConfigureAssertsOnInvalidRate() {
+    REQUIREMENT("SAMD21-RTC-002: The RtcDriver shall support configurable interrupt periods (1-128 Hz)");
+
+    this->resetTest();
+
+    const RtcDriver::TickRate invalid_rate = static_cast<RtcDriver::TickRate>(3);
+    ASSERT_DEATH_IF_SUPPORTED(this->component.configure(RtcDriver::ClockSource::InternalOscillator, invalid_rate),
+                              "Assert:");
+}
+
+void RtcDriverTester::testConfigureAssertsOnInvalidClockSource() {
+    REQUIREMENT("SAMD21-RTC-005: The RtcDriver shall support internal, external, and ULP clock sources");
+
+    this->resetTest();
+
+    const RtcDriver::ClockSource invalid_source = static_cast<RtcDriver::ClockSource>(99);
+    ASSERT_DEATH_IF_SUPPORTED(this->component.configure(invalid_source, RtcDriver::TickRate::TICK_1_HZ), "Assert:");
+}
+
 void RtcDriverTester::testEnable() {
     REQUIREMENT("SAMD21-RTC-001: The RtcDriver shall configure the RTC peripheral for periodic interrupts");
 
@@ -118,6 +150,15 @@ void RtcDriverTester::testEnable() {
     // Verify state indicates configuration is complete
     const RtcHardware::RtcState& state = RtcHardware::getRtcState();
     ASSERT_TRUE(state.configured);
+}
+
+void RtcDriverTester::testEnableAssertsWhenNotConfigured() {
+    REQUIREMENT("SAMD21-RTC-001: The RtcDriver shall configure the RTC peripheral for periodic interrupts");
+
+    this->resetTest();
+
+    // Enabling before configure() is a programming error
+    ASSERT_DEATH_IF_SUPPORTED(this->component.enable(), "Assert:");
 }
 
 void RtcDriverTester::testCycle() {
@@ -150,6 +191,30 @@ void RtcDriverTester::testCycle() {
     ASSERT_EQ(state.deadline_exceeded, 0U);
 }
 
+void RtcDriverTester::testCycleNoInterruptPending() {
+    REQUIREMENT("SAMD21-RTC-004: The RtcDriver shall detect RTC interrupts via activeIn port");
+
+    this->resetTest();
+
+    // Configure and enable
+    this->component.configure(RtcDriver::ClockSource::InternalOscillator, RtcDriver::TickRate::TICK_1_HZ);
+    this->component.enable();
+
+    // No RTC interrupt has fired, so wakeup_interrupt is false: the handler should
+    // acknowledge the ISR tick but report that no cycle work was done, and emit nothing.
+    RtcHardware::RtcState& state = RtcHardware::getRtcState();
+    state.deadline_reached = true;
+
+    bool didWork = this->invoke_to_activeIn(0, 0);
+    EXPECT_FALSE(didWork);
+
+    ASSERT_FROM_PORT_HISTORY_SIZE(0);
+    ASSERT_TLM_SIZE(0);
+
+    // The ISR acknowledgement still happens unconditionally
+    ASSERT_TRUE(state.deadline_reached);
+}
+
 void RtcDriverTester::testCycleOverrun() {
     REQUIREMENT("SAMD21-RTC-008: The RtcDriver shall detect when processing exceeds the configured period");
 
@@ -176,6 +241,30 @@ void RtcDriverTester::testCycleOverrun() {
 
     // Verify state shows overrun
     ASSERT_EQ(state.deadline_exceeded, 1U);
+}
+
+void RtcDriverTester::testCycleOverrunAccumulates() {
+    REQUIREMENT("SAMD21-RTC-008: The RtcDriver shall detect when processing exceeds the configured period");
+
+    this->resetTest();
+
+    this->component.configure(RtcDriver::ClockSource::InternalOscillator, RtcDriver::TickRate::TICK_1_HZ);
+    this->component.enable();
+
+    RtcHardware::RtcState& state = RtcHardware::getRtcState();
+
+    // Three consecutive missed deadlines should accumulate rather than reset
+    for (U16 i = 1; i <= 3; i++) {
+        state.deadline_reached = false;
+        this->simulateRtcInterrupt();
+        this->invoke_to_activeIn(0, static_cast<U32>(i));
+        ASSERT_EQ(state.deadline_exceeded, i);
+    }
+
+    // Three overrun cycles should have reported three increasing telemetry values
+    ASSERT_TLM_SIZE(3);
+    ASSERT_TLM_CycleOverrun_SIZE(3);
+    ASSERT_TLM_CycleOverrun(2, 3);
 }
 
 void RtcDriverTester::testMultipleCycles() {

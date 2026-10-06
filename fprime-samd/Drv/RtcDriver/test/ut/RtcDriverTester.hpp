@@ -28,9 +28,15 @@ class RtcDriverTester : public RtcDriverGTestBase {
 
     // Tests
     void testConfigure();
+    void testConfigureAssertsOnDoubleConfigure();
+    void testConfigureAssertsOnInvalidRate();
+    void testConfigureAssertsOnInvalidClockSource();
     void testEnable();
+    void testEnableAssertsWhenNotConfigured();
     void testCycle();
+    void testCycleNoInterruptPending();
     void testCycleOverrun();
+    void testCycleOverrunAccumulates();
     void testMultipleCycles();
     void testTimeNow();
     void testTimeNowUnconfigured();

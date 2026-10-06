@@ -13,10 +13,30 @@ TEST(Nominal, testConfigure) {
     tester.testConfigure();
 }
 
+TEST(OffNominal, testConfigureAssertsOnDoubleConfigure) {
+    Samd21::RtcDriverTester tester;
+    tester.testConfigureAssertsOnDoubleConfigure();
+}
+
+TEST(OffNominal, testConfigureAssertsOnInvalidRate) {
+    Samd21::RtcDriverTester tester;
+    tester.testConfigureAssertsOnInvalidRate();
+}
+
+TEST(OffNominal, testConfigureAssertsOnInvalidClockSource) {
+    Samd21::RtcDriverTester tester;
+    tester.testConfigureAssertsOnInvalidClockSource();
+}
+
 TEST(Nominal, testEnable) {
     // COMMENT("Test RTC enable functionality");
     Samd21::RtcDriverTester tester;
     tester.testEnable();
+}
+
+TEST(OffNominal, testEnableAssertsWhenNotConfigured) {
+    Samd21::RtcDriverTester tester;
+    tester.testEnableAssertsWhenNotConfigured();
 }
 
 TEST(Nominal, testCycle) {
@@ -25,10 +45,20 @@ TEST(Nominal, testCycle) {
     tester.testCycle();
 }
 
+TEST(Nominal, testCycleNoInterruptPending) {
+    Samd21::RtcDriverTester tester;
+    tester.testCycleNoInterruptPending();
+}
+
 TEST(OffNominal, testCycleOverrun) {
     // COMMENT("Test cycle overrun detection");
     Samd21::RtcDriverTester tester;
     tester.testCycleOverrun();
+}
+
+TEST(OffNominal, testCycleOverrunAccumulates) {
+    Samd21::RtcDriverTester tester;
+    tester.testCycleOverrunAccumulates();
 }
 
 TEST(Nominal, testMultipleCycles) {
