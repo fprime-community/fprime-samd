@@ -1,6 +1,6 @@
 module Samd21 {
-    @ A component for monitoring the health and state of the SAMD21 MCU
-    passive component SamdHealth {
+    @ A component for reporting system information about the SAMD21 MCU
+    passive component SystemInfo {
 
         @ Emit the system information event
         sync command EMIT_SYSTEM_INFO

@@ -1,29 +1,29 @@
 // ======================================================================
-// \title  SamdHealthTestMain.cpp
+// \title  SystemInfoTestMain.cpp
 // \author tumbar
-// \brief  cpp file for SamdHealth component test main function
+// \brief  cpp file for SystemInfo component test main function
 // ======================================================================
 
 #include "STest/Random/Random.hpp"
-#include "fprime-samd/Drv/SamdHealth/test/ut/SamdHealthTester.hpp"
+#include "fprime-samd/Drv/SystemInfo/test/ut/SystemInfoTester.hpp"
 
 TEST(Nominal, testEmitSystemInfoReportsResetReason) {
-    Samd21::SamdHealthTester tester;
+    Samd21::SystemInfoTester tester;
     tester.testEmitSystemInfoReportsResetReason();
 }
 
 TEST(Nominal, testCommitStampsAreReported) {
-    Samd21::SamdHealthTester tester;
+    Samd21::SystemInfoTester tester;
     tester.testCommitStampsAreReported();
 }
 
 TEST(Nominal, testHardwareQueriedOncePerCommand) {
-    Samd21::SamdHealthTester tester;
+    Samd21::SystemInfoTester tester;
     tester.testHardwareQueriedOncePerCommand();
 }
 
 TEST(Nominal, testRepeatedEmit) {
-    Samd21::SamdHealthTester tester;
+    Samd21::SystemInfoTester tester;
     tester.testRepeatedEmit();
 }
 

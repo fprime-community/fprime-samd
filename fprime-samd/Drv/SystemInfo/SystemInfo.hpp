@@ -1,28 +1,28 @@
 // ======================================================================
-// \title  SamdHealth.hpp
+// \title  SystemInfo.hpp
 // \author tumbar
-// \brief  hpp file for SamdHealth component implementation class
+// \brief  hpp file for SystemInfo component implementation class
 // ======================================================================
 
-#ifndef Samd21_SamdHealth_HPP
-#define Samd21_SamdHealth_HPP
+#ifndef Samd21_SystemInfo_HPP
+#define Samd21_SystemInfo_HPP
 
-#include "fprime-samd/Drv/SamdHealth/SamdHealthComponentAc.hpp"
+#include "fprime-samd/Drv/SystemInfo/SystemInfoComponentAc.hpp"
 
 namespace Samd21 {
 
-class SamdHealth final : public SamdHealthComponentBase {
+class SystemInfo final : public SystemInfoComponentBase {
   public:
     // ----------------------------------------------------------------------
     // Component construction and destruction
     // ----------------------------------------------------------------------
 
-    //! Construct SamdHealth object
-    SamdHealth(const char* const compName  //!< The component name
+    //! Construct SystemInfo object
+    SystemInfo(const char* const compName  //!< The component name
     );
 
-    //! Destroy SamdHealth object
-    ~SamdHealth();
+    //! Destroy SystemInfo object
+    ~SystemInfo();
 
   private:
     // ----------------------------------------------------------------------

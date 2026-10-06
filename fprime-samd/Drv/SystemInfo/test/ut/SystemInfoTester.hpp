@@ -1,20 +1,20 @@
 // ======================================================================
-// \title  SamdHealthTester.hpp
+// \title  SystemInfoTester.hpp
 // \author tumbar
-// \brief  hpp file for SamdHealth test harness implementation class
+// \brief  hpp file for SystemInfo test harness implementation class
 // ======================================================================
 
-#ifndef Samd21_SamdHealthTester_HPP
-#define Samd21_SamdHealthTester_HPP
+#ifndef Samd21_SystemInfoTester_HPP
+#define Samd21_SystemInfoTester_HPP
 
 #include "Fw/Types/BasicTypes.hpp"
-#include "fprime-samd/Drv/SamdHealth/SamdHealth.hpp"
-#include "fprime-samd/Drv/SamdHealth/SamdHealthGTestBase.hpp"
-#include "fprime-samd/Drv/SamdHealth/SamdHealthHardware.hpp"
+#include "fprime-samd/Drv/SystemInfo/SystemInfo.hpp"
+#include "fprime-samd/Drv/SystemInfo/SystemInfoGTestBase.hpp"
+#include "fprime-samd/Drv/SystemInfo/SystemInfoHardware.hpp"
 
 namespace Samd21 {
 
-class SamdHealthTester : public SamdHealthGTestBase {
+class SystemInfoTester : public SystemInfoGTestBase {
   public:
     // Maximum size for histories
     static constexpr FwSizeType MAX_HISTORY_SIZE = 10;
@@ -26,8 +26,8 @@ class SamdHealthTester : public SamdHealthGTestBase {
     static constexpr U32 TEST_CMD_SEQ = 0;
 
     // Construction and destruction
-    SamdHealthTester();
-    ~SamdHealthTester();
+    SystemInfoTester();
+    ~SystemInfoTester();
 
     // Tests
     void testEmitSystemInfoReportsResetReason();
@@ -37,7 +37,7 @@ class SamdHealthTester : public SamdHealthGTestBase {
 
   private:
     //! Component under test
-    SamdHealth component;
+    SystemInfo component;
 
     // Auto-generated helper functions
     void connectPorts();

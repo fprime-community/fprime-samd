@@ -1,20 +1,20 @@
 // ======================================================================
-// \title  SamdHealthHardware.hpp
+// \title  SystemInfoHardware.hpp
 // \author tumbar
 // \brief  Hardware abstraction layer for SAMD21 health and state queries
 // ======================================================================
 
-#ifndef Samd21_SamdHealthHardware_HPP
-#define Samd21_SamdHealthHardware_HPP
+#ifndef Samd21_SystemInfoHardware_HPP
+#define Samd21_SystemInfoHardware_HPP
 
 #include "fprime-samd/Drv/Types/ResetReasonEnumAc.hpp"
 
 namespace Samd21 {
-namespace SamdHealthHardware {
+namespace SystemInfoHardware {
 
 //! Hardware abstraction layer for MCU health and state queries
 //! This allows unit testing by providing stub implementations on non-MCU platforms
-struct SamdHealthHal {
+struct SystemInfoHal {
     //! Read the cause of the most recent reset from the power manager
     //!
     //! More than one RCAUSE flag can be set at once, so the register is decoded in
@@ -28,7 +28,7 @@ struct SamdHealthHal {
 #ifndef __SAMD21__
 
 //! Observable state recorded by the stub HAL for unit testing
-struct SamdHealthState {
+struct SystemInfoState {
     //! Number of times getResetReason() was called
     U32 get_reset_reason_count;
 
@@ -38,10 +38,10 @@ struct SamdHealthState {
 
 //! Get the global stub health state
 //! \return Reference to global health state
-SamdHealthState& getSamdHealthState();
+SystemInfoState& getSystemInfoState();
 
 //! Reset stub health state for clean test runs
-void resetSamdHealthState();
+void resetSystemInfoState();
 
 //! Set the value that getResetReason() will return
 //! \param reason Reset reason to report on the next getResetReason()
@@ -49,7 +49,7 @@ void setResetReason(ResetReason reason);
 
 #endif
 
-}  // namespace SamdHealthHardware
+}  // namespace SystemInfoHardware
 }  // namespace Samd21
 
 #endif
