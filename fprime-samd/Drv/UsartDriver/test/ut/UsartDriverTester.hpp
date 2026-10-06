@@ -52,6 +52,7 @@ class UsartDriverTester : public UsartDriverGTestBase {
     // RX path
     void testSchedInNoData();
     void testSchedInPartial();
+    void testSchedInRxOverflow();
     void testRxBufferDone();
     void testRxBufferFlip();
     void testRxMultiplePartials();

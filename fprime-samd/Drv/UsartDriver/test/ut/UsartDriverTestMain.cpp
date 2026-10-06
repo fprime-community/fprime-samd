@@ -84,6 +84,12 @@ TEST(Rx, SchedInPartial) {
     tester.testSchedInPartial();
 }
 
+TEST(Rx, SchedInRxOverflow) {
+    COMMENT("schedIn detects a SERCOM RX overflow and counts it in telemetry");
+    Samd21::UsartDriverTester tester;
+    tester.testSchedInRxOverflow();
+}
+
 TEST(Rx, MultiplePartials) {
     COMMENT("successive partials advance the processed offset");
     Samd21::UsartDriverTester tester;
