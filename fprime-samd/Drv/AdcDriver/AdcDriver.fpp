@@ -11,7 +11,5 @@ module Samd21 {
         @ Schedule input from rate group (checks for completed conversions)
         sync input port activeIn: Svc.ActiveSched
 
-        match readAdc with adcResult
-
     }
 }
