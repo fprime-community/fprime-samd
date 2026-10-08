@@ -24,7 +24,7 @@ GpioDriver ::~GpioDriver() {}
 
 void GpioDriver ::configureInput(Group group,
                                  Pin pin,
-                                 InputPullMode input_pull_mode,
+                                 Gpio::InputPullMode input_pull_mode,
                                  ExternalInterruptMode interrupt_mode) {
     FW_ASSERT(!this->m_configured);
 
@@ -46,7 +46,7 @@ void GpioDriver ::configureInput(Group group,
     this->m_configured = true;
 }
 
-void GpioDriver ::configureOutput(Group group, Pin pin) {
+void GpioDriver ::configureOutput(Group group, Pin pin, Fw::Logic initial_state) {
     FW_ASSERT(!this->m_configured);
 
     this->m_group = group;
@@ -55,7 +55,7 @@ void GpioDriver ::configureOutput(Group group, Pin pin) {
 
     const U8 groupIdx = static_cast<U8>(group);
     const U8 pinIdx = static_cast<U8>(pin);
-    GpioHardware::GpioHal::configureOutput(groupIdx, pinIdx);
+    GpioHardware::GpioHal::configureOutput(groupIdx, pinIdx, initial_state);
 
     this->m_configured = true;
 }

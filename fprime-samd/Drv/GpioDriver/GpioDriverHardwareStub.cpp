@@ -29,7 +29,7 @@ static GpioState g_gpio_state = {
     .read_count = 0,
     .last_group = 0,
     .last_pin = 0,
-    .last_input_pull_mode = GpioDriver::InputPullMode::NO_PULL,
+    .last_input_pull_mode = Gpio::InputPullMode::NO_PULL,
     .last_input_interrupt_mode = GpioDriver::ExternalInterruptMode::NONE,
     .last_write_group = 0,
     .last_write_pin = 0,
@@ -46,7 +46,7 @@ GpioState& getGpioState() {
     return g_gpio_state;
 }
 
-void GpioHal::configureInput(U8 groupIdx, U8 pinIdx, GpioDriver::InputPullMode input_pull_mode) {
+void GpioHal::configureInput(U8 groupIdx, U8 pinIdx, Gpio::InputPullMode input_pull_mode) {
     g_gpio_state.configure_input_count++;
     g_gpio_state.last_group = groupIdx;
     g_gpio_state.last_pin = pinIdx;
@@ -77,7 +77,8 @@ GpioDriver* getInterruptHandler(U8 extintLine) {
     return g_interrupt_handlers[extintLine % EXTINT_LINE_COUNT];
 }
 
-void GpioHal::configureOutput(U8 groupIdx, U8 pinIdx) {
+void GpioHal::configureOutput(U8 groupIdx, U8 pinIdx, Fw::Logic initial_state) {
+    (void)initial_state;
     g_gpio_state.configure_output_count++;
     g_gpio_state.last_group = groupIdx;
     g_gpio_state.last_pin = pinIdx;
@@ -106,7 +107,7 @@ void resetGpioState() {
     g_gpio_state.read_count = 0;
     g_gpio_state.last_group = 0;
     g_gpio_state.last_pin = 0;
-    g_gpio_state.last_input_pull_mode = GpioDriver::InputPullMode::NO_PULL;
+    g_gpio_state.last_input_pull_mode = Gpio::InputPullMode::NO_PULL;
     g_gpio_state.last_input_interrupt_mode = GpioDriver::ExternalInterruptMode::NONE;
     g_gpio_state.last_write_group = 0;
     g_gpio_state.last_write_pin = 0;
