@@ -19,6 +19,6 @@ Returning buffer 2
 [----------] 3 tests from Nominal (2 ms total)
 
 [----------] Global test environment tear-down
-[==========] 3 tests from 1 test suite ran. (2 ms total)
+[==========] 3 tests from 1 test suite ran. (3 ms total)
 [  PASSED  ] 3 tests.
 

@@ -3,7 +3,7 @@
 ==============================================================================
 PASSED  fprime-samd_Svc_Seq_ut_exe  (0.05s)
 ==============================================================================
-[STest::Random] Generated seed 218439 from system time
+[STest::Random] Generated seed 251029 from system time
 [==========] Running 27 tests from 5 test suites.
 [----------] Global test environment set-up.
 [----------] 10 tests from SequenceExecution
@@ -140,7 +140,7 @@ A WAIT_TICKS at the end of a sequence finishes cleanly without a spurious Invali
 (RQ)       SAMD21-SEQ-006
 ***************************************
 [       OK ] WaitTicks.AtEndOfSequence (0 ms)
-[----------] 3 tests from WaitTicks (2 ms total)
+[----------] 3 tests from WaitTicks (1 ms total)
 
 [----------] 4 tests from WaitUntil
 [ RUN      ] WaitUntil.SleepsUntilTime
@@ -172,7 +172,7 @@ WAIT_UNTIL whose requested time is already past resumes on the next schedIn tick
 ***************************************
 (RQ)       SAMD21-SEQ-006
 ***************************************
-[       OK ] WaitUntil.PastResumesImmediately (1 ms)
+[       OK ] WaitUntil.PastResumesImmediately (2 ms)
 [ RUN      ] WaitUntil.MismatchedBaseNeverWakes
 
 ***************************************
@@ -182,8 +182,8 @@ WAIT_UNTIL on a time base the FSW clock never reports never wakes.
 ***************************************
 (RQ)       SAMD21-SEQ-006
 ***************************************
-[       OK ] WaitUntil.MismatchedBaseNeverWakes (1 ms)
-[----------] 4 tests from WaitUntil (3 ms total)
+[       OK ] WaitUntil.MismatchedBaseNeverWakes (0 ms)
+[----------] 4 tests from WaitUntil (4 ms total)
 
 [----------] 4 tests from RunOnError
 [ RUN      ] RunOnError.StartsRecovery
@@ -226,7 +226,7 @@ The armed recovery is one-shot: a second failure does not re-trigger it.
 (RQ)       SAMD21-SEQ-005
 ***************************************
 [       OK ] RunOnError.IsOneShot (0 ms)
-[----------] 4 tests from RunOnError (3 ms total)
+[----------] 4 tests from RunOnError (2 ms total)
 
 [----------] 6 tests from Cancel
 [ RUN      ] Cancel.WhileSleeping
