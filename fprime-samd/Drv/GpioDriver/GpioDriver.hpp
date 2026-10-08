@@ -8,6 +8,7 @@
 #define Samd21_GpioDriver_HPP
 
 #include "fprime-samd/Drv/GpioDriver/GpioDriverComponentAc.hpp"
+#include "fprime-samd/Drv/Types/InputPullModeEnumAc.hpp"
 
 namespace Samd21 {
 
@@ -66,13 +67,6 @@ class GpioDriver final : public GpioDriverComponentBase {
         PIN_31,
     };
 
-    //! Selects the pull up/down resistor on an input line
-    enum class InputPullMode : U8 {
-        NO_PULL,    //!< The pull up/down resistors are not connected
-        PULL_DOWN,  //!< Pull down a floating input line
-        PULL_UP,    //!< Pull up a floating input line
-    };
-
     //! Selects the external interrupt behavior
     enum class ExternalInterruptMode : U8 {
         NONE,     //!< Do not configure this pin to interrupt on an edge
@@ -82,10 +76,10 @@ class GpioDriver final : public GpioDriverComponentBase {
     };
 
     //! Configure this component to control an input GPIO pin
-    void configureInput(Group group, Pin pin, InputPullMode input_pull_mode, ExternalInterruptMode interrupt_mode);
+    void configureInput(Group group, Pin pin, Gpio::InputPullMode input_pull_mode, ExternalInterruptMode interrupt_mode);
 
     //! Configure this component to control an output GPIO pin
-    void configureOutput(Group group, Pin pin);
+    void configureOutput(Group group, Pin pin, Fw::Logic initial_state = Fw::Logic::LOW);
 
     //! Interrupt service hook for the configured input pin's external interrupt.
     //!
