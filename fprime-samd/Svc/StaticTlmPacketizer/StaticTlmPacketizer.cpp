@@ -11,6 +11,7 @@
 #include "Fw/Types/Assert.hpp"
 #include "Fw/Types/Serializable.hpp"
 #include "Fw/Types/SuccessEnumAc.hpp"
+#include "config/FwIndexTypeAliasAc.h"
 
 namespace Samd21 {
 
@@ -18,22 +19,22 @@ namespace Samd21 {
 // Component construction and destruction
 // ----------------------------------------------------------------------
 
-StaticTlmPacketizer ::StaticTlmPacketizer(const char* const compName) : StaticTlmPacketizerComponentBase(compName) {}
+StaticTlmPacketizer::StaticTlmPacketizer(const char* const compName) : StaticTlmPacketizerComponentBase(compName) {}
 
-StaticTlmPacketizer ::~StaticTlmPacketizer() {}
+StaticTlmPacketizer::~StaticTlmPacketizer() {}
 
 // ----------------------------------------------------------------------
 // Handler implementations for typed input ports
 // ----------------------------------------------------------------------
 
-void StaticTlmPacketizer ::pktSendIn_handler(FwIndexType portNum, U32 context) {
+void StaticTlmPacketizer::pktSendIn_handler(FwIndexType portNum, U32 context) {
     this->sendPkt(static_cast<FwTlmPacketizeIdType>(portNum));
 }
 
-void StaticTlmPacketizer ::tlmRecvIn_handler(FwIndexType portNum,
-                                             FwChanIdType id,
-                                             Fw::Time& timeTag,
-                                             Fw::TlmBuffer& val) {
+void StaticTlmPacketizer::tlmRecvIn_handler(FwIndexType portNum,
+                                            FwChanIdType id,
+                                            Fw::Time& timeTag,
+                                            Fw::TlmBuffer& val) {
     this->writePoint(id, val);
 }
 
@@ -41,13 +42,13 @@ void StaticTlmPacketizer ::tlmRecvIn_handler(FwIndexType portNum,
 // Handler implementations for commands
 // ----------------------------------------------------------------------
 
-void StaticTlmPacketizer ::SEND_PKT_cmdHandler(FwOpcodeType opCode, U32 cmdSeq, FwTlmPacketizeIdType id) {
+void StaticTlmPacketizer::SEND_PKT_cmdHandler(FwOpcodeType opCode, U32 cmdSeq, FwTlmPacketizeIdType id) {
     auto status = this->sendPkt(id);
     this->cmdResponse_out(opCode, cmdSeq,
                           status == Fw::Success::SUCCESS ? Fw::CmdResponse::OK : Fw::CmdResponse::EXECUTION_ERROR);
 }
 
-Fw::Success StaticTlmPacketizer ::sendPkt(FwTlmPacketizeIdType id) {
+Fw::Success StaticTlmPacketizer::sendPkt(FwTlmPacketizeIdType id) {
     Fw::ComBuffer pkt;
     Fw::Time now = getTime();
 
@@ -72,8 +73,13 @@ Fw::Success StaticTlmPacketizer ::sendPkt(FwTlmPacketizeIdType id) {
         // Make sure the packet fits in a ComBuffer
         FW_ASSERT(status == Fw::FW_SERIALIZE_OK, status);
 
-        // Transmit the packet
-        this->pktSendOut_out(0, pkt, 0);
+        // Transmit to every connected receiver
+        for (FwIndexType i = 0; i < NUM_PKTSENDOUT_OUTPUT_PORTS; i++) {
+            if (this->isConnected_pktSendOut_OutputPort(i)) {
+                this->pktSendOut_out(i, pkt, 0);
+            }
+        }
+
         return Fw::Success::SUCCESS;
     }
 }

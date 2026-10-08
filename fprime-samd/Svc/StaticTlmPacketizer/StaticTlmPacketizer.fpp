@@ -4,11 +4,11 @@ module Samd21 {
     passive component StaticTlmPacketizer {
 
         @ Send a telemetry packet
-        sync input port pktSendIn: [Samd21.NUM_TLM_PACKETS] Svc.Sched
+        sync input port pktSendIn: [Samd21.StaticTlmPacketizerConfig.NUM_TLM_PACKETS] Svc.Sched
 
         @ Packet send port
         @ Ordered by Section, Group
-        output port pktSendOut: Fw.Com
+        output port pktSendOut: [Samd21.StaticTlmPacketizerConfig.NUM_PKT_OUT] Fw.Com
 
         @ Telemetry input port
         sync input port tlmRecvIn: Fw.Tlm
