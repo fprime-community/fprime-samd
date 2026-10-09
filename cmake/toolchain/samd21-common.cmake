@@ -2,7 +2,7 @@
 # samd21-common.cmake:
 #
 # Common toolchain setup for building F prime for the SAMD21 bare-metal platform.
-# This file should be included by specific toolchain files (qtpy.cmake, microchip_curiosity.cmake)
+# This file should be included by specific toolchain files (qtpy.cmake, samd21g17.cmake)
 # after setting board-specific linker script path.
 #
 # No Arduino-CLI invocation - uses hardcoded toolchain paths and flags.
