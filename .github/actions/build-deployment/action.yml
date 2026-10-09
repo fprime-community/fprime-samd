@@ -10,9 +10,9 @@ inputs:
     description: "Deployment to build, e.g. CuriosityReference."
     required: true
   toolchain:
-    description: "Cross toolchain, e.g. microchip_curiosity."
+    description: "Cross toolchain, e.g. samd21g17."
     required: false
-    default: "microchip_curiosity"
+    default: "samd21g17"
   working-directory:
     description: "Project root holding settings.ini."
     required: false
