@@ -32,7 +32,6 @@ register_fprime_library(
         "${CMAKE_CURRENT_LIST_DIR}/Dma.fpp"
         "${CMAKE_CURRENT_LIST_DIR}/Types.fpp"
         "${CMAKE_CURRENT_LIST_DIR}/Adc.fpp"
-        "${CMAKE_CURRENT_LIST_DIR}/Gpio.fpp"
     SOURCES
         "${CMAKE_CURRENT_LIST_DIR}/ThinBuffer.cpp"
         "${CMAKE_CURRENT_LIST_DIR}/Sercom.cpp"

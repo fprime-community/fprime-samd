@@ -47,7 +47,7 @@
 
 #include <Fw/FPrimeBasicTypes.hpp>
 #include <Fw/Types/LogicEnumAc.hpp>
-#include "fprime-samd/Drv/Types/InputPullModeEnumAc.hpp"
+#include "fprime-samd/Drv/Types/Gpio.hpp"
 
 namespace Samd21 {
 class PinMux {
