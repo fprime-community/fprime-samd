@@ -1,9 +1,9 @@
 # unit-test console output: Drv/UsartDriver
 
 ==============================================================================
-PASSED  fprime-samd_Drv_UsartDriver_ut_exe  (0.41s)
+PASSED  fprime-samd_Drv_UsartDriver_ut_exe  (0.50s)
 ==============================================================================
-[STest::Random] Generated seed 291301 from system time
+[STest::Random] Generated seed 167694 from system time
 [==========] Running 19 tests from 6 test suites.
 [----------] Global test environment set-up.
 [----------] 3 tests from Configure
@@ -87,8 +87,8 @@ TX DMA bus error asserts (invalid buffer pointer handed to DMA)
 ***************************************
 (RQ)       SAMD21-UART-002: The UsartDriver shall use DMA for transmission (an unrecoverable TX DMA bus error asserts)
 ***************************************
-[       OK ] Send.ChannelError (183 ms)
-[----------] 4 tests from Send (184 ms total)
+[       OK ] Send.ChannelError (236 ms)
+[----------] 4 tests from Send (238 ms total)
 
 [----------] 1 test from SendSync
 [ RUN      ] SendSync.Nominal
@@ -183,8 +183,8 @@ RX DMA bus error asserts (invalid buffer pointer handed to DMA)
 ***************************************
 (RQ)       SAMD21-UART-002: The UsartDriver shall use DMA for reception (an unrecoverable RX DMA bus error asserts)
 ***************************************
-[       OK ] Rx.ChannelError (188 ms)
-[----------] 8 tests from Rx (191 ms total)
+[       OK ] Rx.ChannelError (220 ms)
+[----------] 8 tests from Rx (224 ms total)
 
 [----------] 2 tests from Unconfigured
 [ RUN      ] Unconfigured.SchedIn
@@ -206,8 +206,8 @@ activeIn before configure() is a safe no-op
 ***************************************
 (RQ)       SAMD21-UART-005: The UsartDriver shall queue TX requests with asynchronous completion (an activeIn tick before configure() delivers nothing)
 ***************************************
-[       OK ] Unconfigured.ActiveIn (0 ms)
-[----------] 2 tests from Unconfigured (1 ms total)
+[       OK ] Unconfigured.ActiveIn (1 ms)
+[----------] 2 tests from Unconfigured (2 ms total)
 
 [----------] 1 test from TriggerSource
 [ RUN      ] TriggerSource.Mapping
@@ -223,6 +223,6 @@ each SERCOM maps to its matching RX DMA trigger source
 [----------] 1 test from TriggerSource (0 ms total)
 
 [----------] Global test environment tear-down
-[==========] 19 tests from 6 test suites ran. (382 ms total)
+[==========] 19 tests from 6 test suites ran. (471 ms total)
 [  PASSED  ] 19 tests.
 

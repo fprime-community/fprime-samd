@@ -1,9 +1,9 @@
 # unit-test console output: Svc/Seq
 
 ==============================================================================
-PASSED  fprime-samd_Svc_Seq_ut_exe  (0.05s)
+PASSED  fprime-samd_Svc_Seq_ut_exe  (0.06s)
 ==============================================================================
-[STest::Random] Generated seed 30884 from system time
+[STest::Random] Generated seed 139770 from system time
 [==========] Running 27 tests from 5 test suites.
 [----------] Global test environment set-up.
 [----------] 10 tests from SequenceExecution
@@ -20,7 +20,7 @@ Execute the GENERIC action end to end, verifying command order, args, and byte o
 ***************************************
 (RQ)       SAMD21-SEQ-002
 ***************************************
-[       OK ] SequenceExecution.GenericSequence (1 ms)
+[       OK ] SequenceExecution.GenericSequence (2 ms)
 [ RUN      ] SequenceExecution.RunCommandPendsUntilActive
 
 ***************************************
@@ -30,7 +30,7 @@ RUN latches a pending request that only starts on the next idle activeIn tick.
 ***************************************
 (RQ)       SAMD21-SEQ-004
 ***************************************
-[       OK ] SequenceExecution.RunCommandPendsUntilActive (0 ms)
+[       OK ] SequenceExecution.RunCommandPendsUntilActive (1 ms)
 [ RUN      ] SequenceExecution.ImmediateDispatchOrder
 
 ***************************************
@@ -44,7 +44,7 @@ Back-to-back commands dispatch one per activeIn tick, gated by command responses
 ***************************************
 (RQ)       SAMD21-SEQ-002
 ***************************************
-[       OK ] SequenceExecution.ImmediateDispatchOrder (0 ms)
+[       OK ] SequenceExecution.ImmediateDispatchOrder (1 ms)
 [ RUN      ] SequenceExecution.CommandFailureAborts
 
 ***************************************
@@ -106,8 +106,8 @@ A command truncated within the cmdSize field emits InvalidSequence.
 ***************************************
 (RQ)       SAMD21-SEQ-008
 ***************************************
-[       OK ] SequenceExecution.TruncatedCmdSizeFails (0 ms)
-[----------] 10 tests from SequenceExecution (6 ms total)
+[       OK ] SequenceExecution.TruncatedCmdSizeFails (1 ms)
+[----------] 10 tests from SequenceExecution (11 ms total)
 
 [----------] 3 tests from WaitTicks
 [ RUN      ] WaitTicks.ZeroResumesNextTick
@@ -119,7 +119,7 @@ WAIT_TICKS(0) resumes the sequence on the very next rate-group tick.
 ***************************************
 (RQ)       SAMD21-SEQ-006
 ***************************************
-[       OK ] WaitTicks.ZeroResumesNextTick (0 ms)
+[       OK ] WaitTicks.ZeroResumesNextTick (1 ms)
 [ RUN      ] WaitTicks.BlocksNTicks
 
 ***************************************
@@ -129,7 +129,7 @@ WAIT_TICKS(n) blocks for exactly n rate-group ticks, then resumes.
 ***************************************
 (RQ)       SAMD21-SEQ-006
 ***************************************
-[       OK ] WaitTicks.BlocksNTicks (0 ms)
+[       OK ] WaitTicks.BlocksNTicks (1 ms)
 [ RUN      ] WaitTicks.AtEndOfSequence
 
 ***************************************
@@ -139,8 +139,8 @@ A WAIT_TICKS at the end of a sequence finishes cleanly without a spurious Invali
 ***************************************
 (RQ)       SAMD21-SEQ-006
 ***************************************
-[       OK ] WaitTicks.AtEndOfSequence (0 ms)
-[----------] 3 tests from WaitTicks (1 ms total)
+[       OK ] WaitTicks.AtEndOfSequence (1 ms)
+[----------] 3 tests from WaitTicks (3 ms total)
 
 [----------] 4 tests from WaitUntil
 [ RUN      ] WaitUntil.SleepsUntilTime
@@ -152,7 +152,7 @@ WAIT_UNTIL sleeps until the FSW clock reaches the requested time.
 ***************************************
 (RQ)       SAMD21-SEQ-006
 ***************************************
-[       OK ] WaitUntil.SleepsUntilTime (0 ms)
+[       OK ] WaitUntil.SleepsUntilTime (1 ms)
 [ RUN      ] WaitUntil.WakesOnExactTime
 
 ***************************************
@@ -182,8 +182,8 @@ WAIT_UNTIL on a time base the FSW clock never reports never wakes.
 ***************************************
 (RQ)       SAMD21-SEQ-006
 ***************************************
-[       OK ] WaitUntil.MismatchedBaseNeverWakes (0 ms)
-[----------] 4 tests from WaitUntil (3 ms total)
+[       OK ] WaitUntil.MismatchedBaseNeverWakes (1 ms)
+[----------] 4 tests from WaitUntil (4 ms total)
 
 [----------] 4 tests from RunOnError
 [ RUN      ] RunOnError.StartsRecovery
@@ -195,7 +195,7 @@ RUN_ON_ERROR arms a recovery table that starts after a command failure.
 ***************************************
 (RQ)       SAMD21-SEQ-005
 ***************************************
-[       OK ] RunOnError.StartsRecovery (0 ms)
+[       OK ] RunOnError.StartsRecovery (1 ms)
 [ RUN      ] RunOnError.NotTriggeredOnSuccess
 
 ***************************************
@@ -205,7 +205,7 @@ RUN_ON_ERROR does not trigger when the sequence completes successfully.
 ***************************************
 (RQ)       SAMD21-SEQ-005
 ***************************************
-[       OK ] RunOnError.NotTriggeredOnSuccess (0 ms)
+[       OK ] RunOnError.NotTriggeredOnSuccess (1 ms)
 [ RUN      ] RunOnError.ClearsPendingRun
 
 ***************************************
@@ -225,8 +225,8 @@ The armed recovery is one-shot: a second failure does not re-trigger it.
 ***************************************
 (RQ)       SAMD21-SEQ-005
 ***************************************
-[       OK ] RunOnError.IsOneShot (0 ms)
-[----------] 4 tests from RunOnError (3 ms total)
+[       OK ] RunOnError.IsOneShot (1 ms)
+[----------] 4 tests from RunOnError (4 ms total)
 
 [----------] 6 tests from Cancel
 [ RUN      ] Cancel.WhileSleeping
@@ -238,7 +238,7 @@ CANCEL while a WAIT is sleeping stops the sleep; schedIn no longer dispatches.
 ***************************************
 (RQ)       SAMD21-SEQ-007
 ***************************************
-[       OK ] Cancel.WhileSleeping (0 ms)
+[       OK ] Cancel.WhileSleeping (1 ms)
 [ RUN      ] Cancel.WhileAwaitingResponse
 
 ***************************************
@@ -248,7 +248,7 @@ CANCEL while awaiting a response stops execution; the late response is dropped a
 ***************************************
 (RQ)       SAMD21-SEQ-007
 ***************************************
-[       OK ] Cancel.WhileAwaitingResponse (0 ms)
+[       OK ] Cancel.WhileAwaitingResponse (1 ms)
 [ RUN      ] Cancel.ClearsPendingRun
 
 ***************************************
@@ -268,7 +268,7 @@ A RUN after CANCEL re-executes the sequence from the first command.
 ***************************************
 (RQ)       SAMD21-SEQ-007
 ***************************************
-[       OK ] Cancel.ResetsToStart (0 ms)
+[       OK ] Cancel.ResetsToStart (1 ms)
 [ RUN      ] Cancel.WhileIdleNoOp
 
 ***************************************
@@ -278,7 +278,7 @@ CANCEL while idle with nothing pending is a harmless no-op.
 ***************************************
 (RQ)       SAMD21-SEQ-007
 ***************************************
-[       OK ] Cancel.WhileIdleNoOp (0 ms)
+[       OK ] Cancel.WhileIdleNoOp (1 ms)
 [ RUN      ] Cancel.ClearsRunOnError
 
 ***************************************
@@ -288,10 +288,10 @@ CANCEL clears an armed RUN_ON_ERROR recovery table.
 ***************************************
 (RQ)       SAMD21-SEQ-007
 ***************************************
-[       OK ] Cancel.ClearsRunOnError (0 ms)
-[----------] 6 tests from Cancel (5 ms total)
+[       OK ] Cancel.ClearsRunOnError (1 ms)
+[----------] 6 tests from Cancel (6 ms total)
 
 [----------] Global test environment tear-down
-[==========] 27 tests from 5 test suites ran. (21 ms total)
+[==========] 27 tests from 5 test suites ran. (30 ms total)
 [  PASSED  ] 27 tests.
 
