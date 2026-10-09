@@ -17,7 +17,7 @@ env:
   HARNESS_REPO: fprime-community/fprime-samd-reference
   HARNESS_REF: main
   DEPLOYMENT: CuriosityReference
-  TOOLCHAIN: microchip_curiosity
+  TOOLCHAIN: samd21g17
   # Distinct per deployment; the reporter uses it to find and update its own comment.
   REPORT_MARKER: samd-size-CuriosityReference
 
