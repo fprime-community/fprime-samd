@@ -89,7 +89,7 @@ jobs:
           elf: ${{ steps.build.outputs.elf }}
           output: size/current.json
           nm: size/current.nm
-          linker-script: lib/fprime-samd/cmake/toolchain/samd21/curiosity_nano/linker_scripts/flash_without_bootloader.ld
+          linker-script: lib/fprime-samd/cmake/toolchain/samd21/samd21g17/linker_scripts/flash_without_bootloader.ld
           label: SAMD21G17D
 
       - name: "Restore the baseline measurement"
@@ -156,7 +156,7 @@ jobs:
         with:
           elf: baseline-src/${{ steps.baseline-build.outputs.elf }}
           output: baseline-size/current.json
-          linker-script: lib/fprime-samd/cmake/toolchain/samd21/curiosity_nano/linker_scripts/flash_without_bootloader.ld
+          linker-script: lib/fprime-samd/cmake/toolchain/samd21/samd21g17/linker_scripts/flash_without_bootloader.ld
           label: SAMD21G17D
 
       - name: "Save the baseline measurement"
