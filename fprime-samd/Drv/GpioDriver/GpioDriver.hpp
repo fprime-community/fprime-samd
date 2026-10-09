@@ -8,7 +8,7 @@
 #define Samd21_GpioDriver_HPP
 
 #include "fprime-samd/Drv/GpioDriver/GpioDriverComponentAc.hpp"
-#include "fprime-samd/Drv/Types/InputPullModeEnumAc.hpp"
+#include "fprime-samd/Drv/Types/Gpio.hpp"
 
 namespace Samd21 {
 
