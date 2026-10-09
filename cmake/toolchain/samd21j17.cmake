@@ -21,9 +21,6 @@ add_compile_definitions(
 set(SAMD21_LTO ON)
 set(SAMD21_MTB OFF)
 
-# Set the board type
-set(BOARD_TYPE "SAMD21J17")
-
 # Variant directory (relative to this toolchain file)
 get_filename_component(VARIANT_DIR "${CMAKE_CURRENT_LIST_DIR}/samd21/samd21j17" ABSOLUTE)
 
