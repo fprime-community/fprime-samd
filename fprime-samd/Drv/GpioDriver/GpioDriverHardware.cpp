@@ -128,7 +128,7 @@ void GpioHal::configureExternalInterrupt(U8 groupIdx, U8 pinIdx, GpioDriver::Ext
     NVIC_EnableIRQ(EIC_IRQn);
 }
 
-void GpioHal::configureInput(U8 groupIdx, U8 pinIdx, GpioDriver::InputPullMode input_pull_mode) {
+void GpioHal::configureInput(U8 groupIdx, U8 pinIdx, Gpio::InputPullMode input_pull_mode) {
     const U32 pinMask = static_cast<U32>(1) << pinIdx;
     PortGroup& portGroup = PORT->Group[groupIdx];
     U8 pinCfg = static_cast<U8>(PORT_PINCFG_INEN);
@@ -137,17 +137,17 @@ void GpioHal::configureInput(U8 groupIdx, U8 pinIdx, GpioDriver::InputPullMode i
     portGroup.DIRCLR.reg = pinMask;
 
     switch (input_pull_mode) {
-        case GpioDriver::InputPullMode::NO_PULL:
+        case Gpio::InputPullMode::NO_PULL:
             // No pull up/down resistors are connected
             break;
             // With PULLEN set, the OUT register bit selects the pull direction:
             // OUT=1 -> pull-up, OUT=0 -> pull-down. Set the direction before
             // enabling the pull so the pad never briefly pulls the wrong way.
-        case GpioDriver::InputPullMode::PULL_DOWN:
+        case Gpio::InputPullMode::PULL_DOWN:
             portGroup.OUTCLR.reg = pinMask;
             pinCfg |= static_cast<U8>(PORT_PINCFG_PULLEN);
             break;
-        case GpioDriver::InputPullMode::PULL_UP:
+        case Gpio::InputPullMode::PULL_UP:
             portGroup.OUTSET.reg = pinMask;
             pinCfg |= static_cast<U8>(PORT_PINCFG_PULLEN);
             break;
@@ -159,13 +159,20 @@ void GpioHal::configureInput(U8 groupIdx, U8 pinIdx, GpioDriver::InputPullMode i
     portGroup.PINCFG[pinIdx].reg = pinCfg;
 }
 
-void GpioHal::configureOutput(U8 groupIdx, U8 pinIdx) {
+void GpioHal::configureOutput(U8 groupIdx, U8 pinIdx, Fw::Logic initial_state) {
     const U32 pinMask = static_cast<U32>(1) << pinIdx;
     PortGroup& portGroup = PORT->Group[groupIdx];
+
+    // set initial state before enabling pin
+    if (initial_state == Fw::Logic::HIGH) {
+        portGroup.OUTSET.reg = pinMask;
+    } else {
+        portGroup.OUTCLR.reg = pinMask;
+    }
+
     U8 pinCfg = static_cast<U8>(PORT_PINCFG_INEN);
 
     portGroup.PINCFG[pinIdx].reg = pinCfg;
-    portGroup.OUTCLR.reg = pinMask;
     portGroup.DIRSET.reg = pinMask;
 }
 

@@ -46,12 +46,27 @@
 #endif
 
 #include <Fw/FPrimeBasicTypes.hpp>
+#include <Fw/Types/LogicEnumAc.hpp>
+#include "fprime-samd/Drv/Types/Gpio.hpp"
 
 namespace Samd21 {
 class PinMux {
   public:
     /// Configure a pin peripheral function using one of the `PINMUX_*` definitions in the ATMEL CMSIS macros in PIO
     static void configure(U32 pin_mux_cfg);
+
+    /// Reconfigure a pin as a plain GPIO input with the given pull mode. Also clears
+    /// PORT_PINCFG_PMUXEN, so this correctly reclaims a pin that was previously routed
+    /// to a SERCOM/peripheral function. Stateless register poke, safe to call repeatedly.
+    /// \param pin_id Pin identifier in the same `port_group*32 + pin_index` encoding used
+    ///               by the CMSIS `PIN_PAxx`/`PIN_PBxx` constants.
+    static void configureGpioInput(U32 pin_id, Gpio::InputPullMode pull_mode);
+
+    /// Reconfigure a pin as a plain GPIO output with an explicit initial level. Stateless
+    /// register poke, safe to call repeatedly.
+    /// \param pin_id Pin identifier in the same `port_group*32 + pin_index` encoding used
+    ///               by the CMSIS `PIN_PAxx`/`PIN_PBxx` constants.
+    static void configureGpioOutput(U32 pin_id, Fw::Logic initial_state);
 };
 }  // namespace Samd21
 

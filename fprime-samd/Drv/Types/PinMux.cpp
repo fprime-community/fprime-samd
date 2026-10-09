@@ -31,4 +31,51 @@ void PinMux ::configure(U32 pinmux) {
     }
 }
 
+void PinMux ::configureGpioInput(U32 pin_id, Gpio::InputPullMode pull_mode) {
+    const U8 port_group = pin_id / 32;
+    const U8 pin_index = pin_id % 32;
+    const U32 pin_mask = static_cast<U32>(1) << pin_index;
+    PortGroup& group = PORT->Group[port_group];
+    U8 pin_cfg = static_cast<U8>(PORT_PINCFG_INEN);
+
+    // Overwrite (not |=) also clears PMUXEN, reclaiming a pin that was
+    // previously routed to a SERCOM/peripheral function.
+    group.DIRCLR.reg = pin_mask;
+
+    switch (pull_mode) {
+        case Gpio::InputPullMode::NO_PULL:
+            break;
+        case Gpio::InputPullMode::PULL_DOWN:
+            group.OUTCLR.reg = pin_mask;
+            pin_cfg |= static_cast<U8>(PORT_PINCFG_PULLEN);
+            break;
+        case Gpio::InputPullMode::PULL_UP:
+            group.OUTSET.reg = pin_mask;
+            pin_cfg |= static_cast<U8>(PORT_PINCFG_PULLEN);
+            break;
+        default:
+            FW_ASSERT(0, static_cast<FwAssertArgType>(pull_mode));
+            break;
+    }
+
+    group.PINCFG[pin_index].reg = pin_cfg;
+}
+
+void PinMux ::configureGpioOutput(U32 pin_id, Fw::Logic initial_state) {
+    const U8 port_group = pin_id / 32;
+    const U8 pin_index = pin_id % 32;
+    const U32 pin_mask = static_cast<U32>(1) << pin_index;
+    PortGroup& group = PORT->Group[port_group];
+
+    // Overwrite (not |=) also clears PMUXEN, reclaiming a pin that was
+    // previously routed to a SERCOM/peripheral function.
+    group.PINCFG[pin_index].reg = static_cast<U8>(PORT_PINCFG_INEN);
+    if (initial_state == Fw::Logic::HIGH) {
+        group.OUTSET.reg = pin_mask;
+    } else {
+        group.OUTCLR.reg = pin_mask;
+    }
+    group.DIRSET.reg = pin_mask;
+}
+
 }  // namespace Samd21

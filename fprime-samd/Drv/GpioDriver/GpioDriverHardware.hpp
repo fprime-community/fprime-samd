@@ -16,10 +16,10 @@ namespace GpioHardware {
 //! Hardware abstraction layer for GPIO peripheral operations
 struct GpioHal {
     //! Configure GPIO pin in input mode
-    static void configureInput(U8 groupIdx, U8 pinIdx, GpioDriver::InputPullMode input_pull_mode);
+    static void configureInput(U8 groupIdx, U8 pinIdx, Gpio::InputPullMode input_pull_mode);
 
     //! Configure GPIO pin in output mode
-    static void configureOutput(U8 groupIdx, U8 pinIdx);
+    static void configureOutput(U8 groupIdx, U8 pinIdx, Fw::Logic initial_state = Fw::Logic::LOW);
 
     //! Configure the External Interrupt Controller for edge detection on an input pin.
     //!
@@ -74,7 +74,7 @@ struct GpioState {
     U8 last_group;
     U8 last_pin;
     //! Pull mode captured from the most recent configureInput() call
-    GpioDriver::InputPullMode last_input_pull_mode;
+    Gpio::InputPullMode last_input_pull_mode;
     //! Interrupt mode captured from the most recent configureInput() call
     GpioDriver::ExternalInterruptMode last_input_interrupt_mode;
 
