@@ -1,9 +1,9 @@
 # unit-test console output: Svc/Framer
 
 ==============================================================================
-PASSED  fprime-samd_Svc_Framer_ut_exe  (0.03s)
+PASSED  fprime-samd_Svc_Framer_ut_exe  (0.02s)
 ==============================================================================
-[STest::Random] Generated seed 966755 from system time
+[STest::Random] Generated seed 817033 from system time
 [==========] Running 6 tests from 2 test suites.
 [----------] Global test environment set-up.
 [----------] 5 tests from Nominal

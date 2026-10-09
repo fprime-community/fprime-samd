@@ -32,7 +32,7 @@ pre {
   white-space: pre-wrap; word-break: break-word;
 }
 .empty { color: #57606a; padding: 0.75rem 1rem; border-top: 1px solid #d0d7de; margin: 0; }
-</style></head><body><h1>Unit-test console output &mdash; <code>Svc/Seq</code></h1><div class="meta"><span class="pill passed">passed</span> 1 passed &middot; 0.05s &middot; <a href="../../../index.html">← back to the module list</a> &middot; <a href="console.txt">plain text</a></div><details><summary><span class="pill passed">passed</span><span class="name">fprime-samd_Svc_Seq_ut_exe</span><span class="time">0.05s</span></summary><pre>[STest::Random] Generated seed 251029 from system time
+</style></head><body><h1>Unit-test console output &mdash; <code>Svc/Seq</code></h1><div class="meta"><span class="pill passed">passed</span> 1 passed &middot; 0.05s &middot; <a href="../../../index.html">← back to the module list</a> &middot; <a href="console.txt">plain text</a></div><details><summary><span class="pill passed">passed</span><span class="name">fprime-samd_Svc_Seq_ut_exe</span><span class="time">0.05s</span></summary><pre>[STest::Random] Generated seed 30884 from system time
 [==========] Running 27 tests from 5 test suites.
 [----------] Global test environment set-up.
 [----------] 10 tests from SequenceExecution
@@ -136,7 +136,7 @@ A command truncated within the cmdSize field emits InvalidSequence.
 (RQ)       SAMD21-SEQ-008
 ***************************************
 [       OK ] SequenceExecution.TruncatedCmdSizeFails (0 ms)
-[----------] 10 tests from SequenceExecution (7 ms total)
+[----------] 10 tests from SequenceExecution (6 ms total)
 
 [----------] 3 tests from WaitTicks
 [ RUN      ] WaitTicks.ZeroResumesNextTick
@@ -191,7 +191,7 @@ WAIT_UNTIL wakes when the FSW clock exactly equals the requested time.
 ***************************************
 (RQ)       SAMD21-SEQ-006
 ***************************************
-[       OK ] WaitUntil.WakesOnExactTime (0 ms)
+[       OK ] WaitUntil.WakesOnExactTime (1 ms)
 [ RUN      ] WaitUntil.PastResumesImmediately
 
 ***************************************
@@ -201,7 +201,7 @@ WAIT_UNTIL whose requested time is already past resumes on the next schedIn tick
 ***************************************
 (RQ)       SAMD21-SEQ-006
 ***************************************
-[       OK ] WaitUntil.PastResumesImmediately (2 ms)
+[       OK ] WaitUntil.PastResumesImmediately (0 ms)
 [ RUN      ] WaitUntil.MismatchedBaseNeverWakes
 
 ***************************************
@@ -212,7 +212,7 @@ WAIT_UNTIL on a time base the FSW clock never reports never wakes.
 (RQ)       SAMD21-SEQ-006
 ***************************************
 [       OK ] WaitUntil.MismatchedBaseNeverWakes (0 ms)
-[----------] 4 tests from WaitUntil (4 ms total)
+[----------] 4 tests from WaitUntil (3 ms total)
 
 [----------] 4 tests from RunOnError
 [ RUN      ] RunOnError.StartsRecovery
@@ -255,7 +255,7 @@ The armed recovery is one-shot: a second failure does not re-trigger it.
 (RQ)       SAMD21-SEQ-005
 ***************************************
 [       OK ] RunOnError.IsOneShot (0 ms)
-[----------] 4 tests from RunOnError (2 ms total)
+[----------] 4 tests from RunOnError (3 ms total)
 
 [----------] 6 tests from Cancel
 [ RUN      ] Cancel.WhileSleeping
@@ -318,7 +318,7 @@ CANCEL clears an armed RUN_ON_ERROR recovery table.
 (RQ)       SAMD21-SEQ-007
 ***************************************
 [       OK ] Cancel.ClearsRunOnError (0 ms)
-[----------] 6 tests from Cancel (4 ms total)
+[----------] 6 tests from Cancel (5 ms total)
 
 [----------] Global test environment tear-down
 [==========] 27 tests from 5 test suites ran. (21 ms total)

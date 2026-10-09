@@ -1,9 +1,9 @@
 # unit-test console output: Drv/UsartDriver
 
 ==============================================================================
-PASSED  fprime-samd_Drv_UsartDriver_ut_exe  (0.49s)
+PASSED  fprime-samd_Drv_UsartDriver_ut_exe  (0.41s)
 ==============================================================================
-[STest::Random] Generated seed 307704 from system time
+[STest::Random] Generated seed 291301 from system time
 [==========] Running 19 tests from 6 test suites.
 [----------] Global test environment set-up.
 [----------] 3 tests from Configure
@@ -41,7 +41,7 @@ configure() primes both RX buffers into the RX DMA channel
 (RQ)       SAMD21-UART-003: The UsartDriver shall implement double-buffering for continuous RX
 ***************************************
 [       OK ] Configure.QueuesRxBuffers (0 ms)
-[----------] 3 tests from Configure (4 ms total)
+[----------] 3 tests from Configure (3 ms total)
 
 [----------] 4 tests from Send
 [ RUN      ] Send.Nominal
@@ -87,8 +87,8 @@ TX DMA bus error asserts (invalid buffer pointer handed to DMA)
 ***************************************
 (RQ)       SAMD21-UART-002: The UsartDriver shall use DMA for transmission (an unrecoverable TX DMA bus error asserts)
 ***************************************
-[       OK ] Send.ChannelError (237 ms)
-[----------] 4 tests from Send (239 ms total)
+[       OK ] Send.ChannelError (183 ms)
+[----------] 4 tests from Send (184 ms total)
 
 [----------] 1 test from SendSync
 [ RUN      ] SendSync.Nominal
@@ -183,8 +183,8 @@ RX DMA bus error asserts (invalid buffer pointer handed to DMA)
 ***************************************
 (RQ)       SAMD21-UART-002: The UsartDriver shall use DMA for reception (an unrecoverable RX DMA bus error asserts)
 ***************************************
-[       OK ] Rx.ChannelError (209 ms)
-[----------] 8 tests from Rx (213 ms total)
+[       OK ] Rx.ChannelError (188 ms)
+[----------] 8 tests from Rx (191 ms total)
 
 [----------] 2 tests from Unconfigured
 [ RUN      ] Unconfigured.SchedIn
@@ -219,10 +219,10 @@ each SERCOM maps to its matching RX DMA trigger source
 ***************************************
 (RQ)       SAMD21-UART-002: The UsartDriver shall use DMA for both transmission and reception (the correct DMA trigger is selected per SERCOM)
 ***************************************
-[       OK ] TriggerSource.Mapping (1 ms)
-[----------] 1 test from TriggerSource (1 ms total)
+[       OK ] TriggerSource.Mapping (0 ms)
+[----------] 1 test from TriggerSource (0 ms total)
 
 [----------] Global test environment tear-down
-[==========] 19 tests from 6 test suites ran. (461 ms total)
+[==========] 19 tests from 6 test suites ran. (382 ms total)
 [  PASSED  ] 19 tests.
 

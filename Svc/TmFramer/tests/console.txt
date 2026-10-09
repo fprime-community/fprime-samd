@@ -1,9 +1,9 @@
 # unit-test console output: Svc/TmFramer
 
 ==============================================================================
-PASSED  fprime-samd_Svc_TmFramer_ut_exe  (0.26s)
+PASSED  fprime-samd_Svc_TmFramer_ut_exe  (0.19s)
 ==============================================================================
-[STest::Random] Generated seed 993252 from system time
+[STest::Random] Generated seed 842230 from system time
 [==========] Running 11 tests from 2 test suites.
 [----------] Global test environment set-up.
 [----------] 8 tests from Nominal
@@ -22,19 +22,19 @@ PASSED  fprime-samd_Svc_TmFramer_ut_exe  (0.26s)
 [ RUN      ] Nominal.PerApidSequenceCounts
 [       OK ] Nominal.PerApidSequenceCounts (0 ms)
 [ RUN      ] Nominal.FrameCountWrapAround
-[       OK ] Nominal.FrameCountWrapAround (16 ms)
-[----------] 8 tests from Nominal (20 ms total)
+[       OK ] Nominal.FrameCountWrapAround (14 ms)
+[----------] 8 tests from Nominal (18 ms total)
 
 [----------] 3 tests from OffNominal
 [ RUN      ] OffNominal.Backpressure
 [       OK ] OffNominal.Backpressure (0 ms)
 [ RUN      ] OffNominal.UnexpectedBufferReturn
-[       OK ] OffNominal.UnexpectedBufferReturn (210 ms)
+[       OK ] OffNominal.UnexpectedBufferReturn (147 ms)
 [ RUN      ] OffNominal.ApidTrackingOverflow
 [       OK ] OffNominal.ApidTrackingOverflow (0 ms)
-[----------] 3 tests from OffNominal (211 ms total)
+[----------] 3 tests from OffNominal (147 ms total)
 
 [----------] Global test environment tear-down
-[==========] 11 tests from 2 test suites ran. (231 ms total)
+[==========] 11 tests from 2 test suites ran. (165 ms total)
 [  PASSED  ] 11 tests.
 
