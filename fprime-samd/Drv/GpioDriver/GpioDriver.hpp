@@ -76,7 +76,10 @@ class GpioDriver final : public GpioDriverComponentBase {
     };
 
     //! Configure this component to control an input GPIO pin
-    void configureInput(Group group, Pin pin, Gpio::InputPullMode input_pull_mode, ExternalInterruptMode interrupt_mode);
+    void configureInput(Group group,
+                        Pin pin,
+                        Gpio::InputPullMode input_pull_mode,
+                        ExternalInterruptMode interrupt_mode);
 
     //! Configure this component to control an output GPIO pin
     void configureOutput(Group group, Pin pin, Fw::Logic initial_state = Fw::Logic::LOW);
