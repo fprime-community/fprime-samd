@@ -26,7 +26,7 @@ WHERE THE MEMORY BUDGET COMES FROM
 The flash/RAM capacities are read out of the target's linker script MEMORY
 block (``--linker-script``), not hardcoded, because this script is shared by
 every deployment in every repository that consumes fprime-samd and the variants
-genuinely differ -- curiosity_nano and ncc are 128 KiB/16 KiB SAMD21x17, while
+genuinely differ -- samd21g17 and samd21j17 are 128 KiB/16 KiB SAMD21x17, while
 qtpy_m0 is a 256 KiB/32 KiB SAMD21E18A that additionally gives the first 8 KiB
 of flash to a bootloader.  A hardcoded 128/16 would silently overstate usage on
 one board and understate the bootloader carve-out on another.  ``--flash-bytes``
@@ -58,7 +58,7 @@ import re
 import subprocess
 import sys
 
-# SAMD21G17A/D, per cmake/toolchain/samd21/curiosity_nano/linker_scripts/
+# SAMD21G17A/D, per cmake/toolchain/samd21/samd21g17/linker_scripts/
 # flash_without_bootloader.ld:
 #   FLASH (rx) : ORIGIN = 0x00000000, LENGTH = 0x00020000
 #   RAM  (rwx) : ORIGIN = 0x20000000, LENGTH = 0x00004000
@@ -696,12 +696,12 @@ def _cmd_selftest(args):
     here = os.path.dirname(os.path.abspath(__file__))
     variants = os.path.join(here, "..", "..", "cmake", "toolchain", "samd21")
     expected = {
-        "curiosity_nano/linker_scripts/flash_without_bootloader.ld": (
+        "samd21g17/linker_scripts/flash_without_bootloader.ld": (
             0x20000,
             0x4000,
             0x20000000,
         ),
-        "ncc/linker_scripts/flash_without_bootloader.ld": (
+        "samd21j17/linker_scripts/flash_without_bootloader.ld": (
             0x20000,
             0x4000,
             0x20000000,
@@ -731,7 +731,7 @@ def _cmd_selftest(args):
     try:
         path = os.path.normpath(
             os.path.join(
-                variants, "curiosity_nano/linker_scripts/flash_without_bootloader.ld"
+                variants, "samd21g17/linker_scripts/flash_without_bootloader.ld"
             )
         )
         memory = resolve_memory(linker_script=path, flash_bytes=1024)

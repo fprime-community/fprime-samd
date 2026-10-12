@@ -20,9 +20,9 @@ pip install ./lib/fprime-samd/ci
 
 ```yaml
 deployment-name: CuriosityReference
-platform-name: microchip_curiosity
-dictionary: build-artifacts/microchip_curiosity/CuriosityReference/dict/TopTopologyDictionary.json
-executable: build-artifacts/microchip_curiosity/CuriosityReference/bin/CuriosityReference.elf.bin
+platform-name: samd21g17
+dictionary: build-artifacts/samd21g17/CuriosityReference/dict/TopTopologyDictionary.json
+executable: build-artifacts/samd21g17/CuriosityReference/bin/CuriosityReference.elf.bin
 test-scripts:
   - CuriosityReference/test/int/test_curiosity_reference.py
 archive-path: ./archive.tar.gz
@@ -40,7 +40,7 @@ flash-command:
   - -f
   - target/at91samdXX.cfg
   - -c
-  - program build-artifacts/microchip_curiosity/CuriosityReference/bin/CuriosityReference.elf.bin 0x00000000 verify reset exit
+  - program build-artifacts/samd21g17/CuriosityReference/bin/CuriosityReference.elf.bin 0x00000000 verify reset exit
 ```
 
 ## Hardware runner

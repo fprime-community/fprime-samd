@@ -49,7 +49,7 @@ One deployment:
 ```yaml
 env:
   DEPLOYMENT: CuriosityReference
-  TOOLCHAIN: microchip_curiosity
+  TOOLCHAIN: samd21g17
 
 steps:
   - uses: ./lib/fprime-samd/.github/actions/build-deployment
@@ -66,7 +66,7 @@ strategy:
   matrix:
     include:
       - deployment: CuriosityReference
-        toolchain: microchip_curiosity
+        toolchain: samd21g17
       - deployment: OtherDeployment
         toolchain: some_other_toolchain
 ```
