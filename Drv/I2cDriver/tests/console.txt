@@ -1,9 +1,9 @@
 # unit-test console output: Drv/I2cDriver
 
 ==============================================================================
-PASSED  fprime-samd_Drv_I2cDriver_ut_exe  (0.10s)
+PASSED  fprime-samd_Drv_I2cDriver_ut_exe  (0.08s)
 ==============================================================================
-[STest::Random] Generated seed 675849 from system time
+[STest::Random] Generated seed 515067 from system time
 [==========] Running 39 tests from 10 test suites.
 [----------] Global test environment set-up.
 [----------] 3 tests from Configure
@@ -16,7 +16,7 @@ configure() programs the SERCOM once with the requested parameters
 ***************************************
 (RQ)       SAMD21-I2C-001: The I2cDriver shall configure a SERCOM peripheral for I2C host operation
 ***************************************
-[       OK ] Configure.Nominal (4 ms)
+[       OK ] Configure.Nominal (3 ms)
 [ RUN      ] Configure.AllParameters
 
 ***************************************
@@ -26,7 +26,7 @@ configure() forwards every parameter to the HAL
 ***************************************
 (RQ)       SAMD21-I2C-001: The I2cDriver shall configure a SERCOM peripheral for I2C host operation with configurable SCL frequency, SDA hold, and pin usage
 ***************************************
-[       OK ] Configure.AllParameters (1 ms)
+[       OK ] Configure.AllParameters (0 ms)
 [ RUN      ] Configure.RegistersIsr
 
 ***************************************
@@ -36,8 +36,8 @@ configure() registers the component's ISR trampoline
 ***************************************
 (RQ)       SAMD21-I2C-001: The I2cDriver shall configure a SERCOM peripheral for I2C host operation (the driver's ISR trampoline is registered for its SERCOM)
 ***************************************
-[       OK ] Configure.RegistersIsr (1 ms)
-[----------] 3 tests from Configure (6 ms total)
+[       OK ] Configure.RegistersIsr (0 ms)
+[----------] 3 tests from Configure (5 ms total)
 
 [----------] 3 tests from Read
 [ RUN      ] Read.Nominal
@@ -73,7 +73,7 @@ read() while busy is rejected with OTHER_ERR
 ***************************************
 (RQ)       SAMD21-I2C-005: The I2cDriver shall reject a new request that arrives while a transaction is in progress, returning I2C_OTHER_ERR on the matching completion callback
 ***************************************
-[       OK ] Read.Busy (1 ms)
+[       OK ] Read.Busy (0 ms)
 [----------] 3 tests from Read (3 ms total)
 
 [----------] 3 tests from Write
@@ -110,7 +110,7 @@ write() while busy is rejected with OTHER_ERR
 ***************************************
 (RQ)       SAMD21-I2C-005: The I2cDriver shall reject a new request that arrives while a transaction is in progress, returning I2C_OTHER_ERR on the matching completion callback
 ***************************************
-[       OK ] Write.Busy (1 ms)
+[       OK ] Write.Busy (0 ms)
 [----------] 3 tests from Write (3 ms total)
 
 [----------] 6 tests from WriteRead
@@ -151,7 +151,7 @@ writeRead() while busy is rejected with OTHER_ERR
 ***************************************
 (RQ)       SAMD21-I2C-005: The I2cDriver shall reject a new request that arrives while a transaction is in progress, returning I2C_OTHER_ERR on the matching completion callback
 ***************************************
-[       OK ] WriteRead.Busy (1 ms)
+[       OK ] WriteRead.Busy (0 ms)
 [ RUN      ] WriteRead.PointerNack
 
 ***************************************
@@ -171,7 +171,7 @@ MB already latched at write-DMA completion services the handoff inline (no lost 
 ***************************************
 (RQ)       SAMD21-I2C-003: The I2cDriver shall implement writeRead as a repeated START with no intervening STOP (the read half is kicked off even when MB is already latched)
 ***************************************
-[       OK ] WriteRead.MbAlreadyLatched (1 ms)
+[       OK ] WriteRead.MbAlreadyLatched (0 ms)
 [ RUN      ] WriteRead.MbAlreadyLatchedSpuriousIsr
 
 ***************************************
@@ -181,8 +181,8 @@ the stale SERCOM interrupt after an inline handoff is a benign no-op, not an ass
 ***************************************
 (RQ)       SAMD21-I2C-003: The I2cDriver shall implement writeRead as a repeated START with no intervening STOP (a stale SERCOM interrupt after the inline handoff is a benign no-op)
 ***************************************
-[       OK ] WriteRead.MbAlreadyLatchedSpuriousIsr (1 ms)
-[----------] 6 tests from WriteRead (7 ms total)
+[       OK ] WriteRead.MbAlreadyLatchedSpuriousIsr (0 ms)
+[----------] 6 tests from WriteRead (6 ms total)
 
 [----------] 8 tests from Isr
 [ RUN      ] Isr.ErrorIdleUnexpected
@@ -234,7 +234,7 @@ an error while reading a write-read aborts the read channel, replies READ_ERR
 ***************************************
 (RQ)       SAMD21-I2C-004: The I2cDriver shall report bus errors as events and fail the in-flight transaction with the appropriate status (I2C_READ_ERR during the read half of a write-read)
 ***************************************
-[       OK ] Isr.ErrorDuringWriteReadReading (1 ms)
+[       OK ] Isr.ErrorDuringWriteReadReading (0 ms)
 [ RUN      ] Isr.AllErrorFlags
 
 ***************************************
@@ -338,7 +338,7 @@ StallRecoveryCount telemetry tracks the number of recoveries
 (RQ)       SAMD21-I2C-007: The I2cDriver shall force-recover a stalled transaction and count the recovery in telemetry
 ***************************************
 [       OK ] StallWatchdog.RecoveryCountTelemetry (1 ms)
-[----------] 7 tests from StallWatchdog (9 ms total)
+[----------] 7 tests from StallWatchdog (8 ms total)
 
 [----------] 3 tests from DmaReply
 [ RUN      ] DmaReply.WrongChannelRead
@@ -350,7 +350,7 @@ a WRITE-channel reply during a read is flagged InvalidDmaReply
 ***************************************
 (RQ)       SAMD21-I2C-004: The I2cDriver shall report a DMA reply on an unexpected channel as an event without advancing the in-flight read
 ***************************************
-[       OK ] DmaReply.WrongChannelRead (1 ms)
+[       OK ] DmaReply.WrongChannelRead (0 ms)
 [ RUN      ] DmaReply.WrongChannelWrite
 
 ***************************************
@@ -360,7 +360,7 @@ a READ-channel reply during a write is flagged InvalidDmaReply
 ***************************************
 (RQ)       SAMD21-I2C-004: The I2cDriver shall report a DMA reply on an unexpected channel as an event without advancing the in-flight write
 ***************************************
-[       OK ] DmaReply.WrongChannelWrite (1 ms)
+[       OK ] DmaReply.WrongChannelWrite (0 ms)
 [ RUN      ] DmaReply.IdleIgnored
 
 ***************************************
@@ -370,8 +370,8 @@ a DMA reply while IDLE is silently ignored
 ***************************************
 (RQ)       SAMD21-I2C-006: The I2cDriver shall deliver completion callbacks only for transactions it has in flight (a DMA reply while IDLE is ignored)
 ***************************************
-[       OK ] DmaReply.IdleIgnored (1 ms)
-[----------] 3 tests from DmaReply (3 ms total)
+[       OK ] DmaReply.IdleIgnored (0 ms)
+[----------] 3 tests from DmaReply (2 ms total)
 
 [----------] 3 tests from Boundary
 [ RUN      ] Boundary.WriteMaxPayload
@@ -383,7 +383,7 @@ a 255-byte write (max DMA payload) queues a full-length transfer and completes O
 ***************************************
 (RQ)       SAMD21-I2C-002: The I2cDriver shall perform write transactions using DMA for the data payload (at the maximum supported payload length)
 ***************************************
-[       OK ] Boundary.WriteMaxPayload (1 ms)
+[       OK ] Boundary.WriteMaxPayload (0 ms)
 [ RUN      ] Boundary.ReadMinPayload
 
 ***************************************
@@ -447,6 +447,6 @@ CLEAR_ERRORS resets the error counter and responds OK
 [----------] 1 test from Command (1 ms total)
 
 [----------] Global test environment tear-down
-[==========] 39 tests from 10 test suites ran. (50 ms total)
+[==========] 39 tests from 10 test suites ran. (45 ms total)
 [  PASSED  ] 39 tests.
 

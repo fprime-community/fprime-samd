@@ -1,7 +1,7 @@
 # unit-test console output: Svc/ThinBufferManager
 
 ==============================================================================
-PASSED  fprime-samd_Svc_ThinBufferManager_ut_exe  (0.03s)
+PASSED  fprime-samd_Svc_ThinBufferManager_ut_exe  (0.04s)
 ==============================================================================
 [==========] Running 3 tests from 1 test suite.
 [----------] Global test environment set-up.

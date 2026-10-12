@@ -26,7 +26,7 @@
     </tr>
     <tr>
       <th scope="row">Date:</th>
-      <td>2026-10-09 23:41:51</td>
+      <td>2026-10-12 20:23:45</td>
     </tr>
   </table>
 </div>
@@ -72,17 +72,17 @@
     </tr>
     <tr><td><a href="#l67">Samd21::GpioHardware::GpioHal::clearInterruptFlags(unsigned int) (line 67)</a></td><td>not called</td><td>0.0%</td></tr>
     <tr><td><a href="#l56">Samd21::GpioHardware::GpioHal::configureExternalInterrupt(unsigned char, unsigned char, Samd21::GpioDriver::ExternalInterruptMode) (line 56)</a></td><td>called 5 times</td><td>100.0%</td></tr>
-    <tr><td><a href="#l49">Samd21::GpioHardware::GpioHal::configureInput(unsigned char, unsigned char, Samd21::GpioDriver::InputPullMode) (line 49)</a></td><td>called 11 times</td><td>100.0%</td></tr>
-    <tr><td><a href="#l80">Samd21::GpioHardware::GpioHal::configureOutput(unsigned char, unsigned char) (line 80)</a></td><td>called 67 times</td><td>100.0%</td></tr>
+    <tr><td><a href="#l49">Samd21::GpioHardware::GpioHal::configureInput(unsigned char, unsigned char, Samd21::Gpio::InputPullMode) (line 49)</a></td><td>called 11 times</td><td>100.0%</td></tr>
+    <tr><td><a href="#l80">Samd21::GpioHardware::GpioHal::configureOutput(unsigned char, unsigned char, Fw::Logic) (line 80)</a></td><td>called 67 times</td><td>100.0%</td></tr>
     <tr><td><a href="#l63">Samd21::GpioHardware::GpioHal::getInterruptFlags() (line 63)</a></td><td>not called</td><td>0.0%</td></tr>
-    <tr><td><a href="#l86">Samd21::GpioHardware::GpioHal::read(unsigned char, unsigned char) (line 86)</a></td><td>called 2 times</td><td>100.0%</td></tr>
-    <tr><td><a href="#l93">Samd21::GpioHardware::GpioHal::write(unsigned char, unsigned char, Fw::Logic const&amp;) (line 93)</a></td><td>called 2 times</td><td>100.0%</td></tr>
+    <tr><td><a href="#l87">Samd21::GpioHardware::GpioHal::read(unsigned char, unsigned char) (line 87)</a></td><td>called 2 times</td><td>100.0%</td></tr>
+    <tr><td><a href="#l94">Samd21::GpioHardware::GpioHal::write(unsigned char, unsigned char, Fw::Logic const&amp;) (line 94)</a></td><td>called 2 times</td><td>100.0%</td></tr>
     <tr><td><a href="#l45">Samd21::GpioHardware::getGpioState() (line 45)</a></td><td>called 80 times</td><td>100.0%</td></tr>
     <tr><td><a href="#l76">Samd21::GpioHardware::getInterruptHandler(unsigned char) (line 76)</a></td><td>not called</td><td>0.0%</td></tr>
     <tr><td><a href="#l71">Samd21::GpioHardware::registerInterruptHandler(unsigned char, Samd21::GpioDriver*) (line 71)</a></td><td>called 5 times</td><td>83.0%</td></tr>
-    <tr><td><a href="#l101">Samd21::GpioHardware::resetGpioState() (line 101)</a></td><td>called 81 times</td><td>100.0%</td></tr>
-    <tr><td><a href="#l124">Samd21::GpioHardware::setReadValue(Fw::Logic const&amp;) (line 124)</a></td><td>called 2 times</td><td>100.0%</td></tr>
-    <tr><td><a href="#l129">Samd21::GpioHardware::simulateInterrupt(unsigned char) (line 129)</a></td><td>called 3 times</td><td>100.0%</td></tr>
+    <tr><td><a href="#l102">Samd21::GpioHardware::resetGpioState() (line 102)</a></td><td>called 81 times</td><td>100.0%</td></tr>
+    <tr><td><a href="#l125">Samd21::GpioHardware::setReadValue(Fw::Logic const&amp;) (line 125)</a></td><td>called 2 times</td><td>100.0%</td></tr>
+    <tr><td><a href="#l130">Samd21::GpioHardware::simulateInterrupt(unsigned char) (line 130)</a></td><td>called 3 times</td><td>100.0%</td></tr>
   </table>
 </details>
 
@@ -318,7 +318,7 @@
       <td class="linebranch">
       </td>
       <td class="linecount "></td>
-      <td class="src "><span class="w">    </span><span class="p">.</span><span class="n">last_input_pull_mode</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">GpioDriver</span><span class="o">::</span><span class="n">InputPullMode</span><span class="o">::</span><span class="n">NO_PULL</span><span class="p">,</span></td>
+      <td class="src "><span class="w">    </span><span class="p">.</span><span class="n">last_input_pull_mode</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Gpio</span><span class="o">::</span><span class="n">InputPullMode</span><span class="o">::</span><span class="n">NO_PULL</span><span class="p">,</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l33" href="#l33">33</a></td>
@@ -437,7 +437,7 @@
       <td class="linebranch">
       </td>
       <td class="linecount coveredLine">11</td>
-      <td class="src coveredLine"><span class="kt">void</span><span class="w"> </span><span class="nf">GpioHal::configureInput</span><span class="p">(</span><span class="n">U8</span><span class="w"> </span><span class="n">groupIdx</span><span class="p">,</span><span class="w"> </span><span class="n">U8</span><span class="w"> </span><span class="n">pinIdx</span><span class="p">,</span><span class="w"> </span><span class="n">GpioDriver</span><span class="o">::</span><span class="n">InputPullMode</span><span class="w"> </span><span class="n">input_pull_mode</span><span class="p">)</span><span class="w"> </span><span class="p">{</span></td>
+      <td class="src coveredLine"><span class="kt">void</span><span class="w"> </span><span class="nf">GpioHal::configureInput</span><span class="p">(</span><span class="n">U8</span><span class="w"> </span><span class="n">groupIdx</span><span class="p">,</span><span class="w"> </span><span class="n">U8</span><span class="w"> </span><span class="n">pinIdx</span><span class="p">,</span><span class="w"> </span><span class="n">Gpio</span><span class="o">::</span><span class="n">InputPullMode</span><span class="w"> </span><span class="n">input_pull_mode</span><span class="p">)</span><span class="w"> </span><span class="p">{</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l50" href="#l50">50</a></td>
@@ -654,269 +654,276 @@
       <td class="linebranch">
       </td>
       <td class="linecount coveredLine">67</td>
-      <td class="src coveredLine"><span class="kt">void</span><span class="w"> </span><span class="nf">GpioHal::configureOutput</span><span class="p">(</span><span class="n">U8</span><span class="w"> </span><span class="n">groupIdx</span><span class="p">,</span><span class="w"> </span><span class="n">U8</span><span class="w"> </span><span class="n">pinIdx</span><span class="p">)</span><span class="w"> </span><span class="p">{</span></td>
+      <td class="src coveredLine"><span class="kt">void</span><span class="w"> </span><span class="nf">GpioHal::configureOutput</span><span class="p">(</span><span class="n">U8</span><span class="w"> </span><span class="n">groupIdx</span><span class="p">,</span><span class="w"> </span><span class="n">U8</span><span class="w"> </span><span class="n">pinIdx</span><span class="p">,</span><span class="w"> </span><span class="n">Fw</span><span class="o">::</span><span class="n">Logic</span><span class="w"> </span><span class="n">initial_state</span><span class="p">)</span><span class="w"> </span><span class="p">{</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l81" href="#l81">81</a></td>
       <td class="linebranch">
       </td>
-      <td class="linecount coveredLine">67</td>
-      <td class="src coveredLine"><span class="w">    </span><span class="n">g_gpio_state</span><span class="p">.</span><span class="n">configure_output_count</span><span class="o">++</span><span class="p">;</span></td>
+      <td class="linecount "></td>
+      <td class="src "><span class="w">    </span><span class="p">(</span><span class="kt">void</span><span class="p">)</span><span class="n">initial_state</span><span class="p">;</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l82" href="#l82">82</a></td>
       <td class="linebranch">
       </td>
       <td class="linecount coveredLine">67</td>
-      <td class="src coveredLine"><span class="w">    </span><span class="n">g_gpio_state</span><span class="p">.</span><span class="n">last_group</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">groupIdx</span><span class="p">;</span></td>
+      <td class="src coveredLine"><span class="w">    </span><span class="n">g_gpio_state</span><span class="p">.</span><span class="n">configure_output_count</span><span class="o">++</span><span class="p">;</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l83" href="#l83">83</a></td>
       <td class="linebranch">
       </td>
       <td class="linecount coveredLine">67</td>
-      <td class="src coveredLine"><span class="w">    </span><span class="n">g_gpio_state</span><span class="p">.</span><span class="n">last_pin</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">pinIdx</span><span class="p">;</span></td>
+      <td class="src coveredLine"><span class="w">    </span><span class="n">g_gpio_state</span><span class="p">.</span><span class="n">last_group</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">groupIdx</span><span class="p">;</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l84" href="#l84">84</a></td>
       <td class="linebranch">
       </td>
       <td class="linecount coveredLine">67</td>
-      <td class="src coveredLine"><span class="p">}</span></td>
+      <td class="src coveredLine"><span class="w">    </span><span class="n">g_gpio_state</span><span class="p">.</span><span class="n">last_pin</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">pinIdx</span><span class="p">;</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l85" href="#l85">85</a></td>
       <td class="linebranch">
       </td>
-      <td class="linecount "></td>
-      <td class="src "></td>
+      <td class="linecount coveredLine">67</td>
+      <td class="src coveredLine"><span class="p">}</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l86" href="#l86">86</a></td>
       <td class="linebranch">
       </td>
-      <td class="linecount coveredLine">2</td>
-      <td class="src coveredLine"><span class="n">Fw</span><span class="o">::</span><span class="n">Logic</span><span class="w"> </span><span class="nf">GpioHal::read</span><span class="p">(</span><span class="n">U8</span><span class="w"> </span><span class="n">groupIdx</span><span class="p">,</span><span class="w"> </span><span class="n">U8</span><span class="w"> </span><span class="n">pinIdx</span><span class="p">)</span><span class="w"> </span><span class="p">{</span></td>
+      <td class="linecount "></td>
+      <td class="src "></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l87" href="#l87">87</a></td>
       <td class="linebranch">
       </td>
       <td class="linecount coveredLine">2</td>
-      <td class="src coveredLine"><span class="w">    </span><span class="n">g_gpio_state</span><span class="p">.</span><span class="n">read_count</span><span class="o">++</span><span class="p">;</span></td>
+      <td class="src coveredLine"><span class="n">Fw</span><span class="o">::</span><span class="n">Logic</span><span class="w"> </span><span class="nf">GpioHal::read</span><span class="p">(</span><span class="n">U8</span><span class="w"> </span><span class="n">groupIdx</span><span class="p">,</span><span class="w"> </span><span class="n">U8</span><span class="w"> </span><span class="n">pinIdx</span><span class="p">)</span><span class="w"> </span><span class="p">{</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l88" href="#l88">88</a></td>
       <td class="linebranch">
       </td>
       <td class="linecount coveredLine">2</td>
-      <td class="src coveredLine"><span class="w">    </span><span class="n">g_gpio_state</span><span class="p">.</span><span class="n">last_read_group</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">groupIdx</span><span class="p">;</span></td>
+      <td class="src coveredLine"><span class="w">    </span><span class="n">g_gpio_state</span><span class="p">.</span><span class="n">read_count</span><span class="o">++</span><span class="p">;</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l89" href="#l89">89</a></td>
       <td class="linebranch">
       </td>
       <td class="linecount coveredLine">2</td>
-      <td class="src coveredLine"><span class="w">    </span><span class="n">g_gpio_state</span><span class="p">.</span><span class="n">last_read_pin</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">pinIdx</span><span class="p">;</span></td>
+      <td class="src coveredLine"><span class="w">    </span><span class="n">g_gpio_state</span><span class="p">.</span><span class="n">last_read_group</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">groupIdx</span><span class="p">;</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l90" href="#l90">90</a></td>
       <td class="linebranch">
       </td>
       <td class="linecount coveredLine">2</td>
-      <td class="src coveredLine"><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">g_gpio_state</span><span class="p">.</span><span class="n">read_value</span><span class="p">;</span></td>
+      <td class="src coveredLine"><span class="w">    </span><span class="n">g_gpio_state</span><span class="p">.</span><span class="n">last_read_pin</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">pinIdx</span><span class="p">;</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l91" href="#l91">91</a></td>
       <td class="linebranch">
       </td>
-      <td class="linecount "></td>
-      <td class="src "><span class="p">}</span></td>
+      <td class="linecount coveredLine">2</td>
+      <td class="src coveredLine"><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">g_gpio_state</span><span class="p">.</span><span class="n">read_value</span><span class="p">;</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l92" href="#l92">92</a></td>
       <td class="linebranch">
       </td>
       <td class="linecount "></td>
-      <td class="src "></td>
+      <td class="src "><span class="p">}</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l93" href="#l93">93</a></td>
       <td class="linebranch">
       </td>
-      <td class="linecount coveredLine">2</td>
-      <td class="src coveredLine"><span class="kt">void</span><span class="w"> </span><span class="nf">GpioHal::write</span><span class="p">(</span><span class="n">U8</span><span class="w"> </span><span class="n">groupIdx</span><span class="p">,</span><span class="w"> </span><span class="n">U8</span><span class="w"> </span><span class="n">pinIdx</span><span class="p">,</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="n">Fw</span><span class="o">::</span><span class="n">Logic</span><span class="o">&amp;</span><span class="w"> </span><span class="n">state</span><span class="p">)</span><span class="w"> </span><span class="p">{</span></td>
+      <td class="linecount "></td>
+      <td class="src "></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l94" href="#l94">94</a></td>
       <td class="linebranch">
       </td>
       <td class="linecount coveredLine">2</td>
-      <td class="src coveredLine"><span class="w">    </span><span class="n">g_gpio_state</span><span class="p">.</span><span class="n">write_count</span><span class="o">++</span><span class="p">;</span></td>
+      <td class="src coveredLine"><span class="kt">void</span><span class="w"> </span><span class="nf">GpioHal::write</span><span class="p">(</span><span class="n">U8</span><span class="w"> </span><span class="n">groupIdx</span><span class="p">,</span><span class="w"> </span><span class="n">U8</span><span class="w"> </span><span class="n">pinIdx</span><span class="p">,</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="n">Fw</span><span class="o">::</span><span class="n">Logic</span><span class="o">&amp;</span><span class="w"> </span><span class="n">state</span><span class="p">)</span><span class="w"> </span><span class="p">{</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l95" href="#l95">95</a></td>
       <td class="linebranch">
       </td>
       <td class="linecount coveredLine">2</td>
-      <td class="src coveredLine"><span class="w">    </span><span class="n">g_gpio_state</span><span class="p">.</span><span class="n">last_write_group</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">groupIdx</span><span class="p">;</span></td>
+      <td class="src coveredLine"><span class="w">    </span><span class="n">g_gpio_state</span><span class="p">.</span><span class="n">write_count</span><span class="o">++</span><span class="p">;</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l96" href="#l96">96</a></td>
       <td class="linebranch">
       </td>
       <td class="linecount coveredLine">2</td>
-      <td class="src coveredLine"><span class="w">    </span><span class="n">g_gpio_state</span><span class="p">.</span><span class="n">last_write_pin</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">pinIdx</span><span class="p">;</span></td>
+      <td class="src coveredLine"><span class="w">    </span><span class="n">g_gpio_state</span><span class="p">.</span><span class="n">last_write_group</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">groupIdx</span><span class="p">;</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l97" href="#l97">97</a></td>
       <td class="linebranch">
       </td>
       <td class="linecount coveredLine">2</td>
-      <td class="src coveredLine"><span class="w">    </span><span class="n">g_gpio_state</span><span class="p">.</span><span class="n">last_write_state</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">state</span><span class="p">;</span></td>
+      <td class="src coveredLine"><span class="w">    </span><span class="n">g_gpio_state</span><span class="p">.</span><span class="n">last_write_pin</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">pinIdx</span><span class="p">;</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l98" href="#l98">98</a></td>
       <td class="linebranch">
       </td>
       <td class="linecount coveredLine">2</td>
-      <td class="src coveredLine"><span class="p">}</span></td>
+      <td class="src coveredLine"><span class="w">    </span><span class="n">g_gpio_state</span><span class="p">.</span><span class="n">last_write_state</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">state</span><span class="p">;</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l99" href="#l99">99</a></td>
       <td class="linebranch">
       </td>
-      <td class="linecount "></td>
-      <td class="src "></td>
+      <td class="linecount coveredLine">2</td>
+      <td class="src coveredLine"><span class="p">}</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l100" href="#l100">100</a></td>
       <td class="linebranch">
       </td>
       <td class="linecount "></td>
-      <td class="src "><span class="c1">//! Test helper: reset stub state for clean test runs</span></td>
+      <td class="src "></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l101" href="#l101">101</a></td>
       <td class="linebranch">
       </td>
-      <td class="linecount coveredLine">81</td>
-      <td class="src coveredLine"><span class="kt">void</span><span class="w"> </span><span class="nf">resetGpioState</span><span class="p">()</span><span class="w"> </span><span class="p">{</span></td>
+      <td class="linecount "></td>
+      <td class="src "><span class="c1">//! Test helper: reset stub state for clean test runs</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l102" href="#l102">102</a></td>
       <td class="linebranch">
       </td>
       <td class="linecount coveredLine">81</td>
-      <td class="src coveredLine"><span class="w">    </span><span class="n">g_gpio_state</span><span class="p">.</span><span class="n">configure_input_count</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span></td>
+      <td class="src coveredLine"><span class="kt">void</span><span class="w"> </span><span class="nf">resetGpioState</span><span class="p">()</span><span class="w"> </span><span class="p">{</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l103" href="#l103">103</a></td>
       <td class="linebranch">
       </td>
       <td class="linecount coveredLine">81</td>
-      <td class="src coveredLine"><span class="w">    </span><span class="n">g_gpio_state</span><span class="p">.</span><span class="n">configure_external_interrupt_count</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span></td>
+      <td class="src coveredLine"><span class="w">    </span><span class="n">g_gpio_state</span><span class="p">.</span><span class="n">configure_input_count</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l104" href="#l104">104</a></td>
       <td class="linebranch">
       </td>
       <td class="linecount coveredLine">81</td>
-      <td class="src coveredLine"><span class="w">    </span><span class="n">g_gpio_state</span><span class="p">.</span><span class="n">configure_output_count</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span></td>
+      <td class="src coveredLine"><span class="w">    </span><span class="n">g_gpio_state</span><span class="p">.</span><span class="n">configure_external_interrupt_count</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l105" href="#l105">105</a></td>
       <td class="linebranch">
       </td>
       <td class="linecount coveredLine">81</td>
-      <td class="src coveredLine"><span class="w">    </span><span class="n">g_gpio_state</span><span class="p">.</span><span class="n">write_count</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span></td>
+      <td class="src coveredLine"><span class="w">    </span><span class="n">g_gpio_state</span><span class="p">.</span><span class="n">configure_output_count</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l106" href="#l106">106</a></td>
       <td class="linebranch">
       </td>
       <td class="linecount coveredLine">81</td>
-      <td class="src coveredLine"><span class="w">    </span><span class="n">g_gpio_state</span><span class="p">.</span><span class="n">read_count</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span></td>
+      <td class="src coveredLine"><span class="w">    </span><span class="n">g_gpio_state</span><span class="p">.</span><span class="n">write_count</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l107" href="#l107">107</a></td>
       <td class="linebranch">
       </td>
       <td class="linecount coveredLine">81</td>
-      <td class="src coveredLine"><span class="w">    </span><span class="n">g_gpio_state</span><span class="p">.</span><span class="n">last_group</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span></td>
+      <td class="src coveredLine"><span class="w">    </span><span class="n">g_gpio_state</span><span class="p">.</span><span class="n">read_count</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l108" href="#l108">108</a></td>
       <td class="linebranch">
       </td>
       <td class="linecount coveredLine">81</td>
-      <td class="src coveredLine"><span class="w">    </span><span class="n">g_gpio_state</span><span class="p">.</span><span class="n">last_pin</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span></td>
+      <td class="src coveredLine"><span class="w">    </span><span class="n">g_gpio_state</span><span class="p">.</span><span class="n">last_group</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l109" href="#l109">109</a></td>
       <td class="linebranch">
       </td>
       <td class="linecount coveredLine">81</td>
-      <td class="src coveredLine"><span class="w">    </span><span class="n">g_gpio_state</span><span class="p">.</span><span class="n">last_input_pull_mode</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">GpioDriver</span><span class="o">::</span><span class="n">InputPullMode</span><span class="o">::</span><span class="n">NO_PULL</span><span class="p">;</span></td>
+      <td class="src coveredLine"><span class="w">    </span><span class="n">g_gpio_state</span><span class="p">.</span><span class="n">last_pin</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l110" href="#l110">110</a></td>
       <td class="linebranch">
       </td>
       <td class="linecount coveredLine">81</td>
-      <td class="src coveredLine"><span class="w">    </span><span class="n">g_gpio_state</span><span class="p">.</span><span class="n">last_input_interrupt_mode</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">GpioDriver</span><span class="o">::</span><span class="n">ExternalInterruptMode</span><span class="o">::</span><span class="n">NONE</span><span class="p">;</span></td>
+      <td class="src coveredLine"><span class="w">    </span><span class="n">g_gpio_state</span><span class="p">.</span><span class="n">last_input_pull_mode</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Gpio</span><span class="o">::</span><span class="n">InputPullMode</span><span class="o">::</span><span class="n">NO_PULL</span><span class="p">;</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l111" href="#l111">111</a></td>
       <td class="linebranch">
       </td>
       <td class="linecount coveredLine">81</td>
-      <td class="src coveredLine"><span class="w">    </span><span class="n">g_gpio_state</span><span class="p">.</span><span class="n">last_write_group</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span></td>
+      <td class="src coveredLine"><span class="w">    </span><span class="n">g_gpio_state</span><span class="p">.</span><span class="n">last_input_interrupt_mode</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">GpioDriver</span><span class="o">::</span><span class="n">ExternalInterruptMode</span><span class="o">::</span><span class="n">NONE</span><span class="p">;</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l112" href="#l112">112</a></td>
       <td class="linebranch">
       </td>
       <td class="linecount coveredLine">81</td>
-      <td class="src coveredLine"><span class="w">    </span><span class="n">g_gpio_state</span><span class="p">.</span><span class="n">last_write_pin</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span></td>
+      <td class="src coveredLine"><span class="w">    </span><span class="n">g_gpio_state</span><span class="p">.</span><span class="n">last_write_group</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l113" href="#l113">113</a></td>
       <td class="linebranch">
       </td>
       <td class="linecount coveredLine">81</td>
-      <td class="src coveredLine"><span class="w">    </span><span class="n">g_gpio_state</span><span class="p">.</span><span class="n">last_write_state</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Fw</span><span class="o">::</span><span class="n">Logic</span><span class="o">::</span><span class="n">LOW</span><span class="p">;</span></td>
+      <td class="src coveredLine"><span class="w">    </span><span class="n">g_gpio_state</span><span class="p">.</span><span class="n">last_write_pin</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l114" href="#l114">114</a></td>
       <td class="linebranch">
       </td>
       <td class="linecount coveredLine">81</td>
-      <td class="src coveredLine"><span class="w">    </span><span class="n">g_gpio_state</span><span class="p">.</span><span class="n">last_read_group</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span></td>
+      <td class="src coveredLine"><span class="w">    </span><span class="n">g_gpio_state</span><span class="p">.</span><span class="n">last_write_state</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Fw</span><span class="o">::</span><span class="n">Logic</span><span class="o">::</span><span class="n">LOW</span><span class="p">;</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l115" href="#l115">115</a></td>
       <td class="linebranch">
       </td>
       <td class="linecount coveredLine">81</td>
-      <td class="src coveredLine"><span class="w">    </span><span class="n">g_gpio_state</span><span class="p">.</span><span class="n">last_read_pin</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span></td>
+      <td class="src coveredLine"><span class="w">    </span><span class="n">g_gpio_state</span><span class="p">.</span><span class="n">last_read_group</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l116" href="#l116">116</a></td>
       <td class="linebranch">
       </td>
       <td class="linecount coveredLine">81</td>
-      <td class="src coveredLine"><span class="w">    </span><span class="n">g_gpio_state</span><span class="p">.</span><span class="n">read_value</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Fw</span><span class="o">::</span><span class="n">Logic</span><span class="o">::</span><span class="n">HIGH</span><span class="p">;</span></td>
+      <td class="src coveredLine"><span class="w">    </span><span class="n">g_gpio_state</span><span class="p">.</span><span class="n">last_read_pin</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l117" href="#l117">117</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount coveredLine">81</td>
+      <td class="src coveredLine"><span class="w">    </span><span class="n">g_gpio_state</span><span class="p">.</span><span class="n">read_value</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Fw</span><span class="o">::</span><span class="n">Logic</span><span class="o">::</span><span class="n">HIGH</span><span class="p">;</span></td>
+    </tr>
+    <tr class="source-line">
+      <td class="lineno"><a id="l118" href="#l118">118</a></td>
       <td class="linebranch">
       </td>
       <td class="linecount "></td>
       <td class="src "></td>
     </tr>
     <tr class="source-line">
-      <td class="lineno"><a id="l118" href="#l118">118</a></td>
+      <td class="lineno"><a id="l119" href="#l119">119</a></td>
       <td class="linebranch">
         <details class="linebranchDetails">
           <summary class="linebranchSummary">2/2</summary>
@@ -930,91 +937,91 @@
       <td class="src coveredLine"><span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="n">U8</span><span class="w"> </span><span class="n">line</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">line</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">EXTINT_LINE_COUNT</span><span class="p">;</span><span class="w"> </span><span class="n">line</span><span class="o">++</span><span class="p">)</span><span class="w"> </span><span class="p">{</span></td>
     </tr>
     <tr class="source-line">
-      <td class="lineno"><a id="l119" href="#l119">119</a></td>
+      <td class="lineno"><a id="l120" href="#l120">120</a></td>
       <td class="linebranch">
       </td>
       <td class="linecount coveredLine">1296</td>
       <td class="src coveredLine"><span class="w">        </span><span class="n">g_interrupt_handlers</span><span class="p">[</span><span class="n">line</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">nullptr</span><span class="p">;</span></td>
     </tr>
     <tr class="source-line">
-      <td class="lineno"><a id="l120" href="#l120">120</a></td>
+      <td class="lineno"><a id="l121" href="#l121">121</a></td>
       <td class="linebranch">
       </td>
       <td class="linecount "></td>
       <td class="src "><span class="w">    </span><span class="p">}</span></td>
     </tr>
     <tr class="source-line">
-      <td class="lineno"><a id="l121" href="#l121">121</a></td>
+      <td class="lineno"><a id="l122" href="#l122">122</a></td>
       <td class="linebranch">
       </td>
       <td class="linecount coveredLine">81</td>
       <td class="src coveredLine"><span class="p">}</span></td>
     </tr>
     <tr class="source-line">
-      <td class="lineno"><a id="l122" href="#l122">122</a></td>
+      <td class="lineno"><a id="l123" href="#l123">123</a></td>
       <td class="linebranch">
       </td>
       <td class="linecount "></td>
       <td class="src "></td>
     </tr>
     <tr class="source-line">
-      <td class="lineno"><a id="l123" href="#l123">123</a></td>
+      <td class="lineno"><a id="l124" href="#l124">124</a></td>
       <td class="linebranch">
       </td>
       <td class="linecount "></td>
       <td class="src "><span class="c1">//! Test helper: set the value returned by the next read()</span></td>
     </tr>
     <tr class="source-line">
-      <td class="lineno"><a id="l124" href="#l124">124</a></td>
+      <td class="lineno"><a id="l125" href="#l125">125</a></td>
       <td class="linebranch">
       </td>
       <td class="linecount coveredLine">2</td>
       <td class="src coveredLine"><span class="kt">void</span><span class="w"> </span><span class="nf">setReadValue</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">Fw</span><span class="o">::</span><span class="n">Logic</span><span class="o">&amp;</span><span class="w"> </span><span class="n">state</span><span class="p">)</span><span class="w"> </span><span class="p">{</span></td>
     </tr>
     <tr class="source-line">
-      <td class="lineno"><a id="l125" href="#l125">125</a></td>
+      <td class="lineno"><a id="l126" href="#l126">126</a></td>
       <td class="linebranch">
       </td>
       <td class="linecount coveredLine">2</td>
       <td class="src coveredLine"><span class="w">    </span><span class="n">g_gpio_state</span><span class="p">.</span><span class="n">read_value</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">state</span><span class="p">;</span></td>
     </tr>
     <tr class="source-line">
-      <td class="lineno"><a id="l126" href="#l126">126</a></td>
+      <td class="lineno"><a id="l127" href="#l127">127</a></td>
       <td class="linebranch">
       </td>
       <td class="linecount coveredLine">2</td>
       <td class="src coveredLine"><span class="p">}</span></td>
     </tr>
     <tr class="source-line">
-      <td class="lineno"><a id="l127" href="#l127">127</a></td>
+      <td class="lineno"><a id="l128" href="#l128">128</a></td>
       <td class="linebranch">
       </td>
       <td class="linecount "></td>
       <td class="src "></td>
     </tr>
     <tr class="source-line">
-      <td class="lineno"><a id="l128" href="#l128">128</a></td>
+      <td class="lineno"><a id="l129" href="#l129">129</a></td>
       <td class="linebranch">
       </td>
       <td class="linecount "></td>
       <td class="src "><span class="c1">//! Test helper: dispatch an edge to a pin&#39;s registered handler like EIC_Handler would.</span></td>
     </tr>
     <tr class="source-line">
-      <td class="lineno"><a id="l129" href="#l129">129</a></td>
+      <td class="lineno"><a id="l130" href="#l130">130</a></td>
       <td class="linebranch">
       </td>
       <td class="linecount coveredLine">3</td>
       <td class="src coveredLine"><span class="kt">void</span><span class="w"> </span><span class="nf">simulateInterrupt</span><span class="p">(</span><span class="n">U8</span><span class="w"> </span><span class="n">pinIdx</span><span class="p">)</span><span class="w"> </span><span class="p">{</span></td>
     </tr>
     <tr class="source-line">
-      <td class="lineno"><a id="l130" href="#l130">130</a></td>
+      <td class="lineno"><a id="l131" href="#l131">131</a></td>
       <td class="linebranch">
       </td>
       <td class="linecount coveredLine">3</td>
       <td class="src coveredLine"><span class="w">    </span><span class="n">GpioDriver</span><span class="o">*</span><span class="w"> </span><span class="n">handler</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">g_interrupt_handlers</span><span class="p">[</span><span class="n">pinIdx</span><span class="w"> </span><span class="o">%</span><span class="w"> </span><span class="n">EXTINT_LINE_COUNT</span><span class="p">];</span></td>
     </tr>
     <tr class="source-line">
-      <td class="lineno"><a id="l131" href="#l131">131</a></td>
+      <td class="lineno"><a id="l132" href="#l132">132</a></td>
       <td class="linebranch">
         <details class="linebranchDetails">
           <summary class="linebranchSummary">2/2</summary>
@@ -1028,49 +1035,49 @@
       <td class="src coveredLine"><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">handler</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="nb">nullptr</span><span class="p">)</span><span class="w"> </span><span class="p">{</span></td>
     </tr>
     <tr class="source-line">
-      <td class="lineno"><a id="l132" href="#l132">132</a></td>
+      <td class="lineno"><a id="l133" href="#l133">133</a></td>
       <td class="linebranch">
       </td>
       <td class="linecount coveredLine">2</td>
       <td class="src coveredLine"><span class="w">        </span><span class="n">handler</span><span class="o">-&gt;</span><span class="n">gpioInterruptIsr</span><span class="p">();</span></td>
     </tr>
     <tr class="source-line">
-      <td class="lineno"><a id="l133" href="#l133">133</a></td>
+      <td class="lineno"><a id="l134" href="#l134">134</a></td>
       <td class="linebranch">
       </td>
       <td class="linecount "></td>
       <td class="src "><span class="w">    </span><span class="p">}</span></td>
     </tr>
     <tr class="source-line">
-      <td class="lineno"><a id="l134" href="#l134">134</a></td>
+      <td class="lineno"><a id="l135" href="#l135">135</a></td>
       <td class="linebranch">
       </td>
       <td class="linecount coveredLine">3</td>
       <td class="src coveredLine"><span class="p">}</span></td>
     </tr>
     <tr class="source-line">
-      <td class="lineno"><a id="l135" href="#l135">135</a></td>
+      <td class="lineno"><a id="l136" href="#l136">136</a></td>
       <td class="linebranch">
       </td>
       <td class="linecount "></td>
       <td class="src "></td>
     </tr>
     <tr class="source-line">
-      <td class="lineno"><a id="l136" href="#l136">136</a></td>
+      <td class="lineno"><a id="l137" href="#l137">137</a></td>
       <td class="linebranch">
       </td>
       <td class="linecount "></td>
       <td class="src "><span class="p">}</span><span class="w">  </span><span class="c1">// namespace GpioHardware</span></td>
     </tr>
     <tr class="source-line">
-      <td class="lineno"><a id="l137" href="#l137">137</a></td>
+      <td class="lineno"><a id="l138" href="#l138">138</a></td>
       <td class="linebranch">
       </td>
       <td class="linecount "></td>
       <td class="src "><span class="p">}</span><span class="w">  </span><span class="c1">// namespace Samd21</span></td>
     </tr>
     <tr class="source-line">
-      <td class="lineno"><a id="l138" href="#l138">138</a></td>
+      <td class="lineno"><a id="l139" href="#l139">139</a></td>
       <td class="linebranch">
       </td>
       <td class="linecount "></td>
