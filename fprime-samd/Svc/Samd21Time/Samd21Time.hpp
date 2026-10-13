@@ -37,27 +37,6 @@ class Samd21Time final : public Samd21TimeComponentBase {
                          Fw::Time& time        //!< Reference to Time object
                          ) override;
 
-  private:
-    // ----------------------------------------------------------------------
-    // Handler implementations for commands
-    // ----------------------------------------------------------------------
-
-    //! Handler implementation for command SET_TIME
-    //!
-    //! Command to set the time
-    void SET_TIME_cmdHandler(FwOpcodeType opCode,  //!< The opcode
-                             U32 cmdSeq,           //!< The command sequence number
-                             const Fw::TimeValue& value) override;
-
-  private:
-    //! Initialized at startup, this is the "zero" reference clock for PROC_TIME
-    const Os::RawTime m_proc_ref_time;
-
-    //! This is the raw time reference time for the SC_TIME
-    Os::RawTime m_base_raw_time;
-
-    //! The is the base SC_TIME corresponding to the m_base_raw_time raw time
-    Fw::Time m_base_time;
 };
 
 }  // namespace Samd21
