@@ -1,28 +1,28 @@
 // ======================================================================
-// \title  Samd21Time.hpp
+// \title  ProcTime.hpp
 // \author tumbar
-// \brief  hpp file for Samd21Time component implementation class
+// \brief  hpp file for ProcTime component implementation class
 // ======================================================================
 
-#ifndef Samd21_Samd21Time_HPP
-#define Samd21_Samd21Time_HPP
+#ifndef Samd21_ProcTime_HPP
+#define Samd21_ProcTime_HPP
 
-#include "fprime-samd/Svc/Samd21Time/Samd21TimeComponentAc.hpp"
+#include "fprime-samd/Svc/ProcTime/ProcTimeComponentAc.hpp"
 
 namespace Samd21 {
 
-class Samd21Time final : public Samd21TimeComponentBase {
+class ProcTime final : public ProcTimeComponentBase {
   public:
     // ----------------------------------------------------------------------
     // Component construction and destruction
     // ----------------------------------------------------------------------
 
-    //! Construct Samd21Time object
-    Samd21Time(const char* const compName  //!< The component name
+    //! Construct ProcTime object
+    ProcTime(const char* const compName  //!< The component name
     );
 
-    //! Destroy Samd21Time object
-    ~Samd21Time();
+    //! Destroy ProcTime object
+    ~ProcTime();
 
   private:
     // ----------------------------------------------------------------------

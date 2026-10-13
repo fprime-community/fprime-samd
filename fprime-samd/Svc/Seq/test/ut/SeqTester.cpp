@@ -13,7 +13,7 @@
 namespace Samd21 {
 
 // Time base fed to the component under test. This mirrors the flight time
-// provider (Samd21Time emits TB_PROC_TIME), which is deliberately NOT the
+// provider (ProcTime emits TB_PROC_TIME), which is deliberately NOT the
 // default TB_NONE, so WAIT_UNTIL base matching is exercised against a realistic
 // base rather than the serialization default.
 static const TimeBase TEST_TIME_BASE = TimeBase::TB_PROC_TIME;
