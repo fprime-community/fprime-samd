@@ -32,7 +32,7 @@ void GpioDriverTester::resetTest() {
 
 void GpioDriverTester::configureInputAndAssert(GpioDriver::Group group,
                                                GpioDriver::Pin pin,
-                                               GpioDriver::InputPullMode input_pull_mode) {
+                                               Gpio::InputPullMode input_pull_mode) {
     const GpioHardware::GpioState& state = GpioHardware::getGpioState();
     const U32 before = state.configure_input_count;
 
@@ -118,25 +118,25 @@ void GpioDriverTester::testConfigureInput() {
 
     // Pull-up input
     this->resetTest();
-    this->configureInputAndAssert(GpioDriver::Group::PB, GpioDriver::Pin::PIN_10, GpioDriver::InputPullMode::PULL_UP);
+    this->configureInputAndAssert(GpioDriver::Group::PB, GpioDriver::Pin::PIN_10, Gpio::InputPullMode::PULL_UP);
 
     // Pull-down input (fresh component: configure may only be called once)
     GpioDriver comp2("GpioDriver2");
     GpioHardware::resetGpioState();
-    comp2.configureInput(GpioDriver::Group::PA, GpioDriver::Pin::PIN_3, GpioDriver::InputPullMode::PULL_DOWN,
+    comp2.configureInput(GpioDriver::Group::PA, GpioDriver::Pin::PIN_3, Gpio::InputPullMode::PULL_DOWN,
                          GpioDriver::ExternalInterruptMode::NONE);
     const GpioHardware::GpioState& s2 = GpioHardware::getGpioState();
     ASSERT_EQ(s2.configure_input_count, 1U);
-    ASSERT_EQ(s2.last_input_pull_mode, GpioDriver::InputPullMode::PULL_DOWN);
+    ASSERT_EQ(s2.last_input_pull_mode, Gpio::InputPullMode::PULL_DOWN);
 
     // Floating input (no pull)
     GpioDriver comp3("GpioDriver3");
     GpioHardware::resetGpioState();
-    comp3.configureInput(GpioDriver::Group::PB, GpioDriver::Pin::PIN_0, GpioDriver::InputPullMode::NO_PULL,
+    comp3.configureInput(GpioDriver::Group::PB, GpioDriver::Pin::PIN_0, Gpio::InputPullMode::NO_PULL,
                          GpioDriver::ExternalInterruptMode::NONE);
     const GpioHardware::GpioState& s3 = GpioHardware::getGpioState();
     ASSERT_EQ(s3.configure_input_count, 1U);
-    ASSERT_EQ(s3.last_input_pull_mode, GpioDriver::InputPullMode::NO_PULL);
+    ASSERT_EQ(s3.last_input_pull_mode, Gpio::InputPullMode::NO_PULL);
 }
 
 void GpioDriverTester::testConfigureAllPins() {
@@ -181,7 +181,7 @@ void GpioDriverTester::testReadNominal() {
         "an input");
     this->resetTest();
 
-    this->component.configureInput(GpioDriver::Group::PB, GpioDriver::Pin::PIN_2, GpioDriver::InputPullMode::PULL_UP,
+    this->component.configureInput(GpioDriver::Group::PB, GpioDriver::Pin::PIN_2, Gpio::InputPullMode::PULL_UP,
                                    GpioDriver::ExternalInterruptMode::NONE);
 
     // The value read back must match whatever the HAL reports.
@@ -211,7 +211,7 @@ void GpioDriverTester::testWriteWrongMode() {
     REQUIREMENT("GPIO-006: gpioWrite on an input pin shall return INVALID_MODE without touching hardware");
     this->resetTest();
 
-    this->component.configureInput(GpioDriver::Group::PA, GpioDriver::Pin::PIN_1, GpioDriver::InputPullMode::NO_PULL,
+    this->component.configureInput(GpioDriver::Group::PA, GpioDriver::Pin::PIN_1, Gpio::InputPullMode::NO_PULL,
                                    GpioDriver::ExternalInterruptMode::NONE);
 
     this->invokeWriteAndAssertStatus(Fw::Logic::HIGH, Drv::GpioStatus::INVALID_MODE);
@@ -233,7 +233,7 @@ void GpioDriverTester::testConfigureInputExternalInterrupt() {
     this->resetTest();
 
     // NONE must not touch the EIC.
-    this->component.configureInput(GpioDriver::Group::PA, GpioDriver::Pin::PIN_6, GpioDriver::InputPullMode::NO_PULL,
+    this->component.configureInput(GpioDriver::Group::PA, GpioDriver::Pin::PIN_6, Gpio::InputPullMode::NO_PULL,
                                    GpioDriver::ExternalInterruptMode::NONE);
     const GpioHardware::GpioState& stateNone = GpioHardware::getGpioState();
     ASSERT_EQ(stateNone.configure_external_interrupt_count, 0U);
@@ -249,7 +249,7 @@ void GpioDriverTester::testConfigureInputExternalInterrupt() {
         GpioDriver comp("GpioDriverInterrupt");
         GpioHardware::resetGpioState();
 
-        comp.configureInput(GpioDriver::Group::PB, GpioDriver::Pin::PIN_9, GpioDriver::InputPullMode::PULL_UP, mode);
+        comp.configureInput(GpioDriver::Group::PB, GpioDriver::Pin::PIN_9, Gpio::InputPullMode::PULL_UP, mode);
 
         const GpioHardware::GpioState& state = GpioHardware::getGpioState();
         ASSERT_EQ(state.configure_external_interrupt_count, 1U);
@@ -266,7 +266,7 @@ void GpioDriverTester::testInterruptFiresWhenConnected() {
     this->resetTest();
 
     const GpioDriver::Pin pin = GpioDriver::Pin::PIN_11;
-    this->component.configureInput(GpioDriver::Group::PA, pin, GpioDriver::InputPullMode::NO_PULL,
+    this->component.configureInput(GpioDriver::Group::PA, pin, Gpio::InputPullMode::NO_PULL,
                                    GpioDriver::ExternalInterruptMode::BOTH);
 
     ASSERT_from_gpioInterrupt_SIZE(0);
@@ -291,7 +291,7 @@ void GpioDriverTester::testInterruptIsrNoOpWhenDisconnected() {
     this->resetTest();
 
     GpioDriver comp("GpioDriverDisconnected");
-    comp.configureInput(GpioDriver::Group::PB, GpioDriver::Pin::PIN_15, GpioDriver::InputPullMode::NO_PULL,
+    comp.configureInput(GpioDriver::Group::PB, GpioDriver::Pin::PIN_15, Gpio::InputPullMode::NO_PULL,
                         GpioDriver::ExternalInterruptMode::RISING);
 
     // Must not crash, and must not affect this->component's (unrelated) history.

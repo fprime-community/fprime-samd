@@ -32,6 +32,8 @@ register_fprime_library(
     SOURCES
         "${CMAKE_CURRENT_LIST_DIR}/GpioDriver.cpp"
         ${GPIO_HARDWARE_SOURCE}
+    DEPENDS
+        fprime-samd_Drv_Types
 )
 
 # Disable LTO for ISR file to ensure EIC_Handler ISR is not optimized away
@@ -52,6 +54,7 @@ register_fprime_ut(
         # Use stub hardware for unit tests
         "${CMAKE_CURRENT_LIST_DIR}/GpioDriverHardwareStub.cpp"
     DEPENDS
+        fprime-samd_Drv_Types
         STest # For rules-based testing
     UT_AUTO_HELPERS
 )

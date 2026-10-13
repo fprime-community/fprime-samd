@@ -81,9 +81,7 @@ class GpioDriverTester : public GpioDriverGTestBase {
     void resetTest();
 
     //! Configure the component as an input and assert the HAL received the arguments
-    void configureInputAndAssert(GpioDriver::Group group,
-                                 GpioDriver::Pin pin,
-                                 GpioDriver::InputPullMode input_pull_mode);
+    void configureInputAndAssert(GpioDriver::Group group, GpioDriver::Pin pin, Gpio::InputPullMode input_pull_mode);
 
     //! Configure the component as an output and assert the HAL received the arguments
     void configureOutputAndAssert(GpioDriver::Group group, GpioDriver::Pin pin);
