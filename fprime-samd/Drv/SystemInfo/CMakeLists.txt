@@ -20,7 +20,7 @@ if (FPRIME_PLATFORM STREQUAL "Samd21")
     set(SYSTEM_INFO_HARDWARE_SOURCE "${CMAKE_CURRENT_LIST_DIR}/SystemInfoHardware.cpp")
 else()
     # Linux/test build - use stub implementation
-    set(SYSTEM_INFO_HARDWARE_SOURCE "${CMAKE_CURRENT_LIST_DIR}/SystemInfoHardwareStub.cpp")
+    set(SYSTEM_INFO_HARDWARE_SOURCE "${CMAKE_CURRENT_LIST_DIR}/test/ut/SystemInfoHardwareStub.cpp")
 endif()
 
 ### Git commit stamp ###
@@ -96,7 +96,7 @@ register_fprime_ut(
         "${CMAKE_CURRENT_LIST_DIR}/test/ut/SystemInfoTestMain.cpp"
         "${CMAKE_CURRENT_LIST_DIR}/test/ut/SystemInfoTester.cpp"
         # Use stub hardware for unit tests
-        "${CMAKE_CURRENT_LIST_DIR}/SystemInfoHardwareStub.cpp"
+        "${CMAKE_CURRENT_LIST_DIR}/test/ut/SystemInfoHardwareStub.cpp"
     DEPENDS
         STest # For rules-based testing
     UT_AUTO_HELPERS

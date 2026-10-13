@@ -16,7 +16,7 @@ if (FPRIME_PLATFORM STREQUAL "Samd21")
     set(I2C_HARDWARE_SOURCE "${CMAKE_CURRENT_LIST_DIR}/I2cDriverHardware.cpp")
 else()
     # Linux/test build - use stub implementation
-    set(I2C_HARDWARE_SOURCE "${CMAKE_CURRENT_LIST_DIR}/I2cDriverHardwareStub.cpp")
+    set(I2C_HARDWARE_SOURCE "${CMAKE_CURRENT_LIST_DIR}/test/ut/I2cDriverHardwareStub.cpp")
 endif()
 
 register_fprime_library(
@@ -38,7 +38,7 @@ register_fprime_ut(
         "${CMAKE_CURRENT_LIST_DIR}/test/ut/I2cDriverTestMain.cpp"
         "${CMAKE_CURRENT_LIST_DIR}/test/ut/I2cDriverTester.cpp"
         # Use stub hardware for unit tests
-        "${CMAKE_CURRENT_LIST_DIR}/I2cDriverHardwareStub.cpp"
+        "${CMAKE_CURRENT_LIST_DIR}/test/ut/I2cDriverHardwareStub.cpp"
     DEPENDS
         STest # For rules-based testing
     UT_AUTO_HELPERS

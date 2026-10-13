@@ -17,7 +17,7 @@ if (FPRIME_PLATFORM STREQUAL "Samd21")
     set(ADC_ISR_SOURCE "${CMAKE_CURRENT_LIST_DIR}/AdcDriverIsr.cpp")
 else()
     # Linux/test build - use stub implementation
-    set(ADC_HARDWARE_SOURCE "${CMAKE_CURRENT_LIST_DIR}/AdcDriverHardwareStub.cpp")
+    set(ADC_HARDWARE_SOURCE "${CMAKE_CURRENT_LIST_DIR}/test/ut/AdcDriverHardwareStub.cpp")
     set(ADC_ISR_SOURCE "")  # No ISR for test builds
 endif()
 
@@ -48,7 +48,7 @@ register_fprime_ut(
         "${CMAKE_CURRENT_LIST_DIR}/test/ut/AdcDriverTestMain.cpp"
         "${CMAKE_CURRENT_LIST_DIR}/test/ut/AdcDriverTester.cpp"
         # Use stub hardware for unit tests
-        "${CMAKE_CURRENT_LIST_DIR}/AdcDriverHardwareStub.cpp"
+        "${CMAKE_CURRENT_LIST_DIR}/test/ut/AdcDriverHardwareStub.cpp"
     DEPENDS
         STest # For rules-based testing
     UT_AUTO_HELPERS

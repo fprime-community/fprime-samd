@@ -18,11 +18,15 @@ struct Samd21RawTimeHandle : public RawTimeHandle {
 //! Get the current raw time handle by reading the realtime clock and tick counter
 Samd21RawTimeHandle timeNow();
 
-//! \brief stub implementation of Os::RawTime
+//! Get the (absolute) time interval between two raw time handles
+Fw::TimeInterval timeInterval(const Samd21RawTimeHandle& a, const Samd21RawTimeHandle& b);
+
+//! \brief RTC-backed implementation of Os::RawTime
 //!
-//! Stub implementation of `RawTimeInterface`.
+//! Compile-time selected as Os::RawTime (see samd-config/OsSelection.hpp) rather than wrapped by
+//! Os::DelegateRawTime, so it is only usable on the Samd21 platform.
 //!
-class RawTime : public RawTimeInterface {
+class RawTime final : public RawTimeInterface {
   public:
     //! \brief constructor
     //!
@@ -98,10 +102,10 @@ class RawTime : public RawTimeInterface {
                                         Fw::Endianness mode = Fw::Endianness::BIG) override;
 
   private:
-    //! Handle for StubRawTime
+    //! Handle for Samd21::RawTime
     Samd21RawTimeHandle m_handle;
 };
 
 }  // namespace Samd21
 }  // namespace Os
-#endif  // OS_STUB_RAWTIME_HPP
+#endif  // OS_DRV_RTC_RAWTIME_HPP

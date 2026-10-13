@@ -85,16 +85,10 @@ TEST(Nominal, testTimeNowFunction) {
     tester.testTimeNowFunction();
 }
 
-TEST(Nominal, testSamd21RawTimeNow) {
-    // COMMENT("Test Samd21RawTime::now() method");
+TEST(Nominal, testTimeInterval) {
+    // COMMENT("Test timeInterval() between two raw time handles");
     Samd21::RtcDriverTester tester;
-    tester.testSamd21RawTimeNow();
-}
-
-TEST(Nominal, testSamd21RawTimeSerialization) {
-    // COMMENT("Test Samd21RawTime serialization/deserialization");
-    Samd21::RtcDriverTester tester;
-    tester.testSamd21RawTimeSerialization();
+    tester.testTimeInterval();
 }
 
 int main(int argc, char** argv) {

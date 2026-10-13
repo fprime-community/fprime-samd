@@ -50,6 +50,17 @@ Os::Samd21::Samd21RawTimeHandle timeNow() {
     return time;
 }
 
+Fw::TimeInterval timeInterval(const Samd21RawTimeHandle& a, const Samd21RawTimeHandle& b) {
+    const bool a_is_newer = (a.m_seconds > b.m_seconds) || ((a.m_seconds == b.m_seconds) && (a.m_micros > b.m_micros));
+    const Samd21RawTimeHandle& newer = a_is_newer ? a : b;
+    const Samd21RawTimeHandle& older = a_is_newer ? b : a;
+
+    if (newer.m_micros < older.m_micros) {
+        return Fw::TimeInterval(newer.m_seconds - older.m_seconds - 1, 1000000 + newer.m_micros - older.m_micros);
+    }
+    return Fw::TimeInterval(newer.m_seconds - older.m_seconds, newer.m_micros - older.m_micros);
+}
+
 }  // namespace Samd21
 }  // namespace Os
 

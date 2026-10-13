@@ -6,17 +6,6 @@
 namespace Os {
 namespace Samd21 {
 
-//! \brief check is a is newer than b
-bool isNewer(const Samd21RawTimeHandle& a, const Samd21RawTimeHandle& b) {
-    if (a.m_seconds > b.m_seconds) {
-        return true;
-    } else if (a.m_seconds == b.m_seconds) {
-        return a.m_micros > b.m_micros;
-    } else {
-        return false;
-    }
-}
-
 RawTimeHandle* RawTime::getHandle() {
     return &this->m_handle;
 }
@@ -28,20 +17,7 @@ RawTime::Status RawTime::now() {
 }
 
 RawTime::Status RawTime::getTimeInterval(const Os::RawTime& other, Fw::TimeInterval& interval) const {
-    interval.set(0, 0);
-    const Samd21RawTimeHandle& my_handle = this->m_handle;
-    const Samd21RawTimeHandle& other_handle =
-        static_cast<const Samd21RawTimeHandle&>(*const_cast<Os::RawTime&>(other).getHandle());
-
-    const Samd21RawTimeHandle& newer = isNewer(my_handle, other_handle) ? my_handle : other_handle;
-    const Samd21RawTimeHandle& older = isNewer(my_handle, other_handle) ? other_handle : my_handle;
-
-    if (newer.m_micros < older.m_micros) {
-        interval.set(newer.m_seconds - older.m_seconds - 1, 1000000 + newer.m_micros - older.m_micros);
-    } else {
-        interval.set(newer.m_seconds - older.m_seconds, newer.m_micros - older.m_micros);
-    }
-
+    interval = timeInterval(this->m_handle, other.m_handle);
     return Status::OP_OK;
 }
 

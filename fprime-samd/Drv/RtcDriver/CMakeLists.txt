@@ -23,7 +23,7 @@ if (FPRIME_PLATFORM STREQUAL "Samd21")
     )
 else()
     # Linux/test build - use stub implementation
-    set(RTC_HARDWARE_SOURCE "${CMAKE_CURRENT_LIST_DIR}/RtcDriverHardwareStub.cpp")
+    set(RTC_HARDWARE_SOURCE "${CMAKE_CURRENT_LIST_DIR}/test/ut/RtcDriverHardwareStub.cpp")
 endif()
 
 register_fprime_library(
@@ -40,26 +40,29 @@ register_fprime_library(
 # Os::RawTime is compile-time aliased directly to Samd21::RawTime (see
 # default/samd-config/OsSelection.hpp). The implementation module below only exists to satisfy
 # Os_RawTime's REQUIRES_IMPLEMENTATIONS; its getDelegate() goes unused since the alias bypasses it.
-register_fprime_module(
-      Os_RawTime_Samd21_Implementation
-    SOURCES
-        "${CMAKE_CURRENT_LIST_DIR}/RawTime.cpp"
-    HEADERS
-        "${CMAKE_CURRENT_LIST_DIR}/RawTime.hpp"
-    DEPENDS
-        Fw_Time
-        Fw_Types
-        Os_RawTime
-)
+# Samd21::RawTime relies on that alias, so it is only built where the alias applies.
+if (FPRIME_PLATFORM STREQUAL "Samd21")
+    register_fprime_module(
+          Os_RawTime_Samd21_Implementation
+        SOURCES
+            "${CMAKE_CURRENT_LIST_DIR}/RawTime.cpp"
+        HEADERS
+            "${CMAKE_CURRENT_LIST_DIR}/RawTime.hpp"
+        DEPENDS
+            Fw_Time
+            Fw_Types
+            Os_RawTime
+    )
 
-register_fprime_implementation(
-    Os_RawTime_Samd21
-  IMPLEMENTS
-    Os_RawTime
-  DEPENDS
-    Os_RawTime_Samd21_Implementation
-  INTERFACE
-)
+    register_fprime_implementation(
+        Os_RawTime_Samd21
+      IMPLEMENTS
+        Os_RawTime
+      DEPENDS
+        Os_RawTime_Samd21_Implementation
+      INTERFACE
+    )
+endif()
 
 # Disable LTO for ISR file to ensure RTC_Handler ISR is not optimized away
 if (SAMD21_LTO)
@@ -77,9 +80,7 @@ register_fprime_ut(
         "${CMAKE_CURRENT_LIST_DIR}/test/ut/RtcDriverTestMain.cpp"
         "${CMAKE_CURRENT_LIST_DIR}/test/ut/RtcDriverTester.cpp"
         # Use stub hardware for unit tests
-        "${CMAKE_CURRENT_LIST_DIR}/RtcDriverHardwareStub.cpp"
-        # Include RawTime for direct testing
-        "${CMAKE_CURRENT_LIST_DIR}/RawTime.cpp"
+        "${CMAKE_CURRENT_LIST_DIR}/test/ut/RtcDriverHardwareStub.cpp"
     DEPENDS
         STest
     UT_AUTO_HELPERS

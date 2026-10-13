@@ -4,7 +4,7 @@
 //   cppcheck --enable=warning,style,performance,portability --std=c++14 \
 //     --language=c++ --inline-suppr --suppressions-list=cppcheck-suppressions.txt \
 //     I2cDriver.cpp I2cDriver.hpp I2cDriverHardware.cpp I2cDriverHardware.hpp \
-//     I2cDriverHardwareStub.cpp test/ut/*.cpp test/ut/*.hpp
+//     test/ut/*.cpp test/ut/*.hpp
 //
 // With these suppressions the component analyzes with zero findings.
 

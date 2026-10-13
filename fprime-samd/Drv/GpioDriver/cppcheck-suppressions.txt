@@ -4,7 +4,7 @@
 //   cppcheck --enable=warning,style,performance,portability --std=c++14 \
 //     --language=c++ --inline-suppr --suppressions-list=cppcheck-suppressions.txt \
 //     GpioDriver.cpp GpioDriver.hpp GpioDriverHardware.cpp GpioDriverHardware.hpp \
-//     GpioDriverHardwareStub.cpp GpioDriverIsr.cpp test/ut/*.cpp test/ut/*.hpp
+//     GpioDriverIsr.cpp test/ut/*.cpp test/ut/*.hpp
 //
 // With these suppressions the component analyzes with zero findings.
 

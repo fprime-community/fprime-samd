@@ -20,7 +20,7 @@ if (FPRIME_PLATFORM STREQUAL "Samd21")
     set(USART_HARDWARE_SOURCE "${CMAKE_CURRENT_LIST_DIR}/UsartDriverHardware.cpp")
 else()
     # Linux/test build - use stub implementation
-    set(USART_HARDWARE_SOURCE "${CMAKE_CURRENT_LIST_DIR}/UsartDriverHardwareStub.cpp")
+    set(USART_HARDWARE_SOURCE "${CMAKE_CURRENT_LIST_DIR}/test/ut/UsartDriverHardwareStub.cpp")
 endif()
 
 register_fprime_library(
@@ -44,7 +44,7 @@ register_fprime_ut(
         "${CMAKE_CURRENT_LIST_DIR}/test/ut/UsartDriverTestMain.cpp"
         "${CMAKE_CURRENT_LIST_DIR}/test/ut/UsartDriverTester.cpp"
         # Use stub hardware for unit tests
-        "${CMAKE_CURRENT_LIST_DIR}/UsartDriverHardwareStub.cpp"
+        "${CMAKE_CURRENT_LIST_DIR}/test/ut/UsartDriverHardwareStub.cpp"
     DEPENDS
         STest # For rules-based testing
     UT_AUTO_HELPERS

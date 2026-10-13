@@ -23,7 +23,7 @@ if (FPRIME_PLATFORM STREQUAL "Samd21")
     )
 else()
     # Linux/test build - use stub implementation
-    set(GPIO_HARDWARE_SOURCE "${CMAKE_CURRENT_LIST_DIR}/GpioDriverHardwareStub.cpp")
+    set(GPIO_HARDWARE_SOURCE "${CMAKE_CURRENT_LIST_DIR}/test/ut/GpioDriverHardwareStub.cpp")
 endif()
 
 register_fprime_library(
@@ -52,7 +52,7 @@ register_fprime_ut(
         "${CMAKE_CURRENT_LIST_DIR}/test/ut/GpioDriverTestMain.cpp"
         "${CMAKE_CURRENT_LIST_DIR}/test/ut/GpioDriverTester.cpp"
         # Use stub hardware for unit tests
-        "${CMAKE_CURRENT_LIST_DIR}/GpioDriverHardwareStub.cpp"
+        "${CMAKE_CURRENT_LIST_DIR}/test/ut/GpioDriverHardwareStub.cpp"
     DEPENDS
         fprime-samd_Drv_Types
         STest # For rules-based testing

@@ -43,8 +43,7 @@ class RtcDriverTester : public RtcDriverGTestBase {
 
     // RawTime function tests
     void testTimeNowFunction();
-    void testSamd21RawTimeNow();
-    void testSamd21RawTimeSerialization();
+    void testTimeInterval();
 
   private:
     //! Component under test

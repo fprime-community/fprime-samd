@@ -22,8 +22,8 @@ if (FPRIME_PLATFORM STREQUAL "Samd21")
 else()
     # Linux/test build - use stub implementations
     set(TYPES_HARDWARE_SOURCES
-        "${CMAKE_CURRENT_LIST_DIR}/PinMuxStub.cpp"
-        "${CMAKE_CURRENT_LIST_DIR}/CriticalSectionStub.cpp"
+        "${CMAKE_CURRENT_LIST_DIR}/test/ut/PinMuxStub.cpp"
+        "${CMAKE_CURRENT_LIST_DIR}/test/ut/CriticalSectionStub.cpp"
     )
 endif()
 
