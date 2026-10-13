@@ -5,7 +5,7 @@
 #ifndef OS_DRV_RTC_RAWTIME_HPP
 #define OS_DRV_RTC_RAWTIME_HPP
 
-#include "Os/RawTime.hpp"
+#include "Os/RawTimeInterface.hpp"
 
 namespace Os {
 namespace Samd21 {
