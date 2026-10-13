@@ -3,7 +3,7 @@
 ==============================================================================
 PASSED  fprime-samd_Drv_SystemInfo_ut_exe  (0.03s)
 ==============================================================================
-[STest::Random] Generated seed 632588 from system time
+[STest::Random] Generated seed 227575 from system time
 [==========] Running 4 tests from 1 test suite.
 [----------] Global test environment set-up.
 [----------] 4 tests from Nominal
@@ -23,9 +23,9 @@ PASSED  fprime-samd_Drv_SystemInfo_ut_exe  (0.03s)
 [       OK ] Nominal.testHardwareQueriedOncePerCommand (0 ms)
 [ RUN      ] Nominal.testRepeatedEmit
 [       OK ] Nominal.testRepeatedEmit (0 ms)
-[----------] 4 tests from Nominal (2 ms total)
+[----------] 4 tests from Nominal (1 ms total)
 
 [----------] Global test environment tear-down
-[==========] 4 tests from 1 test suite ran. (2 ms total)
+[==========] 4 tests from 1 test suite ran. (1 ms total)
 [  PASSED  ] 4 tests.
 
