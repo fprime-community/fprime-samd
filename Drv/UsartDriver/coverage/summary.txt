@@ -8,8 +8,6 @@ lib/fprime-samd/fprime-samd/Drv/UsartDriver/UsartDriver.cpp
                                              168     158    94%   185-186,207-208,211-212,225-226,245-246
 lib/fprime-samd/fprime-samd/Drv/UsartDriver/UsartDriver.hpp
                                                2       2   100%
-lib/fprime-samd/fprime-samd/Drv/UsartDriver/UsartDriverHardwareStub.cpp
-                                              31      31   100%
 ------------------------------------------------------------------------------
-TOTAL                                        201     191    95%
+TOTAL                                        170     160    94%
 ------------------------------------------------------------------------------

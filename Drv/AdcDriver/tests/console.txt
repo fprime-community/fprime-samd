@@ -1,9 +1,9 @@
 # unit-test console output: Drv/AdcDriver
 
 ==============================================================================
-PASSED  fprime-samd_Drv_AdcDriver_ut_exe  (0.24s)
+PASSED  fprime-samd_Drv_AdcDriver_ut_exe  (0.13s)
 ==============================================================================
-[STest::Random] Generated seed 72467 from system time
+[STest::Random] Generated seed 431832 from system time
 [==========] Running 21 tests from 4 test suites.
 [----------] Global test environment set-up.
 [----------] 5 tests from Configure
@@ -57,7 +57,7 @@ configure() works with all gain options (1X and DIV2)
 (RQ)       SAMD21-ADC-001: The AdcDriver shall configure the ADC peripheral with configurable gain
 ***************************************
 [       OK ] Configure.AllGains (0 ms)
-[----------] 5 tests from Configure (0 ms total)
+[----------] 5 tests from Configure (1 ms total)
 
 [----------] 1 test from ConfigureChannel
 [ RUN      ] ConfigureChannel.Comprehensive

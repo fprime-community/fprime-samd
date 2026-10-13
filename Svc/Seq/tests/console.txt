@@ -1,9 +1,9 @@
 # unit-test console output: Svc/Seq
 
 ==============================================================================
-PASSED  fprime-samd_Svc_Seq_ut_exe  (0.04s)
+PASSED  fprime-samd_Svc_Seq_ut_exe  (0.05s)
 ==============================================================================
-[STest::Random] Generated seed 526068 from system time
+[STest::Random] Generated seed 351994 from system time
 [==========] Running 27 tests from 5 test suites.
 [----------] Global test environment set-up.
 [----------] 10 tests from SequenceExecution
@@ -30,7 +30,7 @@ RUN latches a pending request that only starts on the next idle activeIn tick.
 ***************************************
 (RQ)       SAMD21-SEQ-004
 ***************************************
-[       OK ] SequenceExecution.RunCommandPendsUntilActive (0 ms)
+[       OK ] SequenceExecution.RunCommandPendsUntilActive (1 ms)
 [ RUN      ] SequenceExecution.ImmediateDispatchOrder
 
 ***************************************
@@ -44,7 +44,7 @@ Back-to-back commands dispatch one per activeIn tick, gated by command responses
 ***************************************
 (RQ)       SAMD21-SEQ-002
 ***************************************
-[       OK ] SequenceExecution.ImmediateDispatchOrder (0 ms)
+[       OK ] SequenceExecution.ImmediateDispatchOrder (1 ms)
 [ RUN      ] SequenceExecution.CommandFailureAborts
 
 ***************************************
@@ -80,7 +80,7 @@ A command whose cmdSize is smaller than a bare opcode emits InvalidSequence.
 ***************************************
 (RQ)       SAMD21-SEQ-008
 ***************************************
-[       OK ] SequenceExecution.InvalidCmdSizeFails (0 ms)
+[       OK ] SequenceExecution.InvalidCmdSizeFails (1 ms)
 [ RUN      ] SequenceExecution.CmdSizeOverrunsBufferFails
 
 ***************************************
@@ -106,8 +106,8 @@ A command truncated within the cmdSize field emits InvalidSequence.
 ***************************************
 (RQ)       SAMD21-SEQ-008
 ***************************************
-[       OK ] SequenceExecution.TruncatedCmdSizeFails (0 ms)
-[----------] 10 tests from SequenceExecution (9 ms total)
+[       OK ] SequenceExecution.TruncatedCmdSizeFails (1 ms)
+[----------] 10 tests from SequenceExecution (11 ms total)
 
 [----------] 3 tests from WaitTicks
 [ RUN      ] WaitTicks.ZeroResumesNextTick
@@ -129,7 +129,7 @@ WAIT_TICKS(n) blocks for exactly n rate-group ticks, then resumes.
 ***************************************
 (RQ)       SAMD21-SEQ-006
 ***************************************
-[       OK ] WaitTicks.BlocksNTicks (0 ms)
+[       OK ] WaitTicks.BlocksNTicks (1 ms)
 [ RUN      ] WaitTicks.AtEndOfSequence
 
 ***************************************
@@ -139,7 +139,7 @@ A WAIT_TICKS at the end of a sequence finishes cleanly without a spurious Invali
 ***************************************
 (RQ)       SAMD21-SEQ-006
 ***************************************
-[       OK ] WaitTicks.AtEndOfSequence (0 ms)
+[       OK ] WaitTicks.AtEndOfSequence (1 ms)
 [----------] 3 tests from WaitTicks (3 ms total)
 
 [----------] 4 tests from WaitUntil
@@ -152,7 +152,7 @@ WAIT_UNTIL sleeps until the FSW clock reaches the requested time.
 ***************************************
 (RQ)       SAMD21-SEQ-006
 ***************************************
-[       OK ] WaitUntil.SleepsUntilTime (0 ms)
+[       OK ] WaitUntil.SleepsUntilTime (1 ms)
 [ RUN      ] WaitUntil.WakesOnExactTime
 
 ***************************************
@@ -183,7 +183,7 @@ WAIT_UNTIL on a time base the FSW clock never reports never wakes.
 (RQ)       SAMD21-SEQ-006
 ***************************************
 [       OK ] WaitUntil.MismatchedBaseNeverWakes (0 ms)
-[----------] 4 tests from WaitUntil (2 ms total)
+[----------] 4 tests from WaitUntil (3 ms total)
 
 [----------] 4 tests from RunOnError
 [ RUN      ] RunOnError.StartsRecovery
@@ -289,9 +289,9 @@ CANCEL clears an armed RUN_ON_ERROR recovery table.
 (RQ)       SAMD21-SEQ-007
 ***************************************
 [       OK ] Cancel.ClearsRunOnError (0 ms)
-[----------] 6 tests from Cancel (3 ms total)
+[----------] 6 tests from Cancel (4 ms total)
 
 [----------] Global test environment tear-down
-[==========] 27 tests from 5 test suites ran. (21 ms total)
+[==========] 27 tests from 5 test suites ran. (25 ms total)
 [  PASSED  ] 27 tests.
 
