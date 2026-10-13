@@ -7,7 +7,6 @@
 #ifndef Samd21_Samd21Time_HPP
 #define Samd21_Samd21Time_HPP
 
-#include "Os/RawTime.hpp"
 #include "fprime-samd/Svc/Samd21Time/Samd21TimeComponentAc.hpp"
 
 namespace Samd21 {
@@ -36,7 +35,6 @@ class Samd21Time final : public Samd21TimeComponentBase {
     void getTime_handler(FwIndexType portNum,  //!< The port number
                          Fw::Time& time        //!< Reference to Time object
                          ) override;
-
 };
 
 }  // namespace Samd21

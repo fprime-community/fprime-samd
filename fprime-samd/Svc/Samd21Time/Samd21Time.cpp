@@ -8,6 +8,7 @@
 #include "Fw/Time/Time.hpp"
 #include "Fw/Time/TimeInterval.hpp"
 #include "Fw/Types/Assert.hpp"
+#include "Os/RawTime.hpp"
 #include "config/OsSelection.hpp"
 
 namespace Samd21 {
@@ -16,15 +17,15 @@ namespace Samd21 {
 // Component construction and destruction
 // ----------------------------------------------------------------------
 
-Samd21Time ::Samd21Time(const char* const compName) : Samd21TimeComponentBase(compName) {}
+Samd21Time::Samd21Time(const char* const compName) : Samd21TimeComponentBase(compName) {}
 
-Samd21Time ::~Samd21Time() {}
+Samd21Time::~Samd21Time() {}
 
 // ----------------------------------------------------------------------
 // Handler implementations for typed input ports
 // ----------------------------------------------------------------------
 
-void Samd21Time ::getTime_handler(FwIndexType portNum, Fw::Time& time) {
+void Samd21Time::getTime_handler(FwIndexType portNum, Fw::Time& time) {
     Os::RawTime now;
     auto status = now.now();
     FW_ASSERT(status == Os::RawTimeInterface::Status::OP_OK, status);
@@ -37,6 +38,5 @@ void Samd21Time ::getTime_handler(FwIndexType portNum, Fw::Time& time) {
 
     time = Fw::Time(TimeBase::TB_PROC_TIME, proc_time.getSeconds(), proc_time.getUSeconds());
 }
-
 
 }  // namespace Samd21
