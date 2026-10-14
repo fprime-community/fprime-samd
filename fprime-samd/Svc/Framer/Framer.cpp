@@ -11,6 +11,7 @@
 #include "Svc/FprimeProtocol/FrameHeaderSerializableAc.hpp"
 #include "Svc/FprimeProtocol/FrameTrailerSerializableAc.hpp"
 #include "Utils/Hash/Hash.hpp"
+#include "fprime-samd/Drv/Types/CriticalSection.hpp"
 #include "samd-config/FramerConfig.hpp"
 
 namespace Samd21 {
@@ -35,6 +36,11 @@ Framer ::~Framer() {}
 // ----------------------------------------------------------------------
 
 void Framer ::comPacketQueueIn_handler(FwIndexType portNum, Fw::ComBuffer& data, U32 context) {
+    // Packets arrive from main context (telemetry, command responses) and from ISRs
+    // (events logged by drivers), and buffer completion arrives on yet another path, so
+    // the double buffer is only ever touched with interrupts masked. The section covers
+    // the frame build and CRC: at most FRAMER_TX_BUFFER_SIZE bytes, a few microseconds.
+    Samd21::CriticalSection cs;
     TxBuffer* activeBuf = &m_buffers[m_activeBufferIdx];
 
     // Calculate space needed: frame header + ComBuffer data + trailer
@@ -110,6 +116,7 @@ void Framer ::drvConnected_handler(FwIndexType portNum) {
 }
 
 void Framer ::drvReturnIn_handler(FwIndexType portNum, Fw::Buffer& fwBuffer, const Drv::ByteStreamStatus& status) {
+    Samd21::CriticalSection cs;
     // Find which buffer was returned
     for (FwIndexType i = 0; i < 2; i++) {
         if (m_buffers[i].state == TRANSMITTING && fwBuffer.getData() == m_buffers[i].data) {
@@ -148,6 +155,7 @@ void Framer ::flushActiveBuffer() {
 
 void Framer ::schedIn_handler(FwIndexType portNum, U32 context) {
     if (this->m_driverConnected) {
+        Samd21::CriticalSection cs;
         // Only flush if the other buffer is not transmitting
         FwIndexType nextBufferIdx = (m_activeBufferIdx + 1) % 2;
         TxBuffer& nextBuf = m_buffers[nextBufferIdx];
