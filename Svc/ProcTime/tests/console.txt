@@ -1,7 +1,7 @@
 # unit-test console output: Svc/ProcTime
 
 ==============================================================================
-PASSED  fprime-samd_Svc_ProcTime_ut_exe  (0.03s)
+PASSED  fprime-samd_Svc_ProcTime_ut_exe  (0.02s)
 ==============================================================================
 [==========] Running 3 tests from 1 test suite.
 [----------] Global test environment set-up.
@@ -24,9 +24,9 @@ PASSED  fprime-samd_Svc_ProcTime_ut_exe  (0.03s)
 (RQ)       SAMD21-PROCTIME-002: ProcTime shall report the time elapsed on the Os::RawTime clock
 ***************************************
 [       OK ] Nominal.testTimeIsMonotonic (0 ms)
-[----------] 3 tests from Nominal (1 ms total)
+[----------] 3 tests from Nominal (0 ms total)
 
 [----------] Global test environment tear-down
-[==========] 3 tests from 1 test suite ran. (2 ms total)
+[==========] 3 tests from 1 test suite ran. (1 ms total)
 [  PASSED  ] 3 tests.
 

@@ -1,9 +1,9 @@
 # unit-test console output: Drv/GpioDriver
 
 ==============================================================================
-PASSED  fprime-samd_Drv_GpioDriver_ut_exe  (0.03s)
+PASSED  fprime-samd_Drv_GpioDriver_ut_exe  (0.04s)
 ==============================================================================
-[STest::Random] Generated seed 943399 from system time
+[STest::Random] Generated seed 390442 from system time
 [==========] Running 13 tests from 2 test suites.
 [----------] Global test environment set-up.
 [----------] 7 tests from Nominal

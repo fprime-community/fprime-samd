@@ -26,7 +26,7 @@
     </tr>
     <tr>
       <th scope="row">Date:</th>
-      <td>2026-10-13 19:03:04</td>
+      <td>2026-10-20 16:44:20</td>
     </tr>
   </table>
 </div>
@@ -40,21 +40,21 @@
     </tr>
     <tr>
       <th scope="row">Lines:</th>
-      <td>0</td>
+      <td>28</td>
       <td>32</td>
-      <td class="coverage-none">0.0%</td>
+      <td class="coverage-medium">87.5%</td>
     </tr>
     <tr>
       <th scope="row">Functions:</th>
-      <td>0</td>
       <td>2</td>
-      <td class="coverage-none">0.0%</td>
+      <td>2</td>
+      <td class="coverage-high">100.0%</td>
     </tr>
     <tr>
       <th scope="row">Branches:</th>
-      <td>0</td>
+      <td>12</td>
       <td>14</td>
-      <td class="coverage-none">0.0%</td>
+      <td class="coverage-medium">85.7%</td>
     </tr>
   </table>
 </div>
@@ -70,8 +70,8 @@
       <th>Call count</th>
       <th>Block coverage</th>
     </tr>
-    <tr><td><a href="#l12">Samd21::SercomUtil::rxDmaTrigger(Samd21::SercomKind) (line 12)</a></td><td>not called</td><td>0.0%</td></tr>
-    <tr><td><a href="#l32">Samd21::SercomUtil::txDmaTrigger(Samd21::SercomKind) (line 32)</a></td><td>not called</td><td>0.0%</td></tr>
+    <tr><td><a href="#l12">Samd21::SercomUtil::rxDmaTrigger(Samd21::SercomKind) (line 12)</a></td><td>called 71 times</td><td>73.0%</td></tr>
+    <tr><td><a href="#l32">Samd21::SercomUtil::txDmaTrigger(Samd21::SercomKind) (line 32)</a></td><td>called 33 times</td><td>73.0%</td></tr>
   </table>
 </details>
 
@@ -166,99 +166,111 @@
       <td class="lineno"><a id="l12" href="#l12">12</a></td>
       <td class="linebranch">
       </td>
-      <td class="linecount uncoveredLine">&cross;</td>
-      <td class="src uncoveredLine"><span class="n">Dma</span><span class="o">::</span><span class="n">TriggerSource</span><span class="w"> </span><span class="nf">SercomUtil::rxDmaTrigger</span><span class="p">(</span><span class="n">SercomKind</span><span class="w"> </span><span class="n">sercom</span><span class="p">)</span><span class="w"> </span><span class="p">{</span></td>
+      <td class="linecount coveredLine">71</td>
+      <td class="src coveredLine"><span class="n">Dma</span><span class="o">::</span><span class="n">TriggerSource</span><span class="w"> </span><span class="nf">SercomUtil::rxDmaTrigger</span><span class="p">(</span><span class="n">SercomKind</span><span class="w"> </span><span class="n">sercom</span><span class="p">)</span><span class="w"> </span><span class="p">{</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l13" href="#l13">13</a></td>
       <td class="linebranch">
+        <details class="linebranchDetails">
+          <summary class="linebranchSummary">6/7</summary>
+          <div class="linebranchContents">
+            <div class="takenBranch">&check; Branch 3 taken 59 times.</div>
+            <div class="takenBranch">&check; Branch 4 taken 2 times.</div>
+            <div class="takenBranch">&check; Branch 5 taken 2 times.</div>
+            <div class="takenBranch">&check; Branch 6 taken 4 times.</div>
+            <div class="takenBranch">&check; Branch 7 taken 2 times.</div>
+            <div class="takenBranch">&check; Branch 8 taken 2 times.</div>
+            <div class="notTakenBranch">&cross; Branch 9 not taken.</div>
+          </div>
+        </details>
       </td>
-      <td class="linecount uncoveredLine">&cross;</td>
-      <td class="src uncoveredLine"><span class="w">    </span><span class="k">switch</span><span class="w"> </span><span class="p">(</span><span class="n">sercom</span><span class="p">)</span><span class="w"> </span><span class="p">{</span></td>
+      <td class="linecount partialCoveredLine">71</td>
+      <td class="src partialCoveredLine"><span class="w">    </span><span class="k">switch</span><span class="w"> </span><span class="p">(</span><span class="n">sercom</span><span class="p">)</span><span class="w"> </span><span class="p">{</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l14" href="#l14">14</a></td>
       <td class="linebranch">
       </td>
-      <td class="linecount uncoveredLine">&cross;</td>
-      <td class="src uncoveredLine"><span class="w">        </span><span class="k">case</span><span class="w"> </span><span class="no">SercomKind</span><span class="o">::</span><span class="no">SERCOM_0</span><span class="p">:</span></td>
+      <td class="linecount coveredLine">59</td>
+      <td class="src coveredLine"><span class="w">        </span><span class="k">case</span><span class="w"> </span><span class="no">SercomKind</span><span class="o">::</span><span class="no">SERCOM_0</span><span class="p">:</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l15" href="#l15">15</a></td>
       <td class="linebranch">
       </td>
-      <td class="linecount uncoveredLine">&cross;</td>
-      <td class="src uncoveredLine"><span class="w">            </span><span class="k">return</span><span class="w"> </span><span class="n">Dma</span><span class="o">::</span><span class="n">TriggerSource</span><span class="o">::</span><span class="n">SERCOM0_RX</span><span class="p">;</span></td>
+      <td class="linecount coveredLine">59</td>
+      <td class="src coveredLine"><span class="w">            </span><span class="k">return</span><span class="w"> </span><span class="n">Dma</span><span class="o">::</span><span class="n">TriggerSource</span><span class="o">::</span><span class="n">SERCOM0_RX</span><span class="p">;</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l16" href="#l16">16</a></td>
       <td class="linebranch">
       </td>
-      <td class="linecount uncoveredLine">&cross;</td>
-      <td class="src uncoveredLine"><span class="w">        </span><span class="k">case</span><span class="w"> </span><span class="no">SercomKind</span><span class="o">::</span><span class="no">SERCOM_1</span><span class="p">:</span></td>
+      <td class="linecount coveredLine">2</td>
+      <td class="src coveredLine"><span class="w">        </span><span class="k">case</span><span class="w"> </span><span class="no">SercomKind</span><span class="o">::</span><span class="no">SERCOM_1</span><span class="p">:</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l17" href="#l17">17</a></td>
       <td class="linebranch">
       </td>
-      <td class="linecount uncoveredLine">&cross;</td>
-      <td class="src uncoveredLine"><span class="w">            </span><span class="k">return</span><span class="w"> </span><span class="n">Dma</span><span class="o">::</span><span class="n">TriggerSource</span><span class="o">::</span><span class="n">SERCOM1_RX</span><span class="p">;</span></td>
+      <td class="linecount coveredLine">2</td>
+      <td class="src coveredLine"><span class="w">            </span><span class="k">return</span><span class="w"> </span><span class="n">Dma</span><span class="o">::</span><span class="n">TriggerSource</span><span class="o">::</span><span class="n">SERCOM1_RX</span><span class="p">;</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l18" href="#l18">18</a></td>
       <td class="linebranch">
       </td>
-      <td class="linecount uncoveredLine">&cross;</td>
-      <td class="src uncoveredLine"><span class="w">        </span><span class="k">case</span><span class="w"> </span><span class="no">SercomKind</span><span class="o">::</span><span class="no">SERCOM_2</span><span class="p">:</span></td>
+      <td class="linecount coveredLine">2</td>
+      <td class="src coveredLine"><span class="w">        </span><span class="k">case</span><span class="w"> </span><span class="no">SercomKind</span><span class="o">::</span><span class="no">SERCOM_2</span><span class="p">:</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l19" href="#l19">19</a></td>
       <td class="linebranch">
       </td>
-      <td class="linecount uncoveredLine">&cross;</td>
-      <td class="src uncoveredLine"><span class="w">            </span><span class="k">return</span><span class="w"> </span><span class="n">Dma</span><span class="o">::</span><span class="n">TriggerSource</span><span class="o">::</span><span class="n">SERCOM2_RX</span><span class="p">;</span></td>
+      <td class="linecount coveredLine">2</td>
+      <td class="src coveredLine"><span class="w">            </span><span class="k">return</span><span class="w"> </span><span class="n">Dma</span><span class="o">::</span><span class="n">TriggerSource</span><span class="o">::</span><span class="n">SERCOM2_RX</span><span class="p">;</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l20" href="#l20">20</a></td>
       <td class="linebranch">
       </td>
-      <td class="linecount uncoveredLine">&cross;</td>
-      <td class="src uncoveredLine"><span class="w">        </span><span class="k">case</span><span class="w"> </span><span class="no">SercomKind</span><span class="o">::</span><span class="no">SERCOM_3</span><span class="p">:</span></td>
+      <td class="linecount coveredLine">4</td>
+      <td class="src coveredLine"><span class="w">        </span><span class="k">case</span><span class="w"> </span><span class="no">SercomKind</span><span class="o">::</span><span class="no">SERCOM_3</span><span class="p">:</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l21" href="#l21">21</a></td>
       <td class="linebranch">
       </td>
-      <td class="linecount uncoveredLine">&cross;</td>
-      <td class="src uncoveredLine"><span class="w">            </span><span class="k">return</span><span class="w"> </span><span class="n">Dma</span><span class="o">::</span><span class="n">TriggerSource</span><span class="o">::</span><span class="n">SERCOM3_RX</span><span class="p">;</span></td>
+      <td class="linecount coveredLine">4</td>
+      <td class="src coveredLine"><span class="w">            </span><span class="k">return</span><span class="w"> </span><span class="n">Dma</span><span class="o">::</span><span class="n">TriggerSource</span><span class="o">::</span><span class="n">SERCOM3_RX</span><span class="p">;</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l22" href="#l22">22</a></td>
       <td class="linebranch">
       </td>
-      <td class="linecount uncoveredLine">&cross;</td>
-      <td class="src uncoveredLine"><span class="w">        </span><span class="k">case</span><span class="w"> </span><span class="no">SercomKind</span><span class="o">::</span><span class="no">SERCOM_4</span><span class="p">:</span></td>
+      <td class="linecount coveredLine">2</td>
+      <td class="src coveredLine"><span class="w">        </span><span class="k">case</span><span class="w"> </span><span class="no">SercomKind</span><span class="o">::</span><span class="no">SERCOM_4</span><span class="p">:</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l23" href="#l23">23</a></td>
       <td class="linebranch">
       </td>
-      <td class="linecount uncoveredLine">&cross;</td>
-      <td class="src uncoveredLine"><span class="w">            </span><span class="k">return</span><span class="w"> </span><span class="n">Dma</span><span class="o">::</span><span class="n">TriggerSource</span><span class="o">::</span><span class="n">SERCOM4_RX</span><span class="p">;</span></td>
+      <td class="linecount coveredLine">2</td>
+      <td class="src coveredLine"><span class="w">            </span><span class="k">return</span><span class="w"> </span><span class="n">Dma</span><span class="o">::</span><span class="n">TriggerSource</span><span class="o">::</span><span class="n">SERCOM4_RX</span><span class="p">;</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l24" href="#l24">24</a></td>
       <td class="linebranch">
       </td>
-      <td class="linecount uncoveredLine">&cross;</td>
-      <td class="src uncoveredLine"><span class="w">        </span><span class="k">case</span><span class="w"> </span><span class="no">SercomKind</span><span class="o">::</span><span class="no">SERCOM_5</span><span class="p">:</span></td>
+      <td class="linecount coveredLine">2</td>
+      <td class="src coveredLine"><span class="w">        </span><span class="k">case</span><span class="w"> </span><span class="no">SercomKind</span><span class="o">::</span><span class="no">SERCOM_5</span><span class="p">:</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l25" href="#l25">25</a></td>
       <td class="linebranch">
       </td>
-      <td class="linecount uncoveredLine">&cross;</td>
-      <td class="src uncoveredLine"><span class="w">            </span><span class="k">return</span><span class="w"> </span><span class="n">Dma</span><span class="o">::</span><span class="n">TriggerSource</span><span class="o">::</span><span class="n">SERCOM5_RX</span><span class="p">;</span></td>
+      <td class="linecount coveredLine">2</td>
+      <td class="src coveredLine"><span class="w">            </span><span class="k">return</span><span class="w"> </span><span class="n">Dma</span><span class="o">::</span><span class="n">TriggerSource</span><span class="o">::</span><span class="n">SERCOM5_RX</span><span class="p">;</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l26" href="#l26">26</a></td>
@@ -306,99 +318,111 @@
       <td class="lineno"><a id="l32" href="#l32">32</a></td>
       <td class="linebranch">
       </td>
-      <td class="linecount uncoveredLine">&cross;</td>
-      <td class="src uncoveredLine"><span class="n">Dma</span><span class="o">::</span><span class="n">TriggerSource</span><span class="w"> </span><span class="nf">SercomUtil::txDmaTrigger</span><span class="p">(</span><span class="n">SercomKind</span><span class="w"> </span><span class="n">sercom</span><span class="p">)</span><span class="w"> </span><span class="p">{</span></td>
+      <td class="linecount coveredLine">33</td>
+      <td class="src coveredLine"><span class="n">Dma</span><span class="o">::</span><span class="n">TriggerSource</span><span class="w"> </span><span class="nf">SercomUtil::txDmaTrigger</span><span class="p">(</span><span class="n">SercomKind</span><span class="w"> </span><span class="n">sercom</span><span class="p">)</span><span class="w"> </span><span class="p">{</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l33" href="#l33">33</a></td>
       <td class="linebranch">
+        <details class="linebranchDetails">
+          <summary class="linebranchSummary">6/7</summary>
+          <div class="linebranchContents">
+            <div class="takenBranch">&check; Branch 3 taken 28 times.</div>
+            <div class="takenBranch">&check; Branch 4 taken 1 times.</div>
+            <div class="takenBranch">&check; Branch 5 taken 1 times.</div>
+            <div class="takenBranch">&check; Branch 6 taken 1 times.</div>
+            <div class="takenBranch">&check; Branch 7 taken 1 times.</div>
+            <div class="takenBranch">&check; Branch 8 taken 1 times.</div>
+            <div class="notTakenBranch">&cross; Branch 9 not taken.</div>
+          </div>
+        </details>
       </td>
-      <td class="linecount uncoveredLine">&cross;</td>
-      <td class="src uncoveredLine"><span class="w">    </span><span class="k">switch</span><span class="w"> </span><span class="p">(</span><span class="n">sercom</span><span class="p">)</span><span class="w"> </span><span class="p">{</span></td>
+      <td class="linecount partialCoveredLine">33</td>
+      <td class="src partialCoveredLine"><span class="w">    </span><span class="k">switch</span><span class="w"> </span><span class="p">(</span><span class="n">sercom</span><span class="p">)</span><span class="w"> </span><span class="p">{</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l34" href="#l34">34</a></td>
       <td class="linebranch">
       </td>
-      <td class="linecount uncoveredLine">&cross;</td>
-      <td class="src uncoveredLine"><span class="w">        </span><span class="k">case</span><span class="w"> </span><span class="no">SercomKind</span><span class="o">::</span><span class="no">SERCOM_0</span><span class="p">:</span></td>
+      <td class="linecount coveredLine">28</td>
+      <td class="src coveredLine"><span class="w">        </span><span class="k">case</span><span class="w"> </span><span class="no">SercomKind</span><span class="o">::</span><span class="no">SERCOM_0</span><span class="p">:</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l35" href="#l35">35</a></td>
       <td class="linebranch">
       </td>
-      <td class="linecount uncoveredLine">&cross;</td>
-      <td class="src uncoveredLine"><span class="w">            </span><span class="k">return</span><span class="w"> </span><span class="n">Dma</span><span class="o">::</span><span class="n">TriggerSource</span><span class="o">::</span><span class="n">SERCOM0_TX</span><span class="p">;</span></td>
+      <td class="linecount coveredLine">28</td>
+      <td class="src coveredLine"><span class="w">            </span><span class="k">return</span><span class="w"> </span><span class="n">Dma</span><span class="o">::</span><span class="n">TriggerSource</span><span class="o">::</span><span class="n">SERCOM0_TX</span><span class="p">;</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l36" href="#l36">36</a></td>
       <td class="linebranch">
       </td>
-      <td class="linecount uncoveredLine">&cross;</td>
-      <td class="src uncoveredLine"><span class="w">        </span><span class="k">case</span><span class="w"> </span><span class="no">SercomKind</span><span class="o">::</span><span class="no">SERCOM_1</span><span class="p">:</span></td>
+      <td class="linecount coveredLine">1</td>
+      <td class="src coveredLine"><span class="w">        </span><span class="k">case</span><span class="w"> </span><span class="no">SercomKind</span><span class="o">::</span><span class="no">SERCOM_1</span><span class="p">:</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l37" href="#l37">37</a></td>
       <td class="linebranch">
       </td>
-      <td class="linecount uncoveredLine">&cross;</td>
-      <td class="src uncoveredLine"><span class="w">            </span><span class="k">return</span><span class="w"> </span><span class="n">Dma</span><span class="o">::</span><span class="n">TriggerSource</span><span class="o">::</span><span class="n">SERCOM1_TX</span><span class="p">;</span></td>
+      <td class="linecount coveredLine">1</td>
+      <td class="src coveredLine"><span class="w">            </span><span class="k">return</span><span class="w"> </span><span class="n">Dma</span><span class="o">::</span><span class="n">TriggerSource</span><span class="o">::</span><span class="n">SERCOM1_TX</span><span class="p">;</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l38" href="#l38">38</a></td>
       <td class="linebranch">
       </td>
-      <td class="linecount uncoveredLine">&cross;</td>
-      <td class="src uncoveredLine"><span class="w">        </span><span class="k">case</span><span class="w"> </span><span class="no">SercomKind</span><span class="o">::</span><span class="no">SERCOM_2</span><span class="p">:</span></td>
+      <td class="linecount coveredLine">1</td>
+      <td class="src coveredLine"><span class="w">        </span><span class="k">case</span><span class="w"> </span><span class="no">SercomKind</span><span class="o">::</span><span class="no">SERCOM_2</span><span class="p">:</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l39" href="#l39">39</a></td>
       <td class="linebranch">
       </td>
-      <td class="linecount uncoveredLine">&cross;</td>
-      <td class="src uncoveredLine"><span class="w">            </span><span class="k">return</span><span class="w"> </span><span class="n">Dma</span><span class="o">::</span><span class="n">TriggerSource</span><span class="o">::</span><span class="n">SERCOM2_TX</span><span class="p">;</span></td>
+      <td class="linecount coveredLine">1</td>
+      <td class="src coveredLine"><span class="w">            </span><span class="k">return</span><span class="w"> </span><span class="n">Dma</span><span class="o">::</span><span class="n">TriggerSource</span><span class="o">::</span><span class="n">SERCOM2_TX</span><span class="p">;</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l40" href="#l40">40</a></td>
       <td class="linebranch">
       </td>
-      <td class="linecount uncoveredLine">&cross;</td>
-      <td class="src uncoveredLine"><span class="w">        </span><span class="k">case</span><span class="w"> </span><span class="no">SercomKind</span><span class="o">::</span><span class="no">SERCOM_3</span><span class="p">:</span></td>
+      <td class="linecount coveredLine">1</td>
+      <td class="src coveredLine"><span class="w">        </span><span class="k">case</span><span class="w"> </span><span class="no">SercomKind</span><span class="o">::</span><span class="no">SERCOM_3</span><span class="p">:</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l41" href="#l41">41</a></td>
       <td class="linebranch">
       </td>
-      <td class="linecount uncoveredLine">&cross;</td>
-      <td class="src uncoveredLine"><span class="w">            </span><span class="k">return</span><span class="w"> </span><span class="n">Dma</span><span class="o">::</span><span class="n">TriggerSource</span><span class="o">::</span><span class="n">SERCOM3_TX</span><span class="p">;</span></td>
+      <td class="linecount coveredLine">1</td>
+      <td class="src coveredLine"><span class="w">            </span><span class="k">return</span><span class="w"> </span><span class="n">Dma</span><span class="o">::</span><span class="n">TriggerSource</span><span class="o">::</span><span class="n">SERCOM3_TX</span><span class="p">;</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l42" href="#l42">42</a></td>
       <td class="linebranch">
       </td>
-      <td class="linecount uncoveredLine">&cross;</td>
-      <td class="src uncoveredLine"><span class="w">        </span><span class="k">case</span><span class="w"> </span><span class="no">SercomKind</span><span class="o">::</span><span class="no">SERCOM_4</span><span class="p">:</span></td>
+      <td class="linecount coveredLine">1</td>
+      <td class="src coveredLine"><span class="w">        </span><span class="k">case</span><span class="w"> </span><span class="no">SercomKind</span><span class="o">::</span><span class="no">SERCOM_4</span><span class="p">:</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l43" href="#l43">43</a></td>
       <td class="linebranch">
       </td>
-      <td class="linecount uncoveredLine">&cross;</td>
-      <td class="src uncoveredLine"><span class="w">            </span><span class="k">return</span><span class="w"> </span><span class="n">Dma</span><span class="o">::</span><span class="n">TriggerSource</span><span class="o">::</span><span class="n">SERCOM4_TX</span><span class="p">;</span></td>
+      <td class="linecount coveredLine">1</td>
+      <td class="src coveredLine"><span class="w">            </span><span class="k">return</span><span class="w"> </span><span class="n">Dma</span><span class="o">::</span><span class="n">TriggerSource</span><span class="o">::</span><span class="n">SERCOM4_TX</span><span class="p">;</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l44" href="#l44">44</a></td>
       <td class="linebranch">
       </td>
-      <td class="linecount uncoveredLine">&cross;</td>
-      <td class="src uncoveredLine"><span class="w">        </span><span class="k">case</span><span class="w"> </span><span class="no">SercomKind</span><span class="o">::</span><span class="no">SERCOM_5</span><span class="p">:</span></td>
+      <td class="linecount coveredLine">1</td>
+      <td class="src coveredLine"><span class="w">        </span><span class="k">case</span><span class="w"> </span><span class="no">SercomKind</span><span class="o">::</span><span class="no">SERCOM_5</span><span class="p">:</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l45" href="#l45">45</a></td>
       <td class="linebranch">
       </td>
-      <td class="linecount uncoveredLine">&cross;</td>
-      <td class="src uncoveredLine"><span class="w">            </span><span class="k">return</span><span class="w"> </span><span class="n">Dma</span><span class="o">::</span><span class="n">TriggerSource</span><span class="o">::</span><span class="n">SERCOM5_TX</span><span class="p">;</span></td>
+      <td class="linecount coveredLine">1</td>
+      <td class="src coveredLine"><span class="w">            </span><span class="k">return</span><span class="w"> </span><span class="n">Dma</span><span class="o">::</span><span class="n">TriggerSource</span><span class="o">::</span><span class="n">SERCOM5_TX</span><span class="p">;</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l46" href="#l46">46</a></td>
