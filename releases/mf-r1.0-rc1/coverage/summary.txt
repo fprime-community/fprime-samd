@@ -1,0 +1,41 @@
+------------------------------------------------------------------------------
+                           GCC Code Coverage Report
+Directory: ../../..
+------------------------------------------------------------------------------
+File                                       Lines    Exec  Cover   Missing
+------------------------------------------------------------------------------
+lib/fprime-samd/fprime-samd/Drv/AdcDriver/AdcDriver.cpp
+                                              69      69   100%
+lib/fprime-samd/fprime-samd/Drv/GpioDriver/GpioDriver.cpp
+                                              50      50   100%
+lib/fprime-samd/fprime-samd/Drv/I2cDriver/I2cDriver.cpp
+                                             348     327    94%   166-167,263-264,293-294,340-341,353-354,358-359,363,369-370,425-426,479-480,569-570
+lib/fprime-samd/fprime-samd/Drv/RtcDriver/RtcDriver.cpp
+                                              71      67    94%   90-91,106-107
+lib/fprime-samd/fprime-samd/Drv/SystemInfo/SystemInfo.cpp
+                                              10      10   100%
+lib/fprime-samd/fprime-samd/Drv/Types/Sercom.cpp
+                                              32      28    87%   26-27,46-47
+lib/fprime-samd/fprime-samd/Drv/Types/ThinBuffer.cpp
+                                              11      11   100%
+lib/fprime-samd/fprime-samd/Drv/UsartDriver/UsartDriver.cpp
+                                             168     158    94%   185-186,207-208,211-212,225-226,245-246
+lib/fprime-samd/fprime-samd/Drv/UsartDriver/UsartDriver.hpp
+                                               2       2   100%
+lib/fprime-samd/fprime-samd/Svc/Framer/Framer.cpp
+                                              72      66    91%   46-47,59-60,122,132
+lib/fprime-samd/fprime-samd/Svc/ProcTime/ProcTime.cpp
+                                              12      12   100%
+lib/fprime-samd/fprime-samd/Svc/Seq/Seq.cpp
+                                             149     144    96%   48-50,148,152
+lib/fprime-samd/fprime-samd/Svc/Seq/Seq.hpp
+                                               2       2   100%
+lib/fprime-samd/fprime-samd/Svc/StaticMallocator/StaticMallocator.hpp
+                                              16      16   100%
+lib/fprime-samd/fprime-samd/Svc/ThinBufferManager/ThinBufferManager.cpp
+                                             103     102    99%   39
+lib/fprime-samd/fprime-samd/Svc/TmFramer/TmFramer.cpp
+                                             163     160    98%   69-70,209
+------------------------------------------------------------------------------
+TOTAL                                       1278    1224    95%
+------------------------------------------------------------------------------

@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html class="theme-green">
+
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+    <title>GCC Code Coverage Report</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <link rel="stylesheet" href="coverage.css"/>
+  </head>
+
+  <body>
+
+    <header>
+      <h1>GCC Code Coverage Report</h1>
+      <hr/>
+      <div class="summary">
+<div>
+  <table class="legend">
+    <tr>
+      <th scope="row">Directory:</th>
+      <td>lib/fprime-samd/fprime-samd/Drv/UsartDriver/</td>
+    </tr>
+    <tr>
+      <th scope="row">Date:</th>
+      <td>2026-10-20 16:49:03</td>
+    </tr>
+  </table>
+</div>
+
+<div>
+  <table class="coverage">
+    <tr>
+      <th></th>
+      <th scope="col">Exec</th>
+      <th scope="col">Total</th>
+      <th scope="col">Coverage</th>
+    </tr>
+    <tr>
+      <th scope="row">Lines:</th>
+      <td>160</td>
+      <td>170</td>
+      <td class="coverage-high">94.1%</td>
+    </tr>
+    <tr>
+      <th scope="row">Functions:</th>
+      <td>14</td>
+      <td>14</td>
+      <td class="coverage-high">100.0%</td>
+    </tr>
+    <tr>
+      <th scope="row">Branches:</th>
+      <td>117</td>
+      <td>127</td>
+      <td class="coverage-high">92.1%</td>
+    </tr>
+  </table>
+</div>
+      </div>
+      <hr/>
+    </header>
+    <nav>
+    </nav>
+    <main>
+<table class="listOfFunctions">
+  <tr>
+    <th>Function (File:Line)</th>
+    <th>Call count</th>
+    <th>Block coverage</th>
+  </tr>
+  <tr><td><a href="coverage.UsartDriver.hpp.1de7b87126ab256c8c432474ad25cd0c.html#l226">Samd21::UsartDriver::Signal::Signal() (lib/fprime-samd/fprime-samd/Drv/UsartDriver/UsartDriver.hpp:226)</a></td><td>called 117 times</td><td>100.0%</td></tr>
+  <tr><td><a href="coverage.UsartDriver.hpp.1de7b87126ab256c8c432474ad25cd0c.html#l227">Samd21::UsartDriver::Signal::Signal(Samd21::UsartDriver::SignalKind, unsigned short) (lib/fprime-samd/fprime-samd/Drv/UsartDriver/UsartDriver.hpp:227)</a></td><td>called 8 times</td><td>100.0%</td></tr>
+  <tr><td><a href="coverage.UsartDriver.cpp.d6241c5fdb954a7e34f5f68d9abf95f4.html#l27">Samd21::UsartDriver::UsartDriver(char const*) (lib/fprime-samd/fprime-samd/Drv/UsartDriver/UsartDriver.cpp:27)</a></td><td>called 25 times</td><td>75.0%</td></tr>
+  <tr><td><a href="coverage.UsartDriver.cpp.d6241c5fdb954a7e34f5f68d9abf95f4.html#l133">Samd21::UsartDriver::activeIn_handler(short, unsigned int) (lib/fprime-samd/fprime-samd/Drv/UsartDriver/UsartDriver.cpp:133)</a></td><td>called 10 times</td><td>71.0%</td></tr>
+  <tr><td><a href="coverage.UsartDriver.cpp.d6241c5fdb954a7e34f5f68d9abf95f4.html#l42">Samd21::UsartDriver::configure(Samd21::SercomKind, Samd21::UsartDriver::RxPinOut, Samd21::UsartDriver::TxPinOut, Samd21::UsartDriver::ClockMode, Samd21::UsartDriver::CommunicationMode, Samd21::UsartDriver::BaudRate, Samd21::UsartDriver::DataOrder, Samd21::UsartDriver::DataBits, Samd21::UsartDriver::StopBits, Samd21::UsartDriver::Parity) (lib/fprime-samd/fprime-samd/Drv/UsartDriver/UsartDriver.cpp:42)</a></td><td>called 22 times</td><td>83.0%</td></tr>
+  <tr><td><a href="coverage.UsartDriver.cpp.d6241c5fdb954a7e34f5f68d9abf95f4.html#l282">Samd21::UsartDriver::dmaQueueRxSend(Samd21::ThinBuffer const&amp;) (lib/fprime-samd/fprime-samd/Drv/UsartDriver/UsartDriver.cpp:282)</a></td><td>called 44 times</td><td>61.0%</td></tr>
+  <tr><td><a href="coverage.UsartDriver.cpp.d6241c5fdb954a7e34f5f68d9abf95f4.html#l237">Samd21::UsartDriver::dmaReplyIn_handler(short, Samd21::Dma::Reply const&amp;) (lib/fprime-samd/fprime-samd/Drv/UsartDriver/UsartDriver.cpp:237)</a></td><td>called 4 times</td><td>92.0%</td></tr>
+  <tr><td><a href="coverage.UsartDriver.cpp.d6241c5fdb954a7e34f5f68d9abf95f4.html#l303">Samd21::UsartDriver::dmaReplyRxIsr(Samd21::Dma::Reply const&amp;) (lib/fprime-samd/fprime-samd/Drv/UsartDriver/UsartDriver.cpp:303)</a></td><td>called 3 times</td><td>63.0%</td></tr>
+  <tr><td><a href="coverage.UsartDriver.cpp.d6241c5fdb954a7e34f5f68d9abf95f4.html#l291">Samd21::UsartDriver::dmaReplyTxIsr(Samd21::Dma::Reply const&amp;) (lib/fprime-samd/fprime-samd/Drv/UsartDriver/UsartDriver.cpp:291)</a></td><td>called 1 time</td><td>53.0%</td></tr>
+  <tr><td><a href="coverage.UsartDriver.cpp.d6241c5fdb954a7e34f5f68d9abf95f4.html#l250">Samd21::UsartDriver::recvReturnIn_handler(short, Fw::Buffer&amp;) (lib/fprime-samd/fprime-samd/Drv/UsartDriver/UsartDriver.cpp:250)</a></td><td>called 1 time</td><td>100.0%</td></tr>
+  <tr><td><a href="coverage.UsartDriver.cpp.d6241c5fdb954a7e34f5f68d9abf95f4.html#l84">Samd21::UsartDriver::schedIn_handler(short, unsigned int) (lib/fprime-samd/fprime-samd/Drv/UsartDriver/UsartDriver.cpp:84)</a></td><td>called 8 times</td><td>73.0%</td></tr>
+  <tr><td><a href="coverage.UsartDriver.cpp.d6241c5fdb954a7e34f5f68d9abf95f4.html#l277">Samd21::UsartDriver::sendSync_handler(short, Fw::Buffer&amp;) (lib/fprime-samd/fprime-samd/Drv/UsartDriver/UsartDriver.cpp:277)</a></td><td>called 1 time</td><td>83.0%</td></tr>
+  <tr><td><a href="coverage.UsartDriver.cpp.d6241c5fdb954a7e34f5f68d9abf95f4.html#l256">Samd21::UsartDriver::send_handler(short, Fw::Buffer&amp;) (lib/fprime-samd/fprime-samd/Drv/UsartDriver/UsartDriver.cpp:256)</a></td><td>called 12 times</td><td>66.0%</td></tr>
+  <tr><td><a href="coverage.UsartDriver.cpp.d6241c5fdb954a7e34f5f68d9abf95f4.html#l40">Samd21::UsartDriver::~UsartDriver() (lib/fprime-samd/fprime-samd/Drv/UsartDriver/UsartDriver.cpp:40)</a></td><td>called 25 times</td><td>100.0%</td></tr>
+</table>
+
+      <hr/>
+    </main>
+    <footer>
+      Generated by: <a href="http://gcovr.com/en/8.2">GCOVR (Version 8.2)</a>
+    </footer>
+  </body>
+</html>

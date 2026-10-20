@@ -1,0 +1,431 @@
+{
+  "schema": 1,
+  "generator": "fprime-samd/.github/scripts/coverage_site.py",
+  "ref": "mf-r1.0-rc1",
+  "ref_type": "tag",
+  "commit": "5af78b832f5be6f7efd2edebbe88ddd2a526b5f5",
+  "generated_at": "2026-10-20T16:49:11Z",
+  "thresholds": {
+    "platinum": 95.0,
+    "gold": 90.0,
+    "silver": 80.0
+  },
+  "overall": {
+    "line_pct": 95.77,
+    "line_covered": 1224,
+    "line_total": 1278,
+    "function_pct": 99.13,
+    "function_covered": 114,
+    "function_total": 115,
+    "branch_pct": 58.54,
+    "branch_covered": 929,
+    "branch_total": 1587,
+    "report": "coverage/coverage-all.html"
+  },
+  "overall_tier": "platinum",
+  "worst_module_tier": "bronze",
+  "tests": {
+    "status": "passed",
+    "tests": 11,
+    "passed": 11,
+    "failed": 0,
+    "skipped": 0,
+    "duration": 2.367,
+    "report": "tests/index.html"
+  },
+  "modules": [
+    {
+      "path": "Drv/AdcDriver",
+      "has_ut": true,
+      "has_coverage": true,
+      "coverage": {
+        "line_pct": 100.0,
+        "line_covered": 69,
+        "line_total": 69,
+        "function_pct": 100.0,
+        "function_covered": 7,
+        "function_total": 7,
+        "branch_pct": 92.5,
+        "branch_covered": 37,
+        "branch_total": 40,
+        "report": "Drv/AdcDriver/coverage/index.html"
+      },
+      "tests": {
+        "status": "passed",
+        "tests": 1,
+        "passed": 1,
+        "failed": 0,
+        "skipped": 0,
+        "duration": 0.292,
+        "report": "Drv/AdcDriver/tests/index.html"
+      },
+      "tier": "platinum"
+    },
+    {
+      "path": "Drv/DmaDriver",
+      "has_ut": false,
+      "has_coverage": false,
+      "coverage": null,
+      "tests": null,
+      "tier": "bronze"
+    },
+    {
+      "path": "Drv/GpioDriver",
+      "has_ut": true,
+      "has_coverage": true,
+      "coverage": {
+        "line_pct": 100.0,
+        "line_covered": 50,
+        "line_total": 50,
+        "function_pct": 100.0,
+        "function_covered": 7,
+        "function_total": 7,
+        "branch_pct": 91.67,
+        "branch_covered": 22,
+        "branch_total": 24,
+        "report": "Drv/GpioDriver/coverage/index.html"
+      },
+      "tests": {
+        "status": "passed",
+        "tests": 1,
+        "passed": 1,
+        "failed": 0,
+        "skipped": 0,
+        "duration": 0.037,
+        "report": "Drv/GpioDriver/tests/index.html"
+      },
+      "tier": "platinum"
+    },
+    {
+      "path": "Drv/I2cDriver",
+      "has_ut": true,
+      "has_coverage": true,
+      "coverage": {
+        "line_pct": 93.97,
+        "line_covered": 327,
+        "line_total": 348,
+        "function_pct": 100.0,
+        "function_covered": 18,
+        "function_total": 18,
+        "branch_pct": 86.6,
+        "branch_covered": 265,
+        "branch_total": 306,
+        "report": "Drv/I2cDriver/coverage/index.html"
+      },
+      "tests": {
+        "status": "passed",
+        "tests": 1,
+        "passed": 1,
+        "failed": 0,
+        "skipped": 0,
+        "duration": 0.098,
+        "report": "Drv/I2cDriver/tests/index.html"
+      },
+      "tier": "gold"
+    },
+    {
+      "path": "Drv/RtcDriver",
+      "has_ut": true,
+      "has_coverage": true,
+      "coverage": {
+        "line_pct": 94.37,
+        "line_covered": 67,
+        "line_total": 71,
+        "function_pct": 100.0,
+        "function_covered": 7,
+        "function_total": 7,
+        "branch_pct": 80.49,
+        "branch_covered": 33,
+        "branch_total": 41,
+        "report": "Drv/RtcDriver/coverage/index.html"
+      },
+      "tests": {
+        "status": "passed",
+        "tests": 1,
+        "passed": 1,
+        "failed": 0,
+        "skipped": 0,
+        "duration": 0.946,
+        "report": "Drv/RtcDriver/tests/index.html"
+      },
+      "tier": "gold"
+    },
+    {
+      "path": "Drv/SystemInfo",
+      "has_ut": true,
+      "has_coverage": true,
+      "coverage": {
+        "line_pct": 100.0,
+        "line_covered": 10,
+        "line_total": 10,
+        "function_pct": 100.0,
+        "function_covered": 3,
+        "function_total": 3,
+        "branch_pct": 100.0,
+        "branch_covered": 10,
+        "branch_total": 10,
+        "report": "Drv/SystemInfo/coverage/index.html"
+      },
+      "tests": {
+        "status": "passed",
+        "tests": 1,
+        "passed": 1,
+        "failed": 0,
+        "skipped": 0,
+        "duration": 0.037,
+        "report": "Drv/SystemInfo/tests/index.html"
+      },
+      "tier": "platinum"
+    },
+    {
+      "path": "Drv/Types",
+      "has_ut": false,
+      "has_coverage": false,
+      "coverage": null,
+      "tests": null,
+      "tier": "bronze"
+    },
+    {
+      "path": "Drv/UsartDriver",
+      "has_ut": true,
+      "has_coverage": true,
+      "coverage": {
+        "line_pct": 94.12,
+        "line_covered": 160,
+        "line_total": 170,
+        "function_pct": 100.0,
+        "function_covered": 14,
+        "function_total": 14,
+        "branch_pct": 92.13,
+        "branch_covered": 117,
+        "branch_total": 127,
+        "report": "Drv/UsartDriver/coverage/index.html"
+      },
+      "tests": {
+        "status": "passed",
+        "tests": 1,
+        "passed": 1,
+        "failed": 0,
+        "skipped": 0,
+        "duration": 0.529,
+        "report": "Drv/UsartDriver/tests/index.html"
+      },
+      "tier": "gold"
+    },
+    {
+      "path": "Os",
+      "has_ut": false,
+      "has_coverage": false,
+      "coverage": null,
+      "tests": null,
+      "tier": "bronze"
+    },
+    {
+      "path": "Svc/FatalHandler",
+      "has_ut": false,
+      "has_coverage": false,
+      "coverage": null,
+      "tests": null,
+      "tier": "bronze"
+    },
+    {
+      "path": "Svc/FprimeRouter",
+      "has_ut": false,
+      "has_coverage": false,
+      "coverage": null,
+      "tests": null,
+      "tier": "bronze"
+    },
+    {
+      "path": "Svc/Framer",
+      "has_ut": true,
+      "has_coverage": true,
+      "coverage": {
+        "line_pct": 91.67,
+        "line_covered": 66,
+        "line_total": 72,
+        "function_pct": 100.0,
+        "function_covered": 7,
+        "function_total": 7,
+        "branch_pct": 78.12,
+        "branch_covered": 50,
+        "branch_total": 64,
+        "report": "Svc/Framer/coverage/index.html"
+      },
+      "tests": {
+        "status": "passed",
+        "tests": 1,
+        "passed": 1,
+        "failed": 0,
+        "skipped": 0,
+        "duration": 0.032,
+        "report": "Svc/Framer/tests/index.html"
+      },
+      "tier": "gold"
+    },
+    {
+      "path": "Svc/PassiveCycler",
+      "has_ut": false,
+      "has_coverage": false,
+      "coverage": null,
+      "tests": null,
+      "tier": "bronze"
+    },
+    {
+      "path": "Svc/PassiveDownlink",
+      "has_ut": false,
+      "has_coverage": false,
+      "coverage": null,
+      "tests": null,
+      "tier": "bronze"
+    },
+    {
+      "path": "Svc/PassiveRateGroupDriver",
+      "has_ut": false,
+      "has_coverage": false,
+      "coverage": null,
+      "tests": null,
+      "tier": "bronze"
+    },
+    {
+      "path": "Svc/ProcTime",
+      "has_ut": true,
+      "has_coverage": true,
+      "coverage": {
+        "line_pct": 100.0,
+        "line_covered": 12,
+        "line_total": 12,
+        "function_pct": 100.0,
+        "function_covered": 3,
+        "function_total": 3,
+        "branch_pct": 100.0,
+        "branch_covered": 10,
+        "branch_total": 10,
+        "report": "Svc/ProcTime/coverage/index.html"
+      },
+      "tests": {
+        "status": "passed",
+        "tests": 1,
+        "passed": 1,
+        "failed": 0,
+        "skipped": 0,
+        "duration": 0.03,
+        "report": "Svc/ProcTime/tests/index.html"
+      },
+      "tier": "platinum"
+    },
+    {
+      "path": "Svc/Seq",
+      "has_ut": true,
+      "has_coverage": true,
+      "coverage": {
+        "line_pct": 96.69,
+        "line_covered": 146,
+        "line_total": 151,
+        "function_pct": 94.44,
+        "function_covered": 17,
+        "function_total": 18,
+        "branch_pct": 98.86,
+        "branch_covered": 87,
+        "branch_total": 88,
+        "report": "Svc/Seq/coverage/index.html"
+      },
+      "tests": {
+        "status": "passed",
+        "tests": 1,
+        "passed": 1,
+        "failed": 0,
+        "skipped": 0,
+        "duration": 0.061,
+        "report": "Svc/Seq/tests/index.html"
+      },
+      "tier": "platinum"
+    },
+    {
+      "path": "Svc/StaticCmdDispatcher",
+      "has_ut": false,
+      "has_coverage": false,
+      "coverage": null,
+      "tests": null,
+      "tier": "bronze"
+    },
+    {
+      "path": "Svc/StaticMallocator",
+      "has_ut": false,
+      "has_coverage": false,
+      "coverage": null,
+      "tests": null,
+      "tier": "bronze"
+    },
+    {
+      "path": "Svc/StaticTlmPacketizer",
+      "has_ut": false,
+      "has_coverage": false,
+      "coverage": null,
+      "tests": null,
+      "tier": "bronze"
+    },
+    {
+      "path": "Svc/SyncFramer",
+      "has_ut": false,
+      "has_coverage": false,
+      "coverage": null,
+      "tests": null,
+      "tier": "bronze"
+    },
+    {
+      "path": "Svc/ThinBufferManager",
+      "has_ut": true,
+      "has_coverage": true,
+      "coverage": {
+        "line_pct": 99.03,
+        "line_covered": 102,
+        "line_total": 103,
+        "function_pct": 100.0,
+        "function_covered": 7,
+        "function_total": 7,
+        "branch_pct": 86.27,
+        "branch_covered": 44,
+        "branch_total": 51,
+        "report": "Svc/ThinBufferManager/coverage/index.html"
+      },
+      "tests": {
+        "status": "passed",
+        "tests": 1,
+        "passed": 1,
+        "failed": 0,
+        "skipped": 0,
+        "duration": 0.034,
+        "report": "Svc/ThinBufferManager/tests/index.html"
+      },
+      "tier": "platinum"
+    },
+    {
+      "path": "Svc/TmFramer",
+      "has_ut": true,
+      "has_coverage": true,
+      "coverage": {
+        "line_pct": 98.16,
+        "line_covered": 160,
+        "line_total": 163,
+        "function_pct": 100.0,
+        "function_covered": 11,
+        "function_total": 11,
+        "branch_pct": 91.23,
+        "branch_covered": 104,
+        "branch_total": 114,
+        "report": "Svc/TmFramer/coverage/index.html"
+      },
+      "tests": {
+        "status": "passed",
+        "tests": 1,
+        "passed": 1,
+        "failed": 0,
+        "skipped": 0,
+        "duration": 0.271,
+        "report": "Svc/TmFramer/tests/index.html"
+      },
+      "tier": "platinum"
+    }
+  ]
+}

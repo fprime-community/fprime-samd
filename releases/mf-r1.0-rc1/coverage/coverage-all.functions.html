@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html class="theme-green">
+
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+    <title>GCC Code Coverage Report</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <link rel="stylesheet" href="coverage-all.css"/>
+  </head>
+
+  <body>
+
+    <header>
+      <h1>GCC Code Coverage Report</h1>
+      <hr/>
+      <div class="summary">
+<div>
+  <table class="legend">
+    <tr>
+      <th scope="row">Directory:</th>
+      <td>lib/fprime-samd/fprime-samd/</td>
+    </tr>
+    <tr>
+      <th scope="row">Date:</th>
+      <td>2026-10-20 16:48:53</td>
+    </tr>
+  </table>
+</div>
+
+<div>
+  <table class="coverage">
+    <tr>
+      <th></th>
+      <th scope="col">Exec</th>
+      <th scope="col">Total</th>
+      <th scope="col">Coverage</th>
+    </tr>
+    <tr>
+      <th scope="row">Lines:</th>
+      <td>1224</td>
+      <td>1278</td>
+      <td class="coverage-high">95.8%</td>
+    </tr>
+    <tr>
+      <th scope="row">Functions:</th>
+      <td>114</td>
+      <td>115</td>
+      <td class="coverage-high">99.1%</td>
+    </tr>
+    <tr>
+      <th scope="row">Branches:</th>
+      <td>929</td>
+      <td>1587</td>
+      <td class="coverage-low">58.5%</td>
+    </tr>
+  </table>
+</div>
+      </div>
+      <hr/>
+    </header>
+    <nav>
+    </nav>
+    <main>
+<table class="listOfFunctions">
+  <tr>
+    <th>Function (File:Line)</th>
+    <th>Call count</th>
+    <th>Block coverage</th>
+  </tr>
+  <tr><td><a href="coverage-all.RtcDriver.cpp.980e5165639d17133db819b94807abf6.html#l53">Os::Samd21::timeInterval(Os::Samd21::Samd21RawTimeHandle const&amp;, Os::Samd21::Samd21RawTimeHandle const&amp;) (lib/fprime-samd/fprime-samd/Drv/RtcDriver/RtcDriver.cpp:53)</a></td><td>called 5 times</td><td>100.0%</td></tr>
+  <tr><td><a href="coverage-all.RtcDriver.cpp.980e5165639d17133db819b94807abf6.html#l18">Os::Samd21::timeNow() (lib/fprime-samd/fprime-samd/Drv/RtcDriver/RtcDriver.cpp:18)</a></td><td>called 9 times</td><td>82.0%</td></tr>
+  <tr><td><a href="coverage-all.AdcDriver.cpp.c3108e3b7ac6cca722aed6efbae4f3a1.html#l19">Samd21::AdcDriver::AdcDriver(char const*) (lib/fprime-samd/fprime-samd/Drv/AdcDriver/AdcDriver.cpp:19)</a></td><td>called 21 times</td><td>100.0%</td></tr>
+  <tr><td><a href="coverage-all.AdcDriver.cpp.c3108e3b7ac6cca722aed6efbae4f3a1.html#l117">Samd21::AdcDriver::activeIn_handler(short, unsigned int) (lib/fprime-samd/fprime-samd/Drv/AdcDriver/AdcDriver.cpp:117)</a></td><td>called 31 times</td><td>92.0%</td></tr>
+  <tr><td><a href="coverage-all.AdcDriver.cpp.c3108e3b7ac6cca722aed6efbae4f3a1.html#l44">Samd21::AdcDriver::configure(Samd21::AdcDriver::VoltageReference, Samd21::AdcDriver::Resolution, Samd21::AdcDriver::SampleCount, unsigned char, Samd21::AdcDriver::Gain) (lib/fprime-samd/fprime-samd/Drv/AdcDriver/AdcDriver.cpp:44)</a></td><td>called 37 times</td><td>93.0%</td></tr>
+  <tr><td><a href="coverage-all.AdcDriver.cpp.c3108e3b7ac6cca722aed6efbae4f3a1.html#l67">Samd21::AdcDriver::configureChannel(short, Samd21::AdcDriver::AdcChannel) (lib/fprime-samd/fprime-samd/Drv/AdcDriver/AdcDriver.cpp:67)</a></td><td>called 25 times</td><td>84.0%</td></tr>
+  <tr><td><a href="coverage-all.AdcDriver.cpp.c3108e3b7ac6cca722aed6efbae4f3a1.html#l144">Samd21::AdcDriver::handleInterrupt() (lib/fprime-samd/fprime-samd/Drv/AdcDriver/AdcDriver.cpp:144)</a></td><td>called 27 times</td><td>100.0%</td></tr>
+  <tr><td><a href="coverage-all.AdcDriver.cpp.c3108e3b7ac6cca722aed6efbae4f3a1.html#l90">Samd21::AdcDriver::readAdc_handler(short) (lib/fprime-samd/fprime-samd/Drv/AdcDriver/AdcDriver.cpp:90)</a></td><td>called 27 times</td><td>95.0%</td></tr>
+  <tr><td><a href="coverage-all.AdcDriver.cpp.c3108e3b7ac6cca722aed6efbae4f3a1.html#l34">Samd21::AdcDriver::~AdcDriver() (lib/fprime-samd/fprime-samd/Drv/AdcDriver/AdcDriver.cpp:34)</a></td><td>called 21 times</td><td>100.0%</td></tr>
+  <tr><td><a href="coverage-all.Framer.cpp.3a2217f36f0a98693aee706f8b0e786d.html#l22">Samd21::Framer::Framer(char const*) (lib/fprime-samd/fprime-samd/Svc/Framer/Framer.cpp:22)</a></td><td>called 6 times</td><td>100.0%</td></tr>
+  <tr><td><a href="coverage-all.Framer.cpp.3a2217f36f0a98693aee706f8b0e786d.html#l37">Samd21::Framer::comPacketQueueIn_handler(short, Fw::LinearBufferTemplate&lt;128ul&gt;&amp;, unsigned int) (lib/fprime-samd/fprime-samd/Svc/Framer/Framer.cpp:37)</a></td><td>called 23 times</td><td>72.0%</td></tr>
+  <tr><td><a href="coverage-all.Framer.cpp.3a2217f36f0a98693aee706f8b0e786d.html#l108">Samd21::Framer::drvConnected_handler(short) (lib/fprime-samd/fprime-samd/Svc/Framer/Framer.cpp:108)</a></td><td>called 6 times</td><td>100.0%</td></tr>
+  <tr><td><a href="coverage-all.Framer.cpp.3a2217f36f0a98693aee706f8b0e786d.html#l112">Samd21::Framer::drvReturnIn_handler(short, Fw::Buffer&amp;, Drv::ByteStreamStatus const&amp;) (lib/fprime-samd/fprime-samd/Svc/Framer/Framer.cpp:112)</a></td><td>called 5 times</td><td>94.0%</td></tr>
+  <tr><td><a href="coverage-all.Framer.cpp.3a2217f36f0a98693aee706f8b0e786d.html#l125">Samd21::Framer::flushActiveBuffer() (lib/fprime-samd/fprime-samd/Svc/Framer/Framer.cpp:125)</a></td><td>called 10 times</td><td>83.0%</td></tr>
+  <tr><td><a href="coverage-all.Framer.cpp.3a2217f36f0a98693aee706f8b0e786d.html#l149">Samd21::Framer::schedIn_handler(short, unsigned int) (lib/fprime-samd/fprime-samd/Svc/Framer/Framer.cpp:149)</a></td><td>called 10 times</td><td>86.0%</td></tr>
+  <tr><td><a href="coverage-all.Framer.cpp.3a2217f36f0a98693aee706f8b0e786d.html#l31">Samd21::Framer::~Framer() (lib/fprime-samd/fprime-samd/Svc/Framer/Framer.cpp:31)</a></td><td>called 6 times</td><td>100.0%</td></tr>
+  <tr><td><a href="coverage-all.GpioDriver.cpp.24af6bd796447f3e07be26c1e6e34962.html#l16">Samd21::GpioDriver::GpioDriver(char const*) (lib/fprime-samd/fprime-samd/Drv/GpioDriver/GpioDriver.cpp:16)</a></td><td>called 83 times</td><td>100.0%</td></tr>
+  <tr><td><a href="coverage-all.GpioDriver.cpp.24af6bd796447f3e07be26c1e6e34962.html#l25">Samd21::GpioDriver::configureInput(Samd21::GpioDriver::Group, Samd21::GpioDriver::Pin, Samd21::Gpio::InputPullMode, Samd21::GpioDriver::ExternalInterruptMode) (lib/fprime-samd/fprime-samd/Drv/GpioDriver/GpioDriver.cpp:25)</a></td><td>called 11 times</td><td>93.0%</td></tr>
+  <tr><td><a href="coverage-all.GpioDriver.cpp.24af6bd796447f3e07be26c1e6e34962.html#l49">Samd21::GpioDriver::configureOutput(Samd21::GpioDriver::Group, Samd21::GpioDriver::Pin, Fw::Logic) (lib/fprime-samd/fprime-samd/Drv/GpioDriver/GpioDriver.cpp:49)</a></td><td>called 67 times</td><td>83.0%</td></tr>
+  <tr><td><a href="coverage-all.GpioDriver.cpp.24af6bd796447f3e07be26c1e6e34962.html#l63">Samd21::GpioDriver::gpioInterruptIsr() (lib/fprime-samd/fprime-samd/Drv/GpioDriver/GpioDriver.cpp:63)</a></td><td>called 3 times</td><td>85.0%</td></tr>
+  <tr><td><a href="coverage-all.GpioDriver.cpp.24af6bd796447f3e07be26c1e6e34962.html#l79">Samd21::GpioDriver::gpioRead_handler(short, Fw::Logic&amp;) (lib/fprime-samd/fprime-samd/Drv/GpioDriver/GpioDriver.cpp:79)</a></td><td>called 4 times</td><td>87.0%</td></tr>
+  <tr><td><a href="coverage-all.GpioDriver.cpp.24af6bd796447f3e07be26c1e6e34962.html#l92">Samd21::GpioDriver::gpioWrite_handler(short, Fw::Logic const&amp;) (lib/fprime-samd/fprime-samd/Drv/GpioDriver/GpioDriver.cpp:92)</a></td><td>called 4 times</td><td>96.0%</td></tr>
+  <tr><td><a href="coverage-all.GpioDriver.cpp.24af6bd796447f3e07be26c1e6e34962.html#l23">Samd21::GpioDriver::~GpioDriver() (lib/fprime-samd/fprime-samd/Drv/GpioDriver/GpioDriver.cpp:23)</a></td><td>called 83 times</td><td>100.0%</td></tr>
+  <tr><td><a href="coverage-all.I2cDriver.cpp.760e030299837dff234af6cf40b8faf6.html#l304">Samd21::I2cDriver::CLEAR_ERRORS_cmdHandler(unsigned int, unsigned int) (lib/fprime-samd/fprime-samd/Drv/I2cDriver/I2cDriver.cpp:304)</a></td><td>called 1 time</td><td>80.0%</td></tr>
+  <tr><td><a href="coverage-all.I2cDriver.cpp.760e030299837dff234af6cf40b8faf6.html#l23">Samd21::I2cDriver::I2cDriver(char const*) (lib/fprime-samd/fprime-samd/Drv/I2cDriver/I2cDriver.cpp:23)</a></td><td>called 39 times</td><td>74.0%</td></tr>
+  <tr><td><a href="coverage-all.I2cDriver.cpp.760e030299837dff234af6cf40b8faf6.html#l430">Samd21::I2cDriver::activeIn_handler(short, unsigned int) (lib/fprime-samd/fprime-samd/Drv/I2cDriver/I2cDriver.cpp:430)</a></td><td>called 16 times</td><td>81.0%</td></tr>
+  <tr><td><a href="coverage-all.I2cDriver.cpp.760e030299837dff234af6cf40b8faf6.html#l39">Samd21::I2cDriver::configure(Samd21::SercomKind, Samd21::I2cDriver::SclLowTimeout, Samd21::I2cDriver::InactiveTimeout, Samd21::I2cDriver::ClockStretchMode, Samd21::I2cDriver::Frequency, Samd21::I2cDriver::ClientSclLowTimeout, Samd21::I2cDriver::HostSclLowTimeout, Samd21::I2cDriver::SdaHold, Samd21::I2cDriver::PinUsage, Samd21::I2cDriver::RunInStandby) (lib/fprime-samd/fprime-samd/Drv/I2cDriver/I2cDriver.cpp:39)</a></td><td>called 39 times</td><td>62.0%</td></tr>
+  <tr><td><a href="coverage-all.I2cDriver.cpp.760e030299837dff234af6cf40b8faf6.html#l315">Samd21::I2cDriver::dmaReplyIn_handler(short, Samd21::Dma::Reply const&amp;) (lib/fprime-samd/fprime-samd/Drv/I2cDriver/I2cDriver.cpp:315)</a></td><td>called 20 times</td><td>60.0%</td></tr>
+  <tr><td><a href="coverage-all.I2cDriver.cpp.760e030299837dff234af6cf40b8faf6.html#l73">Samd21::I2cDriver::isrHandler() (lib/fprime-samd/fprime-samd/Drv/I2cDriver/I2cDriver.cpp:73)</a></td><td>called 14 times</td><td>77.0%</td></tr>
+  <tr><td><a href="coverage-all.I2cDriver.cpp.760e030299837dff234af6cf40b8faf6.html#l592">Samd21::I2cDriver::queueReadDma() (lib/fprime-samd/fprime-samd/Drv/I2cDriver/I2cDriver.cpp:592)</a></td><td>called 27 times</td><td>62.0%</td></tr>
+  <tr><td><a href="coverage-all.I2cDriver.cpp.760e030299837dff234af6cf40b8faf6.html#l603">Samd21::I2cDriver::queueWriteDma() (lib/fprime-samd/fprime-samd/Drv/I2cDriver/I2cDriver.cpp:603)</a></td><td>called 22 times</td><td>62.0%</td></tr>
+  <tr><td><a href="coverage-all.I2cDriver.cpp.760e030299837dff234af6cf40b8faf6.html#l613">Samd21::I2cDriver::readImpl(unsigned int, Fw::Buffer&amp;, bool) (lib/fprime-samd/fprime-samd/Drv/I2cDriver/I2cDriver.cpp:613)</a></td><td>called 18 times</td><td>73.0%</td></tr>
+  <tr><td><a href="coverage-all.I2cDriver.cpp.760e030299837dff234af6cf40b8faf6.html#l486">Samd21::I2cDriver::read_handler(short, unsigned int, Fw::Buffer&amp;) (lib/fprime-samd/fprime-samd/Drv/I2cDriver/I2cDriver.cpp:486)</a></td><td>called 14 times</td><td>87.0%</td></tr>
+  <tr><td><a href="coverage-all.I2cDriver.cpp.760e030299837dff234af6cf40b8faf6.html#l236">Samd21::I2cDriver::recoverFromStall(Samd21::I2cDriver::State) (lib/fprime-samd/fprime-samd/Drv/I2cDriver/I2cDriver.cpp:236)</a></td><td>called 4 times</td><td>80.0%</td></tr>
+  <tr><td><a href="coverage-all.I2cDriver.cpp.760e030299837dff234af6cf40b8faf6.html#l501">Samd21::I2cDriver::reportTelemetryIn_handler(short, unsigned int) (lib/fprime-samd/fprime-samd/Drv/I2cDriver/I2cDriver.cpp:501)</a></td><td>called 35 times</td><td>77.0%</td></tr>
+  <tr><td><a href="coverage-all.I2cDriver.cpp.760e030299837dff234af6cf40b8faf6.html#l65">Samd21::I2cDriver::s_i2cDriverIsrHandler(Fw::PassiveComponentBase*, Samd21::SercomKind) (lib/fprime-samd/fprime-samd/Drv/I2cDriver/I2cDriver.cpp:65)</a></td><td>called 14 times</td><td>59.0%</td></tr>
+  <tr><td><a href="coverage-all.I2cDriver.cpp.760e030299837dff234af6cf40b8faf6.html#l205">Samd21::I2cDriver::serviceWriteReadMasterOnBus() (lib/fprime-samd/fprime-samd/Drv/I2cDriver/I2cDriver.cpp:205)</a></td><td>called 6 times</td><td>76.0%</td></tr>
+  <tr><td><a href="coverage-all.I2cDriver.cpp.760e030299837dff234af6cf40b8faf6.html#l631">Samd21::I2cDriver::writeImpl(unsigned int, Fw::Buffer&amp;, bool, bool) (lib/fprime-samd/fprime-samd/Drv/I2cDriver/I2cDriver.cpp:631)</a></td><td>called 22 times</td><td>74.0%</td></tr>
+  <tr><td><a href="coverage-all.I2cDriver.cpp.760e030299837dff234af6cf40b8faf6.html#l675">Samd21::I2cDriver::writeRead_handler(short, unsigned int, Fw::Buffer&amp;, Fw::Buffer&amp;) (lib/fprime-samd/fprime-samd/Drv/I2cDriver/I2cDriver.cpp:675)</a></td><td>called 15 times</td><td>87.0%</td></tr>
+  <tr><td><a href="coverage-all.I2cDriver.cpp.760e030299837dff234af6cf40b8faf6.html#l660">Samd21::I2cDriver::write_handler(short, unsigned int, Fw::Buffer&amp;) (lib/fprime-samd/fprime-samd/Drv/I2cDriver/I2cDriver.cpp:660)</a></td><td>called 9 times</td><td>87.0%</td></tr>
+  <tr><td><a href="coverage-all.I2cDriver.cpp.760e030299837dff234af6cf40b8faf6.html#l37">Samd21::I2cDriver::~I2cDriver() (lib/fprime-samd/fprime-samd/Drv/I2cDriver/I2cDriver.cpp:37)</a></td><td>called 39 times</td><td>100.0%</td></tr>
+  <tr><td><a href="coverage-all.ProcTime.cpp.60ed7b6218a084059b85943c84b37125.html#l20">Samd21::ProcTime::ProcTime(char const*) (lib/fprime-samd/fprime-samd/Svc/ProcTime/ProcTime.cpp:20)</a></td><td>called 3 times</td><td>100.0%</td></tr>
+  <tr><td><a href="coverage-all.ProcTime.cpp.60ed7b6218a084059b85943c84b37125.html#l28">Samd21::ProcTime::getTime_handler(short, Fw::Time&amp;) (lib/fprime-samd/fprime-samd/Svc/ProcTime/ProcTime.cpp:28)</a></td><td>called 103 times</td><td>63.0%</td></tr>
+  <tr><td><a href="coverage-all.ProcTime.cpp.60ed7b6218a084059b85943c84b37125.html#l22">Samd21::ProcTime::~ProcTime() (lib/fprime-samd/fprime-samd/Svc/ProcTime/ProcTime.cpp:22)</a></td><td>called 3 times</td><td>100.0%</td></tr>
+  <tr><td><a href="coverage-all.RtcDriver.cpp.980e5165639d17133db819b94807abf6.html#l73">Samd21::RtcDriver::RtcDriver(char const*) (lib/fprime-samd/fprime-samd/Drv/RtcDriver/RtcDriver.cpp:73)</a></td><td>called 15 times</td><td>100.0%</td></tr>
+  <tr><td><a href="coverage-all.RtcDriver.cpp.980e5165639d17133db819b94807abf6.html#l131">Samd21::RtcDriver::activeIn_handler(short, unsigned int) (lib/fprime-samd/fprime-samd/Drv/RtcDriver/RtcDriver.cpp:131)</a></td><td>called 11 times</td><td>76.0%</td></tr>
+  <tr><td><a href="coverage-all.RtcDriver.cpp.980e5165639d17133db819b94807abf6.html#l75">Samd21::RtcDriver::configure(Samd21::RtcDriver::ClockSource, Samd21::RtcDriver::TickRate) (lib/fprime-samd/fprime-samd/Drv/RtcDriver/RtcDriver.cpp:75)</a></td><td>called 34 times</td><td>87.0%</td></tr>
+  <tr><td><a href="coverage-all.RtcDriver.cpp.980e5165639d17133db819b94807abf6.html#l123">Samd21::RtcDriver::enable() (lib/fprime-samd/fprime-samd/Drv/RtcDriver/RtcDriver.cpp:123)</a></td><td>called 9 times</td><td>75.0%</td></tr>
+  <tr><td><a href="coverage-all.RtcDriver.cpp.980e5165639d17133db819b94807abf6.html#l156">Samd21::RtcDriver::~RtcDriver() (lib/fprime-samd/fprime-samd/Drv/RtcDriver/RtcDriver.cpp:156)</a></td><td>called 15 times</td><td>100.0%</td></tr>
+  <tr><td><a href="coverage-all.Seq.cpp.1fb937042c0049ae48fba017679d5863.html#l177">Samd21::Seq::CANCEL_cmdHandler(unsigned int, unsigned int) (lib/fprime-samd/fprime-samd/Svc/Seq/Seq.cpp:177)</a></td><td>called 6 times</td><td>92.0%</td></tr>
+  <tr><td><a href="coverage-all.Seq.cpp.1fb937042c0049ae48fba017679d5863.html#l168">Samd21::Seq::RUN_ON_ERROR_cmdHandler(unsigned int, unsigned int, Samd21::SeqNames const&amp;) (lib/fprime-samd/fprime-samd/Svc/Seq/Seq.cpp:168)</a></td><td>called 5 times</td><td>85.0%</td></tr>
+  <tr><td><a href="coverage-all.Seq.cpp.1fb937042c0049ae48fba017679d5863.html#l161">Samd21::Seq::RUN_cmdHandler(unsigned int, unsigned int, Samd21::SeqNames const&amp;) (lib/fprime-samd/fprime-samd/Svc/Seq/Seq.cpp:161)</a></td><td>called 28 times</td><td>83.0%</td></tr>
+  <tr><td><a href="coverage-all.Seq.cpp.1fb937042c0049ae48fba017679d5863.html#l19">Samd21::Seq::Seq(char const*) (lib/fprime-samd/fprime-samd/Svc/Seq/Seq.cpp:19)</a></td><td>called 27 times</td><td>91.0%</td></tr>
+  <tr><td><a href="coverage-all.Seq.hpp.f9dbe9ed93817762aa9a8a756cae37b2.html#l31">Samd21::Seq::Sequence::Sequence() (lib/fprime-samd/fprime-samd/Svc/Seq/Seq.hpp:31)</a></td><td>called 81 times</td><td>100.0%</td></tr>
+  <tr><td><a href="coverage-all.Seq.hpp.f9dbe9ed93817762aa9a8a756cae37b2.html#l32">Samd21::Seq::Sequence::Sequence(unsigned char const*, unsigned int) (lib/fprime-samd/fprime-samd/Svc/Seq/Seq.hpp:32)</a></td><td>called 81 times</td><td>100.0%</td></tr>
+  <tr><td><a href="coverage-all.Seq.cpp.1fb937042c0049ae48fba017679d5863.html#l195">Samd21::Seq::WAIT_TICKS_cmdHandler(unsigned int, unsigned int, unsigned int) (lib/fprime-samd/fprime-samd/Svc/Seq/Seq.cpp:195)</a></td><td>called 4 times</td><td>83.0%</td></tr>
+  <tr><td><a href="coverage-all.Seq.cpp.1fb937042c0049ae48fba017679d5863.html#l204">Samd21::Seq::WAIT_UNTIL_cmdHandler(unsigned int, unsigned int, TimeBase const&amp;, unsigned int, unsigned int) (lib/fprime-samd/fprime-samd/Svc/Seq/Seq.cpp:204)</a></td><td>called 4 times</td><td>88.0%</td></tr>
+  <tr><td><a href="coverage-all.Seq.cpp.1fb937042c0049ae48fba017679d5863.html#l56">Samd21::Seq::activeIn_handler(short, unsigned int) (lib/fprime-samd/fprime-samd/Svc/Seq/Seq.cpp:56)</a></td><td>called 50 times</td><td>88.0%</td></tr>
+  <tr><td><a href="coverage-all.Seq.cpp.1fb937042c0049ae48fba017679d5863.html#l80">Samd21::Seq::commandResponseIn_handler(short, unsigned int, unsigned int, Fw::CmdResponse const&amp;) (lib/fprime-samd/fprime-samd/Svc/Seq/Seq.cpp:80)</a></td><td>called 27 times</td><td>95.0%</td></tr>
+  <tr><td><a href="coverage-all.Seq.cpp.1fb937042c0049ae48fba017679d5863.html#l35">Samd21::Seq::configure(Samd21::Seq::Sequence const*) (lib/fprime-samd/fprime-samd/Svc/Seq/Seq.cpp:35)</a></td><td>called 27 times</td><td>94.0%</td></tr>
+  <tr><td><a href="coverage-all.Seq.cpp.1fb937042c0049ae48fba017679d5863.html#l222">Samd21::Seq::deserializeRecord(Fw::ExternalSerializeBuffer&amp;) (lib/fprime-samd/fprime-samd/Svc/Seq/Seq.cpp:222)</a></td><td>called 39 times</td><td>95.0%</td></tr>
+  <tr><td><a href="coverage-all.Seq.cpp.1fb937042c0049ae48fba017679d5863.html#l250">Samd21::Seq::dispatchRecord(Fw::ExternalSerializeBuffer const&amp;, unsigned int) (lib/fprime-samd/fprime-samd/Svc/Seq/Seq.cpp:250)</a></td><td>called 36 times</td><td>88.0%</td></tr>
+  <tr><td><a href="coverage-all.Seq.cpp.1fb937042c0049ae48fba017679d5863.html#l218">Samd21::Seq::hasMoreRecordsInternal() const (lib/fprime-samd/fprime-samd/Svc/Seq/Seq.cpp:218)</a></td><td>called 53 times</td><td>100.0%</td></tr>
+  <tr><td><a href="coverage-all.Seq.cpp.1fb937042c0049ae48fba017679d5863.html#l256">Samd21::Seq::next() (lib/fprime-samd/fprime-samd/Svc/Seq/Seq.cpp:256)</a></td><td>called 41 times</td><td>87.0%</td></tr>
+  <tr><td><a href="coverage-all.Seq.cpp.1fb937042c0049ae48fba017679d5863.html#l48">Samd21::Seq::run(Samd21::SeqNames const&amp;) (lib/fprime-samd/fprime-samd/Svc/Seq/Seq.cpp:48)</a></td><td>not called</td><td>0.0%</td></tr>
+  <tr><td><a href="coverage-all.Seq.cpp.1fb937042c0049ae48fba017679d5863.html#l116">Samd21::Seq::schedIn_handler(short, unsigned int) (lib/fprime-samd/fprime-samd/Svc/Seq/Seq.cpp:116)</a></td><td>called 18 times</td><td>88.0%</td></tr>
+  <tr><td><a href="coverage-all.Seq.cpp.1fb937042c0049ae48fba017679d5863.html#l33">Samd21::Seq::~Seq() (lib/fprime-samd/fprime-samd/Svc/Seq/Seq.cpp:33)</a></td><td>called 27 times</td><td>100.0%</td></tr>
+  <tr><td><a href="coverage-all.Sercom.cpp.b1c41fb0d91f7dcd99e78dafd725bf00.html#l12">Samd21::SercomUtil::rxDmaTrigger(Samd21::SercomKind) (lib/fprime-samd/fprime-samd/Drv/Types/Sercom.cpp:12)</a></td><td>called 71 times</td><td>73.0%</td></tr>
+  <tr><td><a href="coverage-all.Sercom.cpp.b1c41fb0d91f7dcd99e78dafd725bf00.html#l32">Samd21::SercomUtil::txDmaTrigger(Samd21::SercomKind) (lib/fprime-samd/fprime-samd/Drv/Types/Sercom.cpp:32)</a></td><td>called 33 times</td><td>73.0%</td></tr>
+  <tr><td><a href="coverage-all.StaticMallocator.hpp.2a5ea5f2da6b05292f0d03d76648c49b.html#l32">Samd21::StaticMallocator&lt;840ul, 49&gt;::StaticMallocator() (lib/fprime-samd/fprime-samd/Svc/StaticMallocator/StaticMallocator.hpp:32)</a></td><td>called 3 times</td><td>100.0%</td></tr>
+  <tr><td><a href="coverage-all.StaticMallocator.hpp.2a5ea5f2da6b05292f0d03d76648c49b.html#l45">Samd21::StaticMallocator&lt;840ul, 49&gt;::allocate(int, unsigned long&amp;, bool&amp;, unsigned long) (lib/fprime-samd/fprime-samd/Svc/StaticMallocator/StaticMallocator.hpp:45)</a></td><td>called 3 times</td><td>75.0%</td></tr>
+  <tr><td><a href="coverage-all.StaticMallocator.hpp.2a5ea5f2da6b05292f0d03d76648c49b.html#l71">Samd21::StaticMallocator&lt;840ul, 49&gt;::deallocate(int, void*) (lib/fprime-samd/fprime-samd/Svc/StaticMallocator/StaticMallocator.hpp:71)</a></td><td>called 3 times</td><td>78.0%</td></tr>
+  <tr><td><a href="coverage-all.StaticMallocator.hpp.2a5ea5f2da6b05292f0d03d76648c49b.html#l33">Samd21::StaticMallocator&lt;840ul, 49&gt;::~StaticMallocator() (lib/fprime-samd/fprime-samd/Svc/StaticMallocator/StaticMallocator.hpp:33)</a></td><td>called 3 times</td><td>100.0%</td></tr>
+  <tr><td><a href="coverage-all.SystemInfo.cpp.ab1be770223c36327099eb2b75c5328b.html#l18">Samd21::SystemInfo::SystemInfo(char const*) (lib/fprime-samd/fprime-samd/Drv/SystemInfo/SystemInfo.cpp:18)</a></td><td>called 4 times</td><td>100.0%</td></tr>
+  <tr><td><a href="coverage-all.SystemInfo.cpp.ab1be770223c36327099eb2b75c5328b.html#l26">Samd21::SystemInfo::emit() (lib/fprime-samd/fprime-samd/Drv/SystemInfo/SystemInfo.cpp:26)</a></td><td>called 14 times</td><td>68.0%</td></tr>
+  <tr><td><a href="coverage-all.SystemInfo.cpp.ab1be770223c36327099eb2b75c5328b.html#l20">Samd21::SystemInfo::~SystemInfo() (lib/fprime-samd/fprime-samd/Drv/SystemInfo/SystemInfo.cpp:20)</a></td><td>called 4 times</td><td>100.0%</td></tr>
+  <tr><td><a href="coverage-all.ThinBuffer.cpp.76e813dba79cfbeb0326a4d7aed200f6.html#l10">Samd21::ThinBuffer::ThinBuffer() (lib/fprime-samd/fprime-samd/Drv/Types/ThinBuffer.cpp:10)</a></td><td>called 136 times</td><td>100.0%</td></tr>
+  <tr><td><a href="coverage-all.ThinBuffer.cpp.76e813dba79cfbeb0326a4d7aed200f6.html#l12">Samd21::ThinBuffer::ThinBuffer(Fw::Buffer const&amp;) (lib/fprime-samd/fprime-samd/Drv/Types/ThinBuffer.cpp:12)</a></td><td>called 61 times</td><td>100.0%</td></tr>
+  <tr><td><a href="coverage-all.ThinBuffer.cpp.76e813dba79cfbeb0326a4d7aed200f6.html#l14">Samd21::ThinBuffer::ThinBuffer(unsigned char*, unsigned int) (lib/fprime-samd/fprime-samd/Drv/Types/ThinBuffer.cpp:14)</a></td><td>called 44 times</td><td>100.0%</td></tr>
+  <tr><td><a href="coverage-all.ThinBuffer.cpp.76e813dba79cfbeb0326a4d7aed200f6.html#l15">Samd21::ThinBuffer::ThinBuffer(unsigned char*, unsigned int, unsigned int) (lib/fprime-samd/fprime-samd/Drv/Types/ThinBuffer.cpp:15)</a></td><td>called 22 times</td><td>100.0%</td></tr>
+  <tr><td><a href="coverage-all.ThinBuffer.cpp.76e813dba79cfbeb0326a4d7aed200f6.html#l25">Samd21::ThinBuffer::getBuffer() const (lib/fprime-samd/fprime-samd/Drv/Types/ThinBuffer.cpp:25)</a></td><td>called 69 times</td><td>100.0%</td></tr>
+  <tr><td><a href="coverage-all.ThinBuffer.cpp.76e813dba79cfbeb0326a4d7aed200f6.html#l17">Samd21::ThinBuffer::getData() const (lib/fprime-samd/fprime-samd/Drv/Types/ThinBuffer.cpp:17)</a></td><td>called 107 times</td><td>100.0%</td></tr>
+  <tr><td><a href="coverage-all.ThinBuffer.cpp.76e813dba79cfbeb0326a4d7aed200f6.html#l21">Samd21::ThinBuffer::getSize() const (lib/fprime-samd/fprime-samd/Drv/Types/ThinBuffer.cpp:21)</a></td><td>called 121 times</td><td>100.0%</td></tr>
+  <tr><td><a href="coverage-all.ThinBufferManager.cpp.f0f40890ae554cd4c756b08383522f61.html#l23">Samd21::ThinBufferManager::ThinBufferManager(char const*) (lib/fprime-samd/fprime-samd/Svc/ThinBufferManager/ThinBufferManager.cpp:23)</a></td><td>called 3 times</td><td>100.0%</td></tr>
+  <tr><td><a href="coverage-all.ThinBufferManager.cpp.f0f40890ae554cd4c756b08383522f61.html#l97">Samd21::ThinBufferManager::bufferGetCallee_handler(short, unsigned long) (lib/fprime-samd/fprime-samd/Svc/ThinBufferManager/ThinBufferManager.cpp:97)</a></td><td>called 27 times</td><td>92.0%</td></tr>
+  <tr><td><a href="coverage-all.ThinBufferManager.cpp.f0f40890ae554cd4c756b08383522f61.html#l61">Samd21::ThinBufferManager::bufferSendIn_handler(short, Fw::Buffer&amp;) (lib/fprime-samd/fprime-samd/Svc/ThinBufferManager/ThinBufferManager.cpp:61)</a></td><td>called 27 times</td><td>77.0%</td></tr>
+  <tr><td><a href="coverage-all.ThinBufferManager.cpp.f0f40890ae554cd4c756b08383522f61.html#l43">Samd21::ThinBufferManager::cleanup() (lib/fprime-samd/fprime-samd/Svc/ThinBufferManager/ThinBufferManager.cpp:43)</a></td><td>called 3 times</td><td>95.0%</td></tr>
+  <tr><td><a href="coverage-all.ThinBufferManager.cpp.f0f40890ae554cd4c756b08383522f61.html#l208">Samd21::ThinBufferManager::schedIn_handler(short, unsigned int) (lib/fprime-samd/fprime-samd/Svc/ThinBufferManager/ThinBufferManager.cpp:208)</a></td><td>called 8 times</td><td>75.0%</td></tr>
+  <tr><td><a href="coverage-all.ThinBufferManager.cpp.f0f40890ae554cd4c756b08383522f61.html#l125">Samd21::ThinBufferManager::setup(unsigned short, int, Fw::MemAllocator&amp;, Samd21::ThinBufferManager::BufferBins const&amp;) (lib/fprime-samd/fprime-samd/Svc/ThinBufferManager/ThinBufferManager.cpp:125)</a></td><td>called 3 times</td><td>93.0%</td></tr>
+  <tr><td><a href="coverage-all.ThinBufferManager.cpp.f0f40890ae554cd4c756b08383522f61.html#l37">Samd21::ThinBufferManager::~ThinBufferManager() (lib/fprime-samd/fprime-samd/Svc/ThinBufferManager/ThinBufferManager.cpp:37)</a></td><td>called 3 times</td><td>72.0%</td></tr>
+  <tr><td><a href="coverage-all.TmFramer.cpp.a191b4b7d2f90522d472955451d949d3.html#l37">Samd21::TmFramer::TmFramer(char const*) (lib/fprime-samd/fprime-samd/Svc/TmFramer/TmFramer.cpp:37)</a></td><td>called 11 times</td><td>82.0%</td></tr>
+  <tr><td><a href="coverage-all.TmFramer.cpp.a191b4b7d2f90522d472955451d949d3.html#l121">Samd21::TmFramer::apidForComBuffer(Fw::LinearBufferTemplate&lt;128ul&gt; const&amp;) const (lib/fprime-samd/fprime-samd/Svc/TmFramer/TmFramer.cpp:121)</a></td><td>called 303 times</td><td>84.0%</td></tr>
+  <tr><td><a href="coverage-all.TmFramer.cpp.a191b4b7d2f90522d472955451d949d3.html#l166">Samd21::TmFramer::appendSpacePacket(unsigned char*, unsigned long, Fw::LinearBufferTemplate&lt;128ul&gt;&amp;) (lib/fprime-samd/fprime-samd/Svc/TmFramer/TmFramer.cpp:166)</a></td><td>called 303 times</td><td>70.0%</td></tr>
+  <tr><td><a href="coverage-all.TmFramer.cpp.a191b4b7d2f90522d472955451d949d3.html#l212">Samd21::TmFramer::closeFrame(unsigned char*, unsigned long) (lib/fprime-samd/fprime-samd/Svc/TmFramer/TmFramer.cpp:212)</a></td><td>called 271 times</td><td>73.0%</td></tr>
+  <tr><td><a href="coverage-all.TmFramer.cpp.a191b4b7d2f90522d472955451d949d3.html#l61">Samd21::TmFramer::comPacketQueueIn_handler(short, Fw::LinearBufferTemplate&lt;128ul&gt;&amp;, unsigned int) (lib/fprime-samd/fprime-samd/Svc/TmFramer/TmFramer.cpp:61)</a></td><td>called 304 times</td><td>85.0%</td></tr>
+  <tr><td><a href="coverage-all.TmFramer.cpp.a191b4b7d2f90522d472955451d949d3.html#l197">Samd21::TmFramer::drvConnected_handler(short) (lib/fprime-samd/fprime-samd/Svc/TmFramer/TmFramer.cpp:197)</a></td><td>called 11 times</td><td>100.0%</td></tr>
+  <tr><td><a href="coverage-all.TmFramer.cpp.a191b4b7d2f90522d472955451d949d3.html#l201">Samd21::TmFramer::drvReturnIn_handler(short, Fw::Buffer&amp;, Drv::ByteStreamStatus const&amp;) (lib/fprime-samd/fprime-samd/Svc/TmFramer/TmFramer.cpp:201)</a></td><td>called 263 times</td><td>97.0%</td></tr>
+  <tr><td><a href="coverage-all.TmFramer.cpp.a191b4b7d2f90522d472955451d949d3.html#l283">Samd21::TmFramer::flushActiveBuffer() (lib/fprime-samd/fprime-samd/Svc/TmFramer/TmFramer.cpp:283)</a></td><td>called 273 times</td><td>87.0%</td></tr>
+  <tr><td><a href="coverage-all.TmFramer.cpp.a191b4b7d2f90522d472955451d949d3.html#l135">Samd21::TmFramer::nextApidSequenceCount(ComCfg::Apid) (lib/fprime-samd/fprime-samd/Svc/TmFramer/TmFramer.cpp:135)</a></td><td>called 303 times</td><td>100.0%</td></tr>
+  <tr><td><a href="coverage-all.TmFramer.cpp.a191b4b7d2f90522d472955451d949d3.html#l305">Samd21::TmFramer::schedIn_handler(short, unsigned int) (lib/fprime-samd/fprime-samd/Svc/TmFramer/TmFramer.cpp:305)</a></td><td>called 275 times</td><td>84.0%</td></tr>
+  <tr><td><a href="coverage-all.TmFramer.cpp.a191b4b7d2f90522d472955451d949d3.html#l52">Samd21::TmFramer::~TmFramer() (lib/fprime-samd/fprime-samd/Svc/TmFramer/TmFramer.cpp:52)</a></td><td>called 11 times</td><td>100.0%</td></tr>
+  <tr><td><a href="coverage-all.UsartDriver.hpp.1de7b87126ab256c8c432474ad25cd0c.html#l226">Samd21::UsartDriver::Signal::Signal() (lib/fprime-samd/fprime-samd/Drv/UsartDriver/UsartDriver.hpp:226)</a></td><td>called 117 times</td><td>100.0%</td></tr>
+  <tr><td><a href="coverage-all.UsartDriver.hpp.1de7b87126ab256c8c432474ad25cd0c.html#l227">Samd21::UsartDriver::Signal::Signal(Samd21::UsartDriver::SignalKind, unsigned short) (lib/fprime-samd/fprime-samd/Drv/UsartDriver/UsartDriver.hpp:227)</a></td><td>called 8 times</td><td>100.0%</td></tr>
+  <tr><td><a href="coverage-all.UsartDriver.cpp.d6241c5fdb954a7e34f5f68d9abf95f4.html#l27">Samd21::UsartDriver::UsartDriver(char const*) (lib/fprime-samd/fprime-samd/Drv/UsartDriver/UsartDriver.cpp:27)</a></td><td>called 25 times</td><td>75.0%</td></tr>
+  <tr><td><a href="coverage-all.UsartDriver.cpp.d6241c5fdb954a7e34f5f68d9abf95f4.html#l133">Samd21::UsartDriver::activeIn_handler(short, unsigned int) (lib/fprime-samd/fprime-samd/Drv/UsartDriver/UsartDriver.cpp:133)</a></td><td>called 10 times</td><td>71.0%</td></tr>
+  <tr><td><a href="coverage-all.UsartDriver.cpp.d6241c5fdb954a7e34f5f68d9abf95f4.html#l42">Samd21::UsartDriver::configure(Samd21::SercomKind, Samd21::UsartDriver::RxPinOut, Samd21::UsartDriver::TxPinOut, Samd21::UsartDriver::ClockMode, Samd21::UsartDriver::CommunicationMode, Samd21::UsartDriver::BaudRate, Samd21::UsartDriver::DataOrder, Samd21::UsartDriver::DataBits, Samd21::UsartDriver::StopBits, Samd21::UsartDriver::Parity) (lib/fprime-samd/fprime-samd/Drv/UsartDriver/UsartDriver.cpp:42)</a></td><td>called 22 times</td><td>83.0%</td></tr>
+  <tr><td><a href="coverage-all.UsartDriver.cpp.d6241c5fdb954a7e34f5f68d9abf95f4.html#l282">Samd21::UsartDriver::dmaQueueRxSend(Samd21::ThinBuffer const&amp;) (lib/fprime-samd/fprime-samd/Drv/UsartDriver/UsartDriver.cpp:282)</a></td><td>called 44 times</td><td>61.0%</td></tr>
+  <tr><td><a href="coverage-all.UsartDriver.cpp.d6241c5fdb954a7e34f5f68d9abf95f4.html#l237">Samd21::UsartDriver::dmaReplyIn_handler(short, Samd21::Dma::Reply const&amp;) (lib/fprime-samd/fprime-samd/Drv/UsartDriver/UsartDriver.cpp:237)</a></td><td>called 4 times</td><td>92.0%</td></tr>
+  <tr><td><a href="coverage-all.UsartDriver.cpp.d6241c5fdb954a7e34f5f68d9abf95f4.html#l303">Samd21::UsartDriver::dmaReplyRxIsr(Samd21::Dma::Reply const&amp;) (lib/fprime-samd/fprime-samd/Drv/UsartDriver/UsartDriver.cpp:303)</a></td><td>called 3 times</td><td>63.0%</td></tr>
+  <tr><td><a href="coverage-all.UsartDriver.cpp.d6241c5fdb954a7e34f5f68d9abf95f4.html#l291">Samd21::UsartDriver::dmaReplyTxIsr(Samd21::Dma::Reply const&amp;) (lib/fprime-samd/fprime-samd/Drv/UsartDriver/UsartDriver.cpp:291)</a></td><td>called 1 time</td><td>53.0%</td></tr>
+  <tr><td><a href="coverage-all.UsartDriver.cpp.d6241c5fdb954a7e34f5f68d9abf95f4.html#l250">Samd21::UsartDriver::recvReturnIn_handler(short, Fw::Buffer&amp;) (lib/fprime-samd/fprime-samd/Drv/UsartDriver/UsartDriver.cpp:250)</a></td><td>called 1 time</td><td>100.0%</td></tr>
+  <tr><td><a href="coverage-all.UsartDriver.cpp.d6241c5fdb954a7e34f5f68d9abf95f4.html#l84">Samd21::UsartDriver::schedIn_handler(short, unsigned int) (lib/fprime-samd/fprime-samd/Drv/UsartDriver/UsartDriver.cpp:84)</a></td><td>called 8 times</td><td>73.0%</td></tr>
+  <tr><td><a href="coverage-all.UsartDriver.cpp.d6241c5fdb954a7e34f5f68d9abf95f4.html#l277">Samd21::UsartDriver::sendSync_handler(short, Fw::Buffer&amp;) (lib/fprime-samd/fprime-samd/Drv/UsartDriver/UsartDriver.cpp:277)</a></td><td>called 1 time</td><td>83.0%</td></tr>
+  <tr><td><a href="coverage-all.UsartDriver.cpp.d6241c5fdb954a7e34f5f68d9abf95f4.html#l256">Samd21::UsartDriver::send_handler(short, Fw::Buffer&amp;) (lib/fprime-samd/fprime-samd/Drv/UsartDriver/UsartDriver.cpp:256)</a></td><td>called 12 times</td><td>66.0%</td></tr>
+  <tr><td><a href="coverage-all.UsartDriver.cpp.d6241c5fdb954a7e34f5f68d9abf95f4.html#l40">Samd21::UsartDriver::~UsartDriver() (lib/fprime-samd/fprime-samd/Drv/UsartDriver/UsartDriver.cpp:40)</a></td><td>called 25 times</td><td>100.0%</td></tr>
+</table>
+
+      <hr/>
+    </main>
+    <footer>
+      Generated by: <a href="http://gcovr.com/en/8.2">GCOVR (Version 8.2)</a>
+    </footer>
+  </body>
+</html>
