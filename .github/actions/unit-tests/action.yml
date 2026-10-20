@@ -122,6 +122,28 @@ runs:
         printf '  %s\n' "${SELECTED[@]}"
         ninja -C "${BUILD_DIR}" -j"${JOBS}" "${SELECTED[@]}"
 
+    - name: "List the registered tests"
+      # Informational, and on failure the most useful thing in the log: shows what
+      # ctest knows about in this cache, which is the quickest way to see whether a
+      # newly added register_fprime_ut took effect or whether a filter is stale.
+      #
+      # Must run BEFORE the tests, never after. Every ctest invocation -- --show-only
+      # included -- runs F Prime's clean.cmake (a TEST_INCLUDE_FILES hook), which
+      # deletes every *.gcda in the build cache. Listing after the run wiped the
+      # coverage data the caller's library-wide gcovr pass reads, and reported 0%.
+      if: always()
+      continue-on-error: true
+      shell: bash
+      env:
+        PRESET: ${{ inputs.preset }}
+        BUILD_DIR: ${{ inputs.build-dir }}
+      run: |
+        if [ -n "${PRESET}" ]; then
+          ctest --preset "${PRESET}" --show-only
+        else
+          ctest --test-dir "${BUILD_DIR}" --show-only
+        fi
+
     - name: "Run the unit tests"
       id: run
       shell: bash
@@ -170,20 +192,3 @@ runs:
 
         echo "running ${COUNT} test(s)"
         ctest "${CTEST_ARGS[@]}"
-
-    - name: "List the registered tests"
-      # Informational, and on failure the most useful thing in the log: shows what
-      # ctest knows about in this cache, which is the quickest way to see whether a
-      # newly added register_fprime_ut took effect or whether a filter is stale.
-      if: always()
-      continue-on-error: true
-      shell: bash
-      env:
-        PRESET: ${{ inputs.preset }}
-        BUILD_DIR: ${{ inputs.build-dir }}
-      run: |
-        if [ -n "${PRESET}" ]; then
-          ctest --preset "${PRESET}" --show-only
-        else
-          ctest --test-dir "${BUILD_DIR}" --show-only
-        fi

@@ -19,7 +19,7 @@ name: "Coverage Update"
 on:
   push:
     branches: [ main ]
-    tags: [ 'v*' ]
+    tags: [ '**' ]
   workflow_dispatch:
 
 permissions:
