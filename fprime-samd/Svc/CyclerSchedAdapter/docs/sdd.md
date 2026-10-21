@@ -57,7 +57,7 @@ instance framSched: Samd21.CyclerSchedAdapter base id FixedBaseIds.NO_DICTIONARY
 
 Wiring (`cycler.cycleOut -> framSched.activeIn`, `framSched.schedOut -> <consumer>.schedIn`) is
 specified in the topology change. Cost per instance: one passive component object (no members
-beyond the base class; measured 12 B RAM, ~260 B flash before LTO on samd21g17) and one `cycler.cycleOut` slot —
+beyond the base class; 12 B RAM on samd21g17 = `sizeof(Fw::PassiveComponentBase)` because flight builds set `FW_DIRECT_PORT_CALLS` and carry no port objects; ~260 B flash before LTO) and one `cycler.cycleOut` slot —
 `PassiveRateGroupOutputPorts` bounds adapters and direct `activeIn` consumers together.
 
 ### Behavior
@@ -71,8 +71,9 @@ follows `cycle()` in the deployment main loop, i.e. at the next *interrupt*. **C
 through this adapter:** complete all CPU-ready work within one `schedIn` call; defer only work that
 an interrupt (DMA/SERCOM/RTC) will wake. A consumer that needs the re-poll keeps its own
 `Svc.ActiveSched` port instead. With `schedOut` unconnected the call asserts: the autocoded
-`schedOut_out` checks the connection and `FW_ASSERT`s if absent, so the handler adds no check of its
-own (REQ-CSA-005). An instance exists only to pass through to a consumer; an unconnected output is a
+`schedOut_out` checks the connection and `FW_ASSERT`s if absent (UT builds: the port object; flight
+builds with `FW_DIRECT_PORT_CALLS`: the topology-generated `switch` whose only arm for an unconnected
+port is `default: FW_ASSERT(false)`), so the handler adds no check of its own (REQ-CSA-005). An instance exists only to pass through to a consumer; an unconnected output is a
 topology error caught on the first `cycle()` after boot.
 Interaction constraints: `activeIn` is called only from the deployment main loop
 (`Svc.PassiveCycler.cycle()`), never from interrupt context; the consumer's `schedIn` executes on
