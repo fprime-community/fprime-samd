@@ -57,7 +57,7 @@ instance framSched: Samd21.CyclerSchedAdapter base id FixedBaseIds.NO_DICTIONARY
 
 Wiring (`cycler.cycleOut -> framSched.activeIn`, `framSched.schedOut -> <consumer>.schedIn`) is
 specified in the topology change. Cost per instance: one passive component object (no members
-beyond the base class; RAM measured at implementation) and one `cycler.cycleOut` slot —
+beyond the base class; measured 12 B RAM, ~260 B flash before LTO on samd21g17) and one `cycler.cycleOut` slot —
 `PassiveRateGroupOutputPorts` bounds adapters and direct `activeIn` consumers together.
 
 ### Behavior
@@ -65,8 +65,9 @@ beyond the base class; RAM measured at implementation) and one `cycler.cycleOut`
 `Svc.PassiveCycler.cycle()` loops over its connected `cycleOut` ports until none reports work.
 When it reaches the adapter's slot `i` it calls `activeIn(i)`; the adapter calls `schedOut(i)`,
 blocks while the consumer runs to completion on the same stack, then returns `false`, so the cycler never re-polls on the adapter's account. The adapter cannot report
-pending work: `cycle()` is followed by `wfi` in the deployment main loop, so a consumer's next
-`schedIn` turn comes at the next *interrupt*, not immediately. **Constraint on consumers wired
+pending work: its consumer is called again only when the cycler walks the slot again — on a
+later pass of the same `cycle()` because *another* slot reported work, or after the `wfi` that
+follows `cycle()` in the deployment main loop, i.e. at the next *interrupt*. **Constraint on consumers wired
 through this adapter:** complete all CPU-ready work within one `schedIn` call; defer only work that
 an interrupt (DMA/SERCOM/RTC) will wake. A consumer that needs the re-poll keeps its own
 `Svc.ActiveSched` port instead. With `schedOut` unconnected the call asserts: the autocoded

@@ -19,13 +19,13 @@ class CyclerSchedAdapterTester final : public CyclerSchedAdapterGTestBase {
     // ----------------------------------------------------------------------
 
     // Maximum size of histories storing events, telemetry, and port outputs
-    static const FwSizeType MAX_HISTORY_SIZE = 10;
+    static constexpr FwSizeType MAX_HISTORY_SIZE = 10;
 
     // Instance ID supplied to the component instance under test
-    static const FwEnumStoreType TEST_INSTANCE_ID = 0;
+    static constexpr FwEnumStoreType TEST_INSTANCE_ID = 0;
 
     // Interleaved calls in the history-independence test
-    static const U32 INTERLEAVED_CALLS = 100;
+    static constexpr U32 INTERLEAVED_CALLS = 100;
 
   public:
     // ----------------------------------------------------------------------
