@@ -209,6 +209,17 @@ void DmaDriver::handleInterrupt() {
     U8 flags = DMAC->CHINTFLAG.reg;
     U8 status = DMAC->CHSTATUS.reg;
 
+    // Replies are collected here and emitted only after every flag is cleared and
+    // the channel's bookkeeping has settled. A reply handler may queue this channel's
+    // next transaction from inside the callback, so it must see the channel idle (or
+    // anchored on the boundary node) and must not have its own completion flag wiped
+    // by a clear below. Replying mid-way let such a request append to a drained
+    // chain that the code after the callback then detached and orphaned, and the
+    // next TCMPL asserted on a write-back link to nowhere.
+    bool busError = false;
+    U16 busErrorRemaining = 0;
+    U32 okReplies = 0;
+
     // Handle Transfer Error (bus error)
     if (flags & DMAC_CHINTFLAG_TERR) {
         // Check if also invalid descriptor (programming error)
@@ -217,13 +228,8 @@ void DmaDriver::handleInterrupt() {
             FW_ASSERT(false, id);
         } else {
             // Pure bus error - report it
-            ::DmacDescriptor* wb = &dmac_writeback[id];
-
-            Samd21::Dma::Reply reply;
-            reply.set_status(Samd21::Dma::Status::BUS_ERROR);
-            reply.set_remainingBytes(wb->BTCNT.reg);
-
-            this->transactionIsrOut_out(id, reply);
+            busError = true;
+            busErrorRemaining = dmac_writeback[id].BTCNT.reg;
         }
 
         // Clear flag
@@ -254,8 +260,8 @@ void DmaDriver::handleInterrupt() {
     // and the fetch-error SUSP can be pending together, and servicing SUSP first
     // would mark the channel idle and leak the final descriptor.
     if (flags & DMAC_CHINTFLAG_TCMPL) {
-        // A single TCMPL can coalesce several completed blocks, so reply+free
-        // every descriptor completed since we last ran, in submission order.
+        // A single TCMPL can coalesce several completed blocks, so free (and later
+        // reply for) every descriptor completed since we last ran.
         ::DmacDescriptor* wb = &dmac_writeback[id];
 
         if (!m_channels[id].isCircular()) {
@@ -302,25 +308,32 @@ void DmaDriver::handleInterrupt() {
                 FW_ASSERT(keep != nullptr, id);
             }
 
-            // Reply+free every completed node up to (not including) the boundary.
+            // Free every completed node up to (not including) the boundary.
             ::DmacDescriptor* cur = reinterpret_cast<::DmacDescriptor*>(m_currentExecutingDesc[id]);
-            U32 bound = 0;
-            while (cur != nullptr && cur != keep && bound <= DmaDriverConfig::DMA_DESCRIPTOR_N) {
+            U32 completed = 0;
+            while (cur != nullptr && cur != keep && completed <= DmaDriverConfig::DMA_DESCRIPTOR_N) {
                 ::DmacDescriptor* next = reinterpret_cast<::DmacDescriptor*>(cur->DESCADDR.reg);
-
                 freeDescriptor(reinterpret_cast<DmacDescriptor*>(cur));
-
-                Samd21::Dma::Reply reply;
-                reply.set_status(Samd21::Dma::Status::OK);
-                reply.set_remainingBytes(0);
-                this->transactionIsrOut_out(id, reply);
-
                 cur = next;
-                bound++;
+                completed++;
             }
-            FW_ASSERT(bound <= DmaDriverConfig::DMA_DESCRIPTOR_N, id);
+            FW_ASSERT(completed <= DmaDriverConfig::DMA_DESCRIPTOR_N, id);
 
-            if (keep != nullptr) {
+            okReplies = completed;
+
+            if (keep != nullptr && !m_channels[id].isEnabled()) {
+                // The chain ran out and the channel auto-disabled before `keep` was linked
+                // (appendToChain patched a write-back the hardware had already consumed),
+                // so nothing will ever fetch it: reload it as the base descriptor and
+                // re-enable, exactly as a fresh transaction starts. The pool node is then
+                // free, like the first node of any transaction (see sendTransactionIn).
+                m_channels[id].restart(reinterpret_cast<DmacDescriptor*>(keep));
+                freeDescriptor(reinterpret_cast<DmacDescriptor*>(keep));
+                m_currentExecutingDesc[id] = reinterpret_cast<DmacDescriptor*>(&dmac_base[id]);
+                // restart() cleared the hardware flags and the channel is live again: the
+                // end-of-chain SUSP still in the `flags` snapshot must not idle it below.
+                flags &= static_cast<U8>(~DMAC_CHINTFLAG_SUSP);
+            } else if (keep != nullptr) {
                 // Relink the anchor past the freed nodes so appendToChain never
                 // traverses a reclaimed slot; the boundary is the new oldest node.
                 dmac_base[id].DESCADDR.reg = reinterpret_cast<U32>(keep);
@@ -332,11 +345,8 @@ void DmaDriver::handleInterrupt() {
                 m_channels[id].markIdle();
             }
         } else {
-            // Emit one reply per completed block.
-            Samd21::Dma::Reply reply;
-            reply.set_status(Samd21::Dma::Status::OK);
-            reply.set_remainingBytes(0);
-            this->transactionIsrOut_out(id, reply);
+            // One reply per completed block.
+            okReplies = 1;
         }
 
         // Clear flag
@@ -361,6 +371,21 @@ void DmaDriver::handleInterrupt() {
 
         // Clear flag
         DMAC->CHINTFLAG.reg = DMAC_CHINTFLAG_SUSP;
+    }
+
+    // Bookkeeping is settled and every flag is cleared: now tell the clients.
+    if (busError) {
+        Samd21::Dma::Reply reply;
+        reply.set_status(Samd21::Dma::Status::BUS_ERROR);
+        reply.set_remainingBytes(busErrorRemaining);
+        this->transactionIsrOut_out(id, reply);
+    } else {
+        for (U32 i = 0; i < okReplies; i++) {
+            Samd21::Dma::Reply reply;
+            reply.set_status(Samd21::Dma::Status::OK);
+            reply.set_remainingBytes(0);
+            this->transactionIsrOut_out(id, reply);
+        }
     }
 
     Samd21::CriticalSection::leave();

@@ -13,11 +13,18 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 env:
-  # The harness. `main` rather than a pinned SHA so a harness fix does not require a
-  # commit here; the trade-off is that an unrelated harness regression can turn this red,
+  # The harness. Normally `main` rather than a pinned SHA so a harness fix does not require
+  # a commit here; the trade-off is that an unrelated harness regression can turn this red,
   # which the job log makes obvious because the failure is in the reference's own code.
-  HARNESS_REPO: fprime-community/fprime-samd-reference
-  HARNESS_REF: main
+  # TEMPORARY -- REVERT BEFORE MERGE (restore fprime-community/fprime-samd-reference @ main).
+  # fprime-samd-reference main pins a lib/fprime without nasa/fprime#6237 (Drv.AsyncGuardedSpi),
+  # which this PR's SpiDriver implements; until fprime-samd-reference#9 lands, build against
+  # that PR's branch so the harness carries the interface.
+  HARNESS_REPO: lestarch-autobot/fprime-samd-reference
+  # 05ecee7 = the SPI-only re-cut of fprime-samd-reference#9 (lib/fprime = Kronos3 upstream +
+  # nasa/fprime devel 64e4426 incl. #6237, AsyncSpiCfg), on the autobot fork branch
+  # devin/1791242679-fram-driver; pinned by SHA so the harness cannot change under this PR.
+  HARNESS_REF: 05ecee7e2f8fde10877cc2ca8248074b7f4efa10
 
 jobs:
   native-ut:
@@ -25,6 +32,13 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 45
     steps:
+      # Enforces the TEMPORARY marker above: a push to main with the harness still pointed
+      # away from fprime-community/fprime-samd-reference fails here instead of passing.
+      - name: Refuse a temporary harness pointer on main
+        if: github.event_name == 'push' && env.HARNESS_REPO != 'fprime-community/fprime-samd-reference'
+        run: |
+          echo "::error::HARNESS_REPO=${HARNESS_REPO} is a temporary pointer; restore fprime-community/fprime-samd-reference@main before merging"
+          exit 1
       - name: "Checkout the harness"
         uses: actions/checkout@v5
         with:

@@ -29,8 +29,15 @@ concurrency:
 env:
   # The harness fprime-samd's unit tests are built and run inside. Kept identical to
   # unit-tests.yml so coverage measures the same build those tests pass in.
-  HARNESS_REPO: fprime-community/fprime-samd-reference
-  HARNESS_REF: main
+  # TEMPORARY -- REVERT BEFORE MERGE (restore fprime-community/fprime-samd-reference @ main).
+  # fprime-samd-reference main pins a lib/fprime without nasa/fprime#6237 (Drv.AsyncGuardedSpi),
+  # which this PR's SpiDriver implements; until fprime-samd-reference#9 lands, build against
+  # that PR's branch so the harness carries the interface.
+  HARNESS_REPO: lestarch-autobot/fprime-samd-reference
+  # 05ecee7 = the SPI-only re-cut of fprime-samd-reference#9 (lib/fprime = Kronos3 upstream +
+  # nasa/fprime devel 64e4426 incl. #6237, AsyncSpiCfg), on the autobot fork branch
+  # devin/1791242679-fram-driver; pinned by SHA so the harness cannot change under this PR.
+  HARNESS_REF: 05ecee7e2f8fde10877cc2ca8248074b7f4efa10
 
 jobs:
   coverage-check:
