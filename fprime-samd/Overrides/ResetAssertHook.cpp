@@ -1,26 +1,18 @@
 // ======================================================================
-// \title  reset_assert_hooks.cpp
+// \title  ResetAssertHook.cpp
 // \author Andrei Tumbar
-// \brief  cpp file for assert hook functions using send/reset implementation
+// \brief  cpp file for the send/reset assert hook
 // ======================================================================
-#include <Fw/Types/assert_hook.hpp>
-#include <Fw/Types/format.hpp>
+#include "ResetAssertHook.hpp"
 
 #include <sam.h>
 #include "../Mcu/Delay.hpp"
 #include "Fw/Com/ComBuffer.hpp"
-#include "Fw/Types/Assert.hpp"
 #include "Fw/Types/Serializable.hpp"
 #include "Platform/PlatformTypes.h"
 #include "config/FatalPacketSerializableAc.hpp"
 #include "config/FatalTimeSerializableAc.hpp"
 #include "config/FwSizeTypeAliasAc.h"
-
-#if FW_ASSERT_LEVEL == FW_FILEID_ASSERT
-#define fileIdFs "Assert: 0x%08" PRIx32 ":%" PRI_FwSizeType ""
-#else
-#define fileIdFs "Assert: \"%s:%" PRI_FwSizeType "\""
-#endif
 
 extern "C" __attribute__((used)) void HardFault_Handler(void) {
     // __BKPT(3);
@@ -30,21 +22,20 @@ extern "C" __attribute__((used)) void HardFault_Handler(void) {
 namespace Samd21 {
 extern void sendFatalPacket(Fw::ComBuffer& data);
 extern void sendBailFrame(FILE_NAME_ARG file, FwSizeType lineNo);
-}  // namespace Samd21
 
-void Fw::defaultDoAssert() {
+void ResetAssertHook::doAssert() {
     NVIC_SystemReset();
 
     while (true) {
     }
 }
 
-void Fw::defaultPrintAssert(const CHAR* msg) {
+void ResetAssertHook::printAssert(const CHAR* msg) {
     __disable_irq();
 
     static volatile bool assertReached = false;
     if (assertReached) {
-        defaultDoAssert();
+        this->doAssert();
     }
 
     assertReached = true;
@@ -58,18 +49,17 @@ void Fw::defaultPrintAssert(const CHAR* msg) {
     }
 }
 
-void Fw::defaultReportAssert(FILE_NAME_ARG file,
-                             FwSizeType lineNo,
-                             FwSizeType numArgs,
-                             FwAssertArgType arg1,
-                             FwAssertArgType arg2,
-                             FwAssertArgType arg3,
-                             FwAssertArgType arg4,
-                             FwAssertArgType arg5,
-                             FwAssertArgType arg6,
-                             CHAR* destBuffer,
-                             FwSizeType buffSize) {
-    Fw::ExternalSerializeBuffer writer(reinterpret_cast<U8*>(destBuffer), buffSize);
+void ResetAssertHook::reportAssert(FILE_NAME_ARG file,
+                                   FwSizeType lineNo,
+                                   FwSizeType numArgs,
+                                   FwAssertArgType arg1,
+                                   FwAssertArgType arg2,
+                                   FwAssertArgType arg3,
+                                   FwAssertArgType arg4,
+                                   FwAssertArgType arg5,
+                                   FwAssertArgType arg6) {
+    U8 destBuffer[Samd21::FatalPacket::SERIALIZED_SIZE];
+    Fw::ExternalSerializeBuffer writer(destBuffer, static_cast<FwSizeType>(sizeof(destBuffer)));
 
     // Serialize the file location
     Samd21::FatalPacket p(
@@ -78,5 +68,8 @@ void Fw::defaultReportAssert(FILE_NAME_ARG file,
                           static_cast<I32>(arg1), static_cast<I32>(arg2), static_cast<I32>(arg3),
                           static_cast<I32>(arg4), static_cast<I32>(arg5), static_cast<I32>(arg6)));
     auto status = p.serializeTo(writer);
-    FW_ASSERT(status == FW_SERIALIZE_OK, status);
+    FW_ASSERT(status == Fw::FW_SERIALIZE_OK, status);
+    this->printAssert(reinterpret_cast<const CHAR*>(destBuffer));
 }
+
+}  // namespace Samd21
