@@ -1,0 +1,322 @@
+#!/usr/bin/env python3
+"""
+static-prm-db:
+    Generate deployment level parameter database helpers for static parameter databases
+"""
+
+import sys
+import zlib
+from contextlib import nullcontext
+from typing import TYPE_CHECKING
+
+import fpp
+import static_autocoder_common as common
+
+if TYPE_CHECKING:
+    import fprime_cpp_codegen as cg
+
+#: Credited in the `\author` line of every generated file's banner
+TOOL_NAME = "static-prm-db"
+
+#: Annotation marking the component this autocoder generates parameter storage for. Must
+#: match the `@` annotation on the component definition, e.g. Samd21.StaticPrmDb.
+PRM_DB_ANNOTATION = "static-prm-db"
+
+
+def generate(
+    model: fpp.Model,
+    topology: fpp.Topology,
+    file_base: str,
+) -> str:
+    from fprime_cpp_codegen import CppDocBuilder, Output
+
+    doc = CppDocBuilder(
+        file_base,
+        description=f"parameter database code for {topology.qualified_name}",
+        tool_name=TOOL_NAME,
+    )
+
+    doc.system_include(
+        "cstring",
+        output=Output.CPP,
+    )
+
+    doc.include(
+        f"{topology.name}TopologyAc.hpp",
+        output=Output.CPP,
+    )
+
+    dictionary = model.analysis.dictionary_map[topology.symbol]
+
+    for component in common.all_annotated_components(model, PRM_DB_ANNOTATION):
+        generate_ac_functions(topology, component, dictionary, doc)
+
+    return doc.render_cpp()
+
+
+def encode_type(ty: fpp.Type.Variant) -> str:
+    """Canonical encoding of everything about a type that affects how its stored bytes are read
+
+    Type names, formats and defaults are left out: they don't change the meaning of a saved value.
+    """
+    match ty:
+        case fpp.Type.Alias():
+            # An alias is just another name for its target
+            return encode_type(ty.alias_type)
+        case fpp.Type.PrimitiveInt() | fpp.Type.Float():
+            return ty.value.name
+        case fpp.Type.Boolean():
+            return "bool"
+        case fpp.Type.String():
+            # None means the framework default size, covered by the serialized size of the param
+            return f"string[{ty.value}]"
+        case fpp.Type.Enum():
+            constants = []
+            for c in ty.node.constants:
+                match c.resolved_value:
+                    case fpp.Value.EnumConstant(value=(name, value)):
+                        constants.append(f"{name}={value}")
+                    case other:
+                        raise ValueError(
+                            f"Unexpected value {other!r} for enum constant {c.name}"
+                        )
+            return f"enum:{ty.rep_type.name}{{{','.join(constants)}}}"
+        case fpp.Type.Array():
+            return encode_type(ty.anon_array)
+        case fpp.Type.AnonArray():
+            return f"[{ty.size}]{encode_type(ty.elt_type)}"
+        case fpp.Type.Struct():
+            # Struct members may themselves be arrays, recorded in `sizes`
+            sizes = ty.sizes
+            members = ",".join(
+                (
+                    f"{name}:[{sizes[name]}]{encode_type( mty)}"
+                    if name in sizes
+                    else f"{name}:{encode_type(mty)}"
+                )
+                for name, mty in ty.anon_struct.members
+            )
+            return f"struct{{{members}}}"
+        case fpp.Type.AnonStruct():
+            members = ",".join(f"{name}:{encode_type(mty)}" for name, mty in ty.members)
+            return f"struct{{{members}}}"
+        case _:
+            raise ValueError(
+                f"Cannot store parameters of type {ty!r} in a static parameter database"
+            )
+
+
+def compute_param_dictionary_crc(
+    params: list[tuple[int, fpp.ParamEntry]],
+) -> tuple[int, list[str]]:
+    """CRC-32 over the layout and meaning of every parameter in the database
+
+    Any dictionary change that would make a previously saved image decode differently (adding,
+    removing, reordering or renaming a parameter, changing its type, an enum's values, a struct's
+    members, ...) changes the result. `params` must already be in storage order.
+    """
+    lines = []
+    for id, prm in params:
+        line = "0x%08x %s.%s %d %s\n" % (
+            id,
+            prm.instance.qualified_name,
+            prm.param.name,
+            prm.param.param_type.serialized_size,
+            encode_type(prm.param.param_type),
+        )
+
+        lines.append(line)
+    return (zlib.crc32("\n".join(lines).encode("utf-8"), 0), lines)
+
+
+def generate_ac_functions(
+    topology: fpp.Topology,
+    component: fpp.Component,
+    dictionary: fpp.Dictionary,
+    doc: "cg.CppDocBuilder",
+):
+    import fprime_cpp_codegen as cg
+
+    # The parameter storage is a single global holding every parameter in the topology,
+    # so it can only back one instance
+    if common.get_singleton_instance(topology, component) is None:
+        # This component is not in the topology, we don't need to do anything
+        return
+
+    # Generate the above interface in the proper namespace/C++ class
+    *namespaces, prm_db_name = component.symbol.qualified_name.split(".")
+
+    # Sort by ID so the storage layout (and the database CRC) only depends on the dictionary
+    # contents and not the order the analysis happened to visit instances
+    params = sorted(dictionary.param_entry_map.items(), key=lambda entry: entry[0])
+
+    database_hash, hash_lines = compute_param_dictionary_crc(params)
+
+    def prm_name(p: fpp.ParamEntry) -> str:
+        i_name = p.instance.qualified_name.replace(".", "_")
+        return f"{i_name}_{p.param.name}"
+
+    # A topology need not sit inside a module, and namespace() rejects an empty name list
+    scope = doc.namespace(*namespaces) if namespaces else nullcontext(doc)
+    with scope as ns:
+        # Template/helpers for writing records
+        ns.lines("// Database hash lines", output=cg.Output.CPP)
+        ns.lines("".join(list(["|// " + x for x in hash_lines])), output=cg.Output.CPP)
+        ns.lines(
+            """constexpr U32 DATABASE_CRC = 0x%08x;
+            |
+            |template <size_t TY_SIZE>
+            |struct PrmRecord {
+            |  U8 crc;
+            |  U8 data[TY_SIZE];
+            |};
+            |
+            |constexpr U8 crc8_byte(U8 crc, U8 byte) {
+            |  crc = static_cast<U8>(crc ^ byte);
+            |  for (FwIndexType b = 0; b < 8; b++) {
+            |    crc = (crc & 0x80) ?
+            |      static_cast<U8>((crc << 1) ^ %s::CRC8_POLY)
+            |      : static_cast<U8>(crc << 1);
+            |  }
+            |  return crc;
+            |}
+            |
+            |constexpr U8 seedFor(FwPrmIdType id) {
+            |  U8 crc = 0xFF;
+            |  for (FwIndexType i = sizeof(FwPrmIdType) - 1; i >= 0; i--) {
+            |    crc = crc8_byte(crc, static_cast<U8>(id >> (8 * i)));
+            |  }
+            |  return crc;
+            |}""" % (database_hash, prm_db_name),
+            output=cg.Output.CPP,
+        )
+
+        # Generate the RAM buffer to hold parameter values
+        ns.lines(
+            f"""
+            |//! Buffer for {prm_db_name} parameter database
+            |struct {{
+            |  U8 __database_crc[4];
+            |""",
+            output=cg.Output.CPP,
+        )
+
+        total_size = 4
+        for id, prm in params:
+            size = prm.param.param_type.serialized_size
+            total_size += size + 1  # +1 for hash
+            mangled_name = prm_name(prm)
+            ty_name = str(prm.param.param_type)
+            ns.lines(
+                f"  PrmRecord<{size}> {mangled_name};  // {ty_name} id=0x{id:x}",
+                output=cg.Output.CPP,
+            )
+
+            # Static sizes are assumed everywhere
+            # Make sure none of our parameters are strings
+            try:
+                common.assert_fixed_width(
+                    prm.param.param_type,
+                    "Only fixed-width serializables are supported for static parameter database",
+                )
+            except fpp.DiagnosticError as e:
+                e.diagnostic.add_annotation("from parameter", span=prm.param.node.span)
+                e.diagnostic.add_annotation(
+                    "in component instance", span=prm.instance.node.span
+                )
+                raise
+
+        ns.lines(
+            f"""|}} __PRM_RECORD_DB;
+                |
+                |static_assert(sizeof(__PRM_RECORD_DB) == {total_size}, "Unexpected size of prm db");""",
+            output=cg.Output.CPP,
+        )
+
+        # void writeParam(FwPrmIdType id, const Fw::ParamBuffer& val);
+        with ns.function(f"{prm_db_name} ::writeParam", static=True) as f:
+            f.param("FwPrmIdType", "id")
+            f.param("const Fw::ParamBuffer&", "val")
+
+            with f.body.switch("id") as sw:
+                for id, prm in params:
+                    mangled_name = prm_name(prm)
+                    ty_name = str(prm.param.param_type)
+                    size = prm.param.param_type.serialized_size
+                    with sw.case(f"0x{id:x}") as c:
+                        c.lines(f"""// {mangled_name}: {ty_name}
+                        |FW_ASSERT(val.getSize() == {size}, val.getSize(), {size});
+                        |constexpr U8 seed = seedFor(0x{id:x});
+                        |U8 crc = computeCrc(seed, val.getBuffAddr(), {size});
+                        |__PRM_RECORD_DB.{mangled_name}.crc = crc;
+                        |(void)memcpy(__PRM_RECORD_DB.{mangled_name}.data, val.getBuffAddr(), {size});
+                        |""")
+                with sw.default() as d:
+                    d.lines("FW_ASSERT(false, id);")
+
+        # Fw::ParamValid readParam(FwPrmIdType id, Fw::ParamBuffer& val);
+        with ns.function(
+            f"{prm_db_name} ::readParam", ret="Fw::ParamValid", static=True
+        ) as f:
+            f.param("FwPrmIdType", "id")
+            f.param("Fw::ParamBuffer&", "val")
+
+            f.body.lines(f"")
+
+            with f.body.switch("id") as sw:
+                for id, prm in params:
+                    mangled_name = prm_name(prm)
+                    ty_name = str(prm.param.param_type)
+                    size = prm.param.param_type.serialized_size
+                    with sw.case(f"0x{id:x}") as c:
+                        c.lines(f"""// {mangled_name}: {ty_name}
+                        |FW_ASSERT(val.getSize() == {size}, val.getSize(), {size});
+                        |constexpr U8 seed = seedFor(0x{id:x});
+                        |U8 crc = computeCrc(seed, __PRM_RECORD_DB.{mangled_name}.data, {size});
+                        |(void)memcpy(val.getBuffAddr(), __PRM_RECORD_DB.{mangled_name}.data, {size});
+                        |bool valid = (crc == __PRM_RECORD_DB.{mangled_name}.crc);
+                        |return valid ? Fw::ParamValid::VALID : Fw::ParamValid::INVALID;
+                        |""")
+                with sw.default() as d:
+                    d.lines("""|FW_ASSERT(false, id);
+                               |return Fw::ParamValid::INVALID;""")
+
+        with ns.function(f"{prm_db_name} ::loadParameters", static=True) as f:
+            # Load parameters is generated for each deployment topology
+            # This call is simply a wrapper call around that function
+            *namespaces, _ = topology.symbol.qualified_name.split(".")
+            f.body.line(f"::{"::".join(namespaces)}::loadParameters();")
+
+        with ns.function(f"{prm_db_name} ::initializeDefaults", static=True) as f:
+            # TODO
+            pass
+
+        with ns.function(f"{prm_db_name} ::validate", static=True) as f:
+            f.param("U32&", "validRecords")
+            f.param("U32&", "invalidRecords")
+            # TODO
+            pass
+
+        with ns.function(
+            f"{prm_db_name} ::getDeploymentParameterHash", ret="U32", static=True
+        ) as f:
+            f.body.line("return DATABASE_CRC;")
+
+        with ns.function(
+            f"{prm_db_name} ::getDatabaseBuffer", ret="Fw::Buffer", static=True
+        ) as f:
+            f.body.line(
+                f"return Fw::Buffer(reinterpret_cast<U8*>(&__PRM_RECORD_DB), {total_size});"
+            )
+
+
+def main() -> int:
+    return common.main(TOOL_NAME, generate)
+
+
+if __name__ == "__main__":
+    try:
+        sys.exit(main())
+    except fpp.DiagnosticError as e:
+        print(e.diagnostic.render(color=True))
+        sys.exit(1)

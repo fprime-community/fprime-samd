@@ -7,18 +7,15 @@
 #ifndef Samd21_StaticPrmDb_HPP
 #define Samd21_StaticPrmDb_HPP
 
-#include "Drv/ByteStreamDriverModel/ByteStreamStatusEnumAc.hpp"
-#include "Fw/Prm/ParamValidEnumAc.hpp"
-#include "Fw/Prm/PrmBuffer.hpp"
-#include "Fw/Types/SuccessEnumAc.hpp"
-#include "config/FwPrmIdTypeAliasAc.h"
 #include "fprime-samd/Svc/StaticPrmDb/StaticPrmDbComponentAc.hpp"
-#include "fprime-samd/Svc/StaticPrmDb/StaticPrmDb_PrmBankEnumAc.hpp"
 
 namespace Samd21 {
 
 class StaticPrmDb final : public StaticPrmDbComponentBase {
   public:
+    //! MSB-first CRC-8 polynomial used for per-parameter checks (CRC-8/AUTOSAR)
+    static constexpr U8 CRC8_POLY = 0x2F;
+
     // ----------------------------------------------------------------------
     // Component construction and destruction
     // ----------------------------------------------------------------------
@@ -74,49 +71,52 @@ class StaticPrmDb final : public StaticPrmDbComponentBase {
     //! Handler implementation for command SAVE
     //!
     //! Save the current parameters to non-volatile memory
-    void SAVE_cmdHandler(FwOpcodeType opCode,                     //!< The opcode
-                         U32 cmdSeq,                              //!< The command sequence number
-                         const Samd21::StaticPrmDb_PrmBank& bank  //!< The non-volatile parameter bank to write to
+    void SAVE_cmdHandler(FwOpcodeType opCode,  //!< The opcode
+                         U32 cmdSeq            //!< The command sequence number
                          ) override;
 
     //! Handler implementation for command LOAD
     //!
     //! Load parameter values from non-volatile memory
-    void LOAD_cmdHandler(FwOpcodeType opCode,                     //!< The opcode
-                         U32 cmdSeq,                              //!< The command sequence number
-                         const Samd21::StaticPrmDb_PrmBank& bank  //!< The non-volatile parameter bank to read from
+    void LOAD_cmdHandler(FwOpcodeType opCode,  //!< The opcode
+                         U32 cmdSeq            //!< The command sequence number
                          ) override;
 
   private:
+    // ----------------------------------------------------------------------
+    // Auto-generated helpers
+    // ----------------------------------------------------------------------
+
     //! Writes parameter value to RAM given its ID
-    Fw::Success writeParam(FwPrmIdType id, const Fw::ParamBuffer& val);
+    static void writeParam(FwPrmIdType id, const Fw::ParamBuffer& val);
 
     //! Reads the parameter value from RAM given its ID
-    Fw::ParamValid readParam(FwPrmIdType id, Fw::ParamBuffer& val);
-
-    //! Wipe the in-memory database and initialize the default values
-    void initializeDefaults();
+    static Fw::ParamValid readParam(FwPrmIdType id, Fw::ParamBuffer& val);
 
     //! Validate each record and count the valid/invalid records
-    void validate(U32& validRecords, U32& invalidRecords);
+    static void validate(U32& validRecords, U32& invalidRecords);
 
     //! Get a buffer representing the parameter database
-    Fw::Buffer getDatabaseBuffer();
+    static Fw::Buffer getDatabaseBuffer();
 
     //! Call the deployment level load parameters to push all parameters to their components
-    void loadParameters();
+    static void loadParameters();
 
     //! A statically generated hash for the current dictionary/deployment version
     //! This hash will guard the layout of a deployment's parameters so that mismatched
     //! layouts are detected and the storage read will drop the DB.
-    U32 getDeploymentParameterHash() const;
+    static U32 getDeploymentParameterHash();
+
+  private:
+    // ----------------------------------------------------------------------
+    // Other helpers
+    // ----------------------------------------------------------------------
+
+    static U8 computeCrc(U8 seed, const U8* data, FwSizeType size);
 
   private:
     //! Current state of the IO transaction
     StaticPrmDb_IoState::T m_ioState;
-
-    //! Current bank we are IO-ing from/to
-    StaticPrmDb_PrmBank::T m_ioBank;
 
     //! Active command opcode in progress
     FwOpcodeType m_opCode;
