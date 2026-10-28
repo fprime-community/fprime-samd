@@ -145,6 +145,40 @@ def generate_all(
     return 0
 
 
+def assert_fixed_width(ty: fpp.Type.Variant, message: str):
+    match ty:
+        case fpp.Type.String():
+            raise fpp.DiagnosticError(fpp.Diagnostic(message))
+        case fpp.Type.Struct() as s:
+            for name, member in s.anon_struct.members:
+                try:
+                    assert_fixed_width(member, message)
+                except fpp.DiagnosticError as e:
+                    # Look up the member in the AST to get it's span
+                    member_span = next(
+                        (m.span for m in s.node.members if m.name == name), None
+                    )
+                    e.diagnostic.add_annotation("in struct member", span=member_span)
+                    raise
+        case fpp.Type.Array() as a:
+            try:
+                assert_fixed_width(a.anon_array.elt_type, message)
+            except fpp.DiagnosticError as e:
+                e.diagnostic.add_annotation(
+                    "element of array", span=a.node.elt_type.span
+                )
+                raise
+        case fpp.Type.Alias() as a:
+            try:
+                assert_fixed_width(a.alias_type, message)
+            except fpp.DiagnosticError as e:
+                e.diagnostic.add_annotation("aliased here", span=a.node.type_name.span)
+                raise
+        case _:
+            # Everything else is fixed width (for now...)
+            pass
+
+
 def main(
     tool_name: str,
     generate: Generate,

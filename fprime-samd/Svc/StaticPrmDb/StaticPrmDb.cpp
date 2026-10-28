@@ -5,15 +5,12 @@
 // ======================================================================
 
 #include "fprime-samd/Svc/StaticPrmDb/StaticPrmDb.hpp"
-#include "Drv/ByteStreamDriverModel/ByteStreamStatusEnumAc.hpp"
 #include "Fw/Cmd/CmdResponseEnumAc.hpp"
 #include "Fw/Prm/ParamValidEnumAc.hpp"
 #include "Fw/Types/Assert.hpp"
 #include "Fw/Types/Serializable.hpp"
 #include "Fw/Types/SuccessEnumAc.hpp"
 #include "config/FwAssertArgTypeAliasAc.h"
-#include "fprime-samd/Svc/StaticPrmDb/StaticPrmDb_IoStateEnumAc.hpp"
-#include "fprime-samd/Svc/StaticPrmDb/StaticPrmDb_PrmBankEnumAc.hpp"
 
 namespace Samd21 {
 
@@ -22,13 +19,7 @@ namespace Samd21 {
 // ----------------------------------------------------------------------
 
 StaticPrmDb::StaticPrmDb(const char* const compName)
-    : StaticPrmDbComponentBase(compName),
-      m_ioState(StaticPrmDb_IoState::IDLE),
-      m_ioBank(StaticPrmDb_PrmBank::PRIME),
-      m_opCode(0),
-      m_cmdSeq(0) {
-    this->initializeDefaults();
-}
+    : StaticPrmDbComponentBase(compName), m_ioState(StaticPrmDb_IoState::IDLE), m_opCode(0), m_cmdSeq(0) {}
 
 StaticPrmDb::~StaticPrmDb() {}
 
@@ -49,9 +40,6 @@ void StaticPrmDb::readReturnIn_handler(FwIndexType portNum, Fw::Buffer& fwBuffer
     // Make sure we are waiting for a reply
     FW_ASSERT(this->m_ioState == StaticPrmDb_IoState::READING, static_cast<FwAssertArgType>(this->m_ioState));
 
-    // Make sure we are waiting for the proper bank to reply
-    FW_ASSERT(portNum == this->m_ioBank, portNum, this->m_ioBank);
-
     // We should be getting back the same buffer we sent out
     auto txBuf = this->getDatabaseBuffer();
     FW_ASSERT(fwBuffer.getData() == txBuf.getData());
@@ -71,7 +59,7 @@ void StaticPrmDb::readReturnIn_handler(FwIndexType portNum, Fw::Buffer& fwBuffer
             U32 invalidRecords;
             this->validate(validRecords, invalidRecords);
 
-            this->log_ACTIVITY_HI_LoadedDatabase(this->m_ioBank, validRecords, invalidRecords);
+            this->log_ACTIVITY_HI_LoadedDatabase(validRecords, invalidRecords);
 
             // Percolate the parameters to the rest of the system
             this->loadParameters();
@@ -79,30 +67,51 @@ void StaticPrmDb::readReturnIn_handler(FwIndexType portNum, Fw::Buffer& fwBuffer
             result = Fw::Success::SUCCESS;
         } else {
             result = Fw::Success::FAILURE;
-            this->log_WARNING_HI_MismatchedParameterDatabaseHash(this->m_ioBank, storedHash, generatedHash);
+            this->log_WARNING_HI_MismatchedParameterDatabaseHash(storedHash, generatedHash);
         }
     } else {
         result = Fw::Success::FAILURE;
-        this->log_WARNING_HI_ReadFailed(this->m_ioBank, status);
+        this->log_WARNING_HI_ReadFailed(status);
     }
 
     if (result == Fw::Success::SUCCESS) {
         this->m_ioState = StaticPrmDb_IoState::IDLE;
         this->cmdResponse_out(this->m_opCode, this->m_cmdSeq, Fw::CmdResponse::OK);
     } else {
-        // Clear the in-memory database since the entire thing is invalid
-        this->initializeDefaults();
-
         this->m_ioState = StaticPrmDb_IoState::IDLE;
         this->cmdResponse_out(this->m_opCode, this->m_cmdSeq, Fw::CmdResponse::EXECUTION_ERROR);
     }
 }
 
+//! Shift a nibble (placed in the high bits) through 4 rounds of the MSB-first CRC-8 polynomial
+static constexpr U8 crc8Nibble(U8 n) {
+    U8 crc = static_cast<U8>(n << 4);
+    for (U8 b = 0; b < 4; b++) {
+        crc = (crc & 0x80) ? static_cast<U8>((crc << 1) ^ StaticPrmDb::CRC8_POLY) : static_cast<U8>(crc << 1);
+    }
+    return crc;
+}
+
+// Nibble-table CRC-8: 16-byte table, ~2 lookups per byte on M0+
+static constexpr U8 CRC8_NIBBLE[16] = {
+    crc8Nibble(0x0), crc8Nibble(0x1), crc8Nibble(0x2), crc8Nibble(0x3), crc8Nibble(0x4), crc8Nibble(0x5),
+    crc8Nibble(0x6), crc8Nibble(0x7), crc8Nibble(0x8), crc8Nibble(0x9), crc8Nibble(0xA), crc8Nibble(0xB),
+    crc8Nibble(0xC), crc8Nibble(0xD), crc8Nibble(0xE), crc8Nibble(0xF),
+};
+
+U8 StaticPrmDb::computeCrc(U8 seed, const U8* data, FwSizeType len) {
+    U8 crc = seed ^ 0xFF;
+    for (FwSizeType i = 0; i < len; i++) {
+        crc ^= data[i];
+        crc = static_cast<U8>((crc << 4) ^ CRC8_NIBBLE[crc >> 4]);
+        crc = static_cast<U8>((crc << 4) ^ CRC8_NIBBLE[crc >> 4]);
+    }
+    return crc;
+}
+
 void StaticPrmDb::setPrm_handler(FwIndexType portNum, FwPrmIdType id, Fw::ParamBuffer& val) {
     if (this->m_ioState == StaticPrmDb_IoState::IDLE) {
-        auto status = this->writeParam(id, val);
-        FW_ASSERT(status == Fw::Success::SUCCESS, static_cast<FwAssertArgType>(status),
-                  static_cast<FwAssertArgType>(id));
+        this->writeParam(id, val);
     } else {
         this->log_WARNING_HI_DroppingPrmSave(id, this->m_ioState);
     }
@@ -113,9 +122,6 @@ void StaticPrmDb::writeReturnIn_handler(FwIndexType portNum,
                                         const Drv::ByteStreamStatus& status) {
     // Make sure we are waiting for a reply
     FW_ASSERT(this->m_ioState == StaticPrmDb_IoState::WRITING, static_cast<FwAssertArgType>(this->m_ioState));
-
-    // Make sure we are waiting for the proper bank to reply
-    FW_ASSERT(portNum == this->m_ioBank, portNum, this->m_ioBank);
 
     // We should be getting back the same buffer we sent out
     auto txBuf = this->getDatabaseBuffer();
@@ -135,7 +141,7 @@ void StaticPrmDb::writeReturnIn_handler(FwIndexType portNum,
 // Handler implementations for commands
 // ----------------------------------------------------------------------
 
-void StaticPrmDb::SAVE_cmdHandler(FwOpcodeType opCode, U32 cmdSeq, const Samd21::StaticPrmDb_PrmBank& bank) {
+void StaticPrmDb::SAVE_cmdHandler(FwOpcodeType opCode, U32 cmdSeq) {
     // Make sure there is nothing in progress
     switch (this->m_ioState) {
         case StaticPrmDb_IoState::IDLE:  // This is OK
@@ -149,14 +155,13 @@ void StaticPrmDb::SAVE_cmdHandler(FwOpcodeType opCode, U32 cmdSeq, const Samd21:
     this->m_ioState = StaticPrmDb_IoState::WRITING;
     this->m_opCode = opCode;
     this->m_cmdSeq = cmdSeq;
-    this->m_ioBank = bank;
 
     // Write the transmit buffer to the proper bank
     auto buf = this->getDatabaseBuffer();
-    this->writeOut_out(bank.e, buf);
+    this->writeOut_out(0, buf);
 }
 
-void StaticPrmDb::LOAD_cmdHandler(FwOpcodeType opCode, U32 cmdSeq, const Samd21::StaticPrmDb_PrmBank& bank) {
+void StaticPrmDb::LOAD_cmdHandler(FwOpcodeType opCode, U32 cmdSeq) {
     // Make sure there is nothing in progress
     switch (this->m_ioState) {
         case StaticPrmDb_IoState::IDLE:  // This is OK
@@ -170,11 +175,10 @@ void StaticPrmDb::LOAD_cmdHandler(FwOpcodeType opCode, U32 cmdSeq, const Samd21:
     this->m_ioState = StaticPrmDb_IoState::READING;
     this->m_opCode = opCode;
     this->m_cmdSeq = cmdSeq;
-    this->m_ioBank = bank;
 
     // Read the bank into the transmit buffer
     auto buf = this->getDatabaseBuffer();
-    this->readOut_out(bank.e, buf);
+    this->readOut_out(0, buf);
 }
 
 }  // namespace Samd21

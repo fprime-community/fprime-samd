@@ -39,55 +39,20 @@ def tlm_packet_offsets(dictionary: fpp.Dictionary, tlm_id: int):
                 ].tlm_channel.channel_type.serialized_size
 
 
-def assert_fixed_width(ty: fpp.Type.Variant):
-    match ty:
-        case fpp.Type.String():
-            raise fpp.DiagnosticError(
-                fpp.Diagnostic(
-                    "Only fixed-width serializables are supported in static telemetry packets"
-                )
-            )
-        case fpp.Type.Struct() as s:
-            for name, member in s.anon_struct.members:
-                try:
-                    assert_fixed_width(member)
-                except fpp.DiagnosticError as e:
-                    # Look up the member in the AST to get it's span
-                    member_span = next(
-                        (m.span for m in s.node.members if m.name == name), None
-                    )
-                    e.diagnostic.add_annotation("in struct member", span=member_span)
-                    raise
-        case fpp.Type.Array() as a:
-            try:
-                assert_fixed_width(a.anon_array.elt_type)
-            except fpp.DiagnosticError as e:
-                e.diagnostic.add_annotation(
-                    "element of array", span=a.node.elt_type.span
-                )
-                raise
-        case fpp.Type.Alias() as a:
-            try:
-                assert_fixed_width(a.alias_type)
-            except fpp.DiagnosticError as e:
-                e.diagnostic.add_annotation("aliased here", span=a.node.type_name.span)
-                raise
-        case _:
-            # Everything else is fixed width (for now...)
-            pass
-
-
 def compute_size(dictionary: fpp.Dictionary, pkt: fpp.TlmPacket) -> int:
     size = 0
     for id_ in pkt.member_id_list:
         chan = dictionary.tlm_channel_entry_map[id_]
         try:
-            assert_fixed_width(chan.tlm_channel.channel_type)
+            common.assert_fixed_width(
+                chan.tlm_channel.channel_type,
+                "Only fixed-width serializables are supported in static telemetry packets",
+            )
         except fpp.DiagnosticError as e:
             e.diagnostic.add_annotation(
-                "in telemetry channel", span=chan.tlm_channel.node.span
+                "from telemetry channel", span=chan.tlm_channel.node.span
             )
-            e.diagnostic.add_annotation("in telemetry packet", span=pkt.node.span)
+            e.diagnostic.add_annotation("placed in telemetry packet", span=pkt.node.span)
             raise
 
         size += chan.tlm_channel.channel_type.serialized_size
