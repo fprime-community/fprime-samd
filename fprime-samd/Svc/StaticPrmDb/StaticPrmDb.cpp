@@ -81,11 +81,10 @@ void StaticPrmDb::readReturnIn_handler(FwIndexType portNum, Fw::Buffer& fwBuffer
         this->log_WARNING_HI_ReadFailed(status);
     }
 
+    this->m_ioState = StaticPrmDb_IoState::IDLE;
     if (result == Fw::Success::SUCCESS) {
-        this->m_ioState = StaticPrmDb_IoState::IDLE;
         this->cmdResponse_out(this->m_opCode, this->m_cmdSeq, Fw::CmdResponse::OK);
     } else {
-        this->m_ioState = StaticPrmDb_IoState::IDLE;
         this->cmdResponse_out(this->m_opCode, this->m_cmdSeq, Fw::CmdResponse::EXECUTION_ERROR);
     }
 }
@@ -108,12 +107,11 @@ void StaticPrmDb::writeReturnIn_handler(FwIndexType portNum,
     auto txBuf = this->getDatabaseBuffer();
     FW_ASSERT(fwBuffer.getData() == txBuf.getData());
 
+    this->m_ioState = StaticPrmDb_IoState::IDLE;
     if (status == Drv::ByteStreamStatus::OP_OK) {
-        this->m_ioState = StaticPrmDb_IoState::IDLE;
         this->cmdResponse_out(this->m_opCode, this->m_cmdSeq, Fw::CmdResponse::OK);
     } else {
         // We failed to write the data down to the bank
-        this->m_ioState = StaticPrmDb_IoState::IDLE;
         this->cmdResponse_out(this->m_opCode, this->m_cmdSeq, Fw::CmdResponse::EXECUTION_ERROR);
     }
 }
