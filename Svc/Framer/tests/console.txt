@@ -3,12 +3,12 @@
 ==============================================================================
 PASSED  fprime-samd_Svc_Framer_ut_exe  (0.03s)
 ==============================================================================
-[STest::Random] Generated seed 513007 from system time
+[STest::Random] Generated seed 595683 from system time
 [==========] Running 6 tests from 2 test suites.
 [----------] Global test environment set-up.
 [----------] 5 tests from Nominal
 [ RUN      ] Nominal.SinglePacket
-[       OK ] Nominal.SinglePacket (2 ms)
+[       OK ] Nominal.SinglePacket (1 ms)
 [ RUN      ] Nominal.MultiPacketAccumulation
 [       OK ] Nominal.MultiPacketAccumulation (0 ms)
 [ RUN      ] Nominal.BufferOverflow
@@ -17,7 +17,7 @@ PASSED  fprime-samd_Svc_Framer_ut_exe  (0.03s)
 [       OK ] Nominal.DoubleBufferLifecycle (0 ms)
 [ RUN      ] Nominal.SchedInFlush
 [       OK ] Nominal.SchedInFlush (0 ms)
-[----------] 5 tests from Nominal (3 ms total)
+[----------] 5 tests from Nominal (2 ms total)
 
 [----------] 1 test from OffNominal
 [ RUN      ] OffNominal.Backpressure

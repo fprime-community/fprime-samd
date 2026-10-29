@@ -3,7 +3,7 @@
 ==============================================================================
 PASSED  fprime-samd_Drv_I2cDriver_ut_exe  (0.07s)
 ==============================================================================
-[STest::Random] Generated seed 323272 from system time
+[STest::Random] Generated seed 227563 from system time
 [==========] Running 39 tests from 10 test suites.
 [----------] Global test environment set-up.
 [----------] 3 tests from Configure
@@ -37,7 +37,7 @@ configure() registers the component's ISR trampoline
 (RQ)       SAMD21-I2C-001: The I2cDriver shall configure a SERCOM peripheral for I2C host operation (the driver's ISR trampoline is registered for its SERCOM)
 ***************************************
 [       OK ] Configure.RegistersIsr (0 ms)
-[----------] 3 tests from Configure (4 ms total)
+[----------] 3 tests from Configure (5 ms total)
 
 [----------] 3 tests from Read
 [ RUN      ] Read.Nominal
@@ -49,7 +49,7 @@ read() queues an RX DMA transfer and kicks off the peripheral
 ***************************************
 (RQ)       SAMD21-I2C-002: The I2cDriver shall perform 7-bit-addressed read transactions using DMA for the data payload
 ***************************************
-[       OK ] Read.Nominal (0 ms)
+[       OK ] Read.Nominal (1 ms)
 [ RUN      ] Read.Completion
 
 ***************************************
@@ -63,7 +63,7 @@ RX DMA completion returns the buffer OK and frees the driver
 ***************************************
 (RQ)       SAMD21-I2C-006: The I2cDriver shall deliver every completion callback from the main context (via activeIn), not from interrupt context
 ***************************************
-[       OK ] Read.Completion (0 ms)
+[       OK ] Read.Completion (1 ms)
 [ RUN      ] Read.Busy
 
 ***************************************
@@ -73,8 +73,8 @@ read() while busy is rejected with OTHER_ERR
 ***************************************
 (RQ)       SAMD21-I2C-005: The I2cDriver shall reject a new request that arrives while a transaction is in progress, returning I2C_OTHER_ERR on the matching completion callback
 ***************************************
-[       OK ] Read.Busy (0 ms)
-[----------] 3 tests from Read (2 ms total)
+[       OK ] Read.Busy (1 ms)
+[----------] 3 tests from Read (3 ms total)
 
 [----------] 3 tests from Write
 [ RUN      ] Write.Nominal
@@ -407,7 +407,7 @@ both phases of a write-read target the max legal 7-bit address 0x7F
 ***************************************
 (RQ)       SAMD21-I2C-003: The I2cDriver shall implement writeRead as a repeated START with no intervening STOP (both halves target the same address)
 ***************************************
-[       OK ] Boundary.WriteReadMaxAddress (0 ms)
+[       OK ] Boundary.WriteReadMaxAddress (1 ms)
 [----------] 3 tests from Boundary (2 ms total)
 
 [----------] 2 tests from Telemetry
@@ -420,7 +420,7 @@ reportTelemetryIn maps the bus status registers to channels
 ***************************************
 (RQ)       SAMD21-I2C-004: The I2cDriver shall count bus errors in telemetry
 ***************************************
-[       OK ] Telemetry.BusStatus (0 ms)
+[       OK ] Telemetry.BusStatus (1 ms)
 [ RUN      ] Telemetry.DeviceOnBus
 
 ***************************************
@@ -430,8 +430,8 @@ both SB and MB set maps to MASTER_AND_SLAVE_ON_BUS
 ***************************************
 (RQ)       SAMD21-I2C-004: The I2cDriver shall report bus state in telemetry
 ***************************************
-[       OK ] Telemetry.DeviceOnBus (0 ms)
-[----------] 2 tests from Telemetry (1 ms total)
+[       OK ] Telemetry.DeviceOnBus (1 ms)
+[----------] 2 tests from Telemetry (2 ms total)
 
 [----------] 1 test from Command
 [ RUN      ] Command.ClearErrors
@@ -443,10 +443,10 @@ CLEAR_ERRORS resets the error counter and responds OK
 ***************************************
 (RQ)       SAMD21-I2C-004: The I2cDriver shall count bus errors in telemetry (CLEAR_ERRORS resets the counter)
 ***************************************
-[       OK ] Command.ClearErrors (0 ms)
-[----------] 1 test from Command (0 ms total)
+[       OK ] Command.ClearErrors (1 ms)
+[----------] 1 test from Command (1 ms total)
 
 [----------] Global test environment tear-down
-[==========] 39 tests from 10 test suites ran. (31 ms total)
+[==========] 39 tests from 10 test suites ran. (36 ms total)
 [  PASSED  ] 39 tests.
 

@@ -32,7 +32,7 @@ pre {
   white-space: pre-wrap; word-break: break-word;
 }
 .empty { color: #57606a; padding: 0.75rem 1rem; border-top: 1px solid #d0d7de; margin: 0; }
-</style></head><body><h1>Unit-test console output &mdash; <code>Drv/RtcDriver</code></h1><div class="meta"><span class="pill passed">passed</span> 1 passed &middot; 0.87s &middot; <a href="../../../index.html">← back to the module list</a> &middot; <a href="console.txt">plain text</a></div><details><summary><span class="pill passed">passed</span><span class="name">fprime-samd_Drv_RtcDriver_ut_exe</span><span class="time">0.87s</span></summary><pre>[STest::Random] Generated seed 944771 from system time
+</style></head><body><h1>Unit-test console output &mdash; <code>Drv/RtcDriver</code></h1><div class="meta"><span class="pill passed">passed</span> 1 passed &middot; 0.94s &middot; <a href="../../../index.html">← back to the module list</a> &middot; <a href="console.txt">plain text</a></div><details><summary><span class="pill passed">passed</span><span class="name">fprime-samd_Drv_RtcDriver_ut_exe</span><span class="time">0.94s</span></summary><pre>[STest::Random] Generated seed 758119 from system time
 [==========] Running 15 tests from 2 test suites.
 [----------] Global test environment set-up.
 [----------] 9 tests from Nominal
@@ -106,7 +106,7 @@ pre {
 (RQ)       SAMD21-RTC-007: The RtcDriver shall provide an Os::RawTime implementation (timeInterval() computes the absolute difference between two times)
 ***************************************
 [       OK ] Nominal.testTimeInterval (0 ms)
-[----------] 9 tests from Nominal (1 ms total)
+[----------] 9 tests from Nominal (2 ms total)
 
 [----------] 6 tests from OffNominal
 [ RUN      ] OffNominal.testConfigureAssertsOnDoubleConfigure
@@ -114,7 +114,7 @@ pre {
 ***************************************
 (RQ)       SAMD21-RTC-001: The RtcDriver shall configure the RTC peripheral for periodic interrupts
 ***************************************
-[       OK ] OffNominal.testConfigureAssertsOnDoubleConfigure (210 ms)
+[       OK ] OffNominal.testConfigureAssertsOnDoubleConfigure (259 ms)
 [ RUN      ] OffNominal.testConfigureAssertsOnInvalidRate
 
 ***************************************
@@ -126,13 +126,13 @@ pre {
 ***************************************
 (RQ)       SAMD21-RTC-005: The RtcDriver shall support internal, external, and ULP clock sources
 ***************************************
-[       OK ] OffNominal.testConfigureAssertsOnInvalidClockSource (217 ms)
+[       OK ] OffNominal.testConfigureAssertsOnInvalidClockSource (221 ms)
 [ RUN      ] OffNominal.testEnableAssertsWhenNotConfigured
 
 ***************************************
 (RQ)       SAMD21-RTC-001: The RtcDriver shall configure the RTC peripheral for periodic interrupts
 ***************************************
-[       OK ] OffNominal.testEnableAssertsWhenNotConfigured (204 ms)
+[       OK ] OffNominal.testEnableAssertsWhenNotConfigured (215 ms)
 [ RUN      ] OffNominal.testCycleOverrun
 
 ***************************************
@@ -145,9 +145,9 @@ pre {
 (RQ)       SAMD21-RTC-008: The RtcDriver shall detect when processing exceeds the configured period
 ***************************************
 [       OK ] OffNominal.testCycleOverrunAccumulates (0 ms)
-[----------] 6 tests from OffNominal (847 ms total)
+[----------] 6 tests from OffNominal (912 ms total)
 
 [----------] Global test environment tear-down
-[==========] 15 tests from 2 test suites ran. (850 ms total)
+[==========] 15 tests from 2 test suites ran. (915 ms total)
 [  PASSED  ] 15 tests.
 </pre></details></body></html>

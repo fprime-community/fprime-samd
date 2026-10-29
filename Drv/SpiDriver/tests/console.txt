@@ -1,0 +1,60 @@
+# unit-test console output: Drv/SpiDriver
+
+==============================================================================
+PASSED  fprime-samd_Drv_SpiDriver_ut_exe  (2.17s)
+==============================================================================
+[STest::Random] Generated seed 303210 from system time
+[==========] Running 21 tests from 2 test suites.
+[----------] Global test environment set-up.
+[----------] 9 tests from Nominal
+[ RUN      ] Nominal.ConfigureSoftwareChipSelect
+[       OK ] Nominal.ConfigureSoftwareChipSelect (2 ms)
+[ RUN      ] Nominal.ConfigureHardwareChipSelect
+[       OK ] Nominal.ConfigureHardwareChipSelect (0 ms)
+[ RUN      ] Nominal.Transaction
+[       OK ] Nominal.Transaction (1 ms)
+[ RUN      ] Nominal.HardwareChipSelectTransaction
+[       OK ] Nominal.HardwareChipSelectTransaction (0 ms)
+[ RUN      ] Nominal.CalculateBaud
+[       OK ] Nominal.CalculateBaud (909 ms)
+[ RUN      ] Nominal.RandomTransactions
+[       OK ] Nominal.RandomTransactions (30 ms)
+[ RUN      ] Nominal.SetBaudRate
+[       OK ] Nominal.SetBaudRate (0 ms)
+[ RUN      ] Nominal.SetBaudRatePort
+[       OK ] Nominal.SetBaudRatePort (0 ms)
+[ RUN      ] Nominal.SchedIdle
+[       OK ] Nominal.SchedIdle (0 ms)
+[----------] 9 tests from Nominal (945 ms total)
+
+[----------] 12 tests from OffNominal
+[ RUN      ] OffNominal.Busy
+[       OK ] OffNominal.Busy (234 ms)
+[ RUN      ] OffNominal.SameSlotReRequest
+[       OK ] OffNominal.SameSlotReRequest (243 ms)
+[ RUN      ] OffNominal.ChipSelectFailure
+[       OK ] OffNominal.ChipSelectFailure (230 ms)
+[ RUN      ] OffNominal.DmaBusError
+[       OK ] OffNominal.DmaBusError (0 ms)
+[ RUN      ] OffNominal.ConfigureTwice
+[       OK ] OffNominal.ConfigureTwice (229 ms)
+[ RUN      ] OffNominal.RequestBeforeConfigure
+[       OK ] OffNominal.RequestBeforeConfigure (0 ms)
+[ RUN      ] OffNominal.SizeMismatch
+[       OK ] OffNominal.SizeMismatch (240 ms)
+[ RUN      ] OffNominal.ReceiveOverrun
+[       OK ] OffNominal.ReceiveOverrun (1 ms)
+[ RUN      ] OffNominal.ReceiveOverrunAfterTxComplete
+[       OK ] OffNominal.ReceiveOverrunAfterTxComplete (0 ms)
+[ RUN      ] OffNominal.SpuriousInterrupt
+[       OK ] OffNominal.SpuriousInterrupt (0 ms)
+[ RUN      ] OffNominal.ReceiveOverrunIdle
+[       OK ] OffNominal.ReceiveOverrunIdle (0 ms)
+[ RUN      ] OffNominal.UnexpectedDmaReply
+[       OK ] OffNominal.UnexpectedDmaReply (0 ms)
+[----------] 12 tests from OffNominal (1184 ms total)
+
+[----------] Global test environment tear-down
+[==========] 21 tests from 2 test suites ran. (2129 ms total)
+[  PASSED  ] 21 tests.
+

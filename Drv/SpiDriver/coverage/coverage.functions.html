@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html class="theme-green">
+
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+    <title>GCC Code Coverage Report</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <link rel="stylesheet" href="coverage.css"/>
+  </head>
+
+  <body>
+
+    <header>
+      <h1>GCC Code Coverage Report</h1>
+      <hr/>
+      <div class="summary">
+<div>
+  <table class="legend">
+    <tr>
+      <th scope="row">Directory:</th>
+      <td>lib/fprime-samd/fprime-samd/Drv/SpiDriver/</td>
+    </tr>
+    <tr>
+      <th scope="row">Date:</th>
+      <td>2026-10-29 00:18:26</td>
+    </tr>
+  </table>
+</div>
+
+<div>
+  <table class="coverage">
+    <tr>
+      <th></th>
+      <th scope="col">Exec</th>
+      <th scope="col">Total</th>
+      <th scope="col">Coverage</th>
+    </tr>
+    <tr>
+      <th scope="row">Lines:</th>
+      <td>180</td>
+      <td>183</td>
+      <td class="coverage-high">98.4%</td>
+    </tr>
+    <tr>
+      <th scope="row">Functions:</th>
+      <td>14</td>
+      <td>14</td>
+      <td class="coverage-high">100.0%</td>
+    </tr>
+    <tr>
+      <th scope="row">Branches:</th>
+      <td>150</td>
+      <td>166</td>
+      <td class="coverage-high">90.4%</td>
+    </tr>
+  </table>
+</div>
+      </div>
+      <hr/>
+    </header>
+    <nav>
+    </nav>
+    <main>
+<table class="listOfFunctions">
+  <tr>
+    <th>Function (File:Line)</th>
+    <th>Call count</th>
+    <th>Block coverage</th>
+  </tr>
+  <tr><td><a href="coverage.SpiDriver.cpp.4ac4347cc5256240572565dced7cd9b5.html#l45">Samd21::SpiDriver::SpiDriver(char const*) (lib/fprime-samd/fprime-samd/Drv/SpiDriver/SpiDriver.cpp:45)</a></td><td>called 24 times</td><td>87.0%</td></tr>
+  <tr><td><a href="coverage.SpiDriver.cpp.4ac4347cc5256240572565dced7cd9b5.html#l132">Samd21::SpiDriver::SpiWriteRead_handler(short, Fw::Buffer&amp;, Fw::Buffer&amp;) (lib/fprime-samd/fprime-samd/Drv/SpiDriver/SpiDriver.cpp:132)</a></td><td>called 632 times</td><td>71.0%</td></tr>
+  <tr><td><a href="coverage.SpiDriver.cpp.4ac4347cc5256240572565dced7cd9b5.html#l203">Samd21::SpiDriver::activeIn_handler(short, unsigned int) (lib/fprime-samd/fprime-samd/Drv/SpiDriver/SpiDriver.cpp:203)</a></td><td>called 637 times</td><td>100.0%</td></tr>
+  <tr><td><a href="coverage.SpiDriver.cpp.4ac4347cc5256240572565dced7cd9b5.html#l24">Samd21::SpiDriver::calculateBaud(unsigned int, unsigned int) (lib/fprime-samd/fprime-samd/Drv/SpiDriver/SpiDriver.cpp:24)</a></td><td>called 7 times</td><td>58.0%</td></tr>
+  <tr><td><a href="coverage.SpiDriver.cpp.4ac4347cc5256240572565dced7cd9b5.html#l66">Samd21::SpiDriver::configure(Samd21::SercomKind, unsigned int, Samd21::SpiDriver::DataOrder, Samd21::SpiDriver::ClockPolarity, Samd21::SpiDriver::ClockPhase, Samd21::SpiDriver::DataInPinout, Samd21::SpiDriver::DataOutPinout, Samd21::SpiDriver::RunInStandby, Samd21::SpiDriver::HardwareChipSelect) (lib/fprime-samd/fprime-samd/Drv/SpiDriver/SpiDriver.cpp:66)</a></td><td>called 20 times</td><td>71.0%</td></tr>
+  <tr><td><a href="coverage.SpiDriver.cpp.4ac4347cc5256240572565dced7cd9b5.html#l326">Samd21::SpiDriver::deassertChipSelect() (lib/fprime-samd/fprime-samd/Drv/SpiDriver/SpiDriver.cpp:326)</a></td><td>called 539 times</td><td>81.0%</td></tr>
+  <tr><td><a href="coverage.SpiDriver.cpp.4ac4347cc5256240572565dced7cd9b5.html#l213">Samd21::SpiDriver::deliver(Samd21::SpiDriver::PendingReply&amp;, short) (lib/fprime-samd/fprime-samd/Drv/SpiDriver/SpiDriver.cpp:213)</a></td><td>called 5096 times</td><td>74.0%</td></tr>
+  <tr><td><a href="coverage.SpiDriver.cpp.4ac4347cc5256240572565dced7cd9b5.html#l232">Samd21::SpiDriver::dmaReplyIn_handler(short, Samd21::Dma::Reply const&amp;) (lib/fprime-samd/fprime-samd/Drv/SpiDriver/SpiDriver.cpp:232)</a></td><td>called 1070 times</td><td>82.0%</td></tr>
+  <tr><td><a href="coverage.SpiDriver.cpp.4ac4347cc5256240572565dced7cd9b5.html#l292">Samd21::SpiDriver::isrHandler() (lib/fprime-samd/fprime-samd/Drv/SpiDriver/SpiDriver.cpp:292)</a></td><td>called 9 times</td><td>75.0%</td></tr>
+  <tr><td><a href="coverage.SpiDriver.cpp.4ac4347cc5256240572565dced7cd9b5.html#l337">Samd21::SpiDriver::latchReply(short, Fw::Buffer const&amp;, Fw::Buffer const&amp;, Drv::SpiStatus::T) (lib/fprime-samd/fprime-samd/Drv/SpiDriver/SpiDriver.cpp:337)</a></td><td>called 629 times</td><td>76.0%</td></tr>
+  <tr><td><a href="coverage.SpiDriver.cpp.4ac4347cc5256240572565dced7cd9b5.html#l285">Samd21::SpiDriver::s_spiDriverIsrHandler(Fw::PassiveComponentBase*, Samd21::SercomKind) (lib/fprime-samd/fprime-samd/Drv/SpiDriver/SpiDriver.cpp:285)</a></td><td>called 9 times</td><td>59.0%</td></tr>
+  <tr><td><a href="coverage.SpiDriver.cpp.4ac4347cc5256240572565dced7cd9b5.html#l108">Samd21::SpiDriver::setBaudRate(unsigned int) (lib/fprime-samd/fprime-samd/Drv/SpiDriver/SpiDriver.cpp:108)</a></td><td>called 8 times</td><td>80.0%</td></tr>
+  <tr><td><a href="coverage.SpiDriver.cpp.4ac4347cc5256240572565dced7cd9b5.html#l128">Samd21::SpiDriver::setBaudRate_handler(short, unsigned int) (lib/fprime-samd/fprime-samd/Drv/SpiDriver/SpiDriver.cpp:128)</a></td><td>called 4 times</td><td>100.0%</td></tr>
+  <tr><td><a href="coverage.SpiDriver.cpp.4ac4347cc5256240572565dced7cd9b5.html#l64">Samd21::SpiDriver::~SpiDriver() (lib/fprime-samd/fprime-samd/Drv/SpiDriver/SpiDriver.cpp:64)</a></td><td>called 24 times</td><td>100.0%</td></tr>
+</table>
+
+      <hr/>
+    </main>
+    <footer>
+      Generated by: <a href="http://gcovr.com/en/8.2">GCOVR (Version 8.2)</a>
+    </footer>
+  </body>
+</html>
