@@ -46,6 +46,11 @@ def generate(
         output=Output.CPP,
     )
 
+    doc.include(
+        "fprime-samd/Svc/Types/PrmRecord.hpp",
+        output=Output.CPP,
+    )
+
     dictionary = model.analysis.dictionary_map[topology.symbol]
 
     for component in common.all_annotated_components(model, PRM_DB_ANNOTATION):
@@ -159,35 +164,10 @@ def generate_ac_functions(
     # A topology need not sit inside a module, and namespace() rejects an empty name list
     scope = doc.namespace(*namespaces) if namespaces else nullcontext(doc)
     with scope as ns:
-        # Template/helpers for writing records
         ns.lines("// Database hash lines", output=cg.Output.CPP)
         ns.lines("".join(list(["|// " + x for x in hash_lines])), output=cg.Output.CPP)
         ns.lines(
-            """constexpr U32 DATABASE_CRC = 0x%08x;
-            |
-            |template <size_t TY_SIZE>
-            |struct PrmRecord {
-            |  U8 crc;
-            |  U8 data[TY_SIZE];
-            |};
-            |
-            |constexpr U8 crc8_byte(U8 crc, U8 byte) {
-            |  crc = static_cast<U8>(crc ^ byte);
-            |  for (FwIndexType b = 0; b < 8; b++) {
-            |    crc = (crc & 0x80) ?
-            |      static_cast<U8>((crc << 1) ^ %s::CRC8_POLY)
-            |      : static_cast<U8>(crc << 1);
-            |  }
-            |  return crc;
-            |}
-            |
-            |constexpr U8 seedFor(FwPrmIdType id) {
-            |  U8 crc = 0xFF;
-            |  for (FwIndexType i = sizeof(FwPrmIdType) - 1; i >= 0; i--) {
-            |    crc = crc8_byte(crc, static_cast<U8>(id >> (8 * i)));
-            |  }
-            |  return crc;
-            |}""" % (database_hash, prm_db_name),
+            "constexpr U32 DATABASE_CRC = 0x%08x;" % database_hash,
             output=cg.Output.CPP,
         )
 
@@ -208,7 +188,7 @@ def generate_ac_functions(
             mangled_name = prm_name(prm)
             ty_name = str(prm.param.param_type)
             ns.lines(
-                f"  PrmRecord<{size}> {mangled_name};  // {ty_name} id=0x{id:x}",
+                f"  ::Samd21::PrmRecord<{size}, 0x{id:x}> {mangled_name};  // {ty_name} id=0x{id:x}",
                 output=cg.Output.CPP,
             )
 
@@ -227,7 +207,7 @@ def generate_ac_functions(
                 raise
 
         ns.lines(
-            f"""|}} __PRM_RECORD_DB;
+            f"""|}} __PRM_RECORD_DB = {{}};
                 |
                 |static_assert(sizeof(__PRM_RECORD_DB) == {total_size}, "Unexpected size of prm db");""",
             output=cg.Output.CPP,
@@ -246,10 +226,9 @@ def generate_ac_functions(
                     with sw.case(f"0x{id:x}") as c:
                         c.lines(f"""// {mangled_name}: {ty_name}
                         |FW_ASSERT(val.getSize() == {size}, val.getSize(), {size});
-                        |constexpr U8 seed = seedFor(0x{id:x});
-                        |U8 crc = computeCrc(seed, val.getBuffAddr(), {size});
-                        |__PRM_RECORD_DB.{mangled_name}.crc = crc;
-                        |(void)memcpy(__PRM_RECORD_DB.{mangled_name}.data, val.getBuffAddr(), {size});
+                        |auto& prm = __PRM_RECORD_DB.{mangled_name};
+                        |(void)memcpy(prm.data, val.getBuffAddr(), {size});
+                        |prm.crc = prm.computeCrc();
                         |""")
                 with sw.default() as d:
                     d.lines("FW_ASSERT(false, id);")
@@ -271,10 +250,9 @@ def generate_ac_functions(
                     with sw.case(f"0x{id:x}") as c:
                         c.lines(f"""// {mangled_name}: {ty_name}
                         |FW_ASSERT(val.getSize() == {size}, val.getSize(), {size});
-                        |constexpr U8 seed = seedFor(0x{id:x});
-                        |U8 crc = computeCrc(seed, __PRM_RECORD_DB.{mangled_name}.data, {size});
-                        |(void)memcpy(val.getBuffAddr(), __PRM_RECORD_DB.{mangled_name}.data, {size});
-                        |bool valid = (crc == __PRM_RECORD_DB.{mangled_name}.crc);
+                        |auto& prm = __PRM_RECORD_DB.{mangled_name};
+                        |(void)memcpy(val.getBuffAddr(), prm.data, {size});
+                        |bool valid = (prm.computeCrc() == prm.crc);
                         |return valid ? Fw::ParamValid::VALID : Fw::ParamValid::INVALID;
                         |""")
                 with sw.default() as d:
@@ -287,15 +265,22 @@ def generate_ac_functions(
             *namespaces, _ = topology.symbol.qualified_name.split(".")
             f.body.line(f"::{"::".join(namespaces)}::loadParameters();")
 
-        with ns.function(f"{prm_db_name} ::initializeDefaults", static=True) as f:
-            # TODO
-            pass
-
         with ns.function(f"{prm_db_name} ::validate", static=True) as f:
             f.param("U32&", "validRecords")
             f.param("U32&", "invalidRecords")
-            # TODO
-            pass
+            for id, prm in params:
+                ty_name = str(prm.param.param_type)
+                mangled_name = prm_name(prm)
+                f.body.comment(f"{mangled_name}: {ty_name}")
+                with f.body.block() as b:
+                    # Validate the checksum of the data against the stored checksum
+                    b.lines(f"""auto& prm = __PRM_RECORD_DB.{mangled_name};
+                            |bool valid = (prm.computeCrc() == prm.crc);
+                            |if (valid) {{
+                            |  validRecords++;
+                            |}} else {{
+                            |  invalidRecords++;
+                            |}}""")
 
         with ns.function(
             f"{prm_db_name} ::getDeploymentParameterHash", ret="U32", static=True
