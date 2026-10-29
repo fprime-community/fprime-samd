@@ -239,11 +239,31 @@ void DmaChannel::abort(U16& remainingBeats) {
 
     // Remaining beats on the aborted (active) transaction.
     remainingBeats = dmac_writeback[m_channel_id].BTCNT.reg;
+    // The write-back still describes the interrupted block (VALID=1, partial BTCNT,
+    // old addresses). Invalidate it so the next enable fetches the new base descriptor
+    // instead of resuming the stale block into memory that may since have been reused.
+    std::memset(reinterpret_cast<void*>(&dmac_writeback[m_channel_id]), 0, sizeof(::DmacDescriptor));
 
     // Clear any flags latched during the final beat and reset channel state.
     DMAC->CHINTFLAG.reg = DMAC_CHINTFLAG_TCMPL | DMAC_CHINTFLAG_TERR | DMAC_CHINTFLAG_SUSP;
 
     m_busy = false;
+}
+
+void DmaChannel::restart(const DmacDescriptor* desc) {
+    FW_ASSERT(m_busy, m_channel_id);
+    FW_ASSERT(desc != nullptr, m_channel_id);
+    DMAC->CHID.reg = DMAC_CHID_ID(m_channel_id);
+    FW_ASSERT(DMAC->CHCTRLA.bit.ENABLE == 0, m_channel_id);
+    std::memcpy(reinterpret_cast<void*>(&dmac_base[m_channel_id]), desc, sizeof(::DmacDescriptor));
+    DMAC->CHINTFLAG.reg = DMAC_CHINTFLAG_TCMPL | DMAC_CHINTFLAG_TERR | DMAC_CHINTFLAG_SUSP;
+    DMAC->CHINTENSET.reg = DMAC_CHINTENSET_TCMPL | DMAC_CHINTENSET_TERR | DMAC_CHINTENSET_SUSP;
+    DMAC->CHCTRLA.reg |= DMAC_CHCTRLA_ENABLE;
+}
+
+bool DmaChannel::isEnabled() {
+    DMAC->CHID.reg = DMAC_CHID_ID(m_channel_id);
+    return DMAC->CHCTRLA.bit.ENABLE != 0;
 }
 
 void DmaChannel::markIdle() {
