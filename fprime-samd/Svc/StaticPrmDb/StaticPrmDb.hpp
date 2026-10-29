@@ -13,9 +13,6 @@ namespace Samd21 {
 
 class StaticPrmDb final : public StaticPrmDbComponentBase {
   public:
-    //! MSB-first CRC-8 polynomial used for per-parameter checks (CRC-8/AUTOSAR)
-    static constexpr U8 CRC8_POLY = 0x2F;
-
     // ----------------------------------------------------------------------
     // Component construction and destruction
     // ----------------------------------------------------------------------
@@ -106,13 +103,6 @@ class StaticPrmDb final : public StaticPrmDbComponentBase {
     //! This hash will guard the layout of a deployment's parameters so that mismatched
     //! layouts are detected and the storage read will drop the DB.
     static U32 getDeploymentParameterHash();
-
-  private:
-    // ----------------------------------------------------------------------
-    // Other helpers
-    // ----------------------------------------------------------------------
-
-    static U8 computeCrc(U8 seed, const U8* data, FwSizeType size);
 
   private:
     //! Current state of the IO transaction
