@@ -24,8 +24,12 @@ class PassiveCycler final : public PassiveCyclerComponentBase {
     //! Destroy PassiveCycler object
     ~PassiveCycler();
 
-    //! Drive the output cycle
+    //! Drive the output cycle: call every connected consumer, repeat while any reports work
     void cycle();
+
+    //! One main-loop turn: cycle(), then sleep until the next interrupt unless one was taken
+    //! during the cycle (Samd21::Idle), in which case the caller's loop cycles again
+    void idle();
 };
 
 }  // namespace Svc

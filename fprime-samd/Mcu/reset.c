@@ -382,6 +382,48 @@ void DAC_Handler(void) __attribute__((weak, alias("Dummy_Handler")));
 void PTC_Handler(void) __attribute__((weak, alias("Dummy_Handler")));
 void I2S_Handler(void) __attribute__((weak, alias("Dummy_Handler")));
 
+/* Every interrupt enters through a trampoline that records it before calling the driver's
+ * handler: samd21_irq_taken is the "work may be pending" signal Samd21::Idle checks before
+ * WFI (see SystemInit.h). The weak aliases above are untouched, so drivers still define the
+ * plain XXX_Handler symbols. */
+volatile uint32_t samd21_irq_taken = 0;
+
+#define SAMD21_IRQ_ENTRY(handler)       \
+    static void handler##_Entry(void) { \
+        samd21_irq_taken = 1U;          \
+        handler();                      \
+    }
+
+SAMD21_IRQ_ENTRY(SysTick_Handler)
+SAMD21_IRQ_ENTRY(PM_Handler)
+SAMD21_IRQ_ENTRY(SYSCTRL_Handler)
+SAMD21_IRQ_ENTRY(WDT_Handler)
+SAMD21_IRQ_ENTRY(RTC_Handler)
+SAMD21_IRQ_ENTRY(EIC_Handler)
+SAMD21_IRQ_ENTRY(NVMCTRL_Handler)
+SAMD21_IRQ_ENTRY(DMAC_Handler)
+SAMD21_IRQ_ENTRY(USB_Handler)
+SAMD21_IRQ_ENTRY(EVSYS_Handler)
+SAMD21_IRQ_ENTRY(SERCOM0_Handler)
+SAMD21_IRQ_ENTRY(SERCOM1_Handler)
+SAMD21_IRQ_ENTRY(SERCOM2_Handler)
+SAMD21_IRQ_ENTRY(SERCOM3_Handler)
+SAMD21_IRQ_ENTRY(SERCOM4_Handler)
+SAMD21_IRQ_ENTRY(SERCOM5_Handler)
+SAMD21_IRQ_ENTRY(TCC0_Handler)
+SAMD21_IRQ_ENTRY(TCC1_Handler)
+SAMD21_IRQ_ENTRY(TCC2_Handler)
+SAMD21_IRQ_ENTRY(TC3_Handler)
+SAMD21_IRQ_ENTRY(TC4_Handler)
+SAMD21_IRQ_ENTRY(TC5_Handler)
+SAMD21_IRQ_ENTRY(TC6_Handler)
+SAMD21_IRQ_ENTRY(TC7_Handler)
+SAMD21_IRQ_ENTRY(ADC_Handler)
+SAMD21_IRQ_ENTRY(AC_Handler)
+SAMD21_IRQ_ENTRY(DAC_Handler)
+SAMD21_IRQ_ENTRY(PTC_Handler)
+SAMD21_IRQ_ENTRY(I2S_Handler)
+
 /* Initialize segments */
 extern uint32_t __etext;
 extern uint32_t __data_start__;
@@ -404,38 +446,38 @@ __attribute__((used)) __attribute__((section(".isr_vector"))) const DeviceVector
     (void*)(0UL),                                                                     /* Reserved */
     (void*)SVC_Handler, (void*)(0UL),                                                 /* Reserved */
     (void*)(0UL),                                                                     /* Reserved */
-    (void*)PendSV_Handler, (void*)SysTick_Handler,
+    (void*)PendSV_Handler, (void*)SysTick_Handler_Entry,
 
     /* Configurable interrupts */
-    (void*)PM_Handler,      /*  0 Power Manager */
-    (void*)SYSCTRL_Handler, /*  1 System Control */
-    (void*)WDT_Handler,     /*  2 Watchdog Timer */
-    (void*)RTC_Handler,     /*  3 Real-Time Counter */
-    (void*)EIC_Handler,     /*  4 External Interrupt Controller */
-    (void*)NVMCTRL_Handler, /*  5 Non-Volatile Memory Controller */
-    (void*)DMAC_Handler,    /*  6 Direct Memory Access Controller */
-    (void*)USB_Handler,     /*  7 Universal Serial Bus */
-    (void*)EVSYS_Handler,   /*  8 Event System Interface */
-    (void*)SERCOM0_Handler, /*  9 Serial Communication Interface 0 */
-    (void*)SERCOM1_Handler, /* 10 Serial Communication Interface 1 */
-    (void*)SERCOM2_Handler, /* 11 Serial Communication Interface 2 */
-    (void*)SERCOM3_Handler, /* 12 Serial Communication Interface 3 */
-    (void*)SERCOM4_Handler, /* 13 Serial Communication Interface 4 */
-    (void*)SERCOM5_Handler, /* 14 Serial Communication Interface 5 */
-    (void*)TCC0_Handler,    /* 15 Timer Counter Control 0 */
-    (void*)TCC1_Handler,    /* 16 Timer Counter Control 1 */
-    (void*)TCC2_Handler,    /* 17 Timer Counter Control 2 */
-    (void*)TC3_Handler,     /* 18 Basic Timer Counter 0 */
-    (void*)TC4_Handler,     /* 19 Basic Timer Counter 1 */
-    (void*)TC5_Handler,     /* 20 Basic Timer Counter 2 */
-    (void*)TC6_Handler,     /* 21 Basic Timer Counter 3 */
-    (void*)TC7_Handler,     /* 22 Basic Timer Counter 4 */
-    (void*)ADC_Handler,     /* 23 Analog Digital Converter */
-    (void*)AC_Handler,      /* 24 Analog Comparators */
-    (void*)DAC_Handler,     /* 25 Digital Analog Converter */
-    (void*)PTC_Handler,     /* 26 Peripheral Touch Controller */
-    (void*)I2S_Handler,     /* 27 Inter-IC Sound Interface */
-    (void*)(0UL),           /* Reserved */
+    (void*)PM_Handler_Entry,      /*  0 Power Manager */
+    (void*)SYSCTRL_Handler_Entry, /*  1 System Control */
+    (void*)WDT_Handler_Entry,     /*  2 Watchdog Timer */
+    (void*)RTC_Handler_Entry,     /*  3 Real-Time Counter */
+    (void*)EIC_Handler_Entry,     /*  4 External Interrupt Controller */
+    (void*)NVMCTRL_Handler_Entry, /*  5 Non-Volatile Memory Controller */
+    (void*)DMAC_Handler_Entry,    /*  6 Direct Memory Access Controller */
+    (void*)USB_Handler_Entry,     /*  7 Universal Serial Bus */
+    (void*)EVSYS_Handler_Entry,   /*  8 Event System Interface */
+    (void*)SERCOM0_Handler_Entry, /*  9 Serial Communication Interface 0 */
+    (void*)SERCOM1_Handler_Entry, /* 10 Serial Communication Interface 1 */
+    (void*)SERCOM2_Handler_Entry, /* 11 Serial Communication Interface 2 */
+    (void*)SERCOM3_Handler_Entry, /* 12 Serial Communication Interface 3 */
+    (void*)SERCOM4_Handler_Entry, /* 13 Serial Communication Interface 4 */
+    (void*)SERCOM5_Handler_Entry, /* 14 Serial Communication Interface 5 */
+    (void*)TCC0_Handler_Entry,    /* 15 Timer Counter Control 0 */
+    (void*)TCC1_Handler_Entry,    /* 16 Timer Counter Control 1 */
+    (void*)TCC2_Handler_Entry,    /* 17 Timer Counter Control 2 */
+    (void*)TC3_Handler_Entry,     /* 18 Basic Timer Counter 0 */
+    (void*)TC4_Handler_Entry,     /* 19 Basic Timer Counter 1 */
+    (void*)TC5_Handler_Entry,     /* 20 Basic Timer Counter 2 */
+    (void*)TC6_Handler_Entry,     /* 21 Basic Timer Counter 3 */
+    (void*)TC7_Handler_Entry,     /* 22 Basic Timer Counter 4 */
+    (void*)ADC_Handler_Entry,     /* 23 Analog Digital Converter */
+    (void*)AC_Handler_Entry,      /* 24 Analog Comparators */
+    (void*)DAC_Handler_Entry,     /* 25 Digital Analog Converter */
+    (void*)PTC_Handler_Entry,     /* 26 Peripheral Touch Controller */
+    (void*)I2S_Handler_Entry,     /* 27 Inter-IC Sound Interface */
+    (void*)(0UL),                 /* Reserved */
 };
 
 #endif

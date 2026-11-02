@@ -21,16 +21,19 @@ register_fprime_library(
         "${CMAKE_CURRENT_LIST_DIR}/PassiveCycler.cpp"
   DEPENDS
       fprime-samd_Svc_Types
+      fprime-samd_Drv_Types
 )
 
 ### Unit Tests ###
-# register_fprime_ut(
-#     AUTOCODER_INPUTS
-#         "${CMAKE_CURRENT_LIST_DIR}/PassiveCycler.fpp"
-#     SOURCES
-#         "${CMAKE_CURRENT_LIST_DIR}/test/ut/PassiveCyclerTestMain.cpp"
-#         "${CMAKE_CURRENT_LIST_DIR}/test/ut/PassiveCyclerTester.cpp"
-#     DEPENDS
-#         STest # For rules-based testing
-#     UT_AUTO_HELPERS
-# )
+register_fprime_ut(
+    AUTOCODER_INPUTS
+        "${CMAKE_CURRENT_LIST_DIR}/PassiveCycler.fpp"
+    SOURCES
+        "${CMAKE_CURRENT_LIST_DIR}/test/ut/PassiveCyclerTestMain.cpp"
+        "${CMAKE_CURRENT_LIST_DIR}/test/ut/PassiveCyclerTester.cpp"
+    DEPENDS
+        Fw_Test
+        fprime-samd_Svc_Types
+        fprime-samd_Drv_Types
+    UT_AUTO_HELPERS
+)

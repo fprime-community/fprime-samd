@@ -6,6 +6,7 @@
 
 #include "fprime-samd/Svc/PassiveCycler/PassiveCycler.hpp"
 #include "config/FwIndexTypeAliasAc.h"
+#include "fprime-samd/Drv/Types/Idle.hpp"
 
 namespace Svc {
 
@@ -29,6 +30,12 @@ void PassiveCycler ::cycle() {
             }
         }
     }
+}
+
+void PassiveCycler ::idle() {
+    Samd21::Idle::arm();
+    this->cycle();
+    Samd21::Idle::sleepUnlessInterrupted();
 }
 
 }  // namespace Svc

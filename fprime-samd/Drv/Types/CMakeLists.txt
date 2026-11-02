@@ -16,6 +16,7 @@ if (FPRIME_PLATFORM STREQUAL "Samd21")
     set(TYPES_HARDWARE_SOURCES
         "${CMAKE_CURRENT_LIST_DIR}/PinMux.cpp"
         "${CMAKE_CURRENT_LIST_DIR}/CriticalSection.cpp"
+        "${CMAKE_CURRENT_LIST_DIR}/Idle.cpp"
         "${CMAKE_CURRENT_LIST_DIR}/SercomHardware.cpp"
     )
 
@@ -24,6 +25,7 @@ else()
     set(TYPES_HARDWARE_SOURCES
         "${CMAKE_CURRENT_LIST_DIR}/test/ut/PinMuxStub.cpp"
         "${CMAKE_CURRENT_LIST_DIR}/test/ut/CriticalSectionStub.cpp"
+        "${CMAKE_CURRENT_LIST_DIR}/test/ut/IdleStub.cpp"
     )
 endif()
 

@@ -26,6 +26,15 @@ extern "C" {
  */
 void SystemInit(void);
 
+/**
+ * \brief Set to 1 by every interrupt entry of the SAMD21 vector table (Mcu/reset.c)
+ *
+ * Samd21::Idle (Drv/Types) clears it before a Svc::PassiveCycler pass and refuses to
+ * sleep while it is set, so an interrupt taken during the pass causes one more pass
+ * instead of a sleep that lasts until the next interrupt.
+ */
+extern volatile uint32_t samd21_irq_taken;
+
 #ifdef __cplusplus
 }
 #endif
