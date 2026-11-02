@@ -111,6 +111,11 @@ TEST(OffNominal, UnexpectedDmaReply) {
     tester.testUnexpectedDmaReply();
 }
 
+TEST(Nominal, SchedRePoll) {
+    Samd21::SpiDriverTester tester;
+    tester.testSchedRePoll();
+}
+
 int main(int argc, char** argv) {
     ::testing::InitGoogleTest(&argc, argv);
     STest::Random::seed();

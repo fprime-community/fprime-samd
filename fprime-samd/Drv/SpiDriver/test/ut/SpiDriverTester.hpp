@@ -102,6 +102,7 @@ class SpiDriverTester final : public SpiDriverGTestBase {
     void testSetBaudRate();
     void testSetBaudRatePort();
     void testSchedIdle();
+    void testSchedRePoll();
 
   private:
     // ----------------------------------------------------------------------
@@ -162,8 +163,9 @@ class SpiDriverTester final : public SpiDriverGTestBase {
     //! Assert entry `index` of the completion history: port, status and the caller's buffers
     void assertDelivered(FwSizeType index, FwIndexType port, Drv::SpiStatus::T status);
 
-    //! Assert exactly one reply was emitted on port with the request buffers and status
-    void assertReply(FwIndexType port, Drv::SpiStatus::T status);
+    //! Run activeIn once and assert exactly one reply was emitted on port with the request buffers
+    //! and status; inFlight is the expected return value (another transfer still on the bus)
+    void assertReply(FwIndexType port, Drv::SpiStatus::T status, bool inFlight);
     void injectOverrun();
     void assertAbort(FwSizeType index, SpiDriver_DmaChannel::T channel);
 
@@ -195,6 +197,11 @@ class SpiDriverTester final : public SpiDriverGTestBase {
 
     //! Status the stub GPIO driver returns for every chip-select write (default OP_OK)
     Drv::GpioStatus m_chipSelectStatus;
+
+    //! Slot on which the completion callback starts a one-byte transfer (-1: none); with
+    //! m_chainFinish it also completes both DMA streams, otherwise it re-requests the slot
+    FwIndexType m_chainPort;
+    bool m_chainFinish;
 };
 
 }  // namespace Samd21

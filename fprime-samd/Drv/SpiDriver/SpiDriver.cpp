@@ -207,7 +207,14 @@ bool SpiDriver ::activeIn_handler(FwIndexType portNum, U32 context) {
         this->deliver(this->m_refused[slot], slot);
         this->deliver(this->m_pending[slot], slot);
     }
-    return false;
+    // Ask the cycler for another pass while a transfer is in flight or a reply latched
+    // during this pass is still undelivered, so the completion is delivered before main sleeps.
+    Samd21::CriticalSection cs;
+    bool work = (this->m_busy != 0);
+    for (FwIndexType slot = 0; slot < NUM_SPIWRITEREAD_INPUT_PORTS; slot++) {
+        work = work || this->m_refused[slot].pending || this->m_pending[slot].pending;
+    }
+    return work;
 }
 
 void SpiDriver ::deliver(PendingReply& record, FwIndexType slot) {
