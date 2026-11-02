@@ -54,6 +54,14 @@ class DmaChannel final {
     //! completion reply itself. Asserts if the channel is idle or circular.
     void abort(U16& remainingBeats);
 
+    //! Restart a channel that auto-disabled before `desc` was linked onto its chain: load
+    //! `desc` as the new base descriptor and re-enable. Caller owns the bookkeeping and has
+    //! selected nothing (CHID is set here). Interrupts must be disabled.
+    void restart(const DmacDescriptor* desc);
+
+    //! True when the hardware has the channel enabled (CHID is set here)
+    bool isEnabled();
+
     //! Check if channel is busy
     bool isBusy() const { return m_busy; }
 
