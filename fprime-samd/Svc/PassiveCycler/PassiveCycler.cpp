@@ -18,13 +18,14 @@ PassiveCycler ::PassiveCycler(const char* const compName) : PassiveCyclerCompone
 PassiveCycler ::~PassiveCycler() {}
 
 void PassiveCycler ::cycle() {
-    // Cycle the active context until nobody has any more work to do
+    // Cycle the active context until nobody has any more work to do. Every connected consumer
+    // is called on every pass: the call comes first so an earlier true cannot short-circuit it.
     bool didWork = true;
     while (didWork) {
         didWork = false;
         for (FwIndexType i = 0; i < PassiveCycler::NUM_CYCLEOUT_OUTPUT_PORTS; i++) {
             if (this->isConnected_cycleOut_OutputPort(i)) {
-                didWork = didWork || this->cycleOut_out(i, i);
+                didWork = this->cycleOut_out(i, static_cast<U32>(i)) || didWork;
             }
         }
     }
