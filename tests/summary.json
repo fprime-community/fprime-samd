@@ -4,38 +4,38 @@
   "passed": 12,
   "failed": 0,
   "skipped": 0,
-  "duration": 4.337,
+  "duration": 3.059,
   "report": "tests/index.html",
   "cases": [
     {
       "name": "fprime-samd_Drv_AdcDriver_ut_exe",
       "status": "passed",
-      "duration": 0.124
+      "duration": 0.238
     },
     {
       "name": "fprime-samd_Drv_RtcDriver_ut_exe",
       "status": "passed",
-      "duration": 0.931
+      "duration": 0.647
     },
     {
       "name": "fprime-samd_Drv_UsartDriver_ut_exe",
       "status": "passed",
-      "duration": 0.532
+      "duration": 0.343
     },
     {
       "name": "fprime-samd_Drv_I2cDriver_ut_exe",
       "status": "passed",
-      "duration": 0.073
+      "duration": 0.061
     },
     {
       "name": "fprime-samd_Drv_SpiDriver_ut_exe",
       "status": "passed",
-      "duration": 2.179
+      "duration": 1.401
     },
     {
       "name": "fprime-samd_Drv_GpioDriver_ut_exe",
       "status": "passed",
-      "duration": 0.031
+      "duration": 0.039
     },
     {
       "name": "fprime-samd_Drv_SystemInfo_ut_exe",
@@ -45,27 +45,27 @@
     {
       "name": "fprime-samd_Svc_ProcTime_ut_exe",
       "status": "passed",
-      "duration": 0.029
+      "duration": 0.026
     },
     {
       "name": "fprime-samd_Svc_ThinBufferManager_ut_exe",
       "status": "passed",
-      "duration": 0.041
+      "duration": 0.028
     },
     {
       "name": "fprime-samd_Svc_Framer_ut_exe",
       "status": "passed",
-      "duration": 0.039
+      "duration": 0.031
     },
     {
       "name": "fprime-samd_Svc_TmFramer_ut_exe",
       "status": "passed",
-      "duration": 0.273
+      "duration": 0.176
     },
     {
       "name": "fprime-samd_Svc_Seq_ut_exe",
       "status": "passed",
-      "duration": 0.055
+      "duration": 0.041
     }
   ]
 }
