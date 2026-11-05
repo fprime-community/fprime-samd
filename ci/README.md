@@ -37,6 +37,8 @@ flash-command:
   - -f
   - interface/cmsis-dap.cfg
   - -c
+  - cmsis_dap_vid_pid 0x03eb 0x2175   # the Nano's nEDBG, not whichever CMSIS-DAP probe enumerates first
+  - -c
   - transport select swd
   - -f
   - target/at91samdXX.cfg
