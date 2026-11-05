@@ -51,6 +51,10 @@ flash-command:
   - openocd
   - -f
   - interface/cmsis-dap.cfg
+  # Pin the probe to the Curiosity Nano's on-board nEDBG; a host with several CMSIS-DAP
+  # debuggers (e.g. a Raspberry Pi Debug Probe for a Pico) otherwise gets whichever enumerates first.
+  - -c
+  - cmsis_dap_vid_pid 0x03eb 0x2175
   - -c
   - transport select swd
   - -f
