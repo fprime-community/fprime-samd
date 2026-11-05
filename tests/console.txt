@@ -1,9 +1,9 @@
 # unit-test console output: fprime-community/fprime-samd@main
 
 ==============================================================================
-PASSED  fprime-samd_Drv_AdcDriver_ut_exe  (0.24s)
+PASSED  fprime-samd_Drv_AdcDriver_ut_exe  (0.23s)
 ==============================================================================
-[STest::Random] Generated seed 901111 from system time
+[STest::Random] Generated seed 696185 from system time
 [==========] Running 21 tests from 4 test suites.
 [----------] Global test environment set-up.
 [----------] 5 tests from Configure
@@ -237,13 +237,13 @@ handleInterrupt() spurious interrupt with overrun flag clears flags and doesn't 
 [----------] 7 tests from Interrupt (0 ms total)
 
 [----------] Global test environment tear-down
-[==========] 21 tests from 4 test suites ran. (1 ms total)
+[==========] 21 tests from 4 test suites ran. (2 ms total)
 [  PASSED  ] 21 tests.
 
 ==============================================================================
-PASSED  fprime-samd_Drv_RtcDriver_ut_exe  (0.65s)
+PASSED  fprime-samd_Drv_RtcDriver_ut_exe  (0.61s)
 ==============================================================================
-[STest::Random] Generated seed 921569 from system time
+[STest::Random] Generated seed 716997 from system time
 [==========] Running 15 tests from 2 test suites.
 [----------] Global test environment set-up.
 [----------] 9 tests from Nominal
@@ -325,25 +325,25 @@ PASSED  fprime-samd_Drv_RtcDriver_ut_exe  (0.65s)
 ***************************************
 (RQ)       SAMD21-RTC-001: The RtcDriver shall configure the RTC peripheral for periodic interrupts
 ***************************************
-[       OK ] OffNominal.testConfigureAssertsOnDoubleConfigure (174 ms)
+[       OK ] OffNominal.testConfigureAssertsOnDoubleConfigure (158 ms)
 [ RUN      ] OffNominal.testConfigureAssertsOnInvalidRate
 
 ***************************************
 (RQ)       SAMD21-RTC-002: The RtcDriver shall support configurable interrupt periods (1-128 Hz)
 ***************************************
-[       OK ] OffNominal.testConfigureAssertsOnInvalidRate (145 ms)
+[       OK ] OffNominal.testConfigureAssertsOnInvalidRate (143 ms)
 [ RUN      ] OffNominal.testConfigureAssertsOnInvalidClockSource
 
 ***************************************
 (RQ)       SAMD21-RTC-005: The RtcDriver shall support internal, external, and ULP clock sources
 ***************************************
-[       OK ] OffNominal.testConfigureAssertsOnInvalidClockSource (163 ms)
+[       OK ] OffNominal.testConfigureAssertsOnInvalidClockSource (141 ms)
 [ RUN      ] OffNominal.testEnableAssertsWhenNotConfigured
 
 ***************************************
 (RQ)       SAMD21-RTC-001: The RtcDriver shall configure the RTC peripheral for periodic interrupts
 ***************************************
-[       OK ] OffNominal.testEnableAssertsWhenNotConfigured (141 ms)
+[       OK ] OffNominal.testEnableAssertsWhenNotConfigured (142 ms)
 [ RUN      ] OffNominal.testCycleOverrun
 
 ***************************************
@@ -356,16 +356,16 @@ PASSED  fprime-samd_Drv_RtcDriver_ut_exe  (0.65s)
 (RQ)       SAMD21-RTC-008: The RtcDriver shall detect when processing exceeds the configured period
 ***************************************
 [       OK ] OffNominal.testCycleOverrunAccumulates (0 ms)
-[----------] 6 tests from OffNominal (625 ms total)
+[----------] 6 tests from OffNominal (586 ms total)
 
 [----------] Global test environment tear-down
-[==========] 15 tests from 2 test suites ran. (626 ms total)
+[==========] 15 tests from 2 test suites ran. (587 ms total)
 [  PASSED  ] 15 tests.
 
 ==============================================================================
 PASSED  fprime-samd_Drv_UsartDriver_ut_exe  (0.34s)
 ==============================================================================
-[STest::Random] Generated seed 571954 from system time
+[STest::Random] Generated seed 325968 from system time
 [==========] Running 19 tests from 6 test suites.
 [----------] Global test environment set-up.
 [----------] 3 tests from Configure
@@ -545,8 +545,8 @@ RX DMA bus error asserts (invalid buffer pointer handed to DMA)
 ***************************************
 (RQ)       SAMD21-UART-002: The UsartDriver shall use DMA for reception (an unrecoverable RX DMA bus error asserts)
 ***************************************
-[       OK ] Rx.ChannelError (139 ms)
-[----------] 8 tests from Rx (142 ms total)
+[       OK ] Rx.ChannelError (151 ms)
+[----------] 8 tests from Rx (154 ms total)
 
 [----------] 2 tests from Unconfigured
 [ RUN      ] Unconfigured.SchedIn
@@ -585,13 +585,13 @@ each SERCOM maps to its matching RX DMA trigger source
 [----------] 1 test from TriggerSource (0 ms total)
 
 [----------] Global test environment tear-down
-[==========] 19 tests from 6 test suites ran. (307 ms total)
+[==========] 19 tests from 6 test suites ran. (319 ms total)
 [  PASSED  ] 19 tests.
 
 ==============================================================================
 PASSED  fprime-samd_Drv_I2cDriver_ut_exe  (0.06s)
 ==============================================================================
-[STest::Random] Generated seed 917367 from system time
+[STest::Random] Generated seed 674078 from system time
 [==========] Running 39 tests from 10 test suites.
 [----------] Global test environment set-up.
 [----------] 3 tests from Configure
@@ -662,7 +662,7 @@ read() while busy is rejected with OTHER_ERR
 (RQ)       SAMD21-I2C-005: The I2cDriver shall reject a new request that arrives while a transaction is in progress, returning I2C_OTHER_ERR on the matching completion callback
 ***************************************
 [       OK ] Read.Busy (0 ms)
-[----------] 3 tests from Read (2 ms total)
+[----------] 3 tests from Read (1 ms total)
 
 [----------] 3 tests from Write
 [ RUN      ] Write.Nominal
@@ -853,7 +853,7 @@ an error while in WRITE_READ_WRITING_WAIT disables the armed MB interrupt (leak 
 (RQ)       SAMD21-I2C-004: The I2cDriver shall fail the in-flight transaction with the appropriate status and return to service (the error path disables the armed MB interrupt)
 ***************************************
 [       OK ] Isr.ErrorDuringWriteReadWaitDisablesMb (0 ms)
-[----------] 8 tests from Isr (5 ms total)
+[----------] 8 tests from Isr (4 ms total)
 
 [----------] 7 tests from StallWatchdog
 [ RUN      ] StallWatchdog.NoRecoveryBeforeThreshold
@@ -1035,13 +1035,13 @@ CLEAR_ERRORS resets the error counter and responds OK
 [----------] 1 test from Command (0 ms total)
 
 [----------] Global test environment tear-down
-[==========] 39 tests from 10 test suites ran. (28 ms total)
+[==========] 39 tests from 10 test suites ran. (27 ms total)
 [  PASSED  ] 39 tests.
 
 ==============================================================================
-PASSED  fprime-samd_Drv_SpiDriver_ut_exe  (1.40s)
+PASSED  fprime-samd_Drv_SpiDriver_ut_exe  (1.38s)
 ==============================================================================
-[STest::Random] Generated seed 978830 from system time
+[STest::Random] Generated seed 732418 from system time
 [==========] Running 21 tests from 2 test suites.
 [----------] Global test environment set-up.
 [----------] 9 tests from Nominal
@@ -1054,34 +1054,34 @@ PASSED  fprime-samd_Drv_SpiDriver_ut_exe  (1.40s)
 [ RUN      ] Nominal.HardwareChipSelectTransaction
 [       OK ] Nominal.HardwareChipSelectTransaction (0 ms)
 [ RUN      ] Nominal.CalculateBaud
-[       OK ] Nominal.CalculateBaud (585 ms)
+[       OK ] Nominal.CalculateBaud (594 ms)
 [ RUN      ] Nominal.RandomTransactions
-[       OK ] Nominal.RandomTransactions (12 ms)
+[       OK ] Nominal.RandomTransactions (13 ms)
 [ RUN      ] Nominal.SetBaudRate
 [       OK ] Nominal.SetBaudRate (0 ms)
 [ RUN      ] Nominal.SetBaudRatePort
 [       OK ] Nominal.SetBaudRatePort (0 ms)
 [ RUN      ] Nominal.SchedIdle
 [       OK ] Nominal.SchedIdle (0 ms)
-[----------] 9 tests from Nominal (601 ms total)
+[----------] 9 tests from Nominal (611 ms total)
 
 [----------] 12 tests from OffNominal
 [ RUN      ] OffNominal.Busy
-[       OK ] OffNominal.Busy (148 ms)
+[       OK ] OffNominal.Busy (145 ms)
 [ RUN      ] OffNominal.SameSlotReRequest
-[       OK ] OffNominal.SameSlotReRequest (150 ms)
+[       OK ] OffNominal.SameSlotReRequest (148 ms)
 [ RUN      ] OffNominal.ChipSelectFailure
-[       OK ] OffNominal.ChipSelectFailure (151 ms)
+[       OK ] OffNominal.ChipSelectFailure (147 ms)
 [ RUN      ] OffNominal.DmaBusError
 [       OK ] OffNominal.DmaBusError (0 ms)
 [ RUN      ] OffNominal.ConfigureTwice
-[       OK ] OffNominal.ConfigureTwice (149 ms)
+[       OK ] OffNominal.ConfigureTwice (146 ms)
 [ RUN      ] OffNominal.RequestBeforeConfigure
 [       OK ] OffNominal.RequestBeforeConfigure (0 ms)
 [ RUN      ] OffNominal.SizeMismatch
-[       OK ] OffNominal.SizeMismatch (162 ms)
+[       OK ] OffNominal.SizeMismatch (147 ms)
 [ RUN      ] OffNominal.ReceiveOverrun
-[       OK ] OffNominal.ReceiveOverrun (1 ms)
+[       OK ] OffNominal.ReceiveOverrun (0 ms)
 [ RUN      ] OffNominal.ReceiveOverrunAfterTxComplete
 [       OK ] OffNominal.ReceiveOverrunAfterTxComplete (0 ms)
 [ RUN      ] OffNominal.SpuriousInterrupt
@@ -1090,16 +1090,16 @@ PASSED  fprime-samd_Drv_SpiDriver_ut_exe  (1.40s)
 [       OK ] OffNominal.ReceiveOverrunIdle (0 ms)
 [ RUN      ] OffNominal.UnexpectedDmaReply
 [       OK ] OffNominal.UnexpectedDmaReply (0 ms)
-[----------] 12 tests from OffNominal (768 ms total)
+[----------] 12 tests from OffNominal (738 ms total)
 
 [----------] Global test environment tear-down
-[==========] 21 tests from 2 test suites ran. (1370 ms total)
+[==========] 21 tests from 2 test suites ran. (1350 ms total)
 [  PASSED  ] 21 tests.
 
 ==============================================================================
-PASSED  fprime-samd_Drv_GpioDriver_ut_exe  (0.04s)
+PASSED  fprime-samd_Drv_GpioDriver_ut_exe  (0.02s)
 ==============================================================================
-[STest::Random] Generated seed 383339 from system time
+[STest::Random] Generated seed 107065 from system time
 [==========] Running 13 tests from 2 test suites.
 [----------] Global test environment set-up.
 [----------] 7 tests from Nominal
@@ -1108,7 +1108,7 @@ PASSED  fprime-samd_Drv_GpioDriver_ut_exe  (0.04s)
 ***************************************
 (RQ)       GPIO-001: configureOutput shall bind the instance to one group/pin and forward the configuration to the PORT peripheral
 ***************************************
-[       OK ] Nominal.testConfigureOutput (1 ms)
+[       OK ] Nominal.testConfigureOutput (0 ms)
 [ RUN      ] Nominal.testConfigureInput
 
 ***************************************
@@ -1149,7 +1149,7 @@ PASSED  fprime-samd_Drv_GpioDriver_ut_exe  (0.04s)
 (RQ)       GPIO-008: On each configured edge, the driver shall emit a cycle on the gpioInterrupt output port when it is connected
 ***************************************
 [       OK ] Nominal.testInterruptFiresWhenConnected (0 ms)
-[----------] 7 tests from Nominal (2 ms total)
+[----------] 7 tests from Nominal (1 ms total)
 
 [----------] 6 tests from OffNominal
 [ RUN      ] OffNominal.testWriteUnconfigured
@@ -1191,13 +1191,13 @@ PASSED  fprime-samd_Drv_GpioDriver_ut_exe  (0.04s)
 [----------] 6 tests from OffNominal (0 ms total)
 
 [----------] Global test environment tear-down
-[==========] 13 tests from 2 test suites ran. (3 ms total)
+[==========] 13 tests from 2 test suites ran. (1 ms total)
 [  PASSED  ] 13 tests.
 
 ==============================================================================
-PASSED  fprime-samd_Drv_SystemInfo_ut_exe  (0.03s)
+PASSED  fprime-samd_Drv_SystemInfo_ut_exe  (0.02s)
 ==============================================================================
-[STest::Random] Generated seed 416369 from system time
+[STest::Random] Generated seed 125570 from system time
 [==========] Running 4 tests from 1 test suite.
 [----------] Global test environment set-up.
 [----------] 4 tests from Nominal
@@ -1206,7 +1206,7 @@ PASSED  fprime-samd_Drv_SystemInfo_ut_exe  (0.03s)
 ***************************************
 (RQ)       SAMD21-HEALTH-001: SystemInfo shall report the cause of the most recent reset when emit() is called
 ***************************************
-[       OK ] Nominal.testEmitSystemInfoReportsResetReason (1 ms)
+[       OK ] Nominal.testEmitSystemInfoReportsResetReason (0 ms)
 [ RUN      ] Nominal.testCommitStampsAreReported
 
 ***************************************
@@ -1224,7 +1224,7 @@ PASSED  fprime-samd_Drv_SystemInfo_ut_exe  (0.03s)
 [  PASSED  ] 4 tests.
 
 ==============================================================================
-PASSED  fprime-samd_Svc_ProcTime_ut_exe  (0.03s)
+PASSED  fprime-samd_Svc_ProcTime_ut_exe  (0.02s)
 ==============================================================================
 [==========] Running 3 tests from 1 test suite.
 [----------] Global test environment set-up.
@@ -1247,14 +1247,14 @@ PASSED  fprime-samd_Svc_ProcTime_ut_exe  (0.03s)
 (RQ)       SAMD21-PROCTIME-002: ProcTime shall report the time elapsed on the Os::RawTime clock
 ***************************************
 [       OK ] Nominal.testTimeIsMonotonic (0 ms)
-[----------] 3 tests from Nominal (1 ms total)
+[----------] 3 tests from Nominal (0 ms total)
 
 [----------] Global test environment tear-down
 [==========] 3 tests from 1 test suite ran. (1 ms total)
 [  PASSED  ] 3 tests.
 
 ==============================================================================
-PASSED  fprime-samd_Svc_ThinBufferManager_ut_exe  (0.03s)
+PASSED  fprime-samd_Svc_ThinBufferManager_ut_exe  (0.02s)
 ==============================================================================
 [==========] Running 3 tests from 1 test suite.
 [----------] Global test environment set-up.
@@ -1269,7 +1269,7 @@ Returning buffer 2
 [       OK ] Nominal.OneSize (0 ms)
 [ RUN      ] Nominal.MultSize
 [       OK ] Nominal.MultSize (0 ms)
-[----------] 3 tests from Nominal (2 ms total)
+[----------] 3 tests from Nominal (1 ms total)
 
 [----------] Global test environment tear-down
 [==========] 3 tests from 1 test suite ran. (2 ms total)
@@ -1278,7 +1278,7 @@ Returning buffer 2
 ==============================================================================
 PASSED  fprime-samd_Svc_Framer_ut_exe  (0.03s)
 ==============================================================================
-[STest::Random] Generated seed 499934 from system time
+[STest::Random] Generated seed 191119 from system time
 [==========] Running 6 tests from 2 test suites.
 [----------] Global test environment set-up.
 [----------] 5 tests from Nominal
@@ -1292,7 +1292,7 @@ PASSED  fprime-samd_Svc_Framer_ut_exe  (0.03s)
 [       OK ] Nominal.DoubleBufferLifecycle (0 ms)
 [ RUN      ] Nominal.SchedInFlush
 [       OK ] Nominal.SchedInFlush (0 ms)
-[----------] 5 tests from Nominal (1 ms total)
+[----------] 5 tests from Nominal (2 ms total)
 
 [----------] 1 test from OffNominal
 [ RUN      ] OffNominal.Backpressure
@@ -1306,7 +1306,7 @@ PASSED  fprime-samd_Svc_Framer_ut_exe  (0.03s)
 ==============================================================================
 PASSED  fprime-samd_Svc_TmFramer_ut_exe  (0.18s)
 ==============================================================================
-[STest::Random] Generated seed 529279 from system time
+[STest::Random] Generated seed 220688 from system time
 [==========] Running 11 tests from 2 test suites.
 [----------] Global test environment set-up.
 [----------] 8 tests from Nominal
@@ -1325,26 +1325,26 @@ PASSED  fprime-samd_Svc_TmFramer_ut_exe  (0.18s)
 [ RUN      ] Nominal.PerApidSequenceCounts
 [       OK ] Nominal.PerApidSequenceCounts (0 ms)
 [ RUN      ] Nominal.FrameCountWrapAround
-[       OK ] Nominal.FrameCountWrapAround (10 ms)
-[----------] 8 tests from Nominal (13 ms total)
+[       OK ] Nominal.FrameCountWrapAround (14 ms)
+[----------] 8 tests from Nominal (17 ms total)
 
 [----------] 3 tests from OffNominal
 [ RUN      ] OffNominal.Backpressure
 [       OK ] OffNominal.Backpressure (0 ms)
 [ RUN      ] OffNominal.UnexpectedBufferReturn
-[       OK ] OffNominal.UnexpectedBufferReturn (141 ms)
+[       OK ] OffNominal.UnexpectedBufferReturn (138 ms)
 [ RUN      ] OffNominal.ApidTrackingOverflow
 [       OK ] OffNominal.ApidTrackingOverflow (0 ms)
-[----------] 3 tests from OffNominal (141 ms total)
+[----------] 3 tests from OffNominal (138 ms total)
 
 [----------] Global test environment tear-down
-[==========] 11 tests from 2 test suites ran. (155 ms total)
+[==========] 11 tests from 2 test suites ran. (157 ms total)
 [  PASSED  ] 11 tests.
 
 ==============================================================================
-PASSED  fprime-samd_Svc_Seq_ut_exe  (0.04s)
+PASSED  fprime-samd_Svc_Seq_ut_exe  (0.05s)
 ==============================================================================
-[STest::Random] Generated seed 705959 from system time
+[STest::Random] Generated seed 403048 from system time
 [==========] Running 27 tests from 5 test suites.
 [----------] Global test environment set-up.
 [----------] 10 tests from SequenceExecution
@@ -1401,7 +1401,7 @@ A failing command response aborts the remainder of the sequence.
 ***************************************
 A command response received while idle is dropped and logged.
 ***************************************
-[       OK ] SequenceExecution.StrayResponseDropped (0 ms)
+[       OK ] SequenceExecution.StrayResponseDropped (1 ms)
 [ RUN      ] SequenceExecution.PendingRunAfterCompletion
 
 ***************************************
@@ -1448,7 +1448,7 @@ A command truncated within the cmdSize field emits InvalidSequence.
 (RQ)       SAMD21-SEQ-008
 ***************************************
 [       OK ] SequenceExecution.TruncatedCmdSizeFails (0 ms)
-[----------] 10 tests from SequenceExecution (7 ms total)
+[----------] 10 tests from SequenceExecution (8 ms total)
 
 [----------] 3 tests from WaitTicks
 [ RUN      ] WaitTicks.ZeroResumesNextTick
@@ -1481,7 +1481,7 @@ A WAIT_TICKS at the end of a sequence finishes cleanly without a spurious Invali
 (RQ)       SAMD21-SEQ-006
 ***************************************
 [       OK ] WaitTicks.AtEndOfSequence (0 ms)
-[----------] 3 tests from WaitTicks (1 ms total)
+[----------] 3 tests from WaitTicks (2 ms total)
 
 [----------] 4 tests from WaitUntil
 [ RUN      ] WaitUntil.SleepsUntilTime
@@ -1524,7 +1524,7 @@ WAIT_UNTIL on a time base the FSW clock never reports never wakes.
 (RQ)       SAMD21-SEQ-006
 ***************************************
 [       OK ] WaitUntil.MismatchedBaseNeverWakes (0 ms)
-[----------] 4 tests from WaitUntil (2 ms total)
+[----------] 4 tests from WaitUntil (3 ms total)
 
 [----------] 4 tests from RunOnError
 [ RUN      ] RunOnError.StartsRecovery
@@ -1630,9 +1630,9 @@ CANCEL clears an armed RUN_ON_ERROR recovery table.
 (RQ)       SAMD21-SEQ-007
 ***************************************
 [       OK ] Cancel.ClearsRunOnError (0 ms)
-[----------] 6 tests from Cancel (3 ms total)
+[----------] 6 tests from Cancel (4 ms total)
 
 [----------] Global test environment tear-down
-[==========] 27 tests from 5 test suites ran. (18 ms total)
+[==========] 27 tests from 5 test suites ran. (20 ms total)
 [  PASSED  ] 27 tests.
 

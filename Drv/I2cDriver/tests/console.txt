@@ -3,7 +3,7 @@
 ==============================================================================
 PASSED  fprime-samd_Drv_I2cDriver_ut_exe  (0.06s)
 ==============================================================================
-[STest::Random] Generated seed 917367 from system time
+[STest::Random] Generated seed 674078 from system time
 [==========] Running 39 tests from 10 test suites.
 [----------] Global test environment set-up.
 [----------] 3 tests from Configure
@@ -74,7 +74,7 @@ read() while busy is rejected with OTHER_ERR
 (RQ)       SAMD21-I2C-005: The I2cDriver shall reject a new request that arrives while a transaction is in progress, returning I2C_OTHER_ERR on the matching completion callback
 ***************************************
 [       OK ] Read.Busy (0 ms)
-[----------] 3 tests from Read (2 ms total)
+[----------] 3 tests from Read (1 ms total)
 
 [----------] 3 tests from Write
 [ RUN      ] Write.Nominal
@@ -265,7 +265,7 @@ an error while in WRITE_READ_WRITING_WAIT disables the armed MB interrupt (leak 
 (RQ)       SAMD21-I2C-004: The I2cDriver shall fail the in-flight transaction with the appropriate status and return to service (the error path disables the armed MB interrupt)
 ***************************************
 [       OK ] Isr.ErrorDuringWriteReadWaitDisablesMb (0 ms)
-[----------] 8 tests from Isr (5 ms total)
+[----------] 8 tests from Isr (4 ms total)
 
 [----------] 7 tests from StallWatchdog
 [ RUN      ] StallWatchdog.NoRecoveryBeforeThreshold
@@ -447,6 +447,6 @@ CLEAR_ERRORS resets the error counter and responds OK
 [----------] 1 test from Command (0 ms total)
 
 [----------] Global test environment tear-down
-[==========] 39 tests from 10 test suites ran. (28 ms total)
+[==========] 39 tests from 10 test suites ran. (27 ms total)
 [  PASSED  ] 39 tests.
 

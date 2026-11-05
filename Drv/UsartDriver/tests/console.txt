@@ -3,7 +3,7 @@
 ==============================================================================
 PASSED  fprime-samd_Drv_UsartDriver_ut_exe  (0.34s)
 ==============================================================================
-[STest::Random] Generated seed 571954 from system time
+[STest::Random] Generated seed 325968 from system time
 [==========] Running 19 tests from 6 test suites.
 [----------] Global test environment set-up.
 [----------] 3 tests from Configure
@@ -183,8 +183,8 @@ RX DMA bus error asserts (invalid buffer pointer handed to DMA)
 ***************************************
 (RQ)       SAMD21-UART-002: The UsartDriver shall use DMA for reception (an unrecoverable RX DMA bus error asserts)
 ***************************************
-[       OK ] Rx.ChannelError (139 ms)
-[----------] 8 tests from Rx (142 ms total)
+[       OK ] Rx.ChannelError (151 ms)
+[----------] 8 tests from Rx (154 ms total)
 
 [----------] 2 tests from Unconfigured
 [ RUN      ] Unconfigured.SchedIn
@@ -223,6 +223,6 @@ each SERCOM maps to its matching RX DMA trigger source
 [----------] 1 test from TriggerSource (0 ms total)
 
 [----------] Global test environment tear-down
-[==========] 19 tests from 6 test suites ran. (307 ms total)
+[==========] 19 tests from 6 test suites ran. (319 ms total)
 [  PASSED  ] 19 tests.
 
