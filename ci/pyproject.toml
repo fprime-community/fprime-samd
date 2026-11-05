@@ -29,3 +29,7 @@ samd_ci = "fprime_samd_ci.plugins.samd_ci:SamdCi"
 
 [tool.setuptools_scm]
 root = ".."
+# Only `v*` tags are versions. Other tags in fprime-samd (e.g. `mf-r1.0-rc1`) are not
+# parseable and would otherwise make `pip install ./lib/fprime-samd/ci` fail.
+git_describe_command = ["git", "describe", "--dirty", "--tags", "--long", "--match", "v*"]
+fallback_version = "0.0.1"

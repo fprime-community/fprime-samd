@@ -1,0 +1,30 @@
+name: "SAMD CI Setup"
+description: >-
+  Set up a consuming repository for fprime-ci with the fprime-samd `samd-ci` plugin:
+  installs the plugin (every stage) and the SAMD21 cross toolchain (build stage only).
+  The hardware runner needs only openocd and the plugin; see ../../../ci/README.md.
+
+inputs:
+  stage:
+    description: "Stage of the CI process (all, build, or anything else for the hardware runner)"
+    required: false
+    default: "all"
+    type: string
+
+runs:
+  using: "composite"
+  steps:
+    - name: "Install CI tooling"
+      shell: bash
+      run: |
+        CI_TOOLS_PATH="$(cd "$(dirname "$GITHUB_ACTION_PATH")/../../ci" && pwd)"
+        echo "CI Tools Path: $CI_TOOLS_PATH"
+        pip install "${CI_TOOLS_PATH}"
+    # Local-path `uses:` resolves against the consuming repository's checkout, so this
+    # assumes the documented layout (fprime-samd checked out at lib/fprime-samd), the
+    # same assumption setup-samd-toolchain's default `toolchain-file` makes.
+    - name: "Install the SAMD21 cross toolchain"
+      if: ${{ inputs.stage == 'all' || inputs.stage == 'build' }}
+      uses: ./lib/fprime-samd/.github/actions/setup-samd-toolchain
+      with:
+        add-to-path: "true"

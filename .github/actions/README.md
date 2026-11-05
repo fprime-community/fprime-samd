@@ -18,6 +18,7 @@
    | `setup-fprime` | Python, pip, F Prime requirements fan-out |
    | `setup-samd-toolchain` | arm-none-eabi-gcc + CMSIS + CMSIS-Atmel, cached |
    | `save-samd-toolchain` | Saves that cache, only after a build has succeeded |
+   | `setup-ci` | `fprime-ci` + the `samd-ci` plugin (see `ci/README.md`); toolchain for the build stage |
    | `unit-tests` | Builds and runs `*_ut_exe` targets in a generated cache |
    | `measure-coverage` | Per-module + library-wide gcovr, plus per-module console logs |
    | `publish-coverage` | Renders the coverage site and pushes it to the Pages branch |

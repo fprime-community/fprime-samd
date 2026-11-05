@@ -1,0 +1,59 @@
+# fprime-ci configuration for the CuriosityReference deployment of fprime-samd-reference
+# running on a Microchip SAMD21 Curiosity Nano flashed over its on-board nEDBG (CMSIS-DAP).
+#
+# Run from the root of fprime-samd-reference:
+#   fprime-ci -c ./lib/fprime-samd/ci/sample-configs/samd21g17.yml --add-stage build    # build host
+#   fprime-ci -c ./lib/fprime-samd/ci/sample-configs/samd21g17.yml --skip-stage build   # hardware runner
+
+# Required by the CI system
+deployment-name: CuriosityReference
+platform-name: samd21g17
+test-scripts:
+  - CuriosityReference/test/int/test_curiosity_reference.py
+dictionary: build-artifacts/samd21g17/CuriosityReference/dict/TopTopologyDictionary.json
+executable: build-artifacts/samd21g17/CuriosityReference/bin/CuriosityReference.elf.bin
+archive-path: ./archive.tar.gz
+
+extra-build-arguments:
+  - -p
+  - CuriosityReference
+
+extra-gds-arguments:
+  - --zmq-transport
+  - ipc:///tmp/fprime-server-ci-in
+  - ipc:///tmp/fprime-server-ci-out
+  - --communication-selection
+  - uart
+  - --uart-device
+  - /dev/samd21-curiosity
+  - --uart-baud
+  - "115200"
+  - --framing-selection
+  - fprime
+  - --packet-set-name
+  - Main
+  - --gui
+  - none
+
+extra-pytest-arguments:
+  - -s
+  - --zmq-transport
+  - ipc:///tmp/fprime-server-ci-in
+  - ipc:///tmp/fprime-server-ci-out
+
+# Plugin CLI arguments
+command-line-options:
+  ci-selection: samd-ci
+  port: /dev/samd21-curiosity
+
+# Plugin required keys
+flash-command:
+  - openocd
+  - -f
+  - interface/cmsis-dap.cfg
+  - -c
+  - transport select swd
+  - -f
+  - target/at91samdXX.cfg
+  - -c
+  - program build-artifacts/samd21g17/CuriosityReference/bin/CuriosityReference.elf.bin 0x00000000 verify reset exit
