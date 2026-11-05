@@ -1,9 +1,9 @@
 # unit-test console output: Drv/SpiDriver
 
 ==============================================================================
-PASSED  fprime-samd_Drv_SpiDriver_ut_exe  (1.38s)
+PASSED  fprime-samd_Drv_SpiDriver_ut_exe  (1.30s)
 ==============================================================================
-[STest::Random] Generated seed 732418 from system time
+[STest::Random] Generated seed 232014 from system time
 [==========] Running 21 tests from 2 test suites.
 [----------] Global test environment set-up.
 [----------] 9 tests from Nominal
@@ -16,34 +16,34 @@ PASSED  fprime-samd_Drv_SpiDriver_ut_exe  (1.38s)
 [ RUN      ] Nominal.HardwareChipSelectTransaction
 [       OK ] Nominal.HardwareChipSelectTransaction (0 ms)
 [ RUN      ] Nominal.CalculateBaud
-[       OK ] Nominal.CalculateBaud (594 ms)
+[       OK ] Nominal.CalculateBaud (557 ms)
 [ RUN      ] Nominal.RandomTransactions
-[       OK ] Nominal.RandomTransactions (13 ms)
+[       OK ] Nominal.RandomTransactions (11 ms)
 [ RUN      ] Nominal.SetBaudRate
 [       OK ] Nominal.SetBaudRate (0 ms)
 [ RUN      ] Nominal.SetBaudRatePort
 [       OK ] Nominal.SetBaudRatePort (0 ms)
 [ RUN      ] Nominal.SchedIdle
 [       OK ] Nominal.SchedIdle (0 ms)
-[----------] 9 tests from Nominal (611 ms total)
+[----------] 9 tests from Nominal (572 ms total)
 
 [----------] 12 tests from OffNominal
 [ RUN      ] OffNominal.Busy
-[       OK ] OffNominal.Busy (145 ms)
+[       OK ] OffNominal.Busy (142 ms)
 [ RUN      ] OffNominal.SameSlotReRequest
 [       OK ] OffNominal.SameSlotReRequest (148 ms)
 [ RUN      ] OffNominal.ChipSelectFailure
-[       OK ] OffNominal.ChipSelectFailure (147 ms)
+[       OK ] OffNominal.ChipSelectFailure (138 ms)
 [ RUN      ] OffNominal.DmaBusError
 [       OK ] OffNominal.DmaBusError (0 ms)
 [ RUN      ] OffNominal.ConfigureTwice
-[       OK ] OffNominal.ConfigureTwice (146 ms)
+[       OK ] OffNominal.ConfigureTwice (138 ms)
 [ RUN      ] OffNominal.RequestBeforeConfigure
 [       OK ] OffNominal.RequestBeforeConfigure (0 ms)
 [ RUN      ] OffNominal.SizeMismatch
-[       OK ] OffNominal.SizeMismatch (147 ms)
+[       OK ] OffNominal.SizeMismatch (139 ms)
 [ RUN      ] OffNominal.ReceiveOverrun
-[       OK ] OffNominal.ReceiveOverrun (0 ms)
+[       OK ] OffNominal.ReceiveOverrun (1 ms)
 [ RUN      ] OffNominal.ReceiveOverrunAfterTxComplete
 [       OK ] OffNominal.ReceiveOverrunAfterTxComplete (0 ms)
 [ RUN      ] OffNominal.SpuriousInterrupt
@@ -52,9 +52,9 @@ PASSED  fprime-samd_Drv_SpiDriver_ut_exe  (1.38s)
 [       OK ] OffNominal.ReceiveOverrunIdle (0 ms)
 [ RUN      ] OffNominal.UnexpectedDmaReply
 [       OK ] OffNominal.UnexpectedDmaReply (0 ms)
-[----------] 12 tests from OffNominal (738 ms total)
+[----------] 12 tests from OffNominal (710 ms total)
 
 [----------] Global test environment tear-down
-[==========] 21 tests from 2 test suites ran. (1350 ms total)
+[==========] 21 tests from 2 test suites ran. (1283 ms total)
 [  PASSED  ] 21 tests.
 
