@@ -72,7 +72,6 @@ void PrmStorage ::SELECT_BANK_cmdHandler(FwOpcodeType opCode, U32 cmdSeq, const 
     }
     this->m_bank = bank;
     this->tlmWrite_ActiveBank(bank);
-    this->log_ACTIVITY_HI_BankSelected(bank);
     this->cmdResponse_out(opCode, cmdSeq, Fw::CmdResponse::OK);
 }
 
