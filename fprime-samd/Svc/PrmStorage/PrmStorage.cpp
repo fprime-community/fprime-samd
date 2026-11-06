@@ -18,11 +18,11 @@ PrmStorage ::PrmStorage(const char* const compName)
     : PrmStorageComponentBase(compName),
       m_bank(PrmBank::PRIME),
       m_busy(false),
+      m_retryPending(false),
       m_op(Fram::Op::READ),
       m_image(),
       m_cursor(0),
       m_chunk(),
-      m_retryPending(false),
       m_retries(0) {}
 
 PrmStorage ::~PrmStorage() {}

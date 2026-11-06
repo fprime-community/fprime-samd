@@ -127,11 +127,11 @@ class PrmStorage final : public PrmStorageComponentBase {
     PrmBank m_bank;  //!< Bank of the next transfer
 
     bool m_busy;          //!< A transfer is in progress
+    bool m_retryPending;  //!< The request was rejected BUSY; schedIn retries it
     Fram::Op m_op;        //!< Direction of the transfer
     Fw::Buffer m_image;   //!< The database image handed in by StaticPrmDb
     FwSizeType m_cursor;  //!< Image bytes done
     Fw::Buffer m_chunk;   //!< View of the image for the outstanding request
-    bool m_retryPending;  //!< The request was rejected BUSY; schedIn retries it
     U32 m_retries;        //!< BUSY rejections of the request
 };
 
