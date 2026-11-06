@@ -27,6 +27,7 @@ register_fprime_library(
   DEPENDS
       Drv_Interfaces
       fprime-samd_Drv_Types
+      config-fprime-samd
 )
 
 register_fprime_ut(

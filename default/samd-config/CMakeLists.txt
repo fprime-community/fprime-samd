@@ -18,6 +18,7 @@ register_fprime_config(
         "${CMAKE_CURRENT_LIST_DIR}/DmaDriverConfig.hpp"
         "${CMAKE_CURRENT_LIST_DIR}/UsartDriverConfig.hpp"
         "${CMAKE_CURRENT_LIST_DIR}/I2cDriverConfig.hpp"
+        "${CMAKE_CURRENT_LIST_DIR}/SpiDriverConfig.hpp"
         "${CMAKE_CURRENT_LIST_DIR}/FramerConfig.hpp"
         "${CMAKE_CURRENT_LIST_DIR}/ThinBufferManagerConfig.hpp"
     ${SAMD21_ONLY_CFG_OVERRIDES}

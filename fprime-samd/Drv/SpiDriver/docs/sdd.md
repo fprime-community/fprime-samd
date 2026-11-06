@@ -47,6 +47,9 @@ selects on `FPRIME_PLATFORM`.
 | SPI-ERR-003 | After an overrun reply the driver shall accept a new transaction immediately. | Unit Test, Hardware Test |
 | SPI-ERR-004 | A SERCOM interrupt without `INTFLAG.ERROR`, or an overrun with no transaction in flight, shall not abort, reply or alter the transaction state (the latter is acknowledged). | Unit Test |
 | SPI-ERR-005 | A DMA completion reporting `BUS_ERROR` on either stream shall abort the other stream if still outstanding, deassert the chip select (software mode) and reply on the requesting port with `SPI_OTHER_ERR` and the caller's buffers; the driver shall accept a new transaction immediately afterwards. | Unit Test |
+| SPI-SCHED-001 | `activeIn` shall return `true` if any reply record (outcome or refusal, on any slot) is latched between the start of the call and its return, whether or not that record is delivered in the same call. | Unit Test |
+| SPI-SCHED-002 | When `Samd21::SpiDriverConfig::SPI_REPOLL_DURING_OUTSTANDING_TRANSACTION` is non-zero, `activeIn` shall also return `true` if a transfer is in flight at the moment the call returns. | Unit Test (one build per option value) |
+| SPI-SCHED-003 | `activeIn` shall return `false` whenever neither SPI-SCHED-001 nor SPI-SCHED-002 applies. | Unit Test (one build per option value) |
 
 ## 3. Design
 
@@ -56,7 +59,7 @@ selects on `FPRIME_PLATFORM`.
 | ---- | ---- | ---- | ----- |
 | guarded input | `SpiWriteRead[Drv.AsyncSpiCfg.SpiDriverPorts]` | `Drv.SpiWriteReadRequest` | from `Drv.AsyncGuardedSpi`; index = chip-select slot |
 | output | `SpiWriteReadComplete[Drv.AsyncSpiCfg.SpiDriverPorts]` | `Drv.SpiWriteReadCallback` | **main context**, from `activeIn`; exactly one per request |
-| sync input | `activeIn` | `Svc.ActiveSched` | **required**: delivers latched completions and refusals; returns false |
+| sync input | `activeIn` | `Svc.ActiveSched` | **required**: delivers latched completions and refusals; returns true when the driver has work for another pass (§3.3) |
 | sync input | `setBaudRate` | `Samd21.SpiBaudRate` | **main context**, same caller as `SpiWriteRead`; runtime SCK change, returns `Drv.SpiStatus` (§3.2) |
 | output | `dmaTransactionOut[DmaChannel.N]` | `Dma.Transaction` | `MOSI`, `MISO` |
 | output | `dmaTransactionAbortOut[DmaChannel.N]` | `Fw.Signal` | abort a stream after a receive overrun or a DMA bus error; **ISR context** |
@@ -108,7 +111,7 @@ activeIn ─▶ for every slot, refusal then latched outcome (each copied and cl
 ```
 
 Nothing is delivered from an ISR: the ISR paths and the refusals only write the slot's
-pending record; `activeIn` (one pass per `Svc.PassiveCycler` turn) emits the callbacks with
+pending record; `activeIn` (called once per `Svc.PassiveCycler` pass; §3.3 says when it asks for another) emits the callbacks with
 interrupts enabled, so a client may start its next transfer from inside the callback. A slot
 holds one undelivered outcome (counting the transfer in flight) plus one refusal. A request
 on a slot that already holds an outcome — its transfer is still in flight, or its last
@@ -119,6 +122,22 @@ from inside the request. A third request on the same slot before `activeIn` has 
 both records occupied and asserts (client protocol error, caller context). Stray DMA replies
 (nothing in flight, duplicate channel, unknown channel) are ignored — the driver never asserts
 in response to bus traffic.
+
+**Return value (SPI-SCHED-001..003).** `activeIn` tells the cycler whether to run another pass
+before the deployment sleeps (`cycler.cycle(); wfi`). Every latch path (ISR outcome, refusal,
+unconfigured/busy/chip-select refusals from the request) sets a `m_latched` flag; `activeIn`
+clears it under `CriticalSection` on entry and reads it, together with `m_busy`, under
+`CriticalSection` just before returning, so no latch between entry and return is lost. It returns
+`true` if the flag is set — a record was latched during the pass, by an ISR that landed inside the
+call or by a client starting its next transfer from inside a callback — or, when
+`SpiDriverConfig::SPI_REPOLL_DURING_OUTSTANDING_TRANSACTION` (default 1, project-overridable in
+`samd-config/SpiDriverConfig.hpp`) is non-zero, if a transfer is in flight at that moment. The
+option trades sleep for latency: with it on, the cycler re-polls for the whole frame (~136 µs for
+68 bytes at 4 MHz, ~0.5 ms for 256 bytes) and the completion is delivered before `wfi` instead of
+at the next tick (≤ 125 ms at 8 Hz — the frame-per-tick symptom seen with a chained F-RAM client);
+with it off, a completion that lands after the pass waits for the next interrupt. A transfer that
+never completes and raises no SERCOM flag keeps main awake while the option is on (no timeout,
+§6); projects that cannot accept that set the option to 0. Delivery itself is unchanged.
 
 ### 3.4 Error handling
 
@@ -164,11 +183,15 @@ transfer at a time per driver (no queueing across slots); ≤ 65535 bytes per tr
 A deployment supplies two DMA channels (`dmaTransactionOut`/`dmaReplyIn`/`dmaTransactionAbortOut`
 per channel), optionally a `Samd21.GpioDriver` chip select, `cycler.cycleOut -> spiDriver.activeIn`
 before the consumers of its completions, and calls `configure()` in the `configComponents` phase.
+`Svc.PassiveCycler::cycle()` short-circuits on `didWork = didWork || cycleOut_out(i, i)` (fixed by
+fprime-community/fprime-samd#60): until that fix is in, every consumer wired at a higher `cycleOut`
+index than `spiDriver` is skipped for the rest of a pass whenever `activeIn` returns `true` — with
+the re-poll option on, that is every pass of every frame — so wire the non-SPI consumers below it.
 The CY15B102QN F-RAM driver (separate PR) is the reference consumer.
 
 ## 5. Unit tests
 
-`test/ut/` runs natively against the stub HAL (21 tests): configuration in both chip-select
+`test/ut/` runs natively against the stub HAL (22 tests): configuration in both chip-select
 modes, reconfigure assert, request before configure (`SPI_CONFIG_ERR` via `activeIn`), nominal
 transactions in both DMA completion orders on every slot, busy refusal on another slot
 (`SPI_BUSY_ERR`, delivered by `activeIn`), re-request on the in-flight slot and on a slot with
@@ -184,8 +207,16 @@ transfer completes with `SPI_OK` after the change), BAUD boundaries and overflow
 stream outstanding, spurious interrupt, overrun while idle, recovery on every slot and in
 both chip-select modes) driven through the stub HAL's `fireIsr()`.
 
+`Nominal.SchedRePoll` covers the `activeIn` return value (§3.3): true while a transfer is in
+flight (per the configuration option), true when a record is latched during the call — a
+refusal or an ISR completion on a slot not yet visited (delivered in the same call) and an ISR
+completion on a slot already visited (delivered in the next call) — and false when idle. Every
+other `invoke_to_activeIn` in the suite asserts its return value as well; the suite is run with
+`SPI_REPOLL_DURING_OUTSTANDING_TRANSACTION` at 1 and at 0.
+
 ## 6. Future work
 
-- A tick-based completion timeout for faults that raise no SERCOM flag (none observed).
+- A tick-based completion timeout for faults that raise no SERCOM flag (none observed); with
+  `SPI_REPOLL_DURING_OUTSTANDING_TRANSACTION` on, such a fault also keeps main awake (§3.3).
 - Raise the MISO channel above the MOSI/UART channels in DMAC priority so the overrun
   does not occur in the first place at high SCK rates.

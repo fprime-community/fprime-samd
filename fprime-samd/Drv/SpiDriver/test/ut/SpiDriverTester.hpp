@@ -103,6 +103,9 @@ class SpiDriverTester final : public SpiDriverGTestBase {
     void testSetBaudRatePort();
     void testSchedIdle();
 
+    //! activeIn return value: in flight (configurable), latched during the call, idle
+    void testSchedRePoll();
+
   private:
     // ----------------------------------------------------------------------
     // Handlers for typed from ports (capture the port index, which the
@@ -163,7 +166,7 @@ class SpiDriverTester final : public SpiDriverGTestBase {
     void assertDelivered(FwSizeType index, FwIndexType port, Drv::SpiStatus::T status);
 
     //! Assert exactly one reply was emitted on port with the request buffers and status
-    void assertReply(FwIndexType port, Drv::SpiStatus::T status);
+    void assertReply(FwIndexType port, Drv::SpiStatus::T status, bool transferInFlight = false);
     void injectOverrun();
     void assertAbort(FwSizeType index, SpiDriver_DmaChannel::T channel);
 
@@ -186,6 +189,12 @@ class SpiDriverTester final : public SpiDriverGTestBase {
 
     //! Port indices seen on the from ports, parallel to the generated histories
     FwIndexType m_replyPorts[MAX_HISTORY_SIZE];
+
+    //! Slot the completion callback re-requests from inside the callback (-1: none)
+    FwIndexType m_callbackRequestPort = -1;
+
+    //! Whether the callback-started transfer is completed by the stub before returning
+    bool m_callbackCompletes = false;
     FwIndexType m_chipSelectPorts[MAX_HISTORY_SIZE];
     FwIndexType m_dmaPorts[MAX_HISTORY_SIZE];
     FwIndexType m_abortPorts[MAX_HISTORY_SIZE];
