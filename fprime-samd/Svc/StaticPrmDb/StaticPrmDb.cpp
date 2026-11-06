@@ -16,6 +16,9 @@
 
 namespace Samd21 {
 
+// Definitions of the ODR-used class constants (C++14)
+constexpr U32 StaticPrmDb::DATABASE_MAGIC;
+
 // ----------------------------------------------------------------------
 // Component construction and destruction
 // ----------------------------------------------------------------------
@@ -50,13 +53,26 @@ void StaticPrmDb::readReturnIn_handler(FwIndexType portNum, Fw::Buffer& fwBuffer
 
     if (status == Drv::ByteStreamStatus::OP_OK) {
         Fw::ExternalSerializeBuffer txBufSer(txBuf.getData(), txBuf.getSize());
+        auto serStatus = txBufSer.setBuffLen(txBuf.getSize());
+        FW_ASSERT(serStatus == Fw::FW_SERIALIZE_OK, serStatus);
+        U32 storedMagic;
+        serStatus = txBufSer.deserializeTo(storedMagic);
+        FW_ASSERT(serStatus == Fw::FW_SERIALIZE_OK, serStatus);
         U32 storedHash;
-        auto serStatus = txBufSer.deserializeTo(storedHash);
+        serStatus = txBufSer.deserializeTo(storedHash);
         FW_ASSERT(serStatus == Fw::FW_SERIALIZE_OK, serStatus);
 
         U32 generatedHash = this->getDeploymentParameterHash();
 
-        if (storedHash == generatedHash) {
+        if (storedMagic != DATABASE_MAGIC) {
+            result = Fw::Success::FAILURE;
+
+            // Not an image we wrote (blank or foreign storage): drop it like a
+            // mismatched hash
+            memset(txBuf.getData(), 0, txBuf.getSize());
+
+            this->log_WARNING_HI_BadDatabaseMagic(storedMagic, DATABASE_MAGIC);
+        } else if (storedHash == generatedHash) {
             U32 validRecords;
             U32 invalidRecords;
             this->validate(validRecords, invalidRecords);
@@ -139,9 +155,11 @@ void StaticPrmDb::SAVE_cmdHandler(FwOpcodeType opCode, U32 cmdSeq) {
     auto buf = this->getDatabaseBuffer();
     Fw::ExternalSerializeBuffer ser(buf.getData(), buf.getSize());
 
-    // Refresh the database hash
-    auto serStatus = ser.serializeFrom(this->getDeploymentParameterHash());
-    FW_ASSERT(serStatus, Fw::FW_SERIALIZE_OK, serStatus);
+    // Refresh the database magic and hash
+    auto serStatus = ser.serializeFrom(DATABASE_MAGIC);
+    FW_ASSERT(serStatus == Fw::FW_SERIALIZE_OK, serStatus);
+    serStatus = ser.serializeFrom(this->getDeploymentParameterHash());
+    FW_ASSERT(serStatus == Fw::FW_SERIALIZE_OK, serStatus);
 
     this->writeOut_out(0, buf);
 }

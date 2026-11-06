@@ -51,6 +51,11 @@ def generate(
         output=Output.CPP,
     )
 
+    doc.include(
+        "samd-config/StaticPrmDbConfig.hpp",
+        output=Output.CPP,
+    )
+
     dictionary = model.analysis.dictionary_map[topology.symbol]
 
     for component in common.all_annotated_components(model, PRM_DB_ANNOTATION):
@@ -176,12 +181,13 @@ def generate_ac_functions(
             f"""
             |//! Buffer for {prm_db_name} parameter database
             |struct {{
+            |  U8 __database_magic[4];
             |  U8 __database_crc[4];
             |""",
             output=cg.Output.CPP,
         )
 
-        total_size = 4
+        total_size = 8  # magic + database hash
         for id, prm in params:
             size = prm.param.param_type.serialized_size
             total_size += size + 1  # +1 for hash
@@ -209,7 +215,14 @@ def generate_ac_functions(
         ns.lines(
             f"""|}} __PRM_RECORD_DB = {{}};
                 |
-                |static_assert(sizeof(__PRM_RECORD_DB) == {total_size}, "Unexpected size of prm db");""",
+                |static_assert(sizeof(__PRM_RECORD_DB) == {total_size}, "Unexpected size of prm db");
+                |
+                |//! Size of the database image handed to storage
+                |constexpr FwSizeType DATABASE_SIZE = {total_size};
+                |
+                |// The deployment's storage layout must hold the image (e.g. redundant banks must not overlap)
+                |static_assert(::Samd21::StaticPrmDbConfig::storageFits(DATABASE_SIZE),
+                |              "Parameter database image ({total_size} bytes) does not fit the storage layout checked by StaticPrmDbConfig::storageFits");""",
             output=cg.Output.CPP,
         )
 
@@ -262,8 +275,9 @@ def generate_ac_functions(
         with ns.function(f"{prm_db_name} ::loadParameters", static=True) as f:
             # Load parameters is generated for each deployment topology
             # This call is simply a wrapper call around that function
+            # A topology outside any module has its loadParameters in the global namespace
             *namespaces, _ = topology.symbol.qualified_name.split(".")
-            f.body.line(f"::{"::".join(namespaces)}::loadParameters();")
+            f.body.line(f"{"::".join(["", *namespaces, "loadParameters"])}();")
 
         with ns.function(f"{prm_db_name} ::validate", static=True) as f:
             f.param("U32&", "validRecords")
@@ -291,7 +305,7 @@ def generate_ac_functions(
             f"{prm_db_name} ::getDatabaseBuffer", ret="Fw::Buffer", static=True
         ) as f:
             f.body.line(
-                f"return Fw::Buffer(reinterpret_cast<U8*>(&__PRM_RECORD_DB), {total_size});"
+                "return Fw::Buffer(reinterpret_cast<U8*>(&__PRM_RECORD_DB), DATABASE_SIZE);"
             )
 
 

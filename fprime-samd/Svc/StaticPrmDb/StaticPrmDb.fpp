@@ -68,6 +68,11 @@ module Samd21 {
             id 3 \
             format "Failed to read parameters: {}"
 
+        event BadDatabaseMagic(stored: U32, expected: U32) \
+            severity warning high \
+            id 4 \
+            format "Stored parameter database has bad magic 0x{x}, expected 0x{x}"
+
         ###############################################################################
         # Standard AC Ports: Required for Channels, Events, Commands, and Parameters  #
         ###############################################################################
