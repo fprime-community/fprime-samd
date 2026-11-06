@@ -63,16 +63,10 @@ module Samd21 {
         # Events
         # ----------------------------------------------------------------------
 
-        @ The following saves and loads use this bank
-        event BankSelected(bank: Samd21.PrmBank) \
-            severity activity high \
-            id 0 \
-            format "Parameter storage bank set to {}"
-
         @ An F-RAM request failed; the transfer was ended with OTHER_ERROR
         event StorageFailed(op: Fram.Op, bank: Samd21.PrmBank, offset: U32, $status: Fram.Status) \
             severity warning high \
-            id 1 \
+            id 0 \
             format "F-RAM {} of parameter {} bank at offset {} failed: {}" \
             throttle 5
 

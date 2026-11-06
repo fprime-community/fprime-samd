@@ -199,8 +199,8 @@ void PrmStorageTester::testSelectBank() {
     this->sendSelectBank(PrmBank::BACKUP, cmdSeq);
     ASSERT_CMD_RESPONSE_SIZE(1);
     ASSERT_CMD_RESPONSE(0, PrmStorageComponentBase::OPCODE_SELECT_BANK, cmdSeq, Fw::CmdResponse::OK);
-    ASSERT_EVENTS_BankSelected_SIZE(1);
-    ASSERT_EVENTS_BankSelected(0, PrmBank::BACKUP);
+    // Selecting a bank is routine (every save cycle): telemetry only, no event
+    ASSERT_EVENTS_SIZE(0);
     ASSERT_TLM_ActiveBank_SIZE(1);
     ASSERT_TLM_ActiveBank(0, PrmBank::BACKUP);
 

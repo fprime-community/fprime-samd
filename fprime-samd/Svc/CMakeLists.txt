@@ -15,7 +15,7 @@ add_fprime_subdirectory("${CMAKE_CURRENT_LIST_DIR}/StaticTlmPacketizer/")
 add_fprime_subdirectory("${CMAKE_CURRENT_LIST_DIR}/StaticCmdDispatcher/")
 add_fprime_subdirectory("${CMAKE_CURRENT_LIST_DIR}/StaticPrmDb/")
 
-# PrmStorage stores the StaticPrmDb image on a fprime-devices F-RAM, so it is only built when the
+# PrmStorage and FramPeekPoke talk to a fprime-devices F-RAM, so they are only built when the
 # project also lists fprime-devices in its library locations
 set(FPRIME_SAMD_HAS_FPRIME_DEVICES OFF)
 foreach (LIBRARY_LOCATION IN LISTS FPRIME_LIBRARY_LOCATIONS)
@@ -25,4 +25,5 @@ foreach (LIBRARY_LOCATION IN LISTS FPRIME_LIBRARY_LOCATIONS)
 endforeach()
 if (FPRIME_SAMD_HAS_FPRIME_DEVICES)
     add_fprime_subdirectory("${CMAKE_CURRENT_LIST_DIR}/PrmStorage/")
+    add_fprime_subdirectory("${CMAKE_CURRENT_LIST_DIR}/FramPeekPoke/")
 endif()

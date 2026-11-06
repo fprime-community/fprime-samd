@@ -45,7 +45,6 @@ completion of one chunk issues the next. `PRIME` is selected at boot.
 |---|---|---|
 | `SELECT_BANK(bank)` | command | Bank used by the following saves and loads; `BUSY` during a transfer |
 | `ActiveBank` | telemetry | Bank of the next transfer |
-| `BankSelected` | activity high | `SELECT_BANK` took effect |
 | `StorageFailed` | warning high | An F-RAM request failed; the transfer returned `OTHER_ERROR` (throttled, 5) |
 
 ## Configuration
