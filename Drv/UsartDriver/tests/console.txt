@@ -1,9 +1,9 @@
 # unit-test console output: Drv/UsartDriver
 
 ==============================================================================
-PASSED  fprime-samd_Drv_UsartDriver_ut_exe  (0.50s)
+PASSED  fprime-samd_Drv_UsartDriver_ut_exe  (0.49s)
 ==============================================================================
-[STest::Random] Generated seed 102743 from system time
+[STest::Random] Generated seed 129691 from system time
 [==========] Running 19 tests from 6 test suites.
 [----------] Global test environment set-up.
 [----------] 3 tests from Configure
@@ -87,8 +87,8 @@ TX DMA bus error asserts (invalid buffer pointer handed to DMA)
 ***************************************
 (RQ)       SAMD21-UART-002: The UsartDriver shall use DMA for transmission (an unrecoverable TX DMA bus error asserts)
 ***************************************
-[       OK ] Send.ChannelError (239 ms)
-[----------] 4 tests from Send (241 ms total)
+[       OK ] Send.ChannelError (227 ms)
+[----------] 4 tests from Send (229 ms total)
 
 [----------] 1 test from SendSync
 [ RUN      ] SendSync.Nominal
@@ -183,8 +183,8 @@ RX DMA bus error asserts (invalid buffer pointer handed to DMA)
 ***************************************
 (RQ)       SAMD21-UART-002: The UsartDriver shall use DMA for reception (an unrecoverable RX DMA bus error asserts)
 ***************************************
-[       OK ] Rx.ChannelError (215 ms)
-[----------] 8 tests from Rx (219 ms total)
+[       OK ] Rx.ChannelError (217 ms)
+[----------] 8 tests from Rx (222 ms total)
 
 [----------] 2 tests from Unconfigured
 [ RUN      ] Unconfigured.SchedIn
@@ -223,6 +223,6 @@ each SERCOM maps to its matching RX DMA trigger source
 [----------] 1 test from TriggerSource (0 ms total)
 
 [----------] Global test environment tear-down
-[==========] 19 tests from 6 test suites ran. (467 ms total)
+[==========] 19 tests from 6 test suites ran. (458 ms total)
 [  PASSED  ] 19 tests.
 
