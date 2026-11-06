@@ -1,9 +1,9 @@
 # unit-test console output: Drv/UsartDriver
 
 ==============================================================================
-PASSED  fprime-samd_Drv_UsartDriver_ut_exe  (0.32s)
+PASSED  fprime-samd_Drv_UsartDriver_ut_exe  (0.50s)
 ==============================================================================
-[STest::Random] Generated seed 866448 from system time
+[STest::Random] Generated seed 102743 from system time
 [==========] Running 19 tests from 6 test suites.
 [----------] Global test environment set-up.
 [----------] 3 tests from Configure
@@ -16,7 +16,7 @@ configure() programs the SERCOM once and announces readiness
 ***************************************
 (RQ)       SAMD21-UART-001: The UsartDriver shall configure SERCOM peripherals for USART operation
 ***************************************
-[       OK ] Configure.Nominal (1 ms)
+[       OK ] Configure.Nominal (2 ms)
 [ RUN      ] Configure.AllParameters
 
 ***************************************
@@ -41,7 +41,7 @@ configure() primes both RX buffers into the RX DMA channel
 (RQ)       SAMD21-UART-003: The UsartDriver shall implement double-buffering for continuous RX
 ***************************************
 [       OK ] Configure.QueuesRxBuffers (0 ms)
-[----------] 3 tests from Configure (2 ms total)
+[----------] 3 tests from Configure (3 ms total)
 
 [----------] 4 tests from Send
 [ RUN      ] Send.Nominal
@@ -87,8 +87,8 @@ TX DMA bus error asserts (invalid buffer pointer handed to DMA)
 ***************************************
 (RQ)       SAMD21-UART-002: The UsartDriver shall use DMA for transmission (an unrecoverable TX DMA bus error asserts)
 ***************************************
-[       OK ] Send.ChannelError (143 ms)
-[----------] 4 tests from Send (144 ms total)
+[       OK ] Send.ChannelError (239 ms)
+[----------] 4 tests from Send (241 ms total)
 
 [----------] 1 test from SendSync
 [ RUN      ] SendSync.Nominal
@@ -183,8 +183,8 @@ RX DMA bus error asserts (invalid buffer pointer handed to DMA)
 ***************************************
 (RQ)       SAMD21-UART-002: The UsartDriver shall use DMA for reception (an unrecoverable RX DMA bus error asserts)
 ***************************************
-[       OK ] Rx.ChannelError (146 ms)
-[----------] 8 tests from Rx (149 ms total)
+[       OK ] Rx.ChannelError (215 ms)
+[----------] 8 tests from Rx (219 ms total)
 
 [----------] 2 tests from Unconfigured
 [ RUN      ] Unconfigured.SchedIn
@@ -207,7 +207,7 @@ activeIn before configure() is a safe no-op
 (RQ)       SAMD21-UART-005: The UsartDriver shall queue TX requests with asynchronous completion (an activeIn tick before configure() delivers nothing)
 ***************************************
 [       OK ] Unconfigured.ActiveIn (0 ms)
-[----------] 2 tests from Unconfigured (0 ms total)
+[----------] 2 tests from Unconfigured (1 ms total)
 
 [----------] 1 test from TriggerSource
 [ RUN      ] TriggerSource.Mapping
@@ -223,6 +223,6 @@ each SERCOM maps to its matching RX DMA trigger source
 [----------] 1 test from TriggerSource (0 ms total)
 
 [----------] Global test environment tear-down
-[==========] 19 tests from 6 test suites ran. (298 ms total)
+[==========] 19 tests from 6 test suites ran. (467 ms total)
 [  PASSED  ] 19 tests.
 

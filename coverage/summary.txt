@@ -13,7 +13,7 @@ lib/fprime-samd/fprime-samd/Drv/I2cDriver/I2cDriver.cpp
 lib/fprime-samd/fprime-samd/Drv/RtcDriver/RtcDriver.cpp
                                               71      67    94%   90-91,106-107
 lib/fprime-samd/fprime-samd/Drv/SpiDriver/SpiDriver.cpp
-                                             183     180    98%   87-88,251
+                                             192     189    98%   89-90,264
 lib/fprime-samd/fprime-samd/Drv/SystemInfo/SystemInfo.cpp
                                               10      10   100%
 lib/fprime-samd/fprime-samd/Drv/Types/Sercom.cpp
@@ -39,5 +39,5 @@ lib/fprime-samd/fprime-samd/Svc/ThinBufferManager/ThinBufferManager.cpp
 lib/fprime-samd/fprime-samd/Svc/TmFramer/TmFramer.cpp
                                              163     160    98%   69-70,209
 ------------------------------------------------------------------------------
-TOTAL                                       1466    1409    96%
+TOTAL                                       1475    1418    96%
 ------------------------------------------------------------------------------
