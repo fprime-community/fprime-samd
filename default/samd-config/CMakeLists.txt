@@ -21,6 +21,8 @@ register_fprime_config(
         "${CMAKE_CURRENT_LIST_DIR}/SpiDriverConfig.hpp"
         "${CMAKE_CURRENT_LIST_DIR}/FramerConfig.hpp"
         "${CMAKE_CURRENT_LIST_DIR}/ThinBufferManagerConfig.hpp"
+        "${CMAKE_CURRENT_LIST_DIR}/StaticPrmDbConfig.hpp"
+        "${CMAKE_CURRENT_LIST_DIR}/PrmStorageConfig.hpp"
     ${SAMD21_ONLY_CFG_OVERRIDES}
     DEPENDS
         Fw_Types

@@ -13,6 +13,11 @@ namespace Samd21 {
 
 class StaticPrmDb final : public StaticPrmDbComponentBase {
   public:
+    //! First word of the stored database image, 'PRMD'. Tells an image this
+    //! component wrote apart from blank or foreign storage before the hash is
+    //! trusted.
+    static constexpr U32 DATABASE_MAGIC = 0x50524D44;
+
     // ----------------------------------------------------------------------
     // Component construction and destruction
     // ----------------------------------------------------------------------

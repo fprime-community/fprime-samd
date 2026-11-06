@@ -21,6 +21,7 @@ register_fprime_library(
         "${CMAKE_CURRENT_LIST_DIR}/StaticPrmDb.cpp"
     DEPENDS
         fprime-samd_Svc_Types
+        config-fprime-samd
 )
 
 ### Unit Tests ###
