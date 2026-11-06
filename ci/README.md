@@ -16,7 +16,8 @@ pip install ./lib/fprime-samd/ci
 
 ## Configure
 
-`fprime-ci` configuration for a Curiosity Nano deployment (see `fprime-samd-reference/ci/curiosity-nano.yml`):
+[`sample-configs/samd21g17.yml`](sample-configs/samd21g17.yml) is the `fprime-ci` configuration for the
+`CuriosityReference` deployment of `fprime-samd-reference`; copy and adapt it for other deployments. It boils down to:
 
 ```yaml
 deployment-name: CuriosityReference
@@ -36,12 +37,22 @@ flash-command:
   - -f
   - interface/cmsis-dap.cfg
   - -c
+  - cmsis_dap_vid_pid 0x03eb 0x2175   # the Nano's nEDBG, not whichever CMSIS-DAP probe enumerates first
+  - -c
   - transport select swd
   - -f
   - target/at91samdXX.cfg
   - -c
   - program build-artifacts/samd21g17/CuriosityReference/bin/CuriosityReference.elf.bin 0x00000000 verify reset exit
 ```
+
+## GitHub Actions
+
+Split the flow across a build host and the hardware runner, as `nasa/fprime`'s `ext-fprime-zephyr-reference.yml`
+does: the build job runs `fprime-ci -c <config> --add-stage build` and uploads `archive.tar.gz`, the hardware job
+downloads it and runs `fprime-ci -c <config> --skip-stage build`. Point the consuming repository's
+`.github/actions/setup` at [`.github/actions/setup-ci`](../.github/actions/setup-ci/action.yml), which installs this
+plugin and (for the `build` stage only) the SAMD21 cross toolchain.
 
 ## Hardware runner
 

@@ -17,6 +17,7 @@
 #include "fprime-samd/Drv/Types/SercomKindEnumAc.hpp"
 #include "fprime-samd/Drv/Types/ThinBuffer.hpp"
 #include "fprime-samd/Drv/Types/TransactionTypeEnumAc.hpp"
+#include "samd-config/SpiDriverConfig.hpp"
 
 namespace Samd21 {
 
@@ -50,6 +51,7 @@ SpiDriver ::SpiDriver(const char* const compName)
       m_write(),
       m_configured(false),
       m_busy(0),
+      m_latched(false),
       m_hardware_chip_select(false),
       m_pending(),
       m_refused() {
@@ -153,6 +155,7 @@ void SpiDriver ::SpiWriteRead_handler(FwIndexType portNum, Fw::Buffer& writeBuff
             refusal.read = Samd21::ThinBuffer(readBuffer);
             refusal.status = Drv::SpiStatus::SPI_BUSY_ERR;
             refusal.pending = true;
+            this->m_latched = true;
             return;
         }
         if (!this->m_configured) {
@@ -201,13 +204,23 @@ void SpiDriver ::SpiWriteRead_handler(FwIndexType portNum, Fw::Buffer& writeBuff
 }
 
 bool SpiDriver ::activeIn_handler(FwIndexType portNum, U32 context) {
+    {
+        Samd21::CriticalSection cs;
+        this->m_latched = false;
+    }
     for (FwIndexType slot = 0; slot < NUM_SPIWRITEREAD_INPUT_PORTS; slot++) {
         // Deliver the refusal (if any) first: it carries no data and tells the client its
         // re-request was dropped before the older request's outcome lets it re-arm.
         this->deliver(this->m_refused[slot], slot);
         this->deliver(this->m_pending[slot], slot);
     }
-    return false;
+    // Ask for another pass before the deployment sleeps if a reply record was latched during
+    // this call (an ISR landed inside it, or a callback's re-request was refused) or, when
+    // configured, while a transfer is in flight, so its completion is delivered before the
+    // next wfi instead of at the next tick.
+    Samd21::CriticalSection cs;
+    return this->m_latched ||
+           ((Samd21::SpiDriverConfig::SPI_REPOLL_DURING_OUTSTANDING_TRANSACTION != 0) && (this->m_busy != 0));
 }
 
 void SpiDriver ::deliver(PendingReply& record, FwIndexType slot) {
@@ -347,6 +360,7 @@ void SpiDriver ::latchReply(FwIndexType portNum,
     slot.read = Samd21::ThinBuffer(readBuffer);
     slot.status = status;
     slot.pending = true;
+    this->m_latched = true;
 }
 
 }  // namespace Samd21

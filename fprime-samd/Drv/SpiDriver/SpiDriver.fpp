@@ -38,7 +38,9 @@ module Samd21 {
         @ REQUIRED CONNECTION. Main-context delivery of the completions latched by the DMAC
         @ and SERCOM interrupts (and of refused requests). Connect to the deployment's
         @ Svc.PassiveCycler (cycleOut), at a lower index than the components that consume the
-        @ completions. Always returns false: delivering replies leaves no work for this cycle.
+        @ completions. Returns true (call again before sleeping) if a reply record was latched
+        @ during the call, or — when SpiDriverConfig::SPI_REPOLL_DURING_OUTSTANDING_TRANSACTION
+        @ is non-zero — if a transfer is in flight when the call returns; false otherwise.
         sync input port activeIn: Svc.ActiveSched
 
         @ Runtime SCK rate change for bus managers that re-initialise a device during normal

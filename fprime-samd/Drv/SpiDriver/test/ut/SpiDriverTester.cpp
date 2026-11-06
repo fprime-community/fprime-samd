@@ -4,6 +4,7 @@
 // ======================================================================
 
 #include "SpiDriverTester.hpp"
+#include "samd-config/SpiDriverConfig.hpp"
 
 #include <cstdint>
 
@@ -11,6 +12,9 @@
 #include "fprime-samd/Drv/Types/Sercom.hpp"
 
 namespace Samd21 {
+
+//! Expected activeIn return while a transfer is in flight and nothing was latched during the call
+static const bool REPOLL_IN_FLIGHT = (Samd21::SpiDriverConfig::SPI_REPOLL_DURING_OUTSTANDING_TRANSACTION != 0);
 
 // Out-of-class definitions: the gtest macros bind these constants by reference
 const FwSizeType SpiDriverTester::MAX_HISTORY_SIZE;
@@ -144,7 +148,7 @@ void SpiDriverTester ::testBusy() {
     this->invoke_to_SpiWriteRead(1, this->m_writeBuffer[1], this->m_readBuffer[1]);
     ASSERT_from_dmaTransactionOut_SIZE(0);
     ASSERT_from_chipSelectGpioOut_SIZE(0);
-    this->assertReply(1, Drv::SpiStatus::SPI_BUSY_ERR);
+    this->assertReply(1, Drv::SpiStatus::SPI_BUSY_ERR, true);
 
     // Another request on slot 1 is latched again; a request while that refusal is still
     // undelivered is latched in the slot's refusal record (SPI_BUSY_ERR), nothing is called
@@ -157,7 +161,7 @@ void SpiDriverTester ::testBusy() {
     ASSERT_from_chipSelectGpioOut_SIZE(0);
     ASSERT_DEATH_IF_SUPPORTED(this->invoke_to_SpiWriteRead(1, this->m_writeBuffer[1], this->m_readBuffer[1]), "");
     // activeIn delivers both refusals on slot 1
-    this->invoke_to_activeIn(0, 0);
+    ASSERT_EQ(this->invoke_to_activeIn(0, 0), REPOLL_IN_FLIGHT);
     ASSERT_from_SpiWriteReadComplete_SIZE(2);
     this->assertDelivered(0, 1, Drv::SpiStatus::SPI_BUSY_ERR);
     this->assertDelivered(1, 1, Drv::SpiStatus::SPI_BUSY_ERR);
@@ -190,7 +194,7 @@ void SpiDriverTester ::testSameSlotReRequest() {
     ASSERT_DEATH_IF_SUPPORTED(this->invoke_to_SpiWriteRead(0, this->m_writeBuffer[0], this->m_readBuffer[0]), "");
     this->clearAll();
     // activeIn delivers the refusal first, then the completion
-    this->invoke_to_activeIn(0, 0);
+    ASSERT_FALSE(this->invoke_to_activeIn(0, 0));
     ASSERT_from_SpiWriteReadComplete_SIZE(2);
     this->assertDelivered(0, 0, Drv::SpiStatus::SPI_BUSY_ERR);
     this->assertDelivered(1, 0, Drv::SpiStatus::SPI_OK);
@@ -207,7 +211,7 @@ void SpiDriverTester ::testSameSlotReRequest() {
     this->clearAll();
     this->invoke_to_SpiWriteRead(0, this->m_writeBuffer[0], this->m_readBuffer[0]);
     ASSERT_from_SpiWriteReadComplete_SIZE(0);
-    this->invoke_to_activeIn(0, 0);
+    ASSERT_FALSE(this->invoke_to_activeIn(0, 0));
     ASSERT_from_SpiWriteReadComplete_SIZE(2);
     this->assertDelivered(0, 0, Drv::SpiStatus::SPI_BUSY_ERR);
     this->assertDelivered(1, 0, Drv::SpiStatus::SPI_OK);
@@ -261,7 +265,7 @@ void SpiDriverTester ::testDmaBusError() {
         this->clearAll();
         // No reply follows for the aborted stream; a late one would be ignored
         this->completeDma(other);
-        this->invoke_to_activeIn(0, 0);
+        ASSERT_FALSE(this->invoke_to_activeIn(0, 0));
         ASSERT_from_SpiWriteReadComplete_SIZE(0);
         ASSERT_from_chipSelectGpioOut_SIZE(0);
         this->clearAll();
@@ -304,7 +308,7 @@ void SpiDriverTester ::testUnexpectedDmaReply() {
     this->clearAll();
     this->completeDma(SpiDriver_DmaChannel::MISO);
     this->completeDma(SpiDriver_DmaChannel::MOSI);
-    this->invoke_to_activeIn(0, 0);
+    ASSERT_FALSE(this->invoke_to_activeIn(0, 0));
     ASSERT_from_SpiWriteReadComplete_SIZE(0);
     ASSERT_from_chipSelectGpioOut_SIZE(0);
 
@@ -312,7 +316,7 @@ void SpiDriverTester ::testUnexpectedDmaReply() {
     this->clearAll();
     this->completeDma(SpiDriver_DmaChannel::MISO);
     this->completeDma(SpiDriver_DmaChannel::MISO);
-    this->invoke_to_activeIn(0, 0);
+    ASSERT_EQ(this->invoke_to_activeIn(0, 0), REPOLL_IN_FLIGHT);
     ASSERT_from_SpiWriteReadComplete_SIZE(0);
     this->completeDma(SpiDriver_DmaChannel::MOSI);
     this->assertChipSelect(0, 0, Fw::Logic::HIGH);
@@ -355,7 +359,7 @@ void SpiDriverTester ::testRandomTransactions() {
                 this->m_writeBuffer[other].set(this->m_writeData[other], 1);
                 this->m_readBuffer[other].set(this->m_readData[other], 1);
                 this->invoke_to_SpiWriteRead(other, this->m_writeBuffer[other], this->m_readBuffer[other]);
-                this->assertReply(other, Drv::SpiStatus::SPI_BUSY_ERR);
+                this->assertReply(other, Drv::SpiStatus::SPI_BUSY_ERR, true);
                 ASSERT_from_dmaTransactionOut_SIZE(0);
             }
         }
@@ -419,7 +423,7 @@ void SpiDriverTester ::testReceiveOverrunAfterTxComplete() {
     // A late MISO completion after the abort (the DMA driver normally clears it) is ignored
     this->clearAll();
     this->completeDma(SpiDriver_DmaChannel::MISO);
-    this->invoke_to_activeIn(0, 0);
+    ASSERT_FALSE(this->invoke_to_activeIn(0, 0));
     ASSERT_from_SpiWriteReadComplete_SIZE(0);
     ASSERT_from_chipSelectGpioOut_SIZE(0);
 
@@ -532,13 +536,99 @@ void SpiDriverTester ::testSetBaudRatePort() {
 
 void SpiDriverTester ::testSchedIdle() {
     // REQUIREMENT(SPI-XFER-006): activeIn with nothing latched emits nothing, before and after configure()
-    this->invoke_to_activeIn(0, 0);
+    // REQUIREMENT(SPI-SCHED-003): and returns false (nothing latched, nothing in flight)
+    ASSERT_FALSE(this->invoke_to_activeIn(0, 0));
     ASSERT_from_SpiWriteReadComplete_SIZE(0);
     this->configure(SpiDriver::HardwareChipSelect::DISABLED);
-    this->invoke_to_activeIn(0, 0);
-    this->invoke_to_activeIn(0, 1);
+    ASSERT_FALSE(this->invoke_to_activeIn(0, 0));
+    ASSERT_FALSE(this->invoke_to_activeIn(0, 1));
     ASSERT_from_SpiWriteReadComplete_SIZE(0);
     ASSERT_from_chipSelectGpioOut_SIZE(0);
+}
+
+void SpiDriverTester ::testSchedRePoll() {
+    // REQUIREMENT(SPI-SCHED-002): with SPI_REPOLL_DURING_OUTSTANDING_TRANSACTION, activeIn returns true while
+    //                             a transfer is in flight at return, even with nothing to deliver
+    // REQUIREMENT(SPI-SCHED-003): without it, or with nothing in flight and nothing latched, false
+    this->configure(SpiDriver::HardwareChipSelect::DISABLED);
+    this->startTransaction(0, 4);
+    ASSERT_EQ(this->invoke_to_activeIn(0, 0), REPOLL_IN_FLIGHT);
+    ASSERT_from_SpiWriteReadComplete_SIZE(0);
+    // Outcome latched before the call (ISR between passes) is delivered by finishTransaction's pass;
+    // the pass after it has nothing latched and nothing in flight -> false
+    this->finishTransaction(0, true);
+    ASSERT_FALSE(this->invoke_to_activeIn(0, 0));
+
+    // REQUIREMENT(SPI-SCHED-001): a record latched during the call makes it return true, whether or
+    //                             not it is delivered in the same call
+    // (a) delivered in the same call: slots 0 and 1 hold undelivered completions; the slot-0 callback
+    //     re-requests slot 1, so a refusal is latched and delivered (before slot 1's outcome)
+    this->startTransaction(0, 4);
+    this->clearAll();
+    this->completeDma(SpiDriver_DmaChannel::MISO);
+    this->completeDma(SpiDriver_DmaChannel::MOSI);
+    this->startTransaction(1, 4);
+    this->clearAll();
+    this->completeDma(SpiDriver_DmaChannel::MISO);
+    this->completeDma(SpiDriver_DmaChannel::MOSI);
+    ASSERT_from_SpiWriteReadComplete_SIZE(0);
+    this->m_callbackRequestPort = 1;
+    ASSERT_TRUE(this->invoke_to_activeIn(0, 0));
+    ASSERT_from_SpiWriteReadComplete_SIZE(3);
+    this->assertDelivered(0, 0, Drv::SpiStatus::SPI_OK);
+    this->assertDelivered(1, 1, Drv::SpiStatus::SPI_BUSY_ERR);
+    this->assertDelivered(2, 1, Drv::SpiStatus::SPI_OK);
+    ASSERT_from_dmaTransactionOut_SIZE(0);
+    this->clearAll();
+    ASSERT_FALSE(this->invoke_to_activeIn(0, 0));
+    ASSERT_from_SpiWriteReadComplete_SIZE(0);
+
+    // (a2) ISR completion latched on a slot not yet visited: the slot-0 callback starts slot 1 and
+    //      the DMA completes it before slot 1 is visited -> delivered in the same call, true
+    this->startTransaction(0, 4);
+    this->clearAll();
+    this->completeDma(SpiDriver_DmaChannel::MISO);
+    this->completeDma(SpiDriver_DmaChannel::MOSI);
+    this->m_callbackRequestPort = 1;
+    this->m_callbackCompletes = true;
+    ASSERT_TRUE(this->invoke_to_activeIn(0, 0));
+    ASSERT_from_SpiWriteReadComplete_SIZE(2);
+    this->assertDelivered(0, 0, Drv::SpiStatus::SPI_OK);
+    this->assertDelivered(1, 1, Drv::SpiStatus::SPI_OK);
+    ASSERT_from_dmaTransactionOut_SIZE(2);
+    this->clearAll();
+    ASSERT_FALSE(this->invoke_to_activeIn(0, 0));
+    ASSERT_from_SpiWriteReadComplete_SIZE(0);
+
+    // (b) not delivered in the same call: the slot-0 callback starts the next transfer on slot 0 and
+    //     the DMA completes it before activeIn returns (slot 0 was already visited) -> true, and the
+    //     next pass delivers it and returns false
+    this->startTransaction(0, 4);
+    this->clearAll();
+    this->completeDma(SpiDriver_DmaChannel::MISO);
+    this->completeDma(SpiDriver_DmaChannel::MOSI);
+    this->m_callbackRequestPort = 0;
+    this->m_callbackCompletes = true;
+    ASSERT_TRUE(this->invoke_to_activeIn(0, 0));
+    ASSERT_from_SpiWriteReadComplete_SIZE(1);
+    this->assertDelivered(0, 0, Drv::SpiStatus::SPI_OK);
+    ASSERT_from_dmaTransactionOut_SIZE(2);
+    this->clearAll();
+    ASSERT_FALSE(this->invoke_to_activeIn(0, 0));
+    ASSERT_from_SpiWriteReadComplete_SIZE(1);
+    this->assertDelivered(0, 0, Drv::SpiStatus::SPI_OK);
+
+    // (c) the callback starts a transfer that stays in flight at return: in-flight rule only
+    this->clearAll();
+    this->startTransaction(0, 4);
+    this->clearAll();
+    this->completeDma(SpiDriver_DmaChannel::MISO);
+    this->completeDma(SpiDriver_DmaChannel::MOSI);
+    this->m_callbackRequestPort = 1;
+    ASSERT_EQ(this->invoke_to_activeIn(0, 0), REPOLL_IN_FLIGHT);
+    ASSERT_from_SpiWriteReadComplete_SIZE(1);
+    ASSERT_from_dmaTransactionOut_SIZE(2);
+    this->finishTransaction(1, false);
 }
 
 // ----------------------------------------------------------------------
@@ -553,6 +643,19 @@ void SpiDriverTester ::from_SpiWriteReadComplete_handler(FwIndexType portNum,
     this->pushFromPortEntry_SpiWriteReadComplete(writeBuffer, readBuffer, status);
     if (index < MAX_HISTORY_SIZE) {
         this->m_replyPorts[index] = portNum;
+    }
+    // Optionally act like a chained client: re-request a slot (with the buffers the test last set
+    // for it) from inside the callback, and optionally let the stub DMA complete it before
+    // activeIn returns
+    if (this->m_callbackRequestPort >= 0) {
+        const FwIndexType next = this->m_callbackRequestPort;
+        this->m_callbackRequestPort = -1;
+        this->invoke_to_SpiWriteRead(next, this->m_writeBuffer[next], this->m_readBuffer[next]);
+        if (this->m_callbackCompletes) {
+            this->m_callbackCompletes = false;
+            this->completeDma(SpiDriver_DmaChannel::MISO);
+            this->completeDma(SpiDriver_DmaChannel::MOSI);
+        }
     }
 }
 
@@ -686,10 +789,11 @@ void SpiDriverTester ::assertDelivered(FwSizeType index, FwIndexType port, Drv::
     ASSERT_EQ(entry.readBuffer.getSize(), this->m_readBuffer[port].getSize());
 }
 
-void SpiDriverTester ::assertReply(FwIndexType port, Drv::SpiStatus::T status) {
-    // Replies are latched (ISR or refusal) and delivered only by activeIn, in main context
+void SpiDriverTester ::assertReply(FwIndexType port, Drv::SpiStatus::T status, bool transferInFlight) {
+    // Replies are latched (ISR or refusal) and delivered only by activeIn, in main context; the
+    // return value asks for another pass only while a transfer is in flight (when configured)
     ASSERT_from_SpiWriteReadComplete_SIZE(0);
-    this->invoke_to_activeIn(0, 0);
+    ASSERT_EQ(this->invoke_to_activeIn(0, 0), transferInFlight && REPOLL_IN_FLIGHT);
     ASSERT_from_SpiWriteReadComplete_SIZE(1);
     ASSERT_EQ(this->m_replyPorts[0], port);
     const FromPortEntry_SpiWriteReadComplete& entry = this->fromPortHistory_SpiWriteReadComplete->at(0);

@@ -32,19 +32,19 @@ extern void sendFatalPacket(Fw::ComBuffer& data);
 extern void sendBailFrame(FILE_NAME_ARG file, FwSizeType lineNo);
 }  // namespace Samd21
 
-void Fw::defaultDoAssert() {
+void Fw::terminateOnAssert() {
     NVIC_SystemReset();
 
     while (true) {
     }
 }
 
-void Fw::defaultPrintAssert(const CHAR* msg) {
+void Fw::printAssertMessage(const CHAR* msg) {
     __disable_irq();
 
     static volatile bool assertReached = false;
     if (assertReached) {
-        defaultDoAssert();
+        terminateOnAssert();
     }
 
     assertReached = true;
@@ -58,7 +58,7 @@ void Fw::defaultPrintAssert(const CHAR* msg) {
     }
 }
 
-void Fw::defaultReportAssert(FILE_NAME_ARG file,
+void Fw::formatAssertMessage(FILE_NAME_ARG file,
                              FwSizeType lineNo,
                              FwSizeType numArgs,
                              FwAssertArgType arg1,

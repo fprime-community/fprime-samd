@@ -150,7 +150,9 @@ class SpiDriver final : public SpiDriverComponentBase {
                                        ) override;
 
     //! Handler implementation for activeIn: delivers every latched reply (main context),
-    //! per slot the refusal before the outcome. Returns false (no further work this cycle).
+    //! per slot the refusal before the outcome. Returns true if a reply was latched during the
+    //! call or, when SpiDriverConfig::SPI_REPOLL_DURING_OUTSTANDING_TRANSACTION is non-zero,
+    //! if a transfer is still in flight; false otherwise (see sdd.md section 3.3).
     bool activeIn_handler(FwIndexType portNum,  //!< The port number
                           U32 context           //!< The call order
                           ) override;
@@ -212,6 +214,10 @@ class SpiDriver final : public SpiDriverComponentBase {
 
     //! Status flag that tracks while SPI transactions are still active
     U8 m_busy;
+
+    //! Set whenever a reply record (outcome or refusal) is latched; cleared by activeIn on
+    //! entry and read on exit, under a critical section, to decide its return value.
+    bool m_latched;
 
     bool m_hardware_chip_select;
 
