@@ -42,6 +42,12 @@ TEST(Configure, AllGains) {
     tester.testConfigureAllGains();
 }
 
+TEST(Configure, AveragingBadRes) {
+    COMMENT("configure() asserts when averaging (samples > 1) is paired with 8- or 10-bit resolution");
+    Samd21::AdcDriverTester tester;
+    tester.testConfigureAveragingBadRes();
+}
+
 // ----------------------------------------------------------------------
 // configureChannel()
 // ----------------------------------------------------------------------

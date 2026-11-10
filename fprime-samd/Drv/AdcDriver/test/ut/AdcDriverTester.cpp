@@ -84,14 +84,15 @@ void AdcDriverTester::testConfigure() {
     this->resetTest();
 
     // Configure with non-default parameters to verify all parameter plumbing
-    this->component.configure(AdcDriver::VoltageReference::INTVCC1, AdcDriver::Resolution::RES_10BIT,
+    // (Averaging requires RES_12BIT, so use that with SAMPLES_16.)
+    this->component.configure(AdcDriver::VoltageReference::INTVCC1, AdcDriver::Resolution::RES_12BIT,
                               AdcDriver::SampleCount::SAMPLES_16, 10, AdcDriver::Gain::GAIN_DIV2);
 
     // Verify hardware was configured exactly once with the requested parameters
     ASSERT_TRUE(this->stub().configured);
     ASSERT_EQ(this->stub().configure_count, 1U);
     ASSERT_EQ(static_cast<U8>(this->stub().ref), static_cast<U8>(AdcDriver::VoltageReference::INTVCC1));
-    ASSERT_EQ(static_cast<U8>(this->stub().res), static_cast<U8>(AdcDriver::Resolution::RES_10BIT));
+    ASSERT_EQ(static_cast<U8>(this->stub().res), static_cast<U8>(AdcDriver::Resolution::RES_12BIT));
     ASSERT_EQ(static_cast<U8>(this->stub().samples), static_cast<U8>(AdcDriver::SampleCount::SAMPLES_16));
     ASSERT_EQ(this->stub().samplingTime, 10U);
     ASSERT_EQ(static_cast<U8>(this->stub().gain), static_cast<U8>(AdcDriver::Gain::GAIN_DIV2));
@@ -427,6 +428,22 @@ void AdcDriverTester::testConfigureAllSampleCounts() {
 
         ASSERT_TRUE(this->stub().configured);
         ASSERT_EQ(static_cast<U8>(this->stub().samples), static_cast<U8>(count));
+    }
+}
+
+void AdcDriverTester::testConfigureAveragingBadRes() {
+    REQUIREMENT(
+        "SAMD21-ADC-001: The AdcDriver shall reject hardware averaging with a resolution other than "
+        "12-bit, since averaged results are always 12-bit");
+
+    AdcDriver::Resolution badResolutions[] = {AdcDriver::Resolution::RES_8BIT, AdcDriver::Resolution::RES_10BIT};
+    for (auto res : badResolutions) {
+        this->resetTest();
+        this->resetSingleton();  // Clear s_instance so the singleton assert is not what fires
+        ASSERT_DEATH_IF_SUPPORTED(this->component.configure(AdcDriver::VoltageReference::INT1V, res,
+                                                            AdcDriver::SampleCount::SAMPLES_16, 5,
+                                                            AdcDriver::Gain::GAIN_1X),
+                                  "Assert:");
     }
 }
 
