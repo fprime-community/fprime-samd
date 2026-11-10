@@ -22,11 +22,14 @@ register_fprime_library(
 )
 
 ### Unit Tests ###
-# Run against test/StaticTopology, whose dispatch table static-cmd-dispatcher generates
-fprime_samd_add_static_topology_ut(
-    SOURCES
-        "${CMAKE_CURRENT_LIST_DIR}/test/ut/StaticCmdDispatcherTestMain.cpp"
-        "${CMAKE_CURRENT_LIST_DIR}/test/ut/StaticCmdDispatcherTests.cpp"
-    DEPENDS
-        Fw_Test # For REQUIREMENT() traceability
-)
+# Run against test/StaticTopology, whose dispatch table static-cmd-dispatcher generates (cmake/static_topology.cmake)
+if (FPRIME_SAMD_STATIC_TOPOLOGY_ENABLED)
+    register_fprime_ut(
+        SOURCES
+            "${CMAKE_CURRENT_LIST_DIR}/test/ut/StaticCmdDispatcherTestMain.cpp"
+            "${CMAKE_CURRENT_LIST_DIR}/test/ut/StaticCmdDispatcherTests.cpp"
+        DEPENDS
+            Fw_Test # For REQUIREMENT() traceability
+    )
+    fprime_samd_link_static_topology()
+endif()

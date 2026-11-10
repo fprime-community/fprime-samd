@@ -1,4 +1,5 @@
-# fprime_samd_add_static_topology_ut, used by the Static* components' CMakeLists.txt
+# FPRIME_SAMD_STATIC_TOPOLOGY_ENABLED and fprime_samd_link_static_topology, used by the
+# Static* components' CMakeLists.txt
 include("${CMAKE_CURRENT_LIST_DIR}/cmake/static_topology.cmake")
 
 # Add helper library for MCU bootup

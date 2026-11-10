@@ -3,7 +3,7 @@
 #
 # The static-* build autocoders only run on normal modules, never on unit-test targets, and
 # they need a deployment topology as input. So the topology is built once here, as a module,
-# and each component's unit test links it (fprime_samd_add_static_topology_ut, library.cmake)
+# and each component's unit test links it (fprime_samd_link_static_topology, cmake/static_topology.cmake)
 # and drives the real instances through test-harness components. Edge cases of the generated
 # code are covered by adding instances, channels or packets here.
 #

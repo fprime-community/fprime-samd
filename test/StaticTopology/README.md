@@ -31,7 +31,9 @@ fprime-util generate --ut -DFPRIME_SAMD_STATIC_TOPOLOGY_TESTS=ON
 fprime-util check -p lib/fprime-samd/fprime-samd/Svc/StaticCmdDispatcher
 ```
 
-A component registers its test with `fprime_samd_add_static_topology_ut` (see
+A component registers its test with a plain `register_fprime_ut()` (guarded by
+`FPRIME_SAMD_STATIC_TOPOLOGY_ENABLED`) followed by `fprime_samd_link_static_topology()` (see
 `cmake/static_topology.cmake`), which links the topology whole-archive: the component calls the
 generated functions and the topology constructs the component, so the two libraries depend on
-each other.
+each other. `register_fprime_ut(` must stay literal in the component's `CMakeLists.txt`, since
+the coverage tooling finds a module's unit tests by that text.

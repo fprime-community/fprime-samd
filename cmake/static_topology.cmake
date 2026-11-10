@@ -20,11 +20,18 @@ else()
 endif()
 
 ####
-# Function `fprime_samd_add_static_topology_ut`:
+# Function `fprime_samd_link_static_topology`:
 #
-# Registers the current component's unit test against the StaticTopology. Call from the
-# component's CMakeLists.txt; arguments are those of register_fprime_ut, and the topology is
-# added to DEPENDS. Nothing is registered unless the StaticTopology is part of the build.
+# Links the StaticTopology into the current component's unit test. Call right after the
+# component's own register_fprime_ut(), guarded by FPRIME_SAMD_STATIC_TOPOLOGY_ENABLED:
+#
+#     if (FPRIME_SAMD_STATIC_TOPOLOGY_ENABLED)
+#         register_fprime_ut(SOURCES ... DEPENDS ...)
+#         fprime_samd_link_static_topology()
+#     endif()
+#
+# register_fprime_ut() stays literal in the component's CMakeLists.txt: coverage tooling
+# (nasa/fprime-actions discover.py) detects a module's unit tests by that text.
 #
 # The Static* components call functions generated into the topology library (e.g.
 # StaticCmdDispatcher::lookupDispatchPort), and the topology library constructs the
@@ -32,12 +39,11 @@ endif()
 # every generated function is in the executable however late the linker reaches a
 # component's library.
 ####
-function(fprime_samd_add_static_topology_ut)
-    if (NOT FPRIME_SAMD_STATIC_TOPOLOGY_ENABLED)
+function(fprime_samd_link_static_topology)
+    set(UT_TARGET "${FPRIME_CURRENT_MODULE}_${FPRIME__INTERNAL_UT_TARGET}")
+    if (NOT TARGET "${UT_TARGET}")
         return()
     endif()
-    register_fprime_ut(${ARGN})
-    set(UT_TARGET "${FPRIME_CURRENT_MODULE}_${FPRIME__INTERNAL_UT_TARGET}")
     target_link_libraries("${UT_TARGET}" PRIVATE
         "$<LINK_LIBRARY:WHOLE_ARCHIVE,fprime-samd_StaticTopology_Top>")
 endfunction()

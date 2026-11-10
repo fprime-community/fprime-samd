@@ -1,7 +1,7 @@
 ####
 # The StaticTopology deployment topology. A module (not a deployment): there is no
 # executable, the Static* components' unit tests link it (see library.cmake,
-# fprime_samd_add_static_topology_ut). Building it runs the static-* autocoders.
+# fprime_samd_link_static_topology). Building it runs the static-* autocoders.
 ####
 register_fprime_module(
         fprime-samd_StaticTopology_Top

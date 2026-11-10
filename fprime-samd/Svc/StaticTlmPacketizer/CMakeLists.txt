@@ -27,11 +27,14 @@ register_fprime_library(
 )
 
 ### Unit Tests ###
-# Run against test/StaticTopology, whose packet layout static-tlm-packetizer generates
-fprime_samd_add_static_topology_ut(
-    SOURCES
-        "${CMAKE_CURRENT_LIST_DIR}/test/ut/StaticTlmPacketizerTestMain.cpp"
-        "${CMAKE_CURRENT_LIST_DIR}/test/ut/StaticTlmPacketizerTests.cpp"
-    DEPENDS
-        Fw_Test # For REQUIREMENT() traceability
-)
+# Run against test/StaticTopology, whose packet layout static-tlm-packetizer generates (cmake/static_topology.cmake)
+if (FPRIME_SAMD_STATIC_TOPOLOGY_ENABLED)
+    register_fprime_ut(
+        SOURCES
+            "${CMAKE_CURRENT_LIST_DIR}/test/ut/StaticTlmPacketizerTestMain.cpp"
+            "${CMAKE_CURRENT_LIST_DIR}/test/ut/StaticTlmPacketizerTests.cpp"
+        DEPENDS
+            Fw_Test # For REQUIREMENT() traceability
+    )
+    fprime_samd_link_static_topology()
+endif()
