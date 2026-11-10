@@ -32,12 +32,16 @@ lib/fprime-samd/fprime-samd/Svc/Seq/Seq.cpp
                                              149     144    96%   48-50,148,152
 lib/fprime-samd/fprime-samd/Svc/Seq/Seq.hpp
                                                2       2   100%
+lib/fprime-samd/fprime-samd/Svc/StaticCmdDispatcher/StaticCmdDispatcher.cpp
+                                              93      93   100%
 lib/fprime-samd/fprime-samd/Svc/StaticMallocator/StaticMallocator.hpp
                                               16      16   100%
+lib/fprime-samd/fprime-samd/Svc/StaticTlmPacketizer/StaticTlmPacketizer.cpp
+                                              32      32   100%
 lib/fprime-samd/fprime-samd/Svc/ThinBufferManager/ThinBufferManager.cpp
                                              103     102    99%   39
 lib/fprime-samd/fprime-samd/Svc/TmFramer/TmFramer.cpp
                                              163     160    98%   69-70,209
 ------------------------------------------------------------------------------
-TOTAL                                       1475    1418    96%
+TOTAL                                       1600    1543    96%
 ------------------------------------------------------------------------------

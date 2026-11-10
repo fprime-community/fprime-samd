@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Unit tests &mdash; Svc/StaticTlmPacketizer</title><style>* { box-sizing: border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  margin: 0; padding: 1.5rem; color: #1f2328; background: #fff;
+}
+h1 { margin: 0 0 0.25rem 0; font-size: 1.25rem; }
+h1 code { font-size: 1rem; }
+.meta { color: #57606a; font-size: 0.9rem; margin-bottom: 1rem; }
+a { color: #0969da; text-decoration: none; }
+a:hover { text-decoration: underline; }
+.pill {
+  display: inline-block; padding: 0.05rem 0.55rem; border-radius: 2em;
+  font-size: 0.78rem; font-weight: 600; border: 1px solid transparent;
+}
+.passed { background: #dafbe1; color: #0a5122; border-color: #4ac26b; }
+.failed { background: #ffebe9; color: #a40e26; border-color: #ff8182; }
+.skipped { background: #f6f8fa; color: #57606a; border-color: #d0d7de; }
+details { border: 1px solid #d0d7de; border-radius: 6px; margin-bottom: 0.5rem; }
+details > summary {
+  cursor: pointer; padding: 0.5rem 0.75rem; font-weight: 600;
+  display: flex; gap: 0.6rem; align-items: center; list-style: none;
+}
+details > summary::-webkit-details-marker { display: none; }
+details > summary::before { content: "\25B6"; display: inline-block; transition: transform 0.1s; }
+details[open] > summary::before { transform: rotate(90deg); }
+details > summary .name { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+details > summary .time { color: #57606a; font-weight: 400; font-size: 0.85rem; }
+pre {
+  margin: 0; padding: 0.75rem 1rem; overflow-x: auto; background: #f6f8fa;
+  border-top: 1px solid #d0d7de; font-size: 0.82rem; line-height: 1.45;
+  white-space: pre-wrap; word-break: break-word;
+}
+.empty { color: #57606a; padding: 0.75rem 1rem; border-top: 1px solid #d0d7de; margin: 0; }
+</style></head><body><h1>Unit-test console output &mdash; <code>Svc/StaticTlmPacketizer</code></h1><div class="meta"><span class="pill passed">passed</span> 1 passed &middot; 0.03s &middot; <a href="../../../index.html">← back to the module list</a> &middot; <a href="console.txt">plain text</a></div><details><summary><span class="pill passed">passed</span><span class="name">fprime-samd_Svc_StaticTlmPacketizer_ut_exe</span><span class="time">0.03s</span></summary><pre>[==========] Running 8 tests from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 8 tests from StaticTlmPacketizerTest
+[ RUN      ] StaticTlmPacketizerTest.PacketHeader
+
+***************************************
+(RQ)       SAMD21-TLM-003
+***************************************
+
+***************************************
+a packet is the packetized-telemetry descriptor, the packet id and the time, then the payload
+***************************************
+[       OK ] StaticTlmPacketizerTest.PacketHeader (0 ms)
+[ RUN      ] StaticTlmPacketizerTest.PrimaryLayout
+
+***************************************
+(RQ)       SAMD21-TLM-001
+***************************************
+
+***************************************
+each channel is at its offset in packet order; same channel ids on two instances are distinct
+***************************************
+[       OK ] StaticTlmPacketizerTest.PrimaryLayout (0 ms)
+[ RUN      ] StaticTlmPacketizerTest.TypesLayout
+
+***************************************
+(RQ)       SAMD21-TLM-001
+***************************************
+
+***************************************
+every channel type is laid out with its serialized size; a channel may be in several packets
+***************************************
+[       OK ] StaticTlmPacketizerTest.TypesLayout (0 ms)
+[ RUN      ] StaticTlmPacketizerTest.LatestValue
+
+***************************************
+(RQ)       SAMD21-TLM-001
+***************************************
+
+***************************************
+a packet carries the most recent value written to each channel
+***************************************
+[       OK ] StaticTlmPacketizerTest.LatestValue (0 ms)
+[ RUN      ] StaticTlmPacketizerTest.OmittedChannels
+
+***************************************
+(RQ)       SAMD21-TLM-001
+***************************************
+
+***************************************
+a channel in no packet is accepted and dropped
+***************************************
+[       OK ] StaticTlmPacketizerTest.OmittedChannels (0 ms)
+[ RUN      ] StaticTlmPacketizerTest.EmptyPacket
+
+***************************************
+(RQ)       SAMD21-TLM-003
+***************************************
+
+***************************************
+a packet with no channels is sent as its header alone
+***************************************
+[       OK ] StaticTlmPacketizerTest.EmptyPacket (0 ms)
+[ RUN      ] StaticTlmPacketizerTest.UnknownPacket
+
+***************************************
+(RQ)       SAMD21-TLM-004
+***************************************
+
+***************************************
+SEND_PKT of a packet id not in the packet set fails EXECUTION_ERROR and sends nothing
+***************************************
+[       OK ] StaticTlmPacketizerTest.UnknownPacket (0 ms)
+[ RUN      ] StaticTlmPacketizerTest.PortTrigger
+
+***************************************
+(RQ)       SAMD21-TLM-002
+***************************************
+
+***************************************
+a pktSendIn call sends the packet whose id is the port number
+***************************************
+[       OK ] StaticTlmPacketizerTest.PortTrigger (0 ms)
+[----------] 8 tests from StaticTlmPacketizerTest (1 ms total)
+
+[----------] Global test environment tear-down
+[==========] 8 tests from 1 test suite ran. (2 ms total)
+[  PASSED  ] 8 tests.
+</pre></details></body></html>

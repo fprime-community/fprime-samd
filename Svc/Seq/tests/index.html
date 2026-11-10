@@ -32,7 +32,7 @@ pre {
   white-space: pre-wrap; word-break: break-word;
 }
 .empty { color: #57606a; padding: 0.75rem 1rem; border-top: 1px solid #d0d7de; margin: 0; }
-</style></head><body><h1>Unit-test console output &mdash; <code>Svc/Seq</code></h1><div class="meta"><span class="pill passed">passed</span> 1 passed &middot; 0.05s &middot; <a href="../../../index.html">← back to the module list</a> &middot; <a href="console.txt">plain text</a></div><details><summary><span class="pill passed">passed</span><span class="name">fprime-samd_Svc_Seq_ut_exe</span><span class="time">0.05s</span></summary><pre>[STest::Random] Generated seed 229598 from system time
+</style></head><body><h1>Unit-test console output &mdash; <code>Svc/Seq</code></h1><div class="meta"><span class="pill passed">passed</span> 1 passed &middot; 0.06s &middot; <a href="../../../index.html">← back to the module list</a> &middot; <a href="console.txt">plain text</a></div><details><summary><span class="pill passed">passed</span><span class="name">fprime-samd_Svc_Seq_ut_exe</span><span class="time">0.06s</span></summary><pre>[STest::Random] Generated seed 960820 from system time
 [==========] Running 27 tests from 5 test suites.
 [----------] Global test environment set-up.
 [----------] 10 tests from SequenceExecution
@@ -49,7 +49,7 @@ Execute the GENERIC action end to end, verifying command order, args, and byte o
 ***************************************
 (RQ)       SAMD21-SEQ-002
 ***************************************
-[       OK ] SequenceExecution.GenericSequence (1 ms)
+[       OK ] SequenceExecution.GenericSequence (2 ms)
 [ RUN      ] SequenceExecution.RunCommandPendsUntilActive
 
 ***************************************
@@ -109,7 +109,7 @@ A command whose cmdSize is smaller than a bare opcode emits InvalidSequence.
 ***************************************
 (RQ)       SAMD21-SEQ-008
 ***************************************
-[       OK ] SequenceExecution.InvalidCmdSizeFails (1 ms)
+[       OK ] SequenceExecution.InvalidCmdSizeFails (0 ms)
 [ RUN      ] SequenceExecution.CmdSizeOverrunsBufferFails
 
 ***************************************
@@ -119,13 +119,13 @@ A command whose cmdSize runs past the action buffer emits InvalidSequence.
 ***************************************
 (RQ)       SAMD21-SEQ-008
 ***************************************
-[       OK ] SequenceExecution.CmdSizeOverrunsBufferFails (1 ms)
+[       OK ] SequenceExecution.CmdSizeOverrunsBufferFails (0 ms)
 [ RUN      ] SequenceExecution.EmptyAction
 
 ***************************************
 A zero-length action is a valid empty sequence: it finishes immediately with no warning.
 ***************************************
-[       OK ] SequenceExecution.EmptyAction (1 ms)
+[       OK ] SequenceExecution.EmptyAction (0 ms)
 [ RUN      ] SequenceExecution.TruncatedCmdSizeFails
 
 ***************************************
@@ -212,7 +212,7 @@ WAIT_UNTIL on a time base the FSW clock never reports never wakes.
 (RQ)       SAMD21-SEQ-006
 ***************************************
 [       OK ] WaitUntil.MismatchedBaseNeverWakes (0 ms)
-[----------] 4 tests from WaitUntil (2 ms total)
+[----------] 4 tests from WaitUntil (3 ms total)
 
 [----------] 4 tests from RunOnError
 [ RUN      ] RunOnError.StartsRecovery
@@ -255,7 +255,7 @@ The armed recovery is one-shot: a second failure does not re-trigger it.
 (RQ)       SAMD21-SEQ-005
 ***************************************
 [       OK ] RunOnError.IsOneShot (0 ms)
-[----------] 4 tests from RunOnError (2 ms total)
+[----------] 4 tests from RunOnError (3 ms total)
 
 [----------] 6 tests from Cancel
 [ RUN      ] Cancel.WhileSleeping
@@ -318,9 +318,9 @@ CANCEL clears an armed RUN_ON_ERROR recovery table.
 (RQ)       SAMD21-SEQ-007
 ***************************************
 [       OK ] Cancel.ClearsRunOnError (0 ms)
-[----------] 6 tests from Cancel (4 ms total)
+[----------] 6 tests from Cancel (5 ms total)
 
 [----------] Global test environment tear-down
-[==========] 27 tests from 5 test suites ran. (23 ms total)
+[==========] 27 tests from 5 test suites ran. (25 ms total)
 [  PASSED  ] 27 tests.
 </pre></details></body></html>

@@ -1,0 +1,94 @@
+# unit-test console output: Svc/StaticTlmPacketizer
+
+==============================================================================
+PASSED  fprime-samd_Svc_StaticTlmPacketizer_ut_exe  (0.03s)
+==============================================================================
+[==========] Running 8 tests from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 8 tests from StaticTlmPacketizerTest
+[ RUN      ] StaticTlmPacketizerTest.PacketHeader
+
+***************************************
+(RQ)       SAMD21-TLM-003
+***************************************
+
+***************************************
+a packet is the packetized-telemetry descriptor, the packet id and the time, then the payload
+***************************************
+[       OK ] StaticTlmPacketizerTest.PacketHeader (0 ms)
+[ RUN      ] StaticTlmPacketizerTest.PrimaryLayout
+
+***************************************
+(RQ)       SAMD21-TLM-001
+***************************************
+
+***************************************
+each channel is at its offset in packet order; same channel ids on two instances are distinct
+***************************************
+[       OK ] StaticTlmPacketizerTest.PrimaryLayout (0 ms)
+[ RUN      ] StaticTlmPacketizerTest.TypesLayout
+
+***************************************
+(RQ)       SAMD21-TLM-001
+***************************************
+
+***************************************
+every channel type is laid out with its serialized size; a channel may be in several packets
+***************************************
+[       OK ] StaticTlmPacketizerTest.TypesLayout (0 ms)
+[ RUN      ] StaticTlmPacketizerTest.LatestValue
+
+***************************************
+(RQ)       SAMD21-TLM-001
+***************************************
+
+***************************************
+a packet carries the most recent value written to each channel
+***************************************
+[       OK ] StaticTlmPacketizerTest.LatestValue (0 ms)
+[ RUN      ] StaticTlmPacketizerTest.OmittedChannels
+
+***************************************
+(RQ)       SAMD21-TLM-001
+***************************************
+
+***************************************
+a channel in no packet is accepted and dropped
+***************************************
+[       OK ] StaticTlmPacketizerTest.OmittedChannels (0 ms)
+[ RUN      ] StaticTlmPacketizerTest.EmptyPacket
+
+***************************************
+(RQ)       SAMD21-TLM-003
+***************************************
+
+***************************************
+a packet with no channels is sent as its header alone
+***************************************
+[       OK ] StaticTlmPacketizerTest.EmptyPacket (0 ms)
+[ RUN      ] StaticTlmPacketizerTest.UnknownPacket
+
+***************************************
+(RQ)       SAMD21-TLM-004
+***************************************
+
+***************************************
+SEND_PKT of a packet id not in the packet set fails EXECUTION_ERROR and sends nothing
+***************************************
+[       OK ] StaticTlmPacketizerTest.UnknownPacket (0 ms)
+[ RUN      ] StaticTlmPacketizerTest.PortTrigger
+
+***************************************
+(RQ)       SAMD21-TLM-002
+***************************************
+
+***************************************
+a pktSendIn call sends the packet whose id is the port number
+***************************************
+[       OK ] StaticTlmPacketizerTest.PortTrigger (0 ms)
+[----------] 8 tests from StaticTlmPacketizerTest (1 ms total)
+
+[----------] Global test environment tear-down
+[==========] 8 tests from 1 test suite ran. (2 ms total)
+[  PASSED  ] 8 tests.
+

@@ -1,0 +1,144 @@
+# unit-test console output: Svc/StaticCmdDispatcher
+
+==============================================================================
+PASSED  fprime-samd_Svc_StaticCmdDispatcher_ut_exe  (0.03s)
+==============================================================================
+[==========] Running 13 tests from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 13 tests from StaticCmdDispatcherTest
+[ RUN      ] StaticCmdDispatcherTest.RoutesEachInstanceByBaseId
+
+***************************************
+(RQ)       STATIC-CMD-001
+***************************************
+
+***************************************
+an opcode reaches the instance whose base id it was generated from
+***************************************
+[       OK ] StaticCmdDispatcherTest.RoutesEachInstanceByBaseId (0 ms)
+[ RUN      ] StaticCmdDispatcherTest.RoutesOwnCommands
+
+***************************************
+(RQ)       STATIC-CMD-001
+***************************************
+
+***************************************
+the dispatcher's own commands are in the generated table
+***************************************
+[       OK ] StaticCmdDispatcherTest.RoutesOwnCommands (0 ms)
+[ RUN      ] StaticCmdDispatcherTest.UnknownOpcodes
+
+***************************************
+(RQ)       STATIC-CMD-002
+***************************************
+
+***************************************
+opcodes outside the generated table fail INVALID_OPCODE and reach no instance
+***************************************
+[       OK ] StaticCmdDispatcherTest.UnknownOpcodes (0 ms)
+[ RUN      ] StaticCmdDispatcherTest.ReservedOpcodeIsInvalid
+
+***************************************
+(RQ)       STATIC-CMD-002
+***************************************
+
+***************************************
+the opcode reserved for an unused tracking slot is never dispatched
+***************************************
+[       OK ] StaticCmdDispatcherTest.ReservedOpcodeIsInvalid (0 ms)
+[ RUN      ] StaticCmdDispatcherTest.ErrorResponses
+
+***************************************
+(RQ)       STATIC-CMD-003
+***************************************
+
+***************************************
+a component's error response reaches the sender and logs OpCodeError
+***************************************
+[       OK ] StaticCmdDispatcherTest.ErrorResponses (0 ms)
+[ RUN      ] StaticCmdDispatcherTest.MalformedPacket
+
+***************************************
+(RQ)       STATIC-CMD-004
+***************************************
+
+***************************************
+a packet that does not deserialize fails VALIDATION_ERROR
+***************************************
+[       OK ] StaticCmdDispatcherTest.MalformedPacket (0 ms)
+[ RUN      ] StaticCmdDispatcherTest.SequencerCmdPort
+
+***************************************
+(RQ)       STATIC-CMD-001
+***************************************
+
+***************************************
+commands on the Fw.Cmd sequencer port dispatch and respond on that port's status
+***************************************
+[       OK ] StaticCmdDispatcherTest.SequencerCmdPort (0 ms)
+[ RUN      ] StaticCmdDispatcherTest.OutstandingCommandsLimit
+
+***************************************
+(RQ)       STATIC-CMD-005
+***************************************
+
+***************************************
+past CMD_DISPATCHER_SEQUENCER_TABLE_SIZE outstanding commands, a command fails TooManyCommands
+***************************************
+[       OK ] StaticCmdDispatcherTest.OutstandingCommandsLimit (0 ms)
+[ RUN      ] StaticCmdDispatcherTest.ClearTracking
+
+***************************************
+(RQ)       STATIC-CMD-005
+***************************************
+
+***************************************
+CLEAR_TRACKING frees the slots; a late response is reported as unexpected
+***************************************
+[       OK ] StaticCmdDispatcherTest.ClearTracking (0 ms)
+[ RUN      ] StaticCmdDispatcherTest.ClearTrackingWhenFull
+
+***************************************
+(RQ)       STATIC-CMD-005
+***************************************
+
+***************************************
+with every slot taken, CLEAR_TRACKING cannot be tracked either and fails TooManyCommands
+***************************************
+[       OK ] StaticCmdDispatcherTest.ClearTrackingWhenFull (0 ms)
+[ RUN      ] StaticCmdDispatcherTest.UnexpectedResponse
+
+***************************************
+(RQ)       STATIC-CMD-005
+***************************************
+
+***************************************
+a response for a command never dispatched is logged and dropped
+***************************************
+[       OK ] StaticCmdDispatcherTest.UnexpectedResponse (0 ms)
+[ RUN      ] StaticCmdDispatcherTest.EventEmission
+
+***************************************
+(RQ)       STATIC-CMD-006
+***************************************
+
+***************************************
+SET_EVENT_EMISSION silences dispatch/completion events for one sequence port
+***************************************
+[       OK ] StaticCmdDispatcherTest.EventEmission (0 ms)
+[ RUN      ] StaticCmdDispatcherTest.EventEmissionPortOutOfRange
+
+***************************************
+(RQ)       STATIC-CMD-006
+***************************************
+
+***************************************
+SET_EVENT_EMISSION on a port past the sequence ports fails EXECUTION_ERROR
+***************************************
+[       OK ] StaticCmdDispatcherTest.EventEmissionPortOutOfRange (0 ms)
+[----------] 13 tests from StaticCmdDispatcherTest (2 ms total)
+
+[----------] Global test environment tear-down
+[==========] 13 tests from 1 test suite ran. (3 ms total)
+[  PASSED  ] 13 tests.
+
