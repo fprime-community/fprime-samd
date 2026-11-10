@@ -14,7 +14,7 @@
 namespace Samd21 {
 
 // Both banks hold the StaticPrmDb store inside the F-RAM without overlapping
-static_assert(PrmStorageLayout::banksHold(StaticPrmDbConfig::STORE_RECORDS* PrmRecord::SIZE),
+static_assert(PrmStorageLayout::banksHold(StaticPrmDbConfig::STORE_RECORDS * PrmRecord::SIZE),
               "The parameter store (StaticPrmDbConfig::STORE_RECORDS records) does not fit the PrmStorage banks");
 
 // ----------------------------------------------------------------------
