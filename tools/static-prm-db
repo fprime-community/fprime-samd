@@ -149,7 +149,7 @@ def record_value_size(model: fpp.Model) -> int:
 RESERVED_RECORD_IDS = {0x0000: "an unused slot", 0xFFFF: "erased storage"}
 
 
-def record_key(prm: fpp.ParamEntry, segment: int, value_size: int) -> str:
+def record_key(prm: fpp.ParamEntry, segment: int, value_size: int, seed: int = 0) -> str:
     """The text a record ID is the CRC-16 of
 
     The ID only depends on what the record holds: which parameter (by name, not by its ID, so
@@ -157,14 +157,221 @@ def record_key(prm: fpp.ParamEntry, segment: int, value_size: int) -> str:
     them it holds (segment and value size together give its byte range). Any change that would
     make a saved record decode differently changes the ID, so a load skips records of an older
     dictionary or record size instead of misreading them.
+
+    A non-zero seed (PRM_ID_SEED_ANNOTATION) is appended to move a parameter's IDs off a
+    collision; seed 0 is the unseeded key, so adding the annotation support changed no ID.
     """
-    return "%s.%s:%s:%d/%d" % (
+    key = "%s.%s:%s:%d/%d" % (
         prm.instance.qualified_name,
         prm.param.name,
         encode_type(prm.param.param_type),
         segment,
         value_size,
     )
+    return key if seed == 0 else f"{key}#{seed}"
+
+
+#: `@!` annotation on a component instance giving the seed of some of its parameters' record IDs:
+#:
+#:     @! prm-id-seed COUNTING=1 CHILLIN=3
+#:     instance fwHealth: Svc.Health base id 0xAA50
+#:
+#: On the instance rather than the parameter: a collision depends on the deployment's whole
+#: parameter set, and the parameter is often defined in a component the deployment cannot edit.
+PRM_ID_SEED_ANNOTATION = "prm-id-seed"
+
+#: Highest seed the collision diagnostics search for a suggestion
+MAX_SUGGESTED_SEED = 1000
+
+
+def instance_seeds(instance: fpp.InterfaceInstance.Component) -> dict[str, int]:
+    """Parameter name -> seed from the instance's PRM_ID_SEED_ANNOTATION annotations"""
+    seeds: dict[str, int] = {}
+    node = instance.node
+    for annotation in [*node.pre_annotation, *node.post_annotation]:
+        # FPP keeps the text after `@`, so `@! prm-id-seed X=1` arrives as "! prm-id-seed X=1"
+        text = annotation.strip()
+        if not text.startswith("!"):
+            continue
+        words = text[1:].split()
+        if not words or words[0] != PRM_ID_SEED_ANNOTATION:
+            continue
+        if len(words) == 1:
+            raise fpp.DiagnosticError(
+                fpp.Diagnostic(
+                    f"`@! {PRM_ID_SEED_ANNOTATION}` needs at least one PARAM=SEED",
+                    span=node.span,
+                )
+            )
+        for word in words[1:]:
+            name, sep, value = word.partition("=")
+            if not sep or not name or not value.isdigit() or int(value) < 1:
+                raise fpp.DiagnosticError(
+                    fpp.Diagnostic(
+                        f"`{word}` in `@! {PRM_ID_SEED_ANNOTATION}` is not PARAM=SEED "
+                        "with a positive integer seed",
+                        span=node.span,
+                    )
+                )
+            if name in seeds:
+                raise fpp.DiagnosticError(
+                    fpp.Diagnostic(
+                        f"`@! {PRM_ID_SEED_ANNOTATION}` gives parameter `{name}` more than one seed",
+                        span=node.span,
+                    )
+                )
+            seeds[name] = int(value)
+    return seeds
+
+
+def record_ids(prm: fpp.ParamEntry, segments: int, value_size: int, seed: int) -> list[tuple[int, str]]:
+    """(record ID, key) of each record of a parameter"""
+    ids = []
+    for segment in range(segments):
+        key = record_key(prm, segment, value_size, seed)
+        ids.append((crc16(key.encode("utf-8")), key))
+    return ids
+
+
+def suggest_seed(
+    prm: fpp.ParamEntry, segments: int, value_size: int, current: int, taken: set[int]
+) -> tuple[int, list[int]] | None:
+    """Lowest seed above `current` whose record IDs are free, distinct and not reserved"""
+    for seed in range(current + 1, current + 1 + MAX_SUGGESTED_SEED):
+        ids = [record_id for record_id, _ in record_ids(prm, segments, value_size, seed)]
+        if len(set(ids)) == len(ids) and not any(
+            i in taken or i in RESERVED_RECORD_IDS for i in ids
+        ):
+            return seed, ids
+    return None
+
+
+def seed_note(prm: fpp.ParamEntry, seeds: dict[str, int], seed: int) -> str:
+    """The annotation line the instance needs for `prm` to use `seed`"""
+    others = {name: s for name, s in seeds.items() if name != prm.param.name}
+    others[prm.param.name] = seed
+    pairs = " ".join(f"{name}={s}" for name, s in sorted(others.items()))
+    return f"@! {PRM_ID_SEED_ANNOTATION} {pairs}"
+
+
+def assign_record_ids(
+    params: list[tuple[int, fpp.ParamEntry, int]], value_size: int
+) -> dict[int, list[tuple[int, str]]]:
+    """Record IDs of every parameter, keyed by parameter ID; raises on any conflict
+
+    `params` is (parameter ID, entry, segments). Every conflict is collected first so one build
+    reports all of them, each with the `@!` line that would resolve it.
+    """
+    # Seeds, checked against the parameters each instance really has
+    seeds_by_instance: dict[str, dict[str, int]] = {}
+    instance_params: dict[str, set[str]] = {}
+    instance_nodes: dict[str, fpp.InterfaceInstance.Component] = {}
+    for _, prm, _ in params:
+        name = prm.instance.qualified_name
+        instance_params.setdefault(name, set()).add(prm.param.name)
+        if name not in seeds_by_instance:
+            seeds_by_instance[name] = instance_seeds(prm.instance)
+            instance_nodes[name] = prm.instance
+    for name, seeds in seeds_by_instance.items():
+        unknown = sorted(set(seeds) - instance_params[name])
+        if unknown:
+            raise fpp.DiagnosticError(
+                fpp.Diagnostic(
+                    f"`@! {PRM_ID_SEED_ANNOTATION}` names {', '.join(f'`{u}`' for u in unknown)}, "
+                    f"which instance `{name}` has no stored parameter called",
+                    span=instance_nodes[name].node.span,
+                )
+            )
+
+    assigned: dict[int, list[tuple[int, str]]] = {}
+    owner: dict[int, tuple[fpp.ParamEntry, int, str]] = {}  # record ID -> (param, segments, key)
+    reserved: list[tuple[fpp.ParamEntry, int, int, str]] = []
+    collisions: list[tuple[fpp.ParamEntry, int, int, str, fpp.ParamEntry, int, str]] = []
+    for id, prm, segments in params:
+        seed = seeds_by_instance[prm.instance.qualified_name].get(prm.param.name, 0)
+        ids = record_ids(prm, segments, value_size, seed)
+        assigned[id] = ids
+        for record_id, key in ids:
+            if record_id in RESERVED_RECORD_IDS:
+                reserved.append((prm, segments, record_id, key))
+            elif record_id in owner:
+                other, other_segments, other_key = owner[record_id]
+                collisions.append((prm, segments, record_id, key, other, other_segments, other_key))
+            else:
+                owner[record_id] = (prm, segments, key)
+
+    if not reserved and not collisions:
+        return assigned
+
+    # Every ID in use, by any parameter (both sides of a collision included)
+    taken = {i for ids in assigned.values() for i, _ in ids}
+
+    def seed_of(prm: fpp.ParamEntry) -> int:
+        return seeds_by_instance[prm.instance.qualified_name].get(prm.param.name, 0)
+
+    param_id = {(p.instance.qualified_name, p.param.name): pid for pid, p, _ in params}
+
+    # One suggestion per parameter, however many conflicts it is in. Each search avoids every
+    # ID in use and every ID suggested so far, so any combination of suggestions is safe to
+    # apply together (in particular, all the "either" ones, or all the "or" ones).
+    suggestions: dict[tuple[str, str], tuple[int, list[int]] | None] = {}
+    suggested: set[int] = set()
+
+    def suggestion(prm: fpp.ParamEntry, segments: int) -> tuple[int, list[int]] | None:
+        k = (prm.instance.qualified_name, prm.param.name)
+        if k not in suggestions:
+            own = {i for i, _ in assigned[param_id[k]]}
+            found = suggest_seed(prm, segments, value_size, seed_of(prm), (taken - own) | suggested)
+            if found is not None:
+                suggested.update(found[1])
+            suggestions[k] = found
+        return suggestions[k]
+
+    def add_suggestion(diag: fpp.Diagnostic, prm: fpp.ParamEntry, segments: int, side: str) -> None:
+        name = prm.instance.qualified_name
+        found = suggestion(prm, segments)
+        if found is None:
+            diag.add_note(f"no seed up to {seed_of(prm) + MAX_SUGGESTED_SEED} frees `{name}.{prm.param.name}`")
+            return
+        seed, ids = found
+        id_text = ", ".join(f"0x{i:04x}" for i in ids)
+        diag.add_note(
+            f"{side}: move `{name}.{prm.param.name}` to record ID {id_text} by annotating its instance:\n"
+            f"    {seed_note(prm, seeds_by_instance[name], seed)}",
+            span=prm.instance.node.span,
+        )
+
+    diagnostics: list[fpp.Diagnostic] = []
+    for prm, segments, record_id, key in reserved:
+        diag = fpp.Diagnostic(
+            f"record ID 0x{record_id:04x} of `{key}` is reserved for {RESERVED_RECORD_IDS[record_id]}",
+            span=prm.param.node.span,
+        )
+        add_suggestion(diag, prm, segments, "fix")
+        diagnostics.append(diag)
+    for prm, segments, record_id, key, other, other_segments, other_key in collisions:
+        diag = fpp.Diagnostic(
+            f"record ID 0x{record_id:04x} of `{key}` collides with `{other_key}`",
+            span=prm.param.node.span,
+        )
+        diag.add_annotation("colliding parameter", span=other.param.node.span)
+        diag.add_note(
+            "changing a parameter's seed changes its record IDs, so its stored value loads as "
+            "unknown until the next SAVE: seed the parameter added most recently"
+        )
+        add_suggestion(diag, prm, segments, "either")
+        add_suggestion(diag, other, other_segments, "or")
+        diagnostics.append(diag)
+
+    raise RecordIdConflicts(diagnostics)
+
+
+class RecordIdConflicts(Exception):
+    """Every record ID conflict of a deployment, each its own diagnostic"""
+
+    def __init__(self, diagnostics: list[fpp.Diagnostic]):
+        super().__init__(f"{len(diagnostics)} parameter record ID conflict(s)")
+        self.diagnostics = diagnostics
 
 
 def generate_ac_functions(
@@ -204,7 +411,6 @@ def generate_ac_functions(
     #   record: (record ID, param row, segment, key)
     param_rows = []
     record_rows = []
-    record_owner: dict[int, tuple[fpp.ParamEntry, str]] = {}
     word, bit = 0, 0
     for id, prm in params:
         # Static sizes are assumed everywhere
@@ -238,25 +444,10 @@ def generate_ac_functions(
         param_rows.append(row)
         bit += segments
 
-        for segment in range(segments):
-            key = record_key(prm, segment, value_size)
-            record_id = crc16(key.encode("utf-8"))
-            if record_id in RESERVED_RECORD_IDS:
-                raise diagnose(
-                    f"Record ID 0x{record_id:04x} of '{key}' is reserved for "
-                    f"{RESERVED_RECORD_IDS[record_id]}; rename the parameter",
-                    prm,
-                )
-            if record_id in record_owner:
-                other, other_key = record_owner[record_id]
-                e = diagnose(
-                    f"Record ID 0x{record_id:04x} of '{key}' collides with '{other_key}'; "
-                    "rename one of the parameters",
-                    prm,
-                )
-                e.diagnostic.add_annotation("colliding parameter", span=other.param.node.span)
-                raise e
-            record_owner[record_id] = (prm, key)
+
+    ids = assign_record_ids([(row[0], row[1], row[4]) for row in param_rows], value_size)
+    for row in param_rows:
+        for segment, (record_id, key) in enumerate(ids[row[0]]):
             record_rows.append((record_id, row, segment, key))
 
     num_params = len(param_rows)
@@ -451,4 +642,9 @@ if __name__ == "__main__":
         sys.exit(main())
     except fpp.DiagnosticError as e:
         print(e.diagnostic.render(color=True))
+        sys.exit(1)
+    except RecordIdConflicts as e:
+        for diagnostic in e.diagnostics:
+            print(diagnostic.render(color=True))
+        print(f"{TOOL_NAME}: {e}", file=sys.stderr)
         sys.exit(1)

@@ -49,8 +49,42 @@ what the record holds, not on parameter IDs or dictionary order:
   array sizes) gives it a new ID. The old records are then skipped as *unknown*, not misread.
 - Changing `V` gives every record a new ID, so a store saved with another record size loads as
   all *unknown* (and, with a different record size, mostly *corrupt*). Re-save after changing it.
-- The generator fails the build when two record IDs collide or one hits a reserved ID. Rename a
-  parameter to resolve it.
+- The generator fails the build when two record IDs collide or one hits a reserved ID (see
+  below).
+
+#### Resolving record ID conflicts
+
+With 16-bit IDs a deployment of `n` records has about `n²/131072` colliding pairs (0.03 at 64
+records, 0.12 at 128), so an occasional build will hit one. It is resolved with a seed on the
+component instance, which appends `#<seed>` to the key of every record of that parameter:
+
+```fpp
+@! prm-id-seed COUNTING=1 CHILLIN=3
+instance fwHealth: Svc.Health base id 0xAA50
+```
+
+The seed is in the model, so the IDs are the same in every build. It goes on the instance rather
+than the parameter: a collision depends on the deployment's whole parameter set, and the parameter
+is often defined in a component the deployment cannot edit. A parameter with no seed keeps the
+unseeded key.
+
+The generator reports every conflict of the deployment at once, each pointing at the parameter(s)
+involved and noting, on the instance definition, the exact `@!` line that frees it:
+
+```
+error: record ID 0x7313 of `Top.a.Y:U32:0/8` collides with `Top.a.X:U32:0/8`
+   = note: changing a parameter's seed changes its record IDs, so its stored value loads as
+           unknown until the next SAVE: seed the parameter added most recently
+   ----- either: move `Top.a.Y` to record ID 0x0a9f by annotating its instance:
+             @! prm-id-seed Y=1
+   ----- or: move `Top.a.X` to record ID 0x03f4 by annotating its instance:
+             @! prm-id-seed X=1
+```
+
+The suggested seeds avoid every ID in use and every other suggestion in the report, so the
+suggestions can be applied together. Seed the newer parameter: changing a seed moves that
+parameter's records, and its stored value loads as *unknown* until the next `SAVE`. A malformed
+annotation, a repeated parameter or a parameter the instance does not have fails the build.
 
 ### In-memory store
 
