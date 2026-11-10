@@ -34,10 +34,17 @@ parameter invalid. Records from an older dictionary still load. Two partially va
 
 ### Persistent record
 
-```
-[0..1]      record ID      big endian
-[2..3]      CRC-16         big endian, CRC-16/CCITT-FALSE over the ID and the value segment
-[4..4+V-1]  value segment  up to V bytes of the serialized value, zero padded
+```mermaid
+---
+title: "Persistent record, V = 8 (1 unit = 1 bit)"
+config:
+  packet:
+    bitsPerRow: 32
+---
+packet-beta
+0-15: "Record ID (U16, big endian)"
+16-31: "CRC-16/CCITT-FALSE over ID + value (U16, big endian)"
+32-95: "Value segment (V bytes of the serialized value, zero padded)"
 ```
 
 `V` is `StaticPrmDbConfig.RECORD_VALUE_SIZE` (default 8, so a 12-byte record). A parameter of `N`
@@ -55,6 +62,81 @@ what the record holds, not on parameter IDs or dictionary order:
   all *unknown* (and, with a different record size, mostly *corrupt*). Re-save after changing it.
 - The generator fails the build when two record IDs collide or one hits a reserved ID (see
   below).
+
+#### Persistent layout
+
+The store is `STORE_RECORDS` back-to-back records, `STORE_SIZE = STORE_RECORDS * (V + 4)` bytes,
+with no header or trailer. `PrmStorage` places one store in each of its banks. With the default
+configuration (`V` = 8, `STORE_RECORDS` = 64, `PRIME_OFFSET` = `0x0000`, `BACKUP_OFFSET` =
+`0x1000`), each bank is 768 bytes:
+
+```mermaid
+---
+title: "F-RAM 0x0000-0x13FF (1 unit = 64 bytes)"
+---
+packet-beta
+0-11: "PRIME bank 0x0000-0x02FF (768 B)"
+12-63: "Unused by PrmStorage 0x0300-0x0FFF"
+64-75: "BACKUP bank 0x1000-0x12FF (768 B)"
+76-79: "Unused 0x1300-"
+```
+
+The rest of the F-RAM (up to `Fram.FramConfig.Size` = `0x40000`) is not used by `PrmStorage`.
+
+A `SAVE` packs the records of valid parameters from slot 0, in parameter order, and writes the
+remaining slots as empty records. For the three parameters of the [in-memory example](#in-memory-layout)
+(`A` 1 record, `B` 3 records, `C` 1 record):
+
+```mermaid
+---
+title: "Store, one bank (1 unit = 1 record slot of 12 bytes)"
+config:
+  packet:
+    bitsPerRow: 16
+---
+packet-beta
+0-0: "A:0"
+1-1: "B:0"
+2-2: "B:1"
+3-3: "B:2"
+4-4: "C:0"
+5-63: "Empty records (ID 0x0000, all zeros)"
+```
+
+Records identify themselves, so the loader does not rely on their position. If `B` were invalid
+at the save, its records would be skipped and `C:0` would go in slot 1. Each transfer moves
+`SCRATCH_RECORDS` slots (5 x 12 = 60 B, within `Fram.FramConfig.MaxTransfer` = 64), so the store
+takes 13 transfers, the last one 4 records long.
+
+A parameter of `N` bytes is split across `ceil(N / V)` records, segment `s` holding value bytes
+`[s * V, min((s + 1) * V, N))`. For `B` (`N` = 20):
+
+```mermaid
+---
+title: "Serialized value of B (1 unit = 1 byte)"
+config:
+  packet:
+    bitsPerRow: 24
+---
+packet-beta
+0-7: "Segment 0 (record B:0)"
+8-15: "Segment 1 (record B:1)"
+16-19: "Segment 2 (B:2)"
+```
+
+```mermaid
+---
+title: "Record B:2 (1 unit = 1 byte)"
+config:
+  packet:
+    bitsPerRow: 12
+---
+packet-beta
+0-1: "Record ID"
+2-3: "CRC-16"
+4-7: "Value bytes 16-19"
+8-11: "Zero pad"
+```
 
 #### Resolving record ID conflicts
 
@@ -113,6 +195,66 @@ and a branch.
 
 The component itself holds no deployment knowledge. It runs the transfer state machine and the
 record CRC/packing, and calls the generated functions above.
+
+#### In-memory layout
+
+All of it is static: the two generated globals and the component instance. Parameters appear in
+parameter ID order. The example below has three parameters, `A` (`U32`, 1 record), `B` (20 B,
+3 records) and `C` (`F64`, 1 record).
+
+`__PRM_VALUES` holds each parameter's serialized bytes. Its members are all `U8` arrays, so there
+is no padding between them:
+
+```mermaid
+---
+title: "__PRM_VALUES (1 unit = 1 byte)"
+---
+packet-beta
+0-3: "A[4]"
+4-23: "B[20]"
+24-31: "C[8]"
+```
+
+`__PRM_VALIDITY` has one bit per record, assigned in the same order. When a parameter's records
+would not fit in the bits the current word has left, it starts the next word. Bits left over at
+the end of a word stay unused. Bit 0 is the least significant bit:
+
+```mermaid
+---
+title: "__PRM_VALIDITY[0] (1 unit = 1 bit)"
+---
+packet-beta
+0-0: "A:0"
+1-3: "B:0-2"
+4-4: "C:0"
+5-31: "Unused"
+```
+
+`B` is valid when `(__PRM_VALIDITY[0] & 0x0000000E) == 0x0000000E`.
+
+The component's scratch buffer holds the records of the transfer in flight in store format, so a
+transfer of slots `m_slot .. m_slot + 4` maps byte for byte onto the store:
+
+```mermaid
+---
+title: "m_scratch (SCRATCH_RECORDS = 5, 1 unit = 1 byte)"
+config:
+  packet:
+    bitsPerRow: 12
+---
+packet-beta
+0-11: "Record (slot m_slot)"
+12-23: "Record (slot m_slot + 1)"
+24-35: "Record (slot m_slot + 2)"
+36-47: "Record (slot m_slot + 3)"
+48-59: "Record (slot m_slot + 4)"
+```
+
+`readParam` reports a parameter valid only when every one of its bits is set. `writeParam` (from
+`setPrm`) sets them all. `loadRecord` sets one bit per record, so a parameter whose segments came
+from different records of the same store is valid only when all of them loaded. The RAM used
+depends on the dictionary: `sum(N_i)` bytes of values plus 4 bytes per validity word. The
+component instance itself has a fixed size.
 
 ### Save
 
