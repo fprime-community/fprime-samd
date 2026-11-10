@@ -50,8 +50,8 @@ void AdcDriver::configure(VoltageReference ref, Resolution res, SampleCount samp
 
     // Hardware averaging (samples > 1) always produces a 12-bit final result (datasheet
     // Table 34-3), so only RES_12BIT is meaningful when averaging is enabled.
-    FW_ASSERT((samples == SampleCount::SAMPLES_1) || (res == Resolution::RES_12BIT),
-              static_cast<FwAssertArgType>(res), static_cast<FwAssertArgType>(samples));
+    FW_ASSERT((samples == SampleCount::SAMPLES_1) || (res == Resolution::RES_12BIT), static_cast<FwAssertArgType>(res),
+              static_cast<FwAssertArgType>(samples));
 
     // Store gain for use in readAdc
     m_gain = static_cast<U8>(gain);

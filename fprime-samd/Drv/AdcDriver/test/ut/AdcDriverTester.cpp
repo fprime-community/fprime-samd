@@ -440,10 +440,10 @@ void AdcDriverTester::testConfigureAveragingBadRes() {
     for (auto res : badResolutions) {
         this->resetTest();
         this->resetSingleton();  // Clear s_instance so the singleton assert is not what fires
-        ASSERT_DEATH_IF_SUPPORTED(this->component.configure(AdcDriver::VoltageReference::INT1V, res,
-                                                            AdcDriver::SampleCount::SAMPLES_16, 5,
-                                                            AdcDriver::Gain::GAIN_1X),
-                                  "Assert:");
+        ASSERT_DEATH_IF_SUPPORTED(
+            this->component.configure(AdcDriver::VoltageReference::INT1V, res, AdcDriver::SampleCount::SAMPLES_16, 5,
+                                      AdcDriver::Gain::GAIN_1X),
+            "Assert:");
     }
 }
 
