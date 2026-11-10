@@ -57,7 +57,7 @@ jobs:
         shell: bash
         run: |
           git submodule update --init --recursive --filter=blob:none \
-            lib/fprime lib/fprime-baremetal
+            lib/fprime lib/fprime-baremetal lib/fprime-devices
 
       - name: "Check this ref out as lib/fprime-samd"
         uses: actions/checkout@v5

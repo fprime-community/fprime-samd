@@ -38,7 +38,7 @@ jobs:
         shell: bash
         run: |
           git submodule update --init --recursive --filter=blob:none \
-            lib/fprime lib/fprime-baremetal
+            lib/fprime lib/fprime-baremetal lib/fprime-devices
 
       - name: "Resolve the harness commit"
         id: harness
@@ -121,7 +121,7 @@ jobs:
         working-directory: baseline-src
         run: |
           git submodule update --init --recursive --filter=blob:none \
-            lib/fprime lib/fprime-baremetal
+            lib/fprime lib/fprime-baremetal lib/fprime-devices
 
       - name: "Check the base commit out as the baseline's lib/fprime-samd"
         id: baseline-splice
