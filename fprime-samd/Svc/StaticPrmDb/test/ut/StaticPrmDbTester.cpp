@@ -376,8 +376,6 @@ void StaticPrmDbTester::testSaveLoad() {
     this->setParam(PRM_C, SIZE_C, 0x30);
     this->save();
     this->assertTransfers(true);
-    ASSERT_EVENTS_SavedDatabase_SIZE(1);
-    ASSERT_EVENTS_SavedDatabase(0, 3, 0);
     const U16 ids[] = {RECORD_A, RECORD_B0, RECORD_B1, RECORD_C};
     this->assertStoreRecords(ids, 4);
 
@@ -475,7 +473,6 @@ void StaticPrmDbTester::testSaveSkipsInvalid() {
 
     this->setParam(PRM_C, SIZE_C, 0x30);
     this->save();
-    ASSERT_EVENTS_SavedDatabase(0, 1, 2);
     const U16 ids[] = {RECORD_C};
     this->assertStoreRecords(ids, 1);
 }
@@ -518,7 +515,6 @@ void StaticPrmDbTester::testWriteFailure() {
     this->m_failTransferNumber = this->m_transfers + 1;
     this->save(Fw::CmdResponse::EXECUTION_ERROR);
     ASSERT_from_writeOut_SIZE(1);
-    ASSERT_EVENTS_SavedDatabase_SIZE(0);
     // The values in memory are untouched
     this->assertParam(PRM_A, SIZE_A, Fw::ParamValid::VALID, 0x10);
 }

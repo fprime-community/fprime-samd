@@ -87,11 +87,6 @@ module Samd21 {
             id 2 \
             format "Failed to read parameters: {}"
 
-        event SavedDatabase(savedParameters: U32, skippedParameters: U32) \
-            severity activity high \
-            id 3 \
-            format "Saved {} parameters to the parameter store, skipped {} invalid parameters"
-
         ###############################################################################
         # Standard AC Ports: Required for Channels, Events, Commands, and Parameters  #
         ###############################################################################

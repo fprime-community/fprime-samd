@@ -172,7 +172,6 @@ void StaticPrmDb::transferDone() {
 void StaticPrmDb::saveNext() {
     const FwSizeType slots = StaticPrmDbConfig::STORE_RECORDS;
     if (this->m_slot >= slots) {
-        this->log_ACTIVITY_HI_SavedDatabase(this->numParams() - this->m_skippedParams, this->m_skippedParams);
         this->finish(Fw::CmdResponse::OK);
         return;
     }
