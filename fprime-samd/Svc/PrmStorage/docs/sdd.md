@@ -16,14 +16,16 @@ job. Overlaying the banks is done by the deployment's sequences, using `SELECT_B
 
 ## Requirements
 
-| Name | Description | Validation |
-|---|---|---|
-| PRM-STORE-001 | `writeIn` / `readIn` shall transfer the buffer, unchanged, to / from its offset within the selected bank in `MaxTransfer` chunks, and return `OP_OK` on `writeReturnOut` / `readReturnOut` after the last chunk. | Unit Test |
-| PRM-STORE-002 | A failed chunk shall end the transfer with `OTHER_ERROR` and emit `StorageFailed`. | Unit Test |
-| PRM-STORE-003 | `SELECT_BANK` shall point the following transfers at the given bank. During a transfer it shall be rejected `BUSY` and the transfer shall keep its bank. | Unit Test |
-| PRM-STORE-004 | A request the F-RAM driver rejects `BUSY` shall be retried on `schedIn`, up to `BUSY_RETRY_LIMIT` times. Any other rejection, or running out of retries, shall fail the transfer. | Unit Test |
-| PRM-STORE-005 | The component shall work when the F-RAM completion arrives inside the request call. | Unit Test |
-| PRM-STORE-006 | The build shall fail when the parameter store does not fit both banks inside the F-RAM or the banks overlap. | Inspection (static_assert) |
+| Name | Description | Rationale | Validation |
+|---|---|---|---|
+| PRM-STORE-001 | A save shall store the database's bytes unchanged at their offset within the selected bank, and a load shall return the bytes stored there unchanged. A transfer shall complete successfully only once every one of its bytes has been transferred. | Record format and integrity checks belong to `StaticPrmDb`; storage that reordered, interpreted or partially transferred the bytes would defeat the per-record CRCs. | Unit Test |
+| PRM-STORE-002 | Each F-RAM request shall be at most `Fram.FramConfig.MaxTransfer` bytes, with one request outstanding at a time. | The F-RAM driver's frame buffers are sized for `MaxTransfer`, and the driver is shared with other clients. | Unit Test |
+| PRM-STORE-003 | A failed F-RAM request shall end the transfer with an error, issue no further requests for it, and report the direction, bank, F-RAM offset and status of the failure. | The database fails the command and the redundant bank can fill in; the operator needs to locate the failing region of the device. | Unit Test |
+| PRM-STORE-004 | The storage shall hold the store in two banks, PRIME and BACKUP, and direct every following transfer to the bank last selected by command. PRIME shall be selected at boot, and the selected bank shall be reported in telemetry. | Redundant copies let a parameter survive corruption of one bank; which bank is loaded first is the deployment sequence's decision. | Unit Test |
+| PRM-STORE-005 | A bank selection received during a transfer shall be rejected busy, and the transfer shall complete on the bank it started on. | A transfer split across banks would mix two stores, and the merge order across banks would no longer be known. | Unit Test |
+| PRM-STORE-006 | An F-RAM request rejected busy shall be retried on `schedIn`, up to `BUSY_RETRY_LIMIT` times per request. Any other rejection, or running out of retries, shall fail the transfer. | The F-RAM driver is busy during its startup reads and other clients' transfers; the bound keeps a stuck driver from hanging the database's command. | Unit Test |
+| PRM-STORE-007 | The component shall operate whether the F-RAM driver completes each request asynchronously or inside the call that issued it, and shall accept the database's next transfer from within the completion of the previous one. | Storage drivers differ in completion model, and `StaticPrmDb` starts its next transfer from the return of the last. | Unit Test |
+| PRM-STORE-008 | The build shall fail when either bank does not hold the configured parameter store (`StaticPrmDbConfig::STORE_RECORDS` records) inside the F-RAM, or the banks overlap. | A bank layout error would silently corrupt the other bank or another F-RAM user; it must be caught before flight. | Inspection (static_assert) |
 
 ## Design
 
@@ -64,11 +66,3 @@ bank runs past `Fram.FramConfig.Size` or the banks overlap.
 
 The component is only built when the project's library locations include fprime-devices (it uses the
 `Fram` ports).
-
-## Usage in FFB
-
-`STARTUP` selects `PRIME` and runs `prm.LOAD REPLACE`. `PRM_LOAD_BACKUP` then always selects `BACKUP`
-and runs `prm.LOAD MERGE`, which fills in any parameter PRIME did not hold a valid record for. An F-RAM
-error in either load moves the sequence on through `RUN_ON_ERROR`. Both paths end in `PRM_LOAD_DONE`,
-which selects `PRIME` again and starts `SENSORS`. To keep both banks current, a save is `SELECT_BANK PRIME`,
-`prm.SAVE`, `SELECT_BANK BACKUP`, `prm.SAVE`.

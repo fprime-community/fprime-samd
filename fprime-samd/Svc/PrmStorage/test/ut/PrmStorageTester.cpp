@@ -27,6 +27,8 @@ PrmStorageTester::PrmStorageTester()
       component("PrmStorage"),
       m_fram(),
       m_image(),
+      m_readback(),
+      m_chainLoad(false),
       m_pending(),
       m_completeInCall(false),
       m_rejectStatus(Fram::Status::ACCEPTED),
@@ -52,6 +54,18 @@ Fram::Status PrmStorageTester::from_framRead_handler(FwIndexType portNum, U32 of
 Fram::Status PrmStorageTester::from_framWrite_handler(FwIndexType portNum, U32 offset, Fw::Buffer& buffer) {
     this->pushFromPortEntry_framWrite(offset, buffer);
     return this->framRequest(Fram::Op::WRITE, offset, buffer);
+}
+
+void PrmStorageTester::from_writeReturnOut_handler(FwIndexType portNum,
+                                                   Fw::Buffer& buffer,
+                                                   const Drv::ByteStreamStatus& status) {
+    this->pushFromPortEntry_writeReturnOut(buffer, status);
+    if (this->m_chainLoad) {
+        // As StaticPrmDb does: the next transfer starts from the return of the last
+        this->m_chainLoad = false;
+        Fw::Buffer readback(this->m_readback, buffer.getSize());
+        this->invoke_to_readIn(0, 0, readback);
+    }
 }
 
 Fram::Status PrmStorageTester::framRequest(Fram::Op op, U32 offset, Fw::Buffer& buffer) {
@@ -245,27 +259,33 @@ void PrmStorageTester::testSelectBankBusy() {
 }
 
 void PrmStorageTester::testStorageFailure() {
+    const PrmBank banks[] = {PrmBank::PRIME, PrmBank::BACKUP};
     const Fram::Op ops[] = {Fram::Op::WRITE, Fram::Op::READ};
-    for (const Fram::Op op : ops) {
-        // Fail the second chunk
-        this->m_failRequestNumber = this->m_requests + 2;
-        if (op == Fram::Op::WRITE) {
-            this->sendSave();
-        } else {
-            this->sendLoad();
+    for (const PrmBank bank : banks) {
+        this->sendSelectBank(bank, 0);
+        const U32 bankOffset = (bank == PrmBank::BACKUP) ? BACKUP_OFFSET : PRIME_OFFSET;
+        for (const Fram::Op op : ops) {
+            // Fail the second chunk
+            this->m_failRequestNumber = this->m_requests + 2;
+            if (op == Fram::Op::WRITE) {
+                this->sendSave();
+            } else {
+                this->sendLoad();
+            }
+            this->drain();
+            this->m_failRequestNumber = 0;
+            if (op == Fram::Op::WRITE) {
+                this->assertSaveDone(Drv::ByteStreamStatus::OTHER_ERROR);
+                ASSERT_from_framWrite_SIZE(2);
+            } else {
+                this->assertLoadDone(Drv::ByteStreamStatus::OTHER_ERROR);
+                ASSERT_from_framRead_SIZE(2);
+            }
+            // The event locates the failed chunk on the F-RAM
+            ASSERT_EVENTS_StorageFailed_SIZE(1);
+            ASSERT_EVENTS_StorageFailed(0, op, bank, bankOffset + Fram::FramConfig::MaxTransfer,
+                                        Fram::Status::SPI_ERROR);
         }
-        this->drain();
-        this->m_failRequestNumber = 0;
-        if (op == Fram::Op::WRITE) {
-            this->assertSaveDone(Drv::ByteStreamStatus::OTHER_ERROR);
-            ASSERT_from_framWrite_SIZE(2);
-        } else {
-            this->assertLoadDone(Drv::ByteStreamStatus::OTHER_ERROR);
-            ASSERT_from_framRead_SIZE(2);
-        }
-        ASSERT_EVENTS_StorageFailed_SIZE(1);
-        ASSERT_EVENTS_StorageFailed(0, op, PrmBank::PRIME, PRIME_OFFSET + Fram::FramConfig::MaxTransfer,
-                                    Fram::Status::SPI_ERROR);
     }
 }
 
@@ -358,6 +378,84 @@ void PrmStorageTester::testInCallCompletion() {
     this->sendLoad();
     this->assertLoadDone(Drv::ByteStreamStatus::OP_OK);
     assertPattern(this->m_image, 0x70);
+
+    // A chunk failing inside the call ends the transfer there
+    this->m_failRequestNumber = this->m_requests + 2;
+    this->sendSave();
+    this->assertSaveDone(Drv::ByteStreamStatus::OTHER_ERROR);
+    ASSERT_from_framWrite_SIZE(2);
+    ASSERT_EVENTS_StorageFailed_SIZE(1);
+    ASSERT_EVENTS_StorageFailed(0, Fram::Op::WRITE, PrmBank::PRIME, PRIME_OFFSET + Fram::FramConfig::MaxTransfer,
+                                Fram::Status::SPI_ERROR);
+}
+
+void PrmStorageTester::testChainedTransfer() {
+    const bool inCall[] = {false, true};
+    for (const bool completeInCall : inCall) {
+        this->m_completeInCall = completeInCall;
+        this->fillImage(completeInCall ? 0x81 : 0x80);
+        (void)::memset(this->m_readback, 0, sizeof(this->m_readback));
+        this->m_chainLoad = true;
+        this->sendSave();
+        this->drain();
+        ASSERT_FALSE(this->m_chainLoad);
+        // The load started from the save's return is a transfer of its own
+        ASSERT_from_writeReturnOut_SIZE(1);
+        ASSERT_from_writeReturnOut(0, Fw::Buffer(this->m_image, IMAGE_SIZE), Drv::ByteStreamStatus::OP_OK);
+        ASSERT_from_readReturnOut_SIZE(1);
+        ASSERT_from_readReturnOut(0, Fw::Buffer(this->m_readback, IMAGE_SIZE), Drv::ByteStreamStatus::OP_OK);
+        ASSERT_from_framRead_SIZE((IMAGE_SIZE + Fram::FramConfig::MaxTransfer - 1) / Fram::FramConfig::MaxTransfer);
+        ASSERT_EVENTS_SIZE(0);
+        assertPattern(this->m_readback, completeInCall ? 0x81 : 0x80);
+    }
+}
+
+void PrmStorageTester::testBusyRetryPerChunk() {
+    this->fillImage(0x90);
+    this->m_rejectStatus = Fram::Status::BUSY;
+    this->m_rejectCount = PrmStorageConfig::BUSY_RETRY_LIMIT;
+    this->sendSave();
+    for (U32 i = 0; i < PrmStorageConfig::BUSY_RETRY_LIMIT; i++) {
+        this->invoke_to_schedIn(0, 0);
+    }
+    ASSERT_TRUE(this->m_pending.valid);
+
+    // The first chunk used up its retries; the second has as many again
+    this->m_rejectCount = PrmStorageConfig::BUSY_RETRY_LIMIT;
+    this->drain();
+    ASSERT_FALSE(this->m_pending.valid);
+    for (U32 i = 0; i < PrmStorageConfig::BUSY_RETRY_LIMIT; i++) {
+        ASSERT_from_writeReturnOut_SIZE(0);
+        this->invoke_to_schedIn(0, 0);
+    }
+    this->drain();
+    this->assertSaveDone(Drv::ByteStreamStatus::OP_OK);
+    ASSERT_EVENTS_SIZE(0);
+    assertPattern(&this->m_fram[PRIME_OFFSET], 0x90);
+}
+
+void PrmStorageTester::testSelectBankDuringRetry() {
+    this->fillImage(0xA0);
+    this->m_rejectStatus = Fram::Status::BUSY;
+    this->m_rejectCount = 1;
+    this->sendSave();
+    ASSERT_FALSE(this->m_pending.valid);
+
+    const U32 cmdSeq = STest::Pick::any();
+    this->sendSelectBank(PrmBank::BACKUP, cmdSeq);
+    ASSERT_CMD_RESPONSE_SIZE(1);
+    ASSERT_CMD_RESPONSE(0, PrmStorageComponentBase::OPCODE_SELECT_BANK, cmdSeq, Fw::CmdResponse::BUSY);
+    ASSERT_TLM_SIZE(0);
+
+    // The retry and the rest of the save stay on PRIME
+    this->invoke_to_schedIn(0, 0);
+    this->drain();
+    this->assertSaveDone(Drv::ByteStreamStatus::OP_OK);
+    this->assertChunks(PRIME_OFFSET);
+    assertPattern(&this->m_fram[PRIME_OFFSET], 0xA0);
+    for (FwSizeType i = 0; i < IMAGE_SIZE; i++) {
+        ASSERT_EQ(this->m_fram[BACKUP_OFFSET + i], 0);
+    }
 }
 
 }  // namespace Samd21

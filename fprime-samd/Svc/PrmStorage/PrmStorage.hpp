@@ -8,7 +8,6 @@
 #define Samd21_PrmStorage_HPP
 
 #include "fprime-samd/Svc/PrmStorage/PrmStorageComponentAc.hpp"
-#include "samd-config/PrmStorageConfig.hpp"
 
 namespace Samd21 {
 

@@ -70,8 +70,20 @@ class PrmStorageTester : public PrmStorageGTestBase {
     //! A transfer lands at its offset within the selected bank.
     void testOffset();
 
-    //! Save and load work with completions delivered inside the request call.
+    //! Save and load work with completions delivered inside the request call,
+    //! and a failed chunk still ends the transfer.
     void testInCallCompletion();
+
+    //! The database may start its next transfer from the return of the last
+    //! one, with completions delivered asynchronously or inside the call.
+    void testChainedTransfer();
+
+    //! Every chunk gets BUSY_RETRY_LIMIT retries of its own.
+    void testBusyRetryPerChunk();
+
+    //! SELECT_BANK while a request waits for a retry is rejected BUSY and the
+    //! retry stays on the transfer's bank.
+    void testSelectBankDuringRetry();
 
   protected:
     //! Simulated F-RAM read
@@ -79,6 +91,11 @@ class PrmStorageTester : public PrmStorageGTestBase {
 
     //! Simulated F-RAM write
     Fram::Status from_framWrite_handler(FwIndexType portNum, U32 offset, Fw::Buffer& buffer) override;
+
+    //! Record the write return and, when m_chainLoad, start a load into m_readback
+    void from_writeReturnOut_handler(FwIndexType portNum,
+                                     Fw::Buffer& buffer,
+                                     const Drv::ByteStreamStatus& status) override;
 
   private:
     //! A request accepted by the simulated F-RAM, not yet completed
@@ -97,6 +114,12 @@ class PrmStorageTester : public PrmStorageGTestBase {
 
     //! The database image handed to the component
     U8 m_image[IMAGE_SIZE];
+
+    //! Destination of a load chained from a write return
+    U8 m_readback[IMAGE_SIZE];
+
+    //! Start a load of the image's bytes into m_readback from the next write return
+    bool m_chainLoad;
 
     //! Outstanding request
     Pending m_pending;
