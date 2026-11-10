@@ -13,6 +13,7 @@ register_fprime_config(
         "${CMAKE_CURRENT_LIST_DIR}/Samd21SpiConfig.fpp"
         "${CMAKE_CURRENT_LIST_DIR}/Samd21I2cConfig.fpp"
         "${CMAKE_CURRENT_LIST_DIR}/Samd21StaticTlmPacketizerConfig.fpp"
+        "${CMAKE_CURRENT_LIST_DIR}/Samd21StaticPrmDbConfig.fpp"
     HEADERS
         "${CMAKE_CURRENT_LIST_DIR}/RtcDriverConfig.hpp"
         "${CMAKE_CURRENT_LIST_DIR}/DmaDriverConfig.hpp"

@@ -5,23 +5,23 @@ module Samd21 {
         BACKUP = 1 @< Redundant copy
     }
 
-    @ Adapts the Samd21.StaticPrmDb whole-image buffer interface to offset-addressed,
-    @ size-limited Fram requests. The image is transferred as-is, in Fram.FramConfig.MaxTransfer
-    @ chunks, starting at the offset of the selected bank; validating it is the database's job.
+    @ Adapts the Samd21.StaticPrmDb store transfers to offset-addressed, size-limited Fram
+    @ requests. Each transfer is moved as-is, in Fram.FramConfig.MaxTransfer chunks, at its
+    @ offset within the selected bank; validating the records is the database's job.
     passive component PrmStorage {
 
         # ----------------------------------------------------------------------
         # Parameter database interface (Samd21.StaticPrmDb writeOut / readOut)
         # ----------------------------------------------------------------------
 
-        @ Write the database image to the selected bank
-        sync input port writeIn: Fw.BufferSend
+        @ Write a run of store bytes to the selected bank
+        sync input port writeIn: Samd21.PrmTransfer
 
         @ Completion of writeIn: OP_OK when every byte was written, OTHER_ERROR otherwise
         output port writeReturnOut: Drv.ByteStreamData
 
-        @ Read the selected bank into the database image
-        sync input port readIn: Fw.BufferSend
+        @ Read a run of store bytes from the selected bank
+        sync input port readIn: Samd21.PrmTransfer
 
         @ Completion of readIn: OP_OK when every byte was read, OTHER_ERROR otherwise
         output port readReturnOut: Drv.ByteStreamData

@@ -17,4 +17,6 @@ register_fprime_library(
         "${CMAKE_CURRENT_LIST_DIR}/PrmRecord.cpp"
     HEADERS
         "${CMAKE_CURRENT_LIST_DIR}/PrmRecord.hpp"
+    DEPENDS
+        config-fprime-samd
 )

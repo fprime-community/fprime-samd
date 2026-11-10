@@ -98,16 +98,16 @@ void PrmStorageTester::assertPattern(const U8* data, U8 seed, FwSizeType size) {
     }
 }
 
-void PrmStorageTester::sendSave(FwSizeType size) {
+void PrmStorageTester::sendSave(FwSizeType size, U32 offset) {
     this->clearHistory();
     Fw::Buffer image(this->m_image, size);
-    this->invoke_to_writeIn(0, image);
+    this->invoke_to_writeIn(0, offset, image);
 }
 
-void PrmStorageTester::sendLoad(FwSizeType size) {
+void PrmStorageTester::sendLoad(FwSizeType size, U32 offset) {
     this->clearHistory();
     Fw::Buffer image(this->m_image, size);
-    this->invoke_to_readIn(0, image);
+    this->invoke_to_readIn(0, offset, image);
 }
 
 void PrmStorageTester::sendSelectBank(PrmBank bank, U32 cmdSeq) {
@@ -321,6 +321,32 @@ void PrmStorageTester::testRequestRejected() {
     this->invoke_to_schedIn(0, 0);
     ASSERT_from_framWrite_SIZE(1);
     ASSERT_from_writeReturnOut_SIZE(1);
+}
+
+void PrmStorageTester::testOffset() {
+    // A transfer lands at its offset within the selected bank
+    const U32 offset = static_cast<U32>(STest::Pick::lowerUpper(1, 100));
+    const FwSizeType size = 30;
+    this->fillImage(0x60, size);
+    this->sendSave(size, offset);
+    this->drain();
+    this->assertSaveDone(Drv::ByteStreamStatus::OP_OK, size);
+    this->assertChunks(PRIME_OFFSET + offset, size);
+    assertPattern(&this->m_fram[PRIME_OFFSET + offset], 0x60, size);
+    for (U32 i = 0; i < offset; i++) {
+        ASSERT_EQ(this->m_fram[PRIME_OFFSET + i], 0) << "byte " << i;
+    }
+
+    this->sendSelectBank(PrmBank::BACKUP, 0);
+    (void)::memset(this->m_image, 0, sizeof(this->m_image));
+    for (FwSizeType i = 0; i < size; i++) {
+        this->m_fram[BACKUP_OFFSET + offset + i] = static_cast<U8>(0x61 + (i * 7));
+    }
+    this->sendLoad(size, offset);
+    this->drain();
+    this->assertLoadDone(Drv::ByteStreamStatus::OP_OK, size);
+    this->assertChunks(BACKUP_OFFSET + offset, size);
+    assertPattern(this->m_image, 0x61, size);
 }
 
 void PrmStorageTester::testInCallCompletion() {

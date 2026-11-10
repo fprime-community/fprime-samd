@@ -5,7 +5,6 @@ static-prm-db:
 """
 
 import sys
-import zlib
 from contextlib import nullcontext
 from typing import TYPE_CHECKING
 
@@ -59,7 +58,7 @@ def generate(
     dictionary = model.analysis.dictionary_map[topology.symbol]
 
     for component in common.all_annotated_components(model, PRM_DB_ANNOTATION):
-        generate_ac_functions(topology, component, dictionary, doc)
+        generate_ac_functions(topology, component, dictionary, record_value_size(model), doc)
 
     return doc.render_cpp()
 
@@ -116,33 +115,63 @@ def encode_type(ty: fpp.Type.Variant) -> str:
             )
 
 
-def compute_param_dictionary_crc(
-    params: list[tuple[int, fpp.ParamEntry]],
-) -> tuple[int, list[str]]:
-    """CRC-32 over the layout and meaning of every parameter in the database
+def crc16(data: bytes, crc: int = 0xFFFF) -> int:
+    """CRC-16/CCITT-FALSE, matching Samd21::crc16 (PrmRecord.cpp)"""
+    for byte in data:
+        crc ^= byte << 8
+        for _ in range(8):
+            crc = ((crc << 1) ^ 0x1021) if (crc & 0x8000) else (crc << 1)
+            crc &= 0xFFFF
+    return crc
 
-    Any dictionary change that would make a previously saved image decode differently (adding,
-    removing, reordering or renaming a parameter, changing its type, an enum's values, a struct's
-    members, ...) changes the result. `params` must already be in storage order.
-    """
-    lines = []
-    for id, prm in params:
-        line = "0x%08x %s.%s %d %s\n" % (
-            id,
-            prm.instance.qualified_name,
-            prm.param.name,
-            prm.param.param_type.serialized_size,
-            encode_type(prm.param.param_type),
+
+#: FPP constant giving the bytes of a parameter value held by one persistent record
+#: (PrmRecord::VALUE_SIZE). Overridable per project, see Samd21StaticPrmDbConfig.fpp.
+RECORD_VALUE_SIZE_CONSTANT = "Samd21.StaticPrmDbConfig.RECORD_VALUE_SIZE"
+
+
+def record_value_size(model: fpp.Model) -> int:
+    symbol = model.lookup(RECORD_VALUE_SIZE_CONSTANT, kind=fpp.Symbol.Constant)
+    if symbol is None:
+        raise fpp.DiagnosticError(
+            fpp.Diagnostic(f"{RECORD_VALUE_SIZE_CONSTANT} is not defined (samd-config)")
         )
+    value = model.analysis.get_int_value(symbol.definition.value)
+    if value is None or value < 1:
+        raise fpp.DiagnosticError(
+            fpp.Diagnostic(
+                f"{RECORD_VALUE_SIZE_CONSTANT} must be a positive integer, not {value!r}",
+            )
+        )
+    return value
 
-        lines.append(line)
-    return (zlib.crc32("\n".join(lines).encode("utf-8"), 0), lines)
+#: Record IDs never assigned to a parameter (PrmRecord::EMPTY_ID, PrmRecord::BLANK_ID)
+RESERVED_RECORD_IDS = {0x0000: "an unused slot", 0xFFFF: "erased storage"}
+
+
+def record_key(prm: fpp.ParamEntry, segment: int, value_size: int) -> str:
+    """The text a record ID is the CRC-16 of
+
+    The ID only depends on what the record holds: which parameter (by name, not by its ID, so
+    renumbering instances keeps the stored values), how its bytes are read and which segment of
+    them it holds (segment and value size together give its byte range). Any change that would
+    make a saved record decode differently changes the ID, so a load skips records of an older
+    dictionary or record size instead of misreading them.
+    """
+    return "%s.%s:%s:%d/%d" % (
+        prm.instance.qualified_name,
+        prm.param.name,
+        encode_type(prm.param.param_type),
+        segment,
+        value_size,
+    )
 
 
 def generate_ac_functions(
     topology: fpp.Topology,
     component: fpp.Component,
     dictionary: fpp.Dictionary,
+    value_size: int,
     doc: "cg.CppDocBuilder",
 ):
     import fprime_cpp_codegen as cg
@@ -156,95 +185,171 @@ def generate_ac_functions(
     # Generate the above interface in the proper namespace/C++ class
     *namespaces, prm_db_name = component.symbol.qualified_name.split(".")
 
-    # Sort by ID so the storage layout (and the database CRC) only depends on the dictionary
-    # contents and not the order the analysis happened to visit instances
+    # Sorted by ID: StaticPrmDb looks parameters up with a binary search
     params = sorted(dictionary.param_entry_map.items(), key=lambda entry: entry[0])
-
-    database_hash, hash_lines = compute_param_dictionary_crc(params)
 
     def prm_name(p: fpp.ParamEntry) -> str:
         i_name = p.instance.qualified_name.replace(".", "_")
         return f"{i_name}_{p.param.name}"
 
+    def diagnose(message: str, prm: fpp.ParamEntry) -> fpp.DiagnosticError:
+        e = fpp.DiagnosticError(fpp.Diagnostic(message))
+        e.diagnostic.add_annotation("from parameter", span=prm.param.node.span)
+        e.diagnostic.add_annotation("in component instance", span=prm.instance.node.span)
+        return e
+
+    # Every parameter's validity bits sit in one 32-bit word, so a parameter is checked with a
+    # single (word & mask) == mask. Records are numbered in parameter order for the save iterator.
+    #   param:  (id, prm, member, size, segments, word, first bit)
+    #   record: (record ID, param row, segment, key)
+    param_rows = []
+    record_rows = []
+    record_owner: dict[int, tuple[fpp.ParamEntry, str]] = {}
+    word, bit = 0, 0
+    for id, prm in params:
+        # Static sizes are assumed everywhere
+        # Make sure none of our parameters are strings
+        try:
+            common.assert_fixed_width(
+                prm.param.param_type,
+                "Only fixed-width serializables are supported for static parameter database",
+            )
+        except fpp.DiagnosticError as e:
+            e.diagnostic.add_annotation("from parameter", span=prm.param.node.span)
+            e.diagnostic.add_annotation(
+                "in component instance", span=prm.instance.node.span
+            )
+            raise
+
+        size = prm.param.param_type.serialized_size
+        if size == 0:
+            raise diagnose("A stored parameter must have a non-empty value", prm)
+
+        segments = (size + value_size - 1) // value_size
+        if segments > 32:
+            raise diagnose(
+                f"A stored parameter can take at most 32 records ({32 * value_size} bytes with "
+                f"{RECORD_VALUE_SIZE_CONSTANT} = {value_size}), not {size} bytes",
+                prm,
+            )
+        if bit + segments > 32:
+            word, bit = word + 1, 0
+        row = (id, prm, prm_name(prm), size, segments, word, bit)
+        param_rows.append(row)
+        bit += segments
+
+        for segment in range(segments):
+            key = record_key(prm, segment, value_size)
+            record_id = crc16(key.encode("utf-8"))
+            if record_id in RESERVED_RECORD_IDS:
+                raise diagnose(
+                    f"Record ID 0x{record_id:04x} of '{key}' is reserved for "
+                    f"{RESERVED_RECORD_IDS[record_id]}; rename the parameter",
+                    prm,
+                )
+            if record_id in record_owner:
+                other, other_key = record_owner[record_id]
+                e = diagnose(
+                    f"Record ID 0x{record_id:04x} of '{key}' collides with '{other_key}'; "
+                    "rename one of the parameters",
+                    prm,
+                )
+                e.diagnostic.add_annotation("colliding parameter", span=other.param.node.span)
+                raise e
+            record_owner[record_id] = (prm, key)
+            record_rows.append((record_id, row, segment, key))
+
+    num_params = len(param_rows)
+    num_records = len(record_rows)
+    validity_words = (word + 1) if param_rows else 0
+
+    def mask(row) -> str:
+        _, _, _, _, segments, _, first = row
+        return "0x%08xU" % (((1 << segments) - 1) << first)
+
+    def valid(row) -> str:
+        w = row[5]
+        return f"((__PRM_VALIDITY[{w}] & {mask(row)}) == {mask(row)})"
+
+    def segment_span(row, segment: int) -> tuple[int, int]:
+        start = segment * value_size
+        return start, min(value_size, row[3] - start)
+
     # A topology need not sit inside a module, and namespace() rejects an empty name list
     scope = doc.namespace(*namespaces) if namespaces else nullcontext(doc)
     with scope as ns:
-        ns.lines("// Database hash lines", output=cg.Output.CPP)
-        ns.lines("".join(list(["|// " + x for x in hash_lines])), output=cg.Output.CPP)
+        ns.lines("// Persistent records (record ID = CRC-16 of the key)", output=cg.Output.CPP)
         ns.lines(
-            "constexpr U32 DATABASE_CRC = 0x%08x;" % database_hash,
+            "".join(f"|// 0x{rid:04x} {key}\n" for rid, _, _, key in record_rows),
             output=cg.Output.CPP,
         )
 
-        # Generate the RAM buffer to hold parameter values
+        members = "".join(
+            f"|  U8 {member}[{size}];  // {prm.param.param_type} id=0x{id:x}\n"
+            for id, prm, member, size, _, _, _ in param_rows
+        )
         ns.lines(
             f"""
-            |//! Buffer for {prm_db_name} parameter database
+            |//! Records of the deployment
+            |constexpr FwSizeType NUM_RECORDS = {num_records};
+            |
+            |// The persistent store must hold every record of the deployment
+            |static_assert(NUM_RECORDS <= ::Samd21::StaticPrmDbConfig::STORE_RECORDS,
+            |              "The deployment has {num_records} parameter records, more than StaticPrmDbConfig::STORE_RECORDS");
+            |
+            |// Record IDs and segment offsets below were generated for this record value size
+            |static_assert(::Samd21::PrmRecord::VALUE_SIZE == {value_size},
+            |              "PrmRecord::VALUE_SIZE does not match the RECORD_VALUE_SIZE static-prm-db generated for");
+            |
+            |//! Validity bits: one per record, a parameter's records share a word
+            |U32 __PRM_VALIDITY[{max(validity_words, 1)}] = {{}};
+            |
+            |//! Serialized parameter values
             |struct {{
-            |  U8 __database_magic[4];
-            |  U8 __database_crc[4];
+            {members}|}} __PRM_VALUES = {{}};
             |""",
             output=cg.Output.CPP,
         )
 
-        total_size = 8  # magic + database hash
-        for id, prm in params:
-            size = prm.param.param_type.serialized_size
-            total_size += size + 1  # +1 for hash
-            mangled_name = prm_name(prm)
-            ty_name = str(prm.param.param_type)
-            ns.lines(
-                f"  ::Samd21::PrmRecord<{size}, 0x{id:x}> {mangled_name};  // {ty_name} id=0x{id:x}",
-                output=cg.Output.CPP,
-            )
-
-            # Static sizes are assumed everywhere
-            # Make sure none of our parameters are strings
-            try:
-                common.assert_fixed_width(
-                    prm.param.param_type,
-                    "Only fixed-width serializables are supported for static parameter database",
-                )
-            except fpp.DiagnosticError as e:
-                e.diagnostic.add_annotation("from parameter", span=prm.param.node.span)
-                e.diagnostic.add_annotation(
-                    "in component instance", span=prm.instance.node.span
-                )
-                raise
-
+        # The switches only map an ID or index to constants; one shared helper per operation
+        # does the work, so each case is a few argument loads and a branch
         ns.lines(
-            f"""|}} __PRM_RECORD_DB = {{}};
-                |
-                |static_assert(sizeof(__PRM_RECORD_DB) == {total_size}, "Unexpected size of prm db");
-                |
-                |//! Size of the database image handed to storage
-                |constexpr FwSizeType DATABASE_SIZE = {total_size};
-                |
-                |// The deployment's storage layout must hold the image (e.g. redundant banks must not overlap)
-                |static_assert(::Samd21::StaticPrmDbConfig::storageFits(DATABASE_SIZE),
-                |              "Parameter database image ({total_size} bytes) does not fit the storage layout checked by StaticPrmDbConfig::storageFits");""",
+            f"""
+            |//! A parameter's value and its validity bits in __PRM_VALIDITY[word]
+            |static Fw::ParamValid readValue(const U8* value, FwSizeType size, FwSizeType word, U32 mask, Fw::ParamBuffer& val) {{
+            |  if ((__PRM_VALIDITY[word] & mask) != mask) {{
+            |    return Fw::ParamValid::INVALID;
+            |  }}
+            |  const Fw::SerializeStatus status = val.setBuff(value, size);
+            |  FW_ASSERT(status == Fw::FW_SERIALIZE_OK, status);
+            |  return Fw::ParamValid::VALID;
+            |}}
+            |
+            |static void writeValue(U8* value, FwSizeType size, FwSizeType word, U32 mask, const Fw::ParamBuffer& val) {{
+            |  FW_ASSERT(val.getSize() == size, static_cast<FwAssertArgType>(val.getSize()), static_cast<FwAssertArgType>(size));
+            |  (void)::memcpy(value, val.getBuffAddr(), size);
+            |  __PRM_VALIDITY[word] |= mask;
+            |}}
+            |
+            |static {prm_db_name}::RecordLoad loadSegment(const U8* record, bool merge, U8* segment, FwSizeType length, FwSizeType word, U32 bit) {{
+            |  if (merge && ((__PRM_VALIDITY[word] & bit) != 0)) {{
+            |    return {prm_db_name}::RecordLoad::KEPT;
+            |  }}
+            |  (void)::memcpy(segment, &record[::Samd21::PrmRecord::VALUE_OFFSET], length);
+            |  __PRM_VALIDITY[word] |= bit;
+            |  return {prm_db_name}::RecordLoad::LOADED;
+            |}}
+            |
+            |static bool saveSegment(U8* record, U16 recordId, const U8* segment, FwSizeType length, FwSizeType word, U32 mask) {{
+            |  // Parameters without a valid value are left out: a load leaves them invalid
+            |  if ((__PRM_VALIDITY[word] & mask) != mask) {{
+            |    return false;
+            |  }}
+            |  ::Samd21::PrmRecord::pack(record, recordId, segment, length);
+            |  return true;
+            |}}""",
             output=cg.Output.CPP,
         )
-
-        # void writeParam(FwPrmIdType id, const Fw::ParamBuffer& val);
-        with ns.function(f"{prm_db_name} ::writeParam", static=True) as f:
-            f.param("FwPrmIdType", "id")
-            f.param("const Fw::ParamBuffer&", "val")
-
-            with f.body.switch("id") as sw:
-                for id, prm in params:
-                    mangled_name = prm_name(prm)
-                    ty_name = str(prm.param.param_type)
-                    size = prm.param.param_type.serialized_size
-                    with sw.case(f"0x{id:x}") as c:
-                        c.lines(f"""// {mangled_name}: {ty_name}
-                        |FW_ASSERT(val.getSize() == {size}, val.getSize(), {size});
-                        |auto& prm = __PRM_RECORD_DB.{mangled_name};
-                        |(void)memcpy(prm.data, val.getBuffAddr(), {size});
-                        |prm.crc = prm.computeCrc();
-                        |""")
-                with sw.default() as d:
-                    d.lines("FW_ASSERT(false, id);")
 
         # Fw::ParamValid readParam(FwPrmIdType id, Fw::ParamBuffer& val);
         with ns.function(
@@ -252,25 +357,82 @@ def generate_ac_functions(
         ) as f:
             f.param("FwPrmIdType", "id")
             f.param("Fw::ParamBuffer&", "val")
-
-            f.body.lines(f"")
-
             with f.body.switch("id") as sw:
-                for id, prm in params:
-                    mangled_name = prm_name(prm)
-                    ty_name = str(prm.param.param_type)
-                    size = prm.param.param_type.serialized_size
+                for row in param_rows:
+                    id, prm, member, size, _, w, _ = row
                     with sw.case(f"0x{id:x}") as c:
-                        c.lines(f"""// {mangled_name}: {ty_name}
-                        |FW_ASSERT(val.getSize() == {size}, val.getSize(), {size});
-                        |auto& prm = __PRM_RECORD_DB.{mangled_name};
-                        |(void)memcpy(val.getBuffAddr(), prm.data, {size});
-                        |bool valid = (prm.computeCrc() == prm.crc);
-                        |return valid ? Fw::ParamValid::VALID : Fw::ParamValid::INVALID;
-                        |""")
+                        c.lines(f"""// {member}: {prm.param.param_type}
+                        |return readValue(__PRM_VALUES.{member}, {size}, {w}, {mask(row)}, val);""")
                 with sw.default() as d:
-                    d.lines("""|FW_ASSERT(false, id);
+                    d.lines("""|FW_ASSERT(false, static_cast<FwAssertArgType>(id));
                                |return Fw::ParamValid::INVALID;""")
+
+        # void writeParam(FwPrmIdType id, const Fw::ParamBuffer& val);
+        with ns.function(f"{prm_db_name} ::writeParam", static=True) as f:
+            f.param("FwPrmIdType", "id")
+            f.param("const Fw::ParamBuffer&", "val")
+            with f.body.switch("id") as sw:
+                for row in param_rows:
+                    id, prm, member, size, _, w, _ = row
+                    with sw.case(f"0x{id:x}") as c:
+                        c.lines(f"""// {member}: {prm.param.param_type}
+                        |writeValue(__PRM_VALUES.{member}, {size}, {w}, {mask(row)}, val);
+                        |break;""")
+                with sw.default() as d:
+                    d.lines("FW_ASSERT(false, static_cast<FwAssertArgType>(id));")
+
+        # RecordLoad loadRecord(const U8* record, bool merge);
+        with ns.function(
+            f"{prm_db_name} ::loadRecord", ret=f"{prm_db_name}::RecordLoad", static=True
+        ) as f:
+            f.param("const U8*", "record")
+            f.param("bool", "merge")
+            with f.body.switch("::Samd21::PrmRecord::getId(record)") as sw:
+                for rid, row, segment, key in sorted(record_rows, key=lambda r: r[0]):
+                    member, w, first = row[2], row[5], row[6]
+                    start, length = segment_span(row, segment)
+                    b = "0x%08xU" % (1 << (first + segment))
+                    with sw.case(f"0x{rid:04x}") as c:
+                        c.lines(f"""// {key}
+                        |return loadSegment(record, merge, &__PRM_VALUES.{member}[{start}], {length}, {w}, {b});""")
+                with sw.default() as d:
+                    # A parameter removed from (or retyped in) the dictionary since the store was saved
+                    d.line("return RecordLoad::UNKNOWN;")
+
+        # bool saveRecord(FwSizeType index, U8* record);
+        with ns.function(f"{prm_db_name} ::saveRecord", ret="bool", static=True) as f:
+            f.param("FwSizeType", "index")
+            f.param("U8*", "record")
+            if record_rows:
+                with f.body.switch("index") as sw:
+                    for index, (rid, row, segment, key) in enumerate(record_rows):
+                        member, w = row[2], row[5]
+                        start, length = segment_span(row, segment)
+                        with sw.case(f"{index}") as c:
+                            c.lines(f"""// {key}
+                            |return saveSegment(record, 0x{rid:04x}, &__PRM_VALUES.{member}[{start}], {length}, {w}, {mask(row)});""")
+                    with sw.default() as d:
+                        d.lines("""|FW_ASSERT(false, static_cast<FwAssertArgType>(index));
+                                   |return false;""")
+            else:
+                f.body.lines("""|(void)record;
+                                |FW_ASSERT(false, static_cast<FwAssertArgType>(index));
+                                |return false;""")
+
+        with ns.function(f"{prm_db_name} ::invalidateAll", static=True) as f:
+            f.body.line("(void)::memset(__PRM_VALIDITY, 0, sizeof(__PRM_VALIDITY));")
+
+        with ns.function(f"{prm_db_name} ::countInvalidParams", ret="U32", static=True) as f:
+            f.body.line("U32 invalid = 0;")
+            for row in param_rows:
+                f.body.line(f"invalid += {valid(row)} ? 0U : 1U;  // {row[2]}")
+            f.body.line("return invalid;")
+
+        with ns.function(f"{prm_db_name} ::numParams", ret="U32", static=True) as f:
+            f.body.line(f"return {num_params};")
+
+        with ns.function(f"{prm_db_name} ::numRecords", ret="FwSizeType", static=True) as f:
+            f.body.line("return NUM_RECORDS;")
 
         with ns.function(f"{prm_db_name} ::loadParameters", static=True) as f:
             # Load parameters is generated for each deployment topology
@@ -278,35 +440,6 @@ def generate_ac_functions(
             # A topology outside any module has its loadParameters in the global namespace
             *namespaces, _ = topology.symbol.qualified_name.split(".")
             f.body.line(f"{"::".join(["", *namespaces, "loadParameters"])}();")
-
-        with ns.function(f"{prm_db_name} ::validate", static=True) as f:
-            f.param("U32&", "validRecords")
-            f.param("U32&", "invalidRecords")
-            for id, prm in params:
-                ty_name = str(prm.param.param_type)
-                mangled_name = prm_name(prm)
-                f.body.comment(f"{mangled_name}: {ty_name}")
-                with f.body.block() as b:
-                    # Validate the checksum of the data against the stored checksum
-                    b.lines(f"""auto& prm = __PRM_RECORD_DB.{mangled_name};
-                            |bool valid = (prm.computeCrc() == prm.crc);
-                            |if (valid) {{
-                            |  validRecords++;
-                            |}} else {{
-                            |  invalidRecords++;
-                            |}}""")
-
-        with ns.function(
-            f"{prm_db_name} ::getDeploymentParameterHash", ret="U32", static=True
-        ) as f:
-            f.body.line("return DATABASE_CRC;")
-
-        with ns.function(
-            f"{prm_db_name} ::getDatabaseBuffer", ret="Fw::Buffer", static=True
-        ) as f:
-            f.body.line(
-                "return Fw::Buffer(reinterpret_cast<U8*>(&__PRM_RECORD_DB), DATABASE_SIZE);"
-            )
 
 
 def main() -> int:

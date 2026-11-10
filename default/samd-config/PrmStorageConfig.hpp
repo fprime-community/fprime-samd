@@ -10,9 +10,9 @@
 namespace Samd21 {
 namespace PrmStorageConfig {
 
-//! F-RAM offset of the PRIME bank. Each bank holds one database image; the
-//! autocoded parameter database checks the banks hold it without overlapping
-//! (PrmStorageLayout.hpp).
+//! F-RAM offset of the PRIME bank. Each bank holds one parameter store
+//! (StaticPrmDbConfig::STORE_RECORDS records); PrmStorage checks at build time
+//! that the banks hold it without overlapping (PrmStorageLayout.hpp).
 static constexpr U32 PRIME_OFFSET = 0x0000;
 
 //! F-RAM offset of the BACKUP bank

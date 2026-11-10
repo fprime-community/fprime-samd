@@ -1,57 +1,84 @@
 // ======================================================================
 // \title  PrmRecord.hpp
 // \author tumbar
-// \brief  CRC-guarded parameter record used by the static parameter database
+// \brief  Persistent record format of the static parameter database
 // ======================================================================
 
 #ifndef Samd21_PrmRecord_HPP
 #define Samd21_PrmRecord_HPP
 
-#include <cstddef>
-
 #include "Fw/FPrimeBasicTypes.hpp"
+#include "default/samd-config/FppConstantsAc.hpp"
 
 namespace Samd21 {
 
-//! MSB-first CRC-8 polynomial used for per-parameter checks (CRC-8/AUTOSAR)
-constexpr U8 CRC8_POLY = 0x2F;
+//! CRC-16/CCITT-FALSE polynomial (MSB first, initial value 0xFFFF, no final XOR)
+constexpr U16 CRC16_POLY = 0x1021;
 
-//! Shift a single byte through the MSB-first CRC-8 polynomial (bitwise, for compile-time use)
-constexpr U8 crc8Byte(U8 crc, U8 byte) {
-    crc = static_cast<U8>(crc ^ byte);
+//! Initial value of a CRC-16/CCITT-FALSE
+constexpr U16 CRC16_INIT = 0xFFFF;
+
+//! Shift a single byte through the CRC-16 polynomial (bitwise, for compile-time use)
+constexpr U16 crc16Byte(U16 crc, U8 byte) {
+    crc = static_cast<U16>(crc ^ (static_cast<U16>(byte) << 8));
     for (FwIndexType b = 0; b < 8; b++) {
-        crc = (crc & 0x80) ? static_cast<U8>((crc << 1) ^ CRC8_POLY) : static_cast<U8>(crc << 1);
+        crc = (crc & 0x8000) ? static_cast<U16>((crc << 1) ^ CRC16_POLY) : static_cast<U16>(crc << 1);
     }
     return crc;
 }
 
-//! CRC-8 over a buffer starting from a seed (table driven, for runtime use)
-U8 crc8(U8 seed, const U8* data, FwSizeType len);
+//! CRC-16 over a buffer continuing from crc (table driven, for runtime use)
+U16 crc16(U16 crc, const U8* data, FwSizeType len);
 
-//! A single parameter value with a CRC-8 guarding its contents
+//! A persistent parameter record of VALUE_SIZE value bytes (StaticPrmDbConfig.RECORD_VALUE_SIZE):
 //!
-//! The CRC is seeded with the parameter ID so records can't be swapped undetected.
-template <size_t TY_SIZE, FwPrmIdType PRM_ID>
-struct PrmRecord {
-    U8 crc = 0;
-    U8 data[TY_SIZE] = {};
+//!     [0..1]                 record ID, big endian
+//!     [2..3]                 CRC-16 over the ID and the value bytes, big endian
+//!     [4..4+VALUE_SIZE-1]    value bytes; a shorter segment is zero padded
+//!
+//! Records identify themselves, so they may sit anywhere in the store and in
+//! any order. A parameter larger than VALUE_SIZE is split across several records.
+namespace PrmRecord {
 
-    //! CRC seed derived from the parameter ID
-    static constexpr U8 crcSeed() {
-        U8 currentCrc = 0xFF;
-        for (FwIndexType i = sizeof(FwPrmIdType) - 1; i >= 0; i--) {
-            currentCrc = crc8Byte(currentCrc, static_cast<U8>(PRM_ID >> (8 * i)));
-        }
-        return currentCrc;
-    }
+constexpr FwSizeType ID_OFFSET = 0;
+constexpr FwSizeType ID_SIZE = sizeof(U16);
+constexpr FwSizeType CRC_OFFSET = ID_OFFSET + ID_SIZE;
+constexpr FwSizeType CRC_SIZE = sizeof(U16);
+constexpr FwSizeType VALUE_OFFSET = CRC_OFFSET + CRC_SIZE;
+constexpr FwSizeType VALUE_SIZE = StaticPrmDbConfig::RECORD_VALUE_SIZE;
+constexpr FwSizeType SIZE = VALUE_OFFSET + VALUE_SIZE;
 
-    //! CRC over the record's current data
-    U8 computeCrc() const {
-        constexpr U8 seed = crcSeed();
-        return crc8(seed, data, TY_SIZE);
-    }
-};
+static_assert(VALUE_SIZE > 0, "StaticPrmDbConfig.RECORD_VALUE_SIZE must be at least 1");
 
+//! Record ID of an unused slot (written as all zeros). Never assigned to a
+//! parameter, and an EMPTY_ID or BLANK_ID slot is skipped without a CRC check.
+constexpr U16 EMPTY_ID = 0x0000;
+
+//! Record ID of erased (all 0xFF) storage. Never assigned to a parameter.
+constexpr U16 BLANK_ID = 0xFFFF;
+
+//! CRC of a record as stored (ID and the full 8 value bytes)
+U16 computeCrc(const U8* record);
+
+//! Record ID as stored
+U16 getId(const U8* record);
+
+//! CRC as stored
+U16 getCrc(const U8* record);
+
+//! True when the stored CRC matches the record contents
+bool crcValid(const U8* record);
+
+//! True when the record is an unused slot (EMPTY_ID or BLANK_ID)
+bool isEmpty(const U8* record);
+
+//! Fill a record with length (1..VALUE_SIZE) bytes of value, zero padded, and its CRC
+void pack(U8* record, U16 id, const U8* value, FwSizeType length);
+
+//! Fill a record with an unused slot
+void packEmpty(U8* record);
+
+}  // namespace PrmRecord
 }  // namespace Samd21
 
 #endif  // Samd21_PrmRecord_HPP

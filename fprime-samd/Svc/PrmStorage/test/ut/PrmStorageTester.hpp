@@ -67,6 +67,9 @@ class PrmStorageTester : public PrmStorageGTestBase {
     //! A request rejected other than BUSY fails the transfer without a retry.
     void testRequestRejected();
 
+    //! A transfer lands at its offset within the selected bank.
+    void testOffset();
+
     //! Save and load work with completions delivered inside the request call.
     void testInCallCompletion();
 
@@ -122,10 +125,10 @@ class PrmStorageTester : public PrmStorageGTestBase {
     static void assertPattern(const U8* data, U8 seed, FwSizeType size = IMAGE_SIZE);
 
     //! Clear history and send the image to writeIn
-    void sendSave(FwSizeType size = IMAGE_SIZE);
+    void sendSave(FwSizeType size = IMAGE_SIZE, U32 offset = 0);
 
     //! Clear history and send the image to readIn
-    void sendLoad(FwSizeType size = IMAGE_SIZE);
+    void sendLoad(FwSizeType size = IMAGE_SIZE, U32 offset = 0);
 
     //! Clear history and send SELECT_BANK
     void sendSelectBank(PrmBank bank, U32 cmdSeq);

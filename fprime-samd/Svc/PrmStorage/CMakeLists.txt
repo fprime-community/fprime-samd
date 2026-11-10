@@ -21,6 +21,7 @@ register_fprime_library(
     DEPENDS
         Drv_ByteStreamDriverModel
         Svc_Sched
+        fprime-samd_Svc_Types
         fprime-devices_Fram_FramConfig
         fprime-devices_Fram_Ports
         fprime-devices_Fram_Types

@@ -25,13 +25,15 @@ register_fprime_library(
 )
 
 ### Unit Tests ###
-# register_fprime_ut(
-#     AUTOCODER_INPUTS
-#         "${CMAKE_CURRENT_LIST_DIR}/StaticPrmDb.fpp"
-#     SOURCES
-#         "${CMAKE_CURRENT_LIST_DIR}/test/ut/StaticPrmDbTestMain.cpp"
-#         "${CMAKE_CURRENT_LIST_DIR}/test/ut/StaticPrmDbTester.cpp"
-#     DEPENDS
-#         STest # For rules-based testing
-#     UT_AUTO_HELPERS
-# )
+register_fprime_ut(
+    AUTOCODER_INPUTS
+        "${CMAKE_CURRENT_LIST_DIR}/StaticPrmDb.fpp"
+    SOURCES
+        "${CMAKE_CURRENT_LIST_DIR}/test/ut/StaticPrmDbTestMain.cpp"
+        "${CMAKE_CURRENT_LIST_DIR}/test/ut/StaticPrmDbTester.cpp"
+    DEPENDS
+        fprime-samd_Svc_Types
+        STest # For rules-based testing
+        Fw_Test # For REQUIREMENT() traceability
+    UT_AUTO_HELPERS
+)

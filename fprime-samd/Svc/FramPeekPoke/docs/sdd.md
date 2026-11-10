@@ -10,7 +10,7 @@ stored value by hand (for example a parameter record in a `Samd21.PrmStorage` ba
 data (for example a suspected bit flip).
 
 A `POKE` bypasses every integrity check on the data it lands in. Poking a `StaticPrmDb` record without
-also fixing that record's CRC-8 leaves the record invalid.
+also fixing that record's CRC-16 leaves the record (and only its parameter) invalid.
 
 ## Requirements
 

@@ -22,6 +22,13 @@ TEST(Transfer, Load) {
     tester.testLoad();
 }
 
+TEST(Transfer, Offset) {
+    REQUIREMENT("PRM-STORE-001");
+    COMMENT("a transfer lands at its offset within the selected bank");
+    Samd21::PrmStorageTester tester;
+    tester.testOffset();
+}
+
 TEST(Transfer, StorageFailure) {
     REQUIREMENT("PRM-STORE-002");
     COMMENT("a failed chunk ends the transfer with OTHER_ERROR");

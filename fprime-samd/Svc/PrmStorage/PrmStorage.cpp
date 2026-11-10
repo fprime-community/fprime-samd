@@ -7,8 +7,15 @@
 #include "fprime-samd/Svc/PrmStorage/PrmStorage.hpp"
 #include "FramConfig/FramConfig.hpp"
 #include "Fw/Types/Assert.hpp"
+#include "fprime-samd/Svc/PrmStorage/PrmStorageLayout.hpp"
+#include "fprime-samd/Svc/Types/PrmRecord.hpp"
+#include "samd-config/StaticPrmDbConfig.hpp"
 
 namespace Samd21 {
+
+// Both banks hold the StaticPrmDb store inside the F-RAM without overlapping
+static_assert(PrmStorageLayout::banksHold(StaticPrmDbConfig::STORE_RECORDS * PrmRecord::SIZE),
+              "The parameter store (StaticPrmDbConfig::STORE_RECORDS records) does not fit the PrmStorage banks");
 
 // ----------------------------------------------------------------------
 // Component construction and destruction
@@ -20,7 +27,8 @@ PrmStorage ::PrmStorage(const char* const compName)
       m_busy(false),
       m_retryPending(false),
       m_op(Fram::Op::READ),
-      m_image(),
+      m_offset(0),
+      m_buffer(),
       m_cursor(0),
       m_chunk(),
       m_retries(0) {}
@@ -31,12 +39,12 @@ PrmStorage ::~PrmStorage() {}
 // Handler implementations for typed input ports
 // ----------------------------------------------------------------------
 
-void PrmStorage ::writeIn_handler(FwIndexType portNum, Fw::Buffer& fwBuffer) {
-    this->start(Fram::Op::WRITE, fwBuffer);
+void PrmStorage ::writeIn_handler(FwIndexType portNum, U32 offset, Fw::Buffer& buffer) {
+    this->start(Fram::Op::WRITE, offset, buffer);
 }
 
-void PrmStorage ::readIn_handler(FwIndexType portNum, Fw::Buffer& fwBuffer) {
-    this->start(Fram::Op::READ, fwBuffer);
+void PrmStorage ::readIn_handler(FwIndexType portNum, U32 offset, Fw::Buffer& buffer) {
+    this->start(Fram::Op::READ, offset, buffer);
 }
 
 void PrmStorage ::framReadComplete_handler(FwIndexType portNum,
@@ -79,18 +87,19 @@ void PrmStorage ::SELECT_BANK_cmdHandler(FwOpcodeType opCode, U32 cmdSeq, const 
 // Helpers
 // ----------------------------------------------------------------------
 
-void PrmStorage ::start(Fram::Op op, Fw::Buffer& image) {
+void PrmStorage ::start(Fram::Op op, U32 offset, Fw::Buffer& buffer) {
     // StaticPrmDb holds one transaction at a time
     FW_ASSERT(!this->m_busy, static_cast<FwAssertArgType>(op));
     this->m_busy = true;
     this->m_op = op;
-    this->m_image = image;
+    this->m_offset = offset;
+    this->m_buffer = buffer;
     this->m_cursor = 0;
     this->nextChunk();
 }
 
 void PrmStorage ::nextChunk() {
-    const FwSizeType left = this->m_image.getSize() - this->m_cursor;
+    const FwSizeType left = this->m_buffer.getSize() - this->m_cursor;
     if (left == 0) {
         this->finish(Drv::ByteStreamStatus::OP_OK);
         return;
@@ -98,7 +107,7 @@ void PrmStorage ::nextChunk() {
     const FwSizeType size = (left < static_cast<FwSizeType>(Fram::FramConfig::MaxTransfer))
                                 ? left
                                 : static_cast<FwSizeType>(Fram::FramConfig::MaxTransfer);
-    this->m_chunk = Fw::Buffer(this->m_image.getData() + this->m_cursor, size);
+    this->m_chunk = Fw::Buffer(this->m_buffer.getData() + this->m_cursor, size);
     this->m_retries = 0;
     this->send();
 }
@@ -116,7 +125,7 @@ void PrmStorage ::complete(Fram::Op op, Fram::Status status) {
 }
 
 void PrmStorage ::send() {
-    const U32 offset = this->bankOffset() + static_cast<U32>(this->m_cursor);
+    const U32 offset = this->bankOffset() + this->m_offset + static_cast<U32>(this->m_cursor);
     // Copy the view: the driver may complete the request, and this component
     // issue the next one, before the call returns
     Fw::Buffer chunk = this->m_chunk;
@@ -137,7 +146,7 @@ void PrmStorage ::send() {
 }
 
 void PrmStorage ::fail(Fram::Status status) {
-    const U32 offset = this->bankOffset() + static_cast<U32>(this->m_cursor);
+    const U32 offset = this->bankOffset() + this->m_offset + static_cast<U32>(this->m_cursor);
     this->log_WARNING_HI_StorageFailed(this->m_op, this->m_bank, offset, status);
     this->finish(Drv::ByteStreamStatus::OTHER_ERROR);
 }
@@ -147,9 +156,9 @@ void PrmStorage ::finish(Drv::ByteStreamStatus status) {
     this->m_busy = false;
     this->m_retryPending = false;
     if (this->m_op == Fram::Op::READ) {
-        this->readReturnOut_out(0, this->m_image, status);
+        this->readReturnOut_out(0, this->m_buffer, status);
     } else {
-        this->writeReturnOut_out(0, this->m_image, status);
+        this->writeReturnOut_out(0, this->m_buffer, status);
     }
 }
 
