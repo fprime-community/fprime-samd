@@ -16,10 +16,10 @@ applies.
 
 | Name | Description | Rationale | Validation |
 |---|---|---|---|
-| SAMD21-TLM-001 | Shall store the latest value of every channel assigned to a packet, in storage generated from the topology's packet set. | No runtime packet table on a 16 KB part. | Code inspection (generated `<Top>StaticTlmPacketAc.cpp`) |
-| SAMD21-TLM-002 | Shall emit a packet on every connected `pktSendOut` port when requested by `pktSendIn` port index N or by `SEND_PKT(N)`. | Packets are either scheduler- or ground-driven; a packet may fan out to more than one downlink. | Code inspection |
-| SAMD21-TLM-003 | Shall serialize each packet as packet descriptor, packet id, current time, then payload. | Wire compatibility with `Svc::TlmPacketizer`. | Code inspection |
-| SAMD21-TLM-004 | Shall reject an unknown packet id with a `PacketNotFound` warning and an `EXECUTION_ERROR` response, emitting no packet. | `SEND_PKT` takes ground input. | Code inspection |
+| SAMD21-TLM-001 | Shall store the latest value of every channel assigned to a packet, in storage generated from the topology's packet set. | No runtime packet table on a 16 KB part. | Unit Test |
+| SAMD21-TLM-002 | Shall emit a packet on every connected `pktSendOut` port when requested by `pktSendIn` port index N or by `SEND_PKT(N)`. | Packets are either scheduler- or ground-driven; a packet may fan out to more than one downlink. | Unit Test |
+| SAMD21-TLM-003 | Shall serialize each packet as packet descriptor, packet id, current time, then payload. | Wire compatibility with `Svc::TlmPacketizer`. | Unit Test |
+| SAMD21-TLM-004 | Shall reject an unknown packet id with a `PacketNotFound` warning and an `EXECUTION_ERROR` response, emitting no packet. | `SEND_PKT` takes ground input. | Unit Test |
 | SAMD21-TLM-005 | Shall require no runtime configuration, allocator, or task. | Baremetal deployments have no allocator. | Code inspection |
 
 ## Design
@@ -186,6 +186,15 @@ other.
 The header is 14 bytes (descriptor 1 + id 2 + `Fw::Time` 11), leaving a 114-byte payload
 budget. Static RAM cost is the sum of all packet payloads, paid unconditionally.
 
+## Testing
+
+The unit tests run against `test/StaticTopology` (a native-only deployment topology in this
+library), so they exercise the code `static-tlm-packetizer` generates for its packet set
+together with the component: every channel type, a channel in several packets, two instances
+of one component, non-contiguous packet ids, an empty packet and omitted channels. A new
+generator edge case is covered by adding to that topology. Enable with
+`-DFPRIME_SAMD_STATIC_TOPOLOGY_TESTS=ON` in a native unit-test build.
+
 ## Limitations
 
 - `pktSendIn` is sized by `NUM_TLM_PACKETS`, defaulted to 1 in the library — a project
@@ -200,5 +209,3 @@ budget. Static RAM cost is the sum of all packet payloads, paid unconditionally.
   FATAL assert. The declared `NoChan` event is never emitted.
 - No change tracking and no critical section around the packet buffers.
 - No bounds check against the incoming `Fw::TlmBuffer` length when copying a channel.
-- No unit test: `register_fprime_ut()` is commented out in `CMakeLists.txt` and `test/`
-  is empty.

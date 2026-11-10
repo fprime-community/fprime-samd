@@ -75,7 +75,8 @@ jobs:
       - name: "Generate the native unit-test build cache"
         # FPRIME_ENABLE_UT_COVERAGE defaults ON, so this cache is already instrumented
         # with -fprofile-arcs -ftest-coverage; no extra generate flags are needed.
-        run: fprime-util generate --ut
+        # The Static* components' unit tests run against test/StaticTopology (opt-in)
+        run: fprime-util generate --ut -DFPRIME_SAMD_STATIC_TOPOLOGY_TESTS=ON
 
       - name: "Build and run this library's unit tests"
         id: ut

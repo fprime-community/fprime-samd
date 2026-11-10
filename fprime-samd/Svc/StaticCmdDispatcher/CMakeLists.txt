@@ -22,13 +22,11 @@ register_fprime_library(
 )
 
 ### Unit Tests ###
-# register_fprime_ut(
-#     AUTOCODER_INPUTS
-#         "${CMAKE_CURRENT_LIST_DIR}/StaticCmdDispatcher.fpp"
-#     SOURCES
-#         "${CMAKE_CURRENT_LIST_DIR}/test/ut/StaticCmdDispatcherTestMain.cpp"
-#         "${CMAKE_CURRENT_LIST_DIR}/test/ut/StaticCmdDispatcherTester.cpp"
-#     DEPENDS
-#         STest # For rules-based testing
-#     UT_AUTO_HELPERS
-# )
+# Run against test/StaticTopology, whose dispatch table static-cmd-dispatcher generates
+fprime_samd_add_static_topology_ut(
+    SOURCES
+        "${CMAKE_CURRENT_LIST_DIR}/test/ut/StaticCmdDispatcherTestMain.cpp"
+        "${CMAKE_CURRENT_LIST_DIR}/test/ut/StaticCmdDispatcherTests.cpp"
+    DEPENDS
+        Fw_Test # For REQUIREMENT() traceability
+)

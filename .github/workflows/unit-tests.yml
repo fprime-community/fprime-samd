@@ -54,7 +54,8 @@ jobs:
         uses: ./lib/fprime-samd/.github/actions/setup-fprime
 
       - name: "Generate the native unit-test build cache"
-        run: fprime-util generate --ut
+        # The Static* components' unit tests run against test/StaticTopology (opt-in)
+        run: fprime-util generate --ut -DFPRIME_SAMD_STATIC_TOPOLOGY_TESTS=ON
 
       - name: "Build and run this library's unit tests"
         uses: ./lib/fprime-samd/.github/actions/unit-tests
@@ -64,16 +65,3 @@ jobs:
 
       - name: "Build the native-ut all target"
         run: ninja -C build-fprime-automatic-native-ut all
-
-      - name: "Install gcovr"
-        shell: bash
-        run: pip install gcovr
-
-      - name: "Coverage: StaticTlmPacketizer / StaticCmdDispatcher via the harness's CmdTlmTest topology"
-        uses: ./lib/fprime-samd/.github/actions/attach-coverage
-        with:
-          module: CmdTlmTest/Top
-          attach: |
-            lib/fprime-samd/fprime-samd/Svc/StaticTlmPacketizer
-            lib/fprime-samd/fprime-samd/Svc/StaticCmdDispatcher
-          summary-title: "StaticTlmPacketizer / StaticCmdDispatcher coverage (via CmdTlmTest)"
