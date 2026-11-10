@@ -79,7 +79,8 @@ jobs:
         uses: ./lib/fprime-samd/.github/actions/setup-fprime
 
       - name: "Generate the native unit-test build cache"
-        run: fprime-util generate --ut
+        # The Static* components' unit tests run against test/StaticTopology (opt-in)
+        run: fprime-util generate --ut -DFPRIME_SAMD_STATIC_TOPOLOGY_TESTS=ON
 
       - name: "Build and run this library's unit tests"
         id: ut

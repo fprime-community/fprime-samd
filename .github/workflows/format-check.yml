@@ -21,6 +21,7 @@ env:
   CHECKED_DIRS: >-
     lib/fprime-samd/fprime-samd
     lib/fprime-samd/default
+    lib/fprime-samd/test
 
 jobs:
   cpp-formatting:

@@ -22,6 +22,31 @@ Requirements are likewise inherited.
 | `regCommands()` | Required                                                                            | Optional; when called it is purely that boot-time consistency check                                                                                                                                                                    |
 | Events          | —                                                                                   | Same names, ids, severities and formats. The opcode argument is spelled `opCode` rather than `$opcode`, and `OpCodeDispatched.$port` is `I32` rather than `FwIndexType` (the same type on SAMD21). Dictionary-visible, wire-identical. |
 
+## Requirements
+
+The inherited requirements, as the unit tests trace them:
+
+| Name | Description | Validation |
+|---|---|---|
+| STATIC-CMD-001 | A command shall reach the instance whose `base id + opcode` the dispatch table was generated from, and its response shall return to the sequence port it came in on, with the sender's context. | Unit Test |
+| STATIC-CMD-002 | An opcode outside the dispatch table (or the reserved `0xFFFFFFFF`) shall fail `INVALID_OPCODE` with `InvalidCommand` and reach no instance. | Unit Test |
+| STATIC-CMD-003 | An error response shall reach the sender and log `OpCodeError`. | Unit Test |
+| STATIC-CMD-004 | A command packet that does not deserialize shall fail `VALIDATION_ERROR` with `MalformedCommand`. | Unit Test |
+| STATIC-CMD-005 | At most `CMD_DISPATCHER_SEQUENCER_TABLE_SIZE` commands shall be outstanding; past that a command fails `EXECUTION_ERROR` with `TooManyCommands`. `CLEAR_TRACKING` frees every slot; a response no slot tracks logs `UnexpectedCommandResponse`. | Unit Test |
+| STATIC-CMD-006 | `SET_EVENT_EMISSION` shall silence `OpCodeDispatched`/`OpCodeCompleted` for one sequence port; an index past the sequence ports fails `EXECUTION_ERROR` with `PortIndexOutOfRange`. | Unit Test |
+
+`CLEAR_TRACKING` also clears its own tracking entry, so it gets no response on its sequence port
+and logs `UnexpectedCommandResponse`; a sequencer waiting on it will time out. The unit tests pin
+this behavior.
+
+## Testing
+
+The unit tests run against `test/StaticTopology` (a native-only deployment topology in this
+library), so they exercise the dispatch table `static-cmd-dispatcher` generates for it together
+with the component, including two instances of one component at different base ids. A new
+generator edge case is covered by adding to that topology. Enable with
+`-DFPRIME_SAMD_STATIC_TOPOLOGY_TESTS=ON` in a native unit-test build.
+
 ## Usage / Topology Integration
 
 **1. Enable the autocoder**, once per project, in the root `CMakeLists.txt` between the
