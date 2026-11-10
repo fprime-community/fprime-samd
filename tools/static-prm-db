@@ -145,6 +145,10 @@ def record_value_size(model: fpp.Model) -> int:
         )
     return value
 
+#: Records of one parameter: its validity bits share one U32 word, so a parameter's validity is
+#: a single mask test. Bounds a stored parameter to MAX_RECORDS_PER_PARAM * RECORD_VALUE_SIZE bytes.
+MAX_RECORDS_PER_PARAM = 32
+
 #: Record IDs never assigned to a parameter (PrmRecord::EMPTY_ID, PrmRecord::BLANK_ID)
 RESERVED_RECORD_IDS = {0x0000: "an unused slot", 0xFFFF: "erased storage"}
 
@@ -432,12 +436,21 @@ def generate_ac_functions(
             raise diagnose("A stored parameter must have a non-empty value", prm)
 
         segments = (size + value_size - 1) // value_size
-        if segments > 32:
-            raise diagnose(
-                f"A stored parameter can take at most 32 records ({32 * value_size} bytes with "
-                f"{RECORD_VALUE_SIZE_CONSTANT} = {value_size}), not {size} bytes",
-                prm,
+        if segments > MAX_RECORDS_PER_PARAM:
+            # A parameter's validity bits share one U32 word (one mask test per lookup)
+            diag = fpp.Diagnostic(
+                f"parameter `{prm.instance.qualified_name}.{prm.param.name}` is {size} bytes and "
+                f"would take {segments} records; a stored parameter takes at most "
+                f"{MAX_RECORDS_PER_PARAM} ({MAX_RECORDS_PER_PARAM * value_size} bytes with "
+                f"{RECORD_VALUE_SIZE_CONSTANT} = {value_size})",
+                span=prm.param.node.span,
             )
+            diag.add_annotation("in component instance", span=prm.instance.node.span)
+            diag.add_note(
+                f"raise {RECORD_VALUE_SIZE_CONSTANT} to at least "
+                f"{-(-size // MAX_RECORDS_PER_PARAM)}, or split the parameter"
+            )
+            raise fpp.DiagnosticError(diag)
         if bit + segments > 32:
             word, bit = word + 1, 0
         row = (id, prm, prm_name(prm), size, segments, word, bit)

@@ -24,6 +24,7 @@ TEST(Store, SaveLoad) {
 
 TEST(Store, BitFlip) {
     REQUIREMENT("PRM-DB-003");
+    REQUIREMENT("PRM-DB-001");
     COMMENT("a flipped bit invalidates only the parameter owning the record");
     Samd21::StaticPrmDbTester tester;
     tester.testBitFlip();
@@ -31,6 +32,7 @@ TEST(Store, BitFlip) {
 
 TEST(Store, DictionaryChange) {
     REQUIREMENT("PRM-DB-004");
+    REQUIREMENT("PRM-DB-006");
     COMMENT("records of an older dictionary load in any slot order, unknown records are skipped");
     Samd21::StaticPrmDbTester tester;
     tester.testDictionaryChange();
@@ -38,20 +40,21 @@ TEST(Store, DictionaryChange) {
 
 TEST(Store, Merge) {
     REQUIREMENT("PRM-DB-005");
+    REQUIREMENT("PRM-DB-003");
     COMMENT("a MERGE load fills in invalid parameters without overwriting valid ones");
     Samd21::StaticPrmDbTester tester;
     tester.testMerge();
 }
 
 TEST(Store, SaveSkipsInvalid) {
-    REQUIREMENT("PRM-DB-006");
+    REQUIREMENT("PRM-DB-002");
     COMMENT("a save leaves out invalid parameters and clears records of an earlier save");
     Samd21::StaticPrmDbTester tester;
     tester.testSaveSkipsInvalid();
 }
 
 TEST(Store, BlankStore) {
-    REQUIREMENT("PRM-DB-004");
+    REQUIREMENT("PRM-DB-006");
     COMMENT("an erased store loads with every parameter invalid");
     Samd21::StaticPrmDbTester tester;
     tester.testBlankStore();

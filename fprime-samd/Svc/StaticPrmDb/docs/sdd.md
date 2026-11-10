@@ -14,17 +14,21 @@ parameter invalid. Records from an older dictionary still load. Two partially va
 
 ## Requirements
 
-| Name | Description | Validation |
-|---|---|---|
-| PRM-DB-001 | `getPrm` shall return `VALID` with the value of a parameter whose records are all valid, and `INVALID` otherwise. `setPrm` shall store the value and mark all of its records valid. | Unit Test |
-| PRM-DB-002 | `SAVE` followed by `LOAD REPLACE` shall restore every valid parameter. | Unit Test |
-| PRM-DB-003 | A corrupted record shall invalidate only the parameter it belongs to. | Unit Test |
-| PRM-DB-004 | `LOAD` shall accept records in any slot, skip blank/empty slots and records with unknown IDs, and count unknown records apart from corrupt ones. | Unit Test |
-| PRM-DB-005 | `LOAD MERGE` shall take valid records only for record segments not already valid in memory. | Unit Test |
-| PRM-DB-006 | `SAVE` shall write only fully valid parameters and fill the rest of the store with empty slots. | Unit Test |
-| PRM-DB-007 | A failed storage read shall keep the records already loaded, still push parameters to components, and fail `LOAD`. A failed write shall fail `SAVE`. | Unit Test |
-| PRM-DB-008 | During a transfer, commands shall be rejected `BUSY`, `setPrm` shall be dropped with `DroppingPrmSave`, and `getPrm` shall return `INVALID`. | Unit Test |
-| PRM-DB-009 | Save and load shall work when storage completes a transfer inside the call that started it, without recursion. | Unit Test |
+| Name | Description | Rationale | Validation |
+|---|---|---|---|
+| PRM-DB-001 | The database shall serve every parameter of the deployment, reporting each one either valid with its value or invalid. A parameter is valid only when every byte of its value came from a single `setPrm` or from records that passed their integrity check. | Components must never run on a partial or corrupted value; an invalid parameter falls back to its default. | Unit Test |
+| PRM-DB-002 | A save followed by a load shall restore every parameter that was valid at the save, and only those. | A parameter with no valid value must not be persisted as though it had one. | Unit Test |
+| PRM-DB-003 | Corruption of any part of the persistent store shall invalidate only the parameters whose stored bytes it touches; every other parameter shall still load. | A single bit flip (radiation, F-RAM wear) must not take out the whole database, as a whole-image checksum or header would. | Unit Test |
+| PRM-DB-004 | A store saved by an earlier dictionary shall load every parameter whose name and serialized type are unchanged. A parameter that was removed, renamed or retyped shall be skipped and reported, never decoded as another parameter. | Software updates add, remove and renumber parameters; flight values must survive the update without a re-upload, and a changed type must not be misread. | Unit Test |
+| PRM-DB-005 | The database shall overlay two partially valid stores so that a value valid in the first store loaded keeps precedence, and the second fills in only parameters the first left invalid. | Redundant banks (`PrmStorage` PRIME / BACKUP): the newest good value wins, and a parameter survives as long as either bank holds a good copy. | Unit Test |
+| PRM-DB-006 | Load shall not fail because of the store's contents; it shall fail only when storage reports an error, and shall report how many records were valid, corrupt or unknown and how many parameters are left invalid. | Boot must always come up with as many parameters as possible; the operator decides from telemetry whether to re-load or re-save. | Unit Test |
+| PRM-DB-007 | A failed storage transfer shall fail the command in progress without invalidating any parameter value in memory. Parameters read before a failed load shall still be delivered to their components. | A storage fault must not leave the software with fewer parameters than it had, and the redundant store can still fill in the rest. | Unit Test |
+| PRM-DB-008 | While a save or load is in progress, parameter updates shall be rejected and reported, and concurrent save or load commands shall be rejected busy. | The values being saved or loaded must not change mid-transfer. | Unit Test |
+| PRM-DB-009 | Save and load shall complete in bounded stack whether storage completes each transfer asynchronously or inside the call that started it. | Storage drivers differ in completion model; recursion depth growing with the store size would overflow a 16 KB part's stack. | Unit Test |
+| PRM-DB-010 | The persistent store shall have a fixed, configured size that does not change with the dictionary, and the build shall fail if the deployment's parameters do not fit it. | A store whose size moved with the dictionary would invalidate the storage layout (banks) on every update; overflow must be caught before flight. | Inspection (static_assert) |
+| PRM-DB-011 | Each persistent record shall identify the parameter it holds by an ID that is the same in every build of the same dictionary, and the build shall fail, naming the parameters involved and a model change that resolves it, when two records would share an ID or one would use a reserved ID. | Record IDs are part of the flight data format; a silent collision would load one parameter's value into another. | Inspection (generator diagnostics) |
+| PRM-DB-012 | Parameter lookup and storage shall use no runtime tables or search: the deployment-specific layout shall be generated as code at build time. | Flash and RAM budget of a 16 KB / 128 KB part; generated code is optimized through by LTO. | Inspection (generated `<Top>StaticPrmDbAc.cpp`) |
+| PRM-DB-013 | The trade-off between per-record overhead and padding shall be a project configuration (record value size), with every derived size, including the largest storable parameter, following from it. The build shall fail, naming the parameter, if one does not fit. | The best record size depends on the deployment's parameter sizes and the storage budget; a parameter too large for the layout must be caught before flight. | Inspection (generator diagnostics) |
 
 ## Design
 
@@ -172,7 +176,11 @@ lives in `samd-config/Samd21StaticPrmDbConfig.fpp` (override via `CONFIGURATION_
 `PrmRecord::SIZE`, `VALUE_OFFSET` and the other record offsets are derived from it. A small value
 wastes less padding on small parameters; a large one spends less per-record overhead on large
 ones. With parameter sizes `N_i`, the store needs `sum(ceil(N_i / V)) * (V + 4)` bytes, so choose
-`V` to minimize that. A parameter may take at most 32 records.
+`V` to minimize that.
+
+A parameter may take at most 32 records, since its validity bits share one `U32` word (one mask
+test per lookup), so the largest stored parameter is `32 * V` bytes (256 with the default). The
+generator fails the build on a larger one and names the smallest `V` that fits it.
 
 The rest is compile-time, in `samd-config/StaticPrmDbConfig.hpp` (override via
 `CONFIGURATION_OVERRIDES`). Everything is in records, so it scales with the record size:
@@ -181,11 +189,3 @@ The rest is compile-time, in `samd-config/StaticPrmDbConfig.hpp` (override via
 |---|---|
 | `SCRATCH_RECORDS` | Records per transfer. The scratch buffer is `SCRATCH_RECORDS * PrmRecord::SIZE` bytes. Keep it at or below the storage's natural request size (e.g. 5 x 12 = 60 for Fram `MaxTransfer` 64) |
 | `STORE_RECORDS` | Record slots in the store. Fixed so the store does not move with the dictionary. Must hold every record of the deployment (build fails otherwise). `PrmStorage` checks the store fits its banks |
-
-## Usage in FFB
-
-`STARTUP` runs `SELECT_BANK PRIME` and `prm.LOAD REPLACE`, then `PRM_LOAD_BACKUP` always runs
-`SELECT_BANK BACKUP` and `prm.LOAD MERGE`. Parameters PRIME did not hold a valid record for are then
-filled in from BACKUP. If either load fails, the sequencer's `RUN_ON_ERROR` moves on to the next
-step. `PRM_LOAD_DONE` selects `PRIME` again. To keep both banks current, a save is
-`SELECT_BANK PRIME`, `prm.SAVE`, `SELECT_BANK BACKUP`, `prm.SAVE`.
