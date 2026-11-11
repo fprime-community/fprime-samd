@@ -8,7 +8,7 @@ module Samd21 {
         ##############################################################################
 
         @ Port to get parameter values
-        guarded input port getPrm: Fw.PrmGet
+        sync input port getPrm: Fw.PrmGet
 
         @ Port to update parameters
         sync input port setPrm: Fw.PrmSet
@@ -23,10 +23,16 @@ module Samd21 {
             WRITING  @< A save is writing records to the persistent store
         }
 
+        @ How a load ended
+        enum LoadResult : U8 {
+            COMPLETE     @< Every slot of the store was read
+            READ_FAILED  @< Storage failed a read; only the slots before it were read
+        }
+
         @ How a load combines the persistent store with the values already in memory
         enum LoadMode : U8 {
-            REPLACE  @< Invalidate every value in memory, then take each valid record from the store
-            MERGE    @< Keep the values already valid in memory; take valid records only for the rest
+            REPLACE  @< Take each parameter whole from the store; a parameter the store does not hold becomes invalid
+            MERGE    @< Keep the values already valid in memory; take only the rest, whole, from the store
         }
 
         @ Write a run of records to the persistent store
@@ -40,6 +46,10 @@ module Samd21 {
 
         @ Asynchronous reply for read completion.
         sync input port readReturnIn: Drv.ByteStreamData
+
+        @ Main-context scheduler: acts on the last transfer's completion and issues the next
+        @ transfer, at most one per call. Returns true when it did work.
+        sync input port activeIn: Svc.ActiveSched
 
         ##############################################################################
         #### Commands ####
@@ -58,13 +68,16 @@ module Samd21 {
         constant RECORD_VALUE_SIZE = Samd21.StaticPrmDbConfig.RECORD_VALUE_SIZE
 
         @ Records of the last load that passed their CRC and belong to a parameter
-        telemetry ValidRecords: U32 id 0
+        telemetry ValidRecords: U32 id 0 format "{} records"
 
         @ Records of the last load that failed their CRC
-        telemetry CorruptRecords: U32 id 1
+        telemetry CorruptRecords: U32 id 1 format "{} records"
 
         @ Parameters with no valid value after the last load
-        telemetry InvalidParameters: U32 id 2
+        telemetry InvalidParameters: U32 id 2 format "{} parameters"
+
+        @ Parameters of the last load whose records all loaded but were of different saves
+        telemetry IncoherentParameters: U32 id 3 format "{} parameters"
 
         event DroppingPrmSave($id: FwPrmIdType, $state: IoState) \
             severity warning high \
@@ -73,19 +86,34 @@ module Samd21 {
 
         event LoadedDatabase(
             mode: LoadMode
+            result: LoadResult
             validRecords: U32
             corruptRecords: U32
             unknownRecords: U32
+            incoherentParameters: U32
             invalidParameters: U32
         ) \
             severity activity high \
             id 1 \
-            format "Loaded parameter store ({}): {} valid, {} corrupt and {} unknown records, {} parameters invalid"
+            format "Loaded parameter store ({}, {}): {} valid, {} corrupt and {} unknown records, {} parameters incoherent, {} invalid"
 
         event ReadFailed(status: Drv.ByteStreamStatus) \
             severity warning high \
             id 2 \
             format "Failed to read parameters: {}"
+
+        event NoStorage($state: IoState) \
+            severity warning high \
+            id 4 \
+            format "Cannot start {} transfer: no persistent storage is connected"
+
+        @ A successful save emits no event (saves may run every second); a failed one is reported
+        @ here, throttled, and the throttle is cleared by the next successful save
+        event WriteFailed(status: Drv.ByteStreamStatus) \
+            severity warning high \
+            id 3 \
+            format "Failed to write parameters: {}" \
+            throttle 5
 
         ###############################################################################
         # Standard AC Ports: Required for Channels, Events, Commands, and Parameters  #

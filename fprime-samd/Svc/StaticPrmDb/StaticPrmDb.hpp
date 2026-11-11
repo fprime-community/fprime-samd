@@ -26,9 +26,21 @@ class StaticPrmDb final : public StaticPrmDbComponentBase {
 
     //! What loading one valid persistent record did
     enum class RecordLoad : U8 {
-        LOADED,   //!< The record's segment was copied into memory and marked valid
-        KEPT,     //!< MERGE: the segment was already valid in memory and was kept
+        LOADED,   //!< The record's segment was copied into memory
+        KEPT,     //!< The segment was already loaded (earlier slot) or valid (MERGE), and was kept
         UNKNOWN,  //!< The deployment has no record with this ID
+    };
+
+    //! Where a parameter lives in the deployment's generated storage. The generated code holds
+    //! one constant per parameter and passes it to the shared helpers below.
+    struct ParamLayout {
+        U8* value;            //!< Serialized value, size bytes
+        FwSizeType size;      //!< Bytes of the value
+        U16* check;           //!< Value check, nullptr unless the parameter takes more than one record
+        U32* validity;        //!< Validity word holding the parameter's bits
+        U32* loaded;          //!< Word of the load in progress holding the parameter's bits
+        U32 mask;             //!< The parameter's bits, one per record, in both words
+        FwSizeType firstBit;  //!< Bit of the parameter's first record
     };
 
     // ----------------------------------------------------------------------
@@ -55,6 +67,13 @@ class StaticPrmDb final : public StaticPrmDbComponentBase {
                                   Fw::ParamBuffer& val  //!< Buffer containing serialized parameter value.
                                                         //!< Unmodified if param not found.
                                   ) override;
+
+    //! Handler implementation for activeIn
+    //!
+    //! Acts on the completed transfer (if any), then issues the next one (if any)
+    bool activeIn_handler(FwIndexType portNum,  //!< The port number
+                          U32 context           //!< The call order
+                          ) override;
 
     //! Handler implementation for readReturnIn
     //!
@@ -109,21 +128,26 @@ class StaticPrmDb final : public StaticPrmDbComponentBase {
     //! Reads the parameter value from RAM given its ID, INVALID unless all of its records are valid
     static Fw::ParamValid readParam(FwPrmIdType id, Fw::ParamBuffer& val);
 
-    //! Load a record (CRC already checked) into RAM. With merge, a segment already valid is kept.
+    //! Start a load: no record has been loaded into RAM yet
+    static void beginLoad();
+
+    //! Load a record (CRC already checked) into RAM unless this load already loaded its segment,
+    //! or, with merge, its parameter is already valid. Validity is only updated by commitLoad.
     static RecordLoad loadRecord(const U8* record, bool merge);
+
+    //! End a load (complete: every slot was read) by updating every parameter's validity:
+    //!  - none of its records loaded: unchanged, except invalid after a complete REPLACE
+    //!  - some but not all of its records loaded: invalid (its value in RAM is partly overwritten)
+    //!  - all of its records loaded: valid, unless it fails its value check (mixed saves)
+    //! Returns how many failed their value check.
+    static U32 commitLoad(bool complete, bool merge);
 
     //! Pack record index (0 .. numRecords() - 1, in parameter order) of the deployment.
     //! False, and nothing packed, when its parameter has no valid value.
     static bool saveRecord(FwSizeType index, U8* record);
 
-    //! Clear every validity bit
-    static void invalidateAll();
-
     //! Parameters of the deployment without a valid value
     static U32 countInvalidParams();
-
-    //! Parameters of the deployment
-    static U32 numParams();
 
     //! Records of the deployment
     static FwSizeType numRecords();
@@ -133,29 +157,59 @@ class StaticPrmDb final : public StaticPrmDbComponentBase {
 
   private:
     // ----------------------------------------------------------------------
+    // Shared helpers of the generated code, one call per parameter or record
+    // ----------------------------------------------------------------------
+
+    //! The parameter's value, INVALID unless all of its records are valid
+    static Fw::ParamValid readValue(const ParamLayout& layout, Fw::ParamBuffer& val);
+
+    //! Set the parameter's value (and value check) and mark all of its records valid
+    static void writeValue(const ParamLayout& layout, const Fw::ParamBuffer& val);
+
+    //! Copy segment of the parameter from a record into memory and mark it loaded, unless this
+    //! load already loaded it or, with merge, the parameter is already valid
+    static RecordLoad loadSegment(const U8* record, bool merge, const ParamLayout& layout, FwSizeType segment);
+
+    //! Pack segment of the parameter into a record with recordId. False, and nothing packed,
+    //! when the parameter has no valid value.
+    static bool saveSegment(U8* record, U16 recordId, const ParamLayout& layout, FwSizeType segment);
+
+    //! Set the parameter's validity from the load (see commitLoad). 1 when all of its records
+    //! loaded but failed the value check.
+    static U32 commitValue(bool complete, bool merge, const ParamLayout& layout);
+
+  private:
+    // ----------------------------------------------------------------------
     // Helpers
     // ----------------------------------------------------------------------
 
-    //! Records in a buffer returned by storage, checked to be the scratch buffer sent out
-    FwSizeType scratchRecords(const Fw::Buffer& buffer) const;
+    //! Where the transfer started by the main context stands
+    enum class Transfer : U8 {
+        NONE,         //!< No transfer: the next one may be issued
+        OUTSTANDING,  //!< Issued; storage holds the scratch buffer
+        COMPLETED,    //!< Storage returned the scratch buffer; activeIn acts on it
+    };
 
-    //! Run transfers until one completes asynchronously or the command finishes
-    void transferLoop();
+    //! Start a save or load command: storage must be connected
+    bool startCommand(FwOpcodeType opCode, U32 cmdSeq, StaticPrmDb_IoState::T state);
 
-    //! Continue after a completed transfer
-    void transferDone();
+    //! Records storage returned in a completion, checked to be the transfer outstanding
+    FwSizeType transferReturned(const Fw::Buffer& buffer, StaticPrmDb_IoState::T state) const;
 
-    //! Pack the next run of records into the scratch buffer and write it out, or finish the save
+    //! Act on the completed transfer: advance, or finish the command
+    void transferCompleted();
+
+    //! Pack the next run of records into the scratch buffer and write it out
     void saveNext();
 
-    //! Read the next run of records into the scratch buffer, or finish the load
+    //! Read the next run of records into the scratch buffer
     void loadNext();
 
     //! Merge the records read into the scratch buffer into memory
     void unpackScratch(FwSizeType records);
 
     //! Report a finished load, push the parameters to their components and complete LOAD
-    void finishLoad(Fw::CmdResponse response);
+    void finishLoad(StaticPrmDb_LoadResult result);
 
     //! Leave the transfer and complete the command in progress
     void finish(Fw::CmdResponse response);
@@ -173,20 +227,18 @@ class StaticPrmDb final : public StaticPrmDbComponentBase {
     //! Mode of the load in progress
     StaticPrmDb_LoadMode m_loadMode;
 
-    //! A transfer is being started by transferLoop
-    bool m_inCall;
+    //! The transfer in flight
+    Transfer m_transfer;
 
-    //! The transfer started by transferLoop completed inside the call
-    bool m_completedInCall;
+    //! Status and records of the transfer that completed
+    Drv::ByteStreamStatus m_transferStatus;
+    FwSizeType m_transferRecords;
 
     //! Store slot the next transfer starts at
     FwSizeType m_slot;
 
     //! Save: record of the deployment (saveRecord index) packed next
     FwSizeType m_record;
-
-    //! Save: parameters left out because they had no valid value
-    U32 m_skippedParams;
 
     //! Load: records that passed their CRC, failed it, or belong to no parameter of the deployment
     U32 m_validRecords;

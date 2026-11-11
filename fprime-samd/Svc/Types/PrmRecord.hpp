@@ -75,8 +75,37 @@ bool isEmpty(const U8* record);
 //! Fill a record with length (1..VALUE_SIZE) bytes of value, zero padded, and its CRC
 void pack(U8* record, U16 id, const U8* value, FwSizeType length);
 
+//! Fill a record with valueLength bytes of value followed by checkLength bytes of a value check
+//! (together 1..VALUE_SIZE), zero padded, and its CRC
+void pack(U8* record, U16 id, const U8* value, FwSizeType valueLength, const U8* check, FwSizeType checkLength);
+
 //! Fill a record with an unused slot
 void packEmpty(U8* record);
+
+//! Bytes of the value check: the CRC-16 of a multi-record parameter's value, a native-endian U16.
+//! It is kept apart from the value in memory, and stored right after the value, split across the
+//! records with it. The record CRCs only show that each segment is intact; the value check shows
+//! that the segments are of the same value. Only the target that saved a store loads it, so the
+//! byte order need not be fixed; a store read with the other byte order fails every value check.
+constexpr FwSizeType CHECK_SIZE = sizeof(U16);
+
+//! True when a parameter of size value bytes takes more than one record, and so has a value check
+constexpr bool hasValueCheck(FwSizeType size) {
+    return size > VALUE_SIZE;
+}
+
+//! Bytes a parameter of size value bytes takes in its records, value check included
+constexpr FwSizeType storedSize(FwSizeType size) {
+    return hasValueCheck(size) ? (size + CHECK_SIZE) : size;
+}
+
+//! Records a parameter of size value bytes takes
+constexpr FwSizeType recordCount(FwSizeType size) {
+    return (storedSize(size) + VALUE_SIZE - 1) / VALUE_SIZE;
+}
+
+//! Value check of size value bytes
+U16 valueCheck(const U8* value, FwSizeType size);
 
 }  // namespace PrmRecord
 }  // namespace Samd21

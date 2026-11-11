@@ -37,6 +37,9 @@ class StaticPrmDbTester : public StaticPrmDbGTestBase {
     static constexpr U16 RECORD_B1 = 0x2221;
     static constexpr U16 RECORD_C = 0x0333;
 
+    //! Command sequence number of a SAVE sent from a command response
+    static constexpr U32 CHAINED_CMD_SEQ = 0xC4A1;
+
     //! Record slots of the simulated store (the default StaticPrmDbConfig)
     static constexpr FwSizeType STORE_RECORDS = StaticPrmDbConfig::STORE_RECORDS;
     static constexpr FwSizeType STORE_SIZE = StaticPrmDb::STORE_SIZE;
@@ -67,16 +70,30 @@ class StaticPrmDbTester : public StaticPrmDbGTestBase {
     //! A MERGE load fills in parameters left invalid without overwriting valid ones.
     void testMerge();
 
+    //! A save interrupted at any record loads every parameter whole from one of the two saves,
+    //! or invalid, never a mix of the two.
+    void testInterruptedSave();
+
+    //! A MERGE never completes a parameter with segments of the other store's save.
+    void testMergeMixedSaves();
+
+    //! A stale record left after an interrupted save loses to the newer record before it.
+    void testStaleDuplicate();
+
     //! A save leaves out invalid parameters and clears records of an earlier save.
     void testSaveSkipsInvalid();
 
     //! A blank (erased) store loads with every parameter invalid and nothing corrupt.
     void testBlankStore();
 
-    //! A failed read keeps the records already loaded and fails LOAD.
+    //! A failed read keeps the records already loaded and the values in memory it did not reach,
+    //! and fails LOAD.
     void testReadFailure();
 
-    //! A failed write fails SAVE.
+    //! A failed read invalidates only a parameter whose records it loaded part of.
+    void testReadFailureSplitParam();
+
+    //! A failed write fails SAVE with a throttled event; a successful save emits none and re-arms it.
     void testWriteFailure();
 
     //! Commands are rejected BUSY, setPrm dropped and getPrm INVALID during a transfer.
@@ -85,7 +102,19 @@ class StaticPrmDbTester : public StaticPrmDbGTestBase {
     //! Save and load work with storage completing inside the transfer call.
     void testInCallCompletion();
 
+    //! activeIn issues at most one transfer per call and acts on its completion in the next call.
+    void testOneTransferPerCall();
+
+    //! A command sent from the response of the last one starts after it, one transfer at a time.
+    void testChainedCommand();
+
+    //! Without storage connected, SAVE and LOAD fail with an event instead of a port assert.
+    void testNoStorage();
+
   protected:
+    //! Record a command response; with m_chainSave, answer it with another SAVE
+    void cmdResponseIn(FwOpcodeType opCode, U32 cmdSeq, Fw::CmdResponse response) override;
+
     //! Simulated store write
     void from_writeOut_handler(FwIndexType portNum, U32 offset, Fw::Buffer& buffer) override;
 
@@ -118,6 +147,9 @@ class StaticPrmDbTester : public StaticPrmDbGTestBase {
     //! Transfers so far
     U32 m_transfers;
 
+    //! Answer the next command response with a SAVE (CHAINED_CMD_SEQ)
+    bool m_chainSave;
+
     // ----------------------------------------------------------------------
     // Helper functions
     // ----------------------------------------------------------------------
@@ -134,11 +166,22 @@ class StaticPrmDbTester : public StaticPrmDbGTestBase {
     //! Send LOAD and deliver the completions
     void load(StaticPrmDb_LoadMode mode, Fw::CmdResponse response = Fw::CmdResponse::OK);
 
-    //! Deliver outstanding completions until none is left
-    void drain();
+    //! Deliver the outstanding transfer's completion
+    void complete();
+
+    //! Run the main context (activeIn) and storage until no work is left
+    void run();
 
     //! Slot of the store holding a record ID, STORE_RECORDS when none does
     FwSizeType findSlot(U16 recordId) const;
+
+    //! Leave the store as a save interrupted after writing its first slots: slots from slots on
+    //! still hold the earlier store
+    void interruptSave(const U8* earlier, FwSizeType slots);
+
+    //! Value of a parameter after a load that must give it whole from one of two seeds, or invalid.
+    //! The seed it came from, 0 when invalid.
+    U8 paramSeed(FwPrmIdType id, FwSizeType size, U8 seedA, U8 seedB);
 
     //! Assert the store holds exactly the given records (any order) and empty slots
     void assertStoreRecords(const U16* ids, FwSizeType count) const;

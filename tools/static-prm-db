@@ -146,31 +146,51 @@ def record_value_size(model: fpp.Model) -> int:
     return value
 
 #: Records of one parameter: its validity bits share one U32 word, so a parameter's validity is
-#: a single mask test. Bounds a stored parameter to MAX_RECORDS_PER_PARAM * RECORD_VALUE_SIZE bytes.
+#: a single mask test. Bounds a stored parameter to MAX_RECORDS_PER_PARAM * RECORD_VALUE_SIZE
+#: bytes, its value check included.
 MAX_RECORDS_PER_PARAM = 32
+
+#: Bytes of the value check (PrmRecord::CHECK_SIZE): the CRC-16 of a multi-record parameter's
+#: value, so that a load can tell segments of different saves apart. Held in s_prmChecks as a
+#: native-endian U16, apart from the value, and stored after the value in the parameter's records.
+CHECK_SIZE = 2
+
+
+def has_value_check(size: int, value_size: int) -> bool:
+    """A parameter larger than one record carries a value check (PrmRecord::hasValueCheck)"""
+    return size > value_size
+
+
+def stored_size(size: int, value_size: int) -> int:
+    """Bytes a parameter takes in its records, value check included (PrmRecord::storedSize)"""
+    return size + CHECK_SIZE if has_value_check(size, value_size) else size
 
 #: Record IDs never assigned to a parameter (PrmRecord::EMPTY_ID, PrmRecord::BLANK_ID)
 RESERVED_RECORD_IDS = {0x0000: "an unused slot", 0xFFFF: "erased storage"}
 
 
-def record_key(prm: fpp.ParamEntry, segment: int, value_size: int, seed: int = 0) -> str:
+def record_key(
+    prm: fpp.ParamEntry, segment: int, value_size: int, checked: bool, seed: int = 0
+) -> str:
     """The text a record ID is the CRC-16 of
 
     The ID only depends on what the record holds: which parameter (by name, not by its ID, so
     renumbering instances keeps the stored values), how its bytes are read and which segment of
     them it holds (segment and value size together give its byte range). Any change that would
     make a saved record decode differently changes the ID, so a load skips records of an older
-    dictionary or record size instead of misreading them.
+    dictionary or record size instead of misreading them. A parameter with a value check is
+    marked `+c`: its segments hold the check bytes too.
 
     A non-zero seed (PRM_ID_SEED_ANNOTATION) is appended to move a parameter's IDs off a
     collision; seed 0 is the unseeded key, so adding the annotation support changed no ID.
     """
-    key = "%s.%s:%s:%d/%d" % (
+    key = "%s.%s:%s:%d/%d%s" % (
         prm.instance.qualified_name,
         prm.param.name,
         encode_type(prm.param.param_type),
         segment,
         value_size,
+        "+c" if checked else "",
     )
     return key if seed == 0 else f"{key}#{seed}"
 
@@ -230,9 +250,11 @@ def instance_seeds(instance: fpp.InterfaceInstance.Component) -> dict[str, int]:
 
 def record_ids(prm: fpp.ParamEntry, segments: int, value_size: int, seed: int) -> list[tuple[int, str]]:
     """(record ID, key) of each record of a parameter"""
+    # Only a parameter larger than one record has a value check, so it is the same as segments > 1
+    checked = segments > 1
     ids = []
     for segment in range(segments):
-        key = record_key(prm, segment, value_size, seed)
+        key = record_key(prm, segment, value_size, checked, seed)
         ids.append((crc16(key.encode("utf-8")), key))
     return ids
 
@@ -411,7 +433,7 @@ def generate_ac_functions(
 
     # Every parameter's validity bits sit in one 32-bit word, so a parameter is checked with a
     # single (word & mask) == mask. Records are numbered in parameter order for the save iterator.
-    #   param:  (id, prm, member, size, segments, word, first bit)
+    #   param:  (id, prm, member, size, segments, word, first bit), size without the value check
     #   record: (record ID, param row, segment, key)
     param_rows = []
     record_rows = []
@@ -435,20 +457,22 @@ def generate_ac_functions(
         if size == 0:
             raise diagnose("A stored parameter must have a non-empty value", prm)
 
-        segments = (size + value_size - 1) // value_size
+        stored = stored_size(size, value_size)
+        segments = (stored + value_size - 1) // value_size
         if segments > MAX_RECORDS_PER_PARAM:
             # A parameter's validity bits share one U32 word (one mask test per lookup)
             diag = fpp.Diagnostic(
                 f"parameter `{prm.instance.qualified_name}.{prm.param.name}` is {size} bytes and "
-                f"would take {segments} records; a stored parameter takes at most "
-                f"{MAX_RECORDS_PER_PARAM} ({MAX_RECORDS_PER_PARAM * value_size} bytes with "
+                f"would take {segments} records with its {CHECK_SIZE}-byte value check; a stored "
+                f"parameter takes at most {MAX_RECORDS_PER_PARAM} "
+                f"({MAX_RECORDS_PER_PARAM * value_size - CHECK_SIZE} bytes with "
                 f"{RECORD_VALUE_SIZE_CONSTANT} = {value_size})",
                 span=prm.param.node.span,
             )
             diag.add_annotation("in component instance", span=prm.instance.node.span)
             diag.add_note(
                 f"raise {RECORD_VALUE_SIZE_CONSTANT} to at least "
-                f"{-(-size // MAX_RECORDS_PER_PARAM)}, or split the parameter"
+                f"{-(-(size + CHECK_SIZE) // MAX_RECORDS_PER_PARAM)}, or split the parameter"
             )
             raise fpp.DiagnosticError(diag)
         if bit + segments > 32:
@@ -463,7 +487,6 @@ def generate_ac_functions(
         for segment, (record_id, key) in enumerate(ids[row[0]]):
             record_rows.append((record_id, row, segment, key))
 
-    num_params = len(param_rows)
     num_records = len(record_rows)
     validity_words = (word + 1) if param_rows else 0
 
@@ -471,13 +494,12 @@ def generate_ac_functions(
         _, _, _, _, segments, _, first = row
         return "0x%08xU" % (((1 << segments) - 1) << first)
 
-    def valid(row) -> str:
-        w = row[5]
-        return f"((__PRM_VALIDITY[{w}] & {mask(row)}) == {mask(row)})"
+    def checked(row) -> bool:
+        return has_value_check(row[3], value_size)
 
-    def segment_span(row, segment: int) -> tuple[int, int]:
-        start = segment * value_size
-        return start, min(value_size, row[3] - start)
+    def layout(row) -> str:
+        """Name of the parameter's ParamLayout constant"""
+        return f"LAYOUT_{row[2]}"
 
     # A topology need not sit inside a module, and namespace() rejects an empty name list
     scope = doc.namespace(*namespaces) if namespaces else nullcontext(doc)
@@ -492,6 +514,27 @@ def generate_ac_functions(
             f"|  U8 {member}[{size}];  // {prm.param.param_type} id=0x{id:x}\n"
             for id, prm, member, size, _, _, _ in param_rows
         )
+        check_members = "".join(
+            f"|  U16 {row[2]};  // id=0x{row[0]:x}\n"
+            for row in param_rows
+            if checked(row)
+        )
+        # Only a parameter of more than one record has a value check
+        checks = (
+            "|\n"
+            "|//! Value checks of the parameters stored in more than one record, stored after the value\n"
+            "|struct {\n"
+            f"{check_members}|}} s_prmChecks = {{}};\n"
+            if check_members
+            else ""
+        )
+        layouts = "".join(
+            f"|constexpr {prm_db_name}::ParamLayout {layout(row)} = {{\n"
+            f"|    s_prmValues.{row[2]}, {row[3]}, "
+            f"{f'&s_prmChecks.{row[2]}' if checked(row) else 'nullptr'}, "
+            f"&s_prmValidity[{row[5]}], &s_prmLoaded[{row[5]}], {mask(row)}, {row[6]}}};\n"
+            for row in param_rows
+        )
         ns.lines(
             f"""
             |//! Records of the deployment
@@ -505,55 +548,28 @@ def generate_ac_functions(
             |static_assert(::Samd21::PrmRecord::VALUE_SIZE == {value_size},
             |              "PrmRecord::VALUE_SIZE does not match the RECORD_VALUE_SIZE static-prm-db generated for");
             |
+            |// The storage is only reached through the functions below
+            |namespace {{
+            |
             |//! Validity bits: one per record, a parameter's records share a word
-            |U32 __PRM_VALIDITY[{max(validity_words, 1)}] = {{}};
+            |U32 s_prmValidity[{max(validity_words, 1)}] = {{}};
+            |
+            |//! Records copied into memory by the load in progress, laid out as s_prmValidity
+            |U32 s_prmLoaded[{max(validity_words, 1)}] = {{}};
             |
             |//! Serialized parameter values
             |struct {{
-            {members}|}} __PRM_VALUES = {{}};
+            {members}|}} s_prmValues = {{}};
+            {checks}|
+            |//! Where each parameter lives, passed to the shared helpers of {prm_db_name}
+            {layouts}|
+            |}}  // namespace
             |""",
             output=cg.Output.CPP,
         )
 
-        # The switches only map an ID or index to constants; one shared helper per operation
-        # does the work, so each case is a few argument loads and a branch
-        ns.lines(
-            f"""
-            |//! A parameter's value and its validity bits in __PRM_VALIDITY[word]
-            |static Fw::ParamValid readValue(const U8* value, FwSizeType size, FwSizeType word, U32 mask, Fw::ParamBuffer& val) {{
-            |  if ((__PRM_VALIDITY[word] & mask) != mask) {{
-            |    return Fw::ParamValid::INVALID;
-            |  }}
-            |  const Fw::SerializeStatus status = val.setBuff(value, size);
-            |  FW_ASSERT(status == Fw::FW_SERIALIZE_OK, status);
-            |  return Fw::ParamValid::VALID;
-            |}}
-            |
-            |static void writeValue(U8* value, FwSizeType size, FwSizeType word, U32 mask, const Fw::ParamBuffer& val) {{
-            |  FW_ASSERT(val.getSize() == size, static_cast<FwAssertArgType>(val.getSize()), static_cast<FwAssertArgType>(size));
-            |  (void)::memcpy(value, val.getBuffAddr(), size);
-            |  __PRM_VALIDITY[word] |= mask;
-            |}}
-            |
-            |static {prm_db_name}::RecordLoad loadSegment(const U8* record, bool merge, U8* segment, FwSizeType length, FwSizeType word, U32 bit) {{
-            |  if (merge && ((__PRM_VALIDITY[word] & bit) != 0)) {{
-            |    return {prm_db_name}::RecordLoad::KEPT;
-            |  }}
-            |  (void)::memcpy(segment, &record[::Samd21::PrmRecord::VALUE_OFFSET], length);
-            |  __PRM_VALIDITY[word] |= bit;
-            |  return {prm_db_name}::RecordLoad::LOADED;
-            |}}
-            |
-            |static bool saveSegment(U8* record, U16 recordId, const U8* segment, FwSizeType length, FwSizeType word, U32 mask) {{
-            |  // Parameters without a valid value are left out: a load leaves them invalid
-            |  if ((__PRM_VALIDITY[word] & mask) != mask) {{
-            |    return false;
-            |  }}
-            |  ::Samd21::PrmRecord::pack(record, recordId, segment, length);
-            |  return true;
-            |}}""",
-            output=cg.Output.CPP,
-        )
+        # The switches only map an ID or index to a parameter's layout; the component's shared
+        # helpers do the work, so each case is a few argument loads and a branch
 
         # Fw::ParamValid readParam(FwPrmIdType id, Fw::ParamBuffer& val);
         with ns.function(
@@ -563,10 +579,10 @@ def generate_ac_functions(
             f.param("Fw::ParamBuffer&", "val")
             with f.body.switch("id") as sw:
                 for row in param_rows:
-                    id, prm, member, size, _, w, _ = row
+                    id, prm, member = row[0], row[1], row[2]
                     with sw.case(f"0x{id:x}") as c:
                         c.lines(f"""// {member}: {prm.param.param_type}
-                        |return readValue(__PRM_VALUES.{member}, {size}, {w}, {mask(row)}, val);""")
+                        |return {prm_db_name}::readValue({layout(row)}, val);""")
                 with sw.default() as d:
                     d.lines("""|FW_ASSERT(false, static_cast<FwAssertArgType>(id));
                                |return Fw::ParamValid::INVALID;""")
@@ -577,10 +593,10 @@ def generate_ac_functions(
             f.param("const Fw::ParamBuffer&", "val")
             with f.body.switch("id") as sw:
                 for row in param_rows:
-                    id, prm, member, size, _, w, _ = row
+                    id, prm, member = row[0], row[1], row[2]
                     with sw.case(f"0x{id:x}") as c:
                         c.lines(f"""// {member}: {prm.param.param_type}
-                        |writeValue(__PRM_VALUES.{member}, {size}, {w}, {mask(row)}, val);
+                        |{prm_db_name}::writeValue({layout(row)}, val);
                         |break;""")
                 with sw.default() as d:
                     d.lines("FW_ASSERT(false, static_cast<FwAssertArgType>(id));")
@@ -593,12 +609,9 @@ def generate_ac_functions(
             f.param("bool", "merge")
             with f.body.switch("::Samd21::PrmRecord::getId(record)") as sw:
                 for rid, row, segment, key in sorted(record_rows, key=lambda r: r[0]):
-                    member, w, first = row[2], row[5], row[6]
-                    start, length = segment_span(row, segment)
-                    b = "0x%08xU" % (1 << (first + segment))
                     with sw.case(f"0x{rid:04x}") as c:
                         c.lines(f"""// {key}
-                        |return loadSegment(record, merge, &__PRM_VALUES.{member}[{start}], {length}, {w}, {b});""")
+                        |return {prm_db_name}::loadSegment(record, merge, {layout(row)}, {segment});""")
                 with sw.default() as d:
                     # A parameter removed from (or retyped in) the dictionary since the store was saved
                     d.line("return RecordLoad::UNKNOWN;")
@@ -610,11 +623,9 @@ def generate_ac_functions(
             if record_rows:
                 with f.body.switch("index") as sw:
                     for index, (rid, row, segment, key) in enumerate(record_rows):
-                        member, w = row[2], row[5]
-                        start, length = segment_span(row, segment)
                         with sw.case(f"{index}") as c:
                             c.lines(f"""// {key}
-                            |return saveSegment(record, 0x{rid:04x}, &__PRM_VALUES.{member}[{start}], {length}, {w}, {mask(row)});""")
+                            |return {prm_db_name}::saveSegment(record, 0x{rid:04x}, {layout(row)}, {segment});""")
                     with sw.default() as d:
                         d.lines("""|FW_ASSERT(false, static_cast<FwAssertArgType>(index));
                                    |return false;""")
@@ -623,17 +634,27 @@ def generate_ac_functions(
                                 |FW_ASSERT(false, static_cast<FwAssertArgType>(index));
                                 |return false;""")
 
-        with ns.function(f"{prm_db_name} ::invalidateAll", static=True) as f:
-            f.body.line("(void)::memset(__PRM_VALIDITY, 0, sizeof(__PRM_VALIDITY));")
+        with ns.function(f"{prm_db_name} ::beginLoad", static=True) as f:
+            f.body.line("(void)::memset(s_prmLoaded, 0, sizeof(s_prmLoaded));")
+
+        with ns.function(f"{prm_db_name} ::commitLoad", ret="U32", static=True) as f:
+            f.param("bool", "complete")
+            f.param("bool", "merge")
+            f.body.line("U32 incoherent = 0;")
+            for row in param_rows:
+                f.body.line(f"incoherent += {prm_db_name}::commitValue(complete, merge, {layout(row)});")
+            if not param_rows:
+                f.body.lines("""|(void)complete;
+                                |(void)merge;""")
+            f.body.line("return incoherent;")
 
         with ns.function(f"{prm_db_name} ::countInvalidParams", ret="U32", static=True) as f:
             f.body.line("U32 invalid = 0;")
             for row in param_rows:
-                f.body.line(f"invalid += {valid(row)} ? 0U : 1U;  // {row[2]}")
+                f.body.line(
+                    f"invalid += ((s_prmValidity[{row[5]}] & {mask(row)}) == {mask(row)}) ? 0U : 1U;  // {row[2]}"
+                )
             f.body.line("return invalid;")
-
-        with ns.function(f"{prm_db_name} ::numParams", ret="U32", static=True) as f:
-            f.body.line(f"return {num_params};")
 
         with ns.function(f"{prm_db_name} ::numRecords", ret="FwSizeType", static=True) as f:
             f.body.line("return NUM_RECORDS;")

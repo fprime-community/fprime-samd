@@ -62,11 +62,23 @@ bool isEmpty(const U8* record) {
 }
 
 void pack(U8* record, U16 id, const U8* value, FwSizeType length) {
-    FW_ASSERT((length > 0) && (length <= VALUE_SIZE), static_cast<FwAssertArgType>(length));
+    pack(record, id, value, length, nullptr, 0);
+}
+
+void pack(U8* record, U16 id, const U8* value, FwSizeType valueLength, const U8* check, FwSizeType checkLength) {
+    const FwSizeType length = valueLength + checkLength;
+    FW_ASSERT((length > 0) && (length <= VALUE_SIZE), static_cast<FwAssertArgType>(valueLength),
+              static_cast<FwAssertArgType>(checkLength));
     FW_ASSERT((id != EMPTY_ID) && (id != BLANK_ID), static_cast<FwAssertArgType>(id));
     record[ID_OFFSET] = static_cast<U8>(id >> 8);
     record[ID_OFFSET + 1] = static_cast<U8>(id);
-    (void)::memcpy(&record[VALUE_OFFSET], value, static_cast<size_t>(length));
+    // A segment may hold only value bytes or only value check bytes; the other part is nullptr
+    if (valueLength > 0) {
+        (void)::memcpy(&record[VALUE_OFFSET], value, static_cast<size_t>(valueLength));
+    }
+    if (checkLength > 0) {
+        (void)::memcpy(&record[VALUE_OFFSET + valueLength], check, static_cast<size_t>(checkLength));
+    }
     (void)::memset(&record[VALUE_OFFSET + length], 0, static_cast<size_t>(VALUE_SIZE - length));
     const U16 crc = computeCrc(record);
     record[CRC_OFFSET] = static_cast<U8>(crc >> 8);
@@ -75,6 +87,10 @@ void pack(U8* record, U16 id, const U8* value, FwSizeType length) {
 
 void packEmpty(U8* record) {
     (void)::memset(record, 0, static_cast<size_t>(SIZE));
+}
+
+U16 valueCheck(const U8* value, FwSizeType size) {
+    return crc16(CRC16_INIT, value, size);
 }
 
 }  // namespace PrmRecord
