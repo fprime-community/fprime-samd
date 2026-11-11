@@ -5,7 +5,7 @@ Directory: ../../..
 File                                       Lines    Exec  Cover   Missing
 ------------------------------------------------------------------------------
 lib/fprime-samd/fprime-samd/Drv/AdcDriver/AdcDriver.cpp
-                                              69      69   100%
+                                              70      70   100%
 lib/fprime-samd/fprime-samd/Drv/GpioDriver/GpioDriver.cpp
                                               50      50   100%
 lib/fprime-samd/fprime-samd/Drv/I2cDriver/I2cDriver.cpp
@@ -43,5 +43,5 @@ lib/fprime-samd/fprime-samd/Svc/ThinBufferManager/ThinBufferManager.cpp
 lib/fprime-samd/fprime-samd/Svc/TmFramer/TmFramer.cpp
                                              163     160    98%   69-70,209
 ------------------------------------------------------------------------------
-TOTAL                                       1600    1543    96%
+TOTAL                                       1601    1544    96%
 ------------------------------------------------------------------------------

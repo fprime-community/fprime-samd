@@ -3,7 +3,7 @@
 ==============================================================================
 PASSED  fprime-samd_Svc_Seq_ut_exe  (0.06s)
 ==============================================================================
-[STest::Random] Generated seed 960820 from system time
+[STest::Random] Generated seed 948746 from system time
 [==========] Running 27 tests from 5 test suites.
 [----------] Global test environment set-up.
 [----------] 10 tests from SequenceExecution
@@ -80,7 +80,7 @@ A command whose cmdSize is smaller than a bare opcode emits InvalidSequence.
 ***************************************
 (RQ)       SAMD21-SEQ-008
 ***************************************
-[       OK ] SequenceExecution.InvalidCmdSizeFails (0 ms)
+[       OK ] SequenceExecution.InvalidCmdSizeFails (1 ms)
 [ RUN      ] SequenceExecution.CmdSizeOverrunsBufferFails
 
 ***************************************
@@ -90,13 +90,13 @@ A command whose cmdSize runs past the action buffer emits InvalidSequence.
 ***************************************
 (RQ)       SAMD21-SEQ-008
 ***************************************
-[       OK ] SequenceExecution.CmdSizeOverrunsBufferFails (0 ms)
+[       OK ] SequenceExecution.CmdSizeOverrunsBufferFails (1 ms)
 [ RUN      ] SequenceExecution.EmptyAction
 
 ***************************************
 A zero-length action is a valid empty sequence: it finishes immediately with no warning.
 ***************************************
-[       OK ] SequenceExecution.EmptyAction (0 ms)
+[       OK ] SequenceExecution.EmptyAction (1 ms)
 [ RUN      ] SequenceExecution.TruncatedCmdSizeFails
 
 ***************************************
@@ -119,7 +119,7 @@ WAIT_TICKS(0) resumes the sequence on the very next rate-group tick.
 ***************************************
 (RQ)       SAMD21-SEQ-006
 ***************************************
-[       OK ] WaitTicks.ZeroResumesNextTick (0 ms)
+[       OK ] WaitTicks.ZeroResumesNextTick (1 ms)
 [ RUN      ] WaitTicks.BlocksNTicks
 
 ***************************************
@@ -129,7 +129,7 @@ WAIT_TICKS(n) blocks for exactly n rate-group ticks, then resumes.
 ***************************************
 (RQ)       SAMD21-SEQ-006
 ***************************************
-[       OK ] WaitTicks.BlocksNTicks (0 ms)
+[       OK ] WaitTicks.BlocksNTicks (1 ms)
 [ RUN      ] WaitTicks.AtEndOfSequence
 
 ***************************************
@@ -140,7 +140,7 @@ A WAIT_TICKS at the end of a sequence finishes cleanly without a spurious Invali
 (RQ)       SAMD21-SEQ-006
 ***************************************
 [       OK ] WaitTicks.AtEndOfSequence (0 ms)
-[----------] 3 tests from WaitTicks (2 ms total)
+[----------] 3 tests from WaitTicks (3 ms total)
 
 [----------] 4 tests from WaitUntil
 [ RUN      ] WaitUntil.SleepsUntilTime
@@ -226,7 +226,7 @@ The armed recovery is one-shot: a second failure does not re-trigger it.
 (RQ)       SAMD21-SEQ-005
 ***************************************
 [       OK ] RunOnError.IsOneShot (0 ms)
-[----------] 4 tests from RunOnError (3 ms total)
+[----------] 4 tests from RunOnError (2 ms total)
 
 [----------] 6 tests from Cancel
 [ RUN      ] Cancel.WhileSleeping
@@ -278,7 +278,7 @@ CANCEL while idle with nothing pending is a harmless no-op.
 ***************************************
 (RQ)       SAMD21-SEQ-007
 ***************************************
-[       OK ] Cancel.WhileIdleNoOp (0 ms)
+[       OK ] Cancel.WhileIdleNoOp (1 ms)
 [ RUN      ] Cancel.ClearsRunOnError
 
 ***************************************
@@ -288,10 +288,10 @@ CANCEL clears an armed RUN_ON_ERROR recovery table.
 ***************************************
 (RQ)       SAMD21-SEQ-007
 ***************************************
-[       OK ] Cancel.ClearsRunOnError (0 ms)
+[       OK ] Cancel.ClearsRunOnError (1 ms)
 [----------] 6 tests from Cancel (5 ms total)
 
 [----------] Global test environment tear-down
-[==========] 27 tests from 5 test suites ran. (25 ms total)
+[==========] 27 tests from 5 test suites ran. (24 ms total)
 [  PASSED  ] 27 tests.
 
