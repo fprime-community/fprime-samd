@@ -91,8 +91,10 @@ class AdcDriver final : public AdcDriverComponentBase {
 
     //! Configure the ADC peripheral (voltage reference, resolution, averaging, sampling time, gain)
     //! \param ref Voltage reference selection
-    //! \param res ADC resolution (8/10/12 bits)
-    //! \param samples Hardware averaging/oversampling count
+    //! \param res ADC result resolution (8/10/12 bits). Must be RES_12BIT when samples > SAMPLES_1
+    //!            (averaged results are 12-bit; the driver sets CTRLB.RESSEL=16BIT internally as the
+    //!            datasheet requires for averaging). Asserts otherwise.
+    //! \param samples Hardware averaging count
     //! \param samplingTime SAMPCTRL.SAMPLEN value (0-63), controls sampling duration
     //! \param gain Input gain selection (affects input voltage range relative to Vref)
     void configure(VoltageReference ref, Resolution res, SampleCount samples, U8 samplingTime, Gain gain);

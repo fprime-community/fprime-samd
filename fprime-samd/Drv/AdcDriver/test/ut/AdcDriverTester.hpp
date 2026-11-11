@@ -35,6 +35,7 @@ class AdcDriverTester : public AdcDriverGTestBase {
     void testConfigureAllResolutions();
     void testConfigureAllSampleCounts();
     void testConfigureAllGains();
+    void testConfigureAveragingBadRes();
 
     // configureChannel()
     void testConfigureChannelNominal();

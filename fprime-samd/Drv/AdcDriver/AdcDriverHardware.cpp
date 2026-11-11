@@ -91,17 +91,24 @@ void AdcHal::configure(AdcDriver::VoltageReference ref,
     AdcHal::waitForAdcSync();
 
     // Configure resolution and prescaler
+    // Per datasheet §34.6.6-34.6.7: accumulation/averaging of two or more samples requires
+    // CTRLB.RESSEL = 16BIT. With ADJRES set per Table 34-3 (below), the final averaged
+    // result is still 12-bit, so callers pass RES_12BIT (enforced in AdcDriver::configure).
     U8 ressel = 0;
-    switch (res) {
-        case AdcDriver::Resolution::RES_8BIT:
-            ressel = ADC_CTRLB_RESSEL_8BIT_Val;
-            break;
-        case AdcDriver::Resolution::RES_10BIT:
-            ressel = ADC_CTRLB_RESSEL_10BIT_Val;
-            break;
-        case AdcDriver::Resolution::RES_12BIT:
-            ressel = ADC_CTRLB_RESSEL_12BIT_Val;
-            break;
+    if (samples != AdcDriver::SampleCount::SAMPLES_1) {
+        ressel = ADC_CTRLB_RESSEL_16BIT_Val;
+    } else {
+        switch (res) {
+            case AdcDriver::Resolution::RES_8BIT:
+                ressel = ADC_CTRLB_RESSEL_8BIT_Val;
+                break;
+            case AdcDriver::Resolution::RES_10BIT:
+                ressel = ADC_CTRLB_RESSEL_10BIT_Val;
+                break;
+            case AdcDriver::Resolution::RES_12BIT:
+                ressel = ADC_CTRLB_RESSEL_12BIT_Val;
+                break;
+        }
     }
     ADC->CTRLB.reg = ADC_CTRLB_RESSEL(ressel) | ADC_CTRLB_PRESCALER_DIV32;
     AdcHal::waitForAdcSync();
