@@ -255,20 +255,6 @@ void StaticPrmDbTester::cmdResponseIn(FwOpcodeType opCode, U32 cmdSeq, Fw::CmdRe
 // ----------------------------------------------------------------------
 
 void StaticPrmDbTester::setParam(FwPrmIdType id, FwSizeType size, U8 seed) {
-    if (size > FW_PARAM_BUFFER_MAX_SIZE) {
-        // Too large for an Fw::ParamBuffer in this configuration: stand in for setPrm through
-        // the layout memory so the record split is still covered
-        const StaticPrmDb::ParamLayout& layout = testParam(id);
-        ASSERT_EQ(layout.size, size);
-        for (FwSizeType i = 0; i < size; i++) {
-            layout.value[i] = static_cast<U8>(seed + (i * 13));
-        }
-        if (layout.check != nullptr) {
-            *layout.check = PrmRecord::valueCheck(layout.value, size);
-        }
-        *layout.validity |= layout.mask;
-        return;
-    }
     Fw::ParamBuffer val;
     for (FwSizeType i = 0; i < size; i++) {
         ASSERT_EQ(val.serializeFrom(static_cast<U8>(seed + (i * 13))), Fw::FW_SERIALIZE_OK);
@@ -277,19 +263,6 @@ void StaticPrmDbTester::setParam(FwPrmIdType id, FwSizeType size, U8 seed) {
 }
 
 void StaticPrmDbTester::assertParam(FwPrmIdType id, FwSizeType size, Fw::ParamValid valid, U8 seed) {
-    if (size > FW_PARAM_BUFFER_MAX_SIZE) {
-        // Too large for an Fw::ParamBuffer in this configuration: read the layout memory
-        const StaticPrmDb::ParamLayout& layout = testParam(id);
-        const U8* value = layout.value;
-        const bool allValid = validMask(layout.mask);
-        ASSERT_EQ(allValid, valid == Fw::ParamValid::VALID) << "parameter 0x" << std::hex << id;
-        if (allValid) {
-            for (FwSizeType i = 0; i < size; i++) {
-                ASSERT_EQ(value[i], static_cast<U8>(seed + (i * 13))) << "byte " << i;
-            }
-        }
-        return;
-    }
     Fw::ParamBuffer val;
     ASSERT_EQ(this->invoke_to_getPrm(0, id, val), valid) << "parameter 0x" << std::hex << id;
     if (valid == Fw::ParamValid::VALID) {
