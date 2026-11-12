@@ -61,7 +61,7 @@ class StaticTlmPacketizer final : public StaticTlmPacketizerComponentBase {
                              ) override;
 
   private:
-    //! Send a telemetry packet given it's id
+    //! Send a telemetry packet given its id
     Fw::Success sendPkt(FwTlmPacketizeIdType id);
 
     //! Given a telemetry id/value, write the value to the memory holding this value
