@@ -32,7 +32,7 @@ pre {
   white-space: pre-wrap; word-break: break-word;
 }
 .empty { color: #57606a; padding: 0.75rem 1rem; border-top: 1px solid #d0d7de; margin: 0; }
-</style></head><body><h1>Unit-test console output &mdash; <code>Drv/AdcDriver</code></h1><div class="meta"><span class="pill passed">passed</span> 1 passed &middot; 0.55s &middot; <a href="../../../index.html">← back to the module list</a> &middot; <a href="console.txt">plain text</a></div><details><summary><span class="pill passed">passed</span><span class="name">fprime-samd_Drv_AdcDriver_ut_exe</span><span class="time">0.55s</span></summary><pre>[STest::Random] Generated seed 447639 from system time
+</style></head><body><h1>Unit-test console output &mdash; <code>Drv/AdcDriver</code></h1><div class="meta"><span class="pill passed">passed</span> 1 passed &middot; 0.52s &middot; <a href="../../../index.html">← back to the module list</a> &middot; <a href="console.txt">plain text</a></div><details><summary><span class="pill passed">passed</span><span class="name">fprime-samd_Drv_AdcDriver_ut_exe</span><span class="time">0.52s</span></summary><pre>[STest::Random] Generated seed 808595 from system time
 [==========] Running 22 tests from 4 test suites.
 [----------] Global test environment set-up.
 [----------] 6 tests from Configure
@@ -95,8 +95,8 @@ configure() asserts when averaging (samples &gt; 1) is paired with 8- or 10-bit 
 ***************************************
 (RQ)       SAMD21-ADC-001: The AdcDriver shall reject hardware averaging with a resolution other than 12-bit, since averaged results are always 12-bit
 ***************************************
-[       OK ] Configure.AveragingBadRes (409 ms)
-[----------] 6 tests from Configure (410 ms total)
+[       OK ] Configure.AveragingBadRes (466 ms)
+[----------] 6 tests from Configure (468 ms total)
 
 [----------] 1 test from ConfigureChannel
 [ RUN      ] ConfigureChannel.Comprehensive
@@ -276,6 +276,6 @@ handleInterrupt() spurious interrupt with overrun flag clears flags and doesn&#x
 [----------] 7 tests from Interrupt (1 ms total)
 
 [----------] Global test environment tear-down
-[==========] 22 tests from 4 test suites ran. (414 ms total)
+[==========] 22 tests from 4 test suites ran. (471 ms total)
 [  PASSED  ] 22 tests.
 </pre></details></body></html>

@@ -26,6 +26,8 @@ lib/fprime-samd/fprime-samd/Drv/UsartDriver/UsartDriver.hpp
                                                2       2   100%
 lib/fprime-samd/fprime-samd/Svc/Framer/Framer.cpp
                                               77      71    92%   52-53,65-66,129,139
+lib/fprime-samd/fprime-samd/Svc/PrmStorage/PrmStorage.cpp
+                                              88      88   100%
 lib/fprime-samd/fprime-samd/Svc/ProcTime/ProcTime.cpp
                                               12      12   100%
 lib/fprime-samd/fprime-samd/Svc/Seq/Seq.cpp
@@ -36,12 +38,18 @@ lib/fprime-samd/fprime-samd/Svc/StaticCmdDispatcher/StaticCmdDispatcher.cpp
                                               93      93   100%
 lib/fprime-samd/fprime-samd/Svc/StaticMallocator/StaticMallocator.hpp
                                               16      16   100%
+lib/fprime-samd/fprime-samd/Svc/StaticPrmDb/StaticPrmDb.cpp
+                                             238     238   100%
 lib/fprime-samd/fprime-samd/Svc/StaticTlmPacketizer/StaticTlmPacketizer.cpp
                                               32      32   100%
 lib/fprime-samd/fprime-samd/Svc/ThinBufferManager/ThinBufferManager.cpp
                                              103     102    99%   39
 lib/fprime-samd/fprime-samd/Svc/TmFramer/TmFramer.cpp
                                              163     160    98%   69-70,209
+lib/fprime-samd/fprime-samd/Svc/Types/PrmRecord.cpp
+                                              41      41   100%
+lib/fprime-samd/fprime-samd/Svc/Types/PrmRecord.hpp
+                                               6       6   100%
 ------------------------------------------------------------------------------
-TOTAL                                       1601    1544    96%
+TOTAL                                       1974    1917    97%
 ------------------------------------------------------------------------------

@@ -1,0 +1,229 @@
+# unit-test console output: Svc/StaticPrmDb
+
+==============================================================================
+PASSED  fprime-samd_Svc_StaticPrmDb_ut_exe  (0.09s)
+==============================================================================
+[STest::Random] Generated seed 612264 from system time
+[==========] Running 18 tests from 3 test suites.
+[----------] Global test environment set-up.
+[----------] 1 test from Params
+[ RUN      ] Params.SetGet
+
+***************************************
+(RQ)       PRM-DB-001
+***************************************
+
+***************************************
+parameters set through setPrm read back VALID, others INVALID
+***************************************
+[       OK ] Params.SetGet (2 ms)
+[----------] 1 test from Params (3 ms total)
+
+[----------] 9 tests from Store
+[ RUN      ] Store.SaveLoad
+
+***************************************
+(RQ)       PRM-DB-002
+***************************************
+
+***************************************
+a save followed by a REPLACE load restores every value
+***************************************
+[       OK ] Store.SaveLoad (1 ms)
+[ RUN      ] Store.BitFlip
+
+***************************************
+(RQ)       PRM-DB-003
+***************************************
+
+***************************************
+(RQ)       PRM-DB-001
+***************************************
+
+***************************************
+a flipped bit invalidates only the parameter owning the record
+***************************************
+[       OK ] Store.BitFlip (1 ms)
+[ RUN      ] Store.DictionaryChange
+
+***************************************
+(RQ)       PRM-DB-004
+***************************************
+
+***************************************
+(RQ)       PRM-DB-006
+***************************************
+
+***************************************
+records of an older dictionary load in any slot order, unknown records are skipped
+***************************************
+[       OK ] Store.DictionaryChange (0 ms)
+[ RUN      ] Store.Merge
+
+***************************************
+(RQ)       PRM-DB-005
+***************************************
+
+***************************************
+(RQ)       PRM-DB-003
+***************************************
+
+***************************************
+a MERGE load fills in invalid parameters without overwriting valid ones
+***************************************
+[       OK ] Store.Merge (1 ms)
+[ RUN      ] Store.InterruptedSave
+
+***************************************
+(RQ)       PRM-DB-014
+***************************************
+
+***************************************
+(RQ)       PRM-DB-001
+***************************************
+
+***************************************
+a save interrupted at any record loads each parameter whole from one save, or invalid
+***************************************
+[       OK ] Store.InterruptedSave (14 ms)
+[ RUN      ] Store.MergeMixedSaves
+
+***************************************
+(RQ)       PRM-DB-005
+***************************************
+
+***************************************
+(RQ)       PRM-DB-014
+***************************************
+
+***************************************
+a MERGE never completes a parameter with segments of another save
+***************************************
+[       OK ] Store.MergeMixedSaves (2 ms)
+[ RUN      ] Store.StaleDuplicate
+
+***************************************
+(RQ)       PRM-DB-014
+***************************************
+
+***************************************
+a stale record after an interrupted save loses to the newer record before it
+***************************************
+[       OK ] Store.StaleDuplicate (0 ms)
+[ RUN      ] Store.SaveSkipsInvalid
+
+***************************************
+(RQ)       PRM-DB-002
+***************************************
+
+***************************************
+a save leaves out invalid parameters and clears records of an earlier save
+***************************************
+[       OK ] Store.SaveSkipsInvalid (0 ms)
+[ RUN      ] Store.BlankStore
+
+***************************************
+(RQ)       PRM-DB-006
+***************************************
+
+***************************************
+an erased store loads with every parameter invalid
+***************************************
+[       OK ] Store.BlankStore (0 ms)
+[----------] 9 tests from Store (25 ms total)
+
+[----------] 8 tests from Storage
+[ RUN      ] Storage.ReadFailure
+
+***************************************
+(RQ)       PRM-DB-007
+***************************************
+
+***************************************
+a failed read keeps the records already loaded and the values it did not reach
+***************************************
+[       OK ] Storage.ReadFailure (1 ms)
+[ RUN      ] Storage.ReadFailureSplitParam
+
+***************************************
+(RQ)       PRM-DB-007
+***************************************
+
+***************************************
+a failed read invalidates only a parameter whose records it loaded part of
+***************************************
+[       OK ] Storage.ReadFailureSplitParam (2 ms)
+[ RUN      ] Storage.WriteFailure
+
+***************************************
+(RQ)       PRM-DB-007
+***************************************
+
+***************************************
+(RQ)       PRM-DB-015
+***************************************
+
+***************************************
+a failed write fails SAVE with a throttled event; a successful save emits none
+***************************************
+[       OK ] Storage.WriteFailure (1 ms)
+[ RUN      ] Storage.Busy
+
+***************************************
+(RQ)       PRM-DB-008
+***************************************
+
+***************************************
+commands are rejected BUSY, setPrm dropped and getPrm INVALID during a transfer
+***************************************
+[       OK ] Storage.Busy (0 ms)
+[ RUN      ] Storage.InCallCompletion
+
+***************************************
+(RQ)       PRM-DB-009
+***************************************
+
+***************************************
+save and load work with storage completing inside the transfer call
+***************************************
+[       OK ] Storage.InCallCompletion (0 ms)
+[ RUN      ] Storage.OneTransferPerCall
+
+***************************************
+(RQ)       PRM-DB-009
+***************************************
+
+***************************************
+activeIn issues at most one transfer per call and acts on its completion in the next
+***************************************
+[       OK ] Storage.OneTransferPerCall (0 ms)
+[ RUN      ] Storage.ChainedCommand
+
+***************************************
+(RQ)       PRM-DB-008
+***************************************
+
+***************************************
+(RQ)       PRM-DB-009
+***************************************
+
+***************************************
+a command sent from the response of the last one starts after it, one transfer at a time
+***************************************
+[       OK ] Storage.ChainedCommand (0 ms)
+[ RUN      ] Storage.NoStorage
+
+***************************************
+(RQ)       PRM-DB-007
+***************************************
+
+***************************************
+without storage connected, SAVE and LOAD fail with an event
+***************************************
+[       OK ] Storage.NoStorage (0 ms)
+[----------] 8 tests from Storage (10 ms total)
+
+[----------] Global test environment tear-down
+[==========] 18 tests from 3 test suites ran. (39 ms total)
+[  PASSED  ] 18 tests.
+

@@ -89,6 +89,6 @@ a pktSendIn call sends the packet whose id is the port number
 [----------] 8 tests from StaticTlmPacketizerTest (2 ms total)
 
 [----------] Global test environment tear-down
-[==========] 8 tests from 1 test suite ran. (3 ms total)
+[==========] 8 tests from 1 test suite ran. (4 ms total)
 [  PASSED  ] 8 tests.
 

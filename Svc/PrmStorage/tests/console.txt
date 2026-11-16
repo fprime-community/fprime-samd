@@ -1,0 +1,171 @@
+# unit-test console output: Svc/PrmStorage
+
+==============================================================================
+PASSED  fprime-samd_Svc_PrmStorage_ut_exe  (0.04s)
+==============================================================================
+[STest::Random] Generated seed 689259 from system time
+[==========] Running 13 tests from 3 test suites.
+[----------] Global test environment set-up.
+[----------] 4 tests from Transfer
+[ RUN      ] Transfer.Save
+
+***************************************
+(RQ)       PRM-STORE-001
+***************************************
+
+***************************************
+(RQ)       PRM-STORE-002
+***************************************
+
+***************************************
+(RQ)       PRM-STORE-004
+***************************************
+
+***************************************
+a save writes the image verbatim to PRIME, selected at boot, in MaxTransfer chunks
+***************************************
+[       OK ] Transfer.Save (1 ms)
+[ RUN      ] Transfer.Load
+
+***************************************
+(RQ)       PRM-STORE-001
+***************************************
+
+***************************************
+(RQ)       PRM-STORE-002
+***************************************
+
+***************************************
+a load reads the selected bank into the image in MaxTransfer chunks
+***************************************
+[       OK ] Transfer.Load (0 ms)
+[ RUN      ] Transfer.Offset
+
+***************************************
+(RQ)       PRM-STORE-001
+***************************************
+
+***************************************
+a transfer lands at its offset within the selected bank
+***************************************
+[       OK ] Transfer.Offset (0 ms)
+[ RUN      ] Transfer.StorageFailure
+
+***************************************
+(RQ)       PRM-STORE-003
+***************************************
+
+***************************************
+a failed chunk ends the transfer with OTHER_ERROR and reports where it failed
+***************************************
+[       OK ] Transfer.StorageFailure (0 ms)
+[----------] 4 tests from Transfer (3 ms total)
+
+[----------] 3 tests from Bank
+[ RUN      ] Bank.Select
+
+***************************************
+(RQ)       PRM-STORE-004
+***************************************
+
+***************************************
+SELECT_BANK moves the following transfers to the other bank
+***************************************
+[       OK ] Bank.Select (0 ms)
+[ RUN      ] Bank.SelectBusy
+
+***************************************
+(RQ)       PRM-STORE-005
+***************************************
+
+***************************************
+SELECT_BANK during a transfer is rejected BUSY and the transfer keeps its bank
+***************************************
+[       OK ] Bank.SelectBusy (0 ms)
+[ RUN      ] Bank.SelectDuringRetry
+
+***************************************
+(RQ)       PRM-STORE-005
+***************************************
+
+***************************************
+(RQ)       PRM-STORE-006
+***************************************
+
+***************************************
+SELECT_BANK while a request waits for a retry is rejected BUSY
+***************************************
+[       OK ] Bank.SelectDuringRetry (0 ms)
+[----------] 3 tests from Bank (1 ms total)
+
+[----------] 6 tests from Fram
+[ RUN      ] Fram.BusyRetry
+
+***************************************
+(RQ)       PRM-STORE-006
+***************************************
+
+***************************************
+requests rejected BUSY are retried on schedIn
+***************************************
+[       OK ] Fram.BusyRetry (0 ms)
+[ RUN      ] Fram.BusyRetryPerChunk
+
+***************************************
+(RQ)       PRM-STORE-006
+***************************************
+
+***************************************
+every chunk gets BUSY_RETRY_LIMIT retries of its own
+***************************************
+[       OK ] Fram.BusyRetryPerChunk (0 ms)
+[ RUN      ] Fram.BusyRetryExhausted
+
+***************************************
+(RQ)       PRM-STORE-006
+***************************************
+
+***************************************
+a request still BUSY after BUSY_RETRY_LIMIT retries fails the transfer
+***************************************
+[       OK ] Fram.BusyRetryExhausted (0 ms)
+[ RUN      ] Fram.RequestRejected
+
+***************************************
+(RQ)       PRM-STORE-006
+***************************************
+
+***************************************
+a request rejected other than BUSY fails the transfer without a retry
+***************************************
+[       OK ] Fram.RequestRejected (0 ms)
+[ RUN      ] Fram.InCallCompletion
+
+***************************************
+(RQ)       PRM-STORE-007
+***************************************
+
+***************************************
+(RQ)       PRM-STORE-003
+***************************************
+
+***************************************
+save, load and a failed chunk complete with F-RAM completions delivered inside the request call
+***************************************
+[       OK ] Fram.InCallCompletion (0 ms)
+[ RUN      ] Fram.ChainedTransfer
+
+***************************************
+(RQ)       PRM-STORE-007
+***************************************
+
+***************************************
+a load started from the return of a save runs as a transfer of its own
+***************************************
+[       OK ] Fram.ChainedTransfer (0 ms)
+[----------] 6 tests from Fram (3 ms total)
+
+[----------] Global test environment tear-down
+[==========] 13 tests from 3 test suites ran. (9 ms total)
+[  PASSED  ] 13 tests.
+
