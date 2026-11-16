@@ -19,6 +19,12 @@ get_filename_component(STATIC_TLM_PACKETIZER_PATH
 set(STATIC_TLM_PACKETIZER "${STATIC_TLM_PACKETIZER_PATH}"
     CACHE INTERNAL "Path to static-tlm-packetizer" FORCE)
 
+# Imported by the generator, so editing it must regenerate the output too
+get_filename_component(STATIC_AUTOCODER_COMMON_PATH
+    "${CMAKE_CURRENT_LIST_DIR}/../../tools/static_autocoder_common.py" REALPATH)
+set(STATIC_AUTOCODER_COMMON "${STATIC_AUTOCODER_COMMON_PATH}"
+    CACHE INTERNAL "Path to the module shared by the static-* autocoders" FORCE)
+
 # The rules name the generated files, and both halves of the autocoder read them: the
 # configure-time query below to declare the outputs, and the generator to name what it
 # writes. One artifact, so the two cannot disagree about a path.
@@ -69,7 +75,7 @@ function(static_tlm_packet_setup_autocode MODULE_NAME AC_INPUT_FILES)
             COMMAND ${STATIC_TLM_PACKETIZER} "-d" "${CMAKE_CURRENT_BINARY_DIR}"
                 "--rules" "${STATIC_TLM_PACKET_RULES}"
                 ${FPP_IMPORT_FLAGS} ${AC_INPUT_FILES}
-            DEPENDS ${FILE_DEPENDENCIES} "${STATIC_TLM_PACKETIZER}"
+            DEPENDS ${FILE_DEPENDENCIES} "${STATIC_TLM_PACKETIZER}" "${STATIC_AUTOCODER_COMMON}"
                 "${STATIC_TLM_PACKET_RULES}"
             COMMENT "Generating telemetry packet code for ${MODULE_NAME}"
     )

@@ -13,6 +13,7 @@ register_fprime_config(
         "${CMAKE_CURRENT_LIST_DIR}/Samd21SpiConfig.fpp"
         "${CMAKE_CURRENT_LIST_DIR}/Samd21I2cConfig.fpp"
         "${CMAKE_CURRENT_LIST_DIR}/Samd21StaticTlmPacketizerConfig.fpp"
+        "${CMAKE_CURRENT_LIST_DIR}/Samd21StaticPrmDbConfig.fpp"
     HEADERS
         "${CMAKE_CURRENT_LIST_DIR}/RtcDriverConfig.hpp"
         "${CMAKE_CURRENT_LIST_DIR}/DmaDriverConfig.hpp"
@@ -21,6 +22,8 @@ register_fprime_config(
         "${CMAKE_CURRENT_LIST_DIR}/SpiDriverConfig.hpp"
         "${CMAKE_CURRENT_LIST_DIR}/FramerConfig.hpp"
         "${CMAKE_CURRENT_LIST_DIR}/ThinBufferManagerConfig.hpp"
+        "${CMAKE_CURRENT_LIST_DIR}/StaticPrmDbConfig.hpp"
+        "${CMAKE_CURRENT_LIST_DIR}/PrmStorageConfig.hpp"
     ${SAMD21_ONLY_CFG_OVERRIDES}
     DEPENDS
         Fw_Types
