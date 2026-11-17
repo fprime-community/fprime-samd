@@ -1,9 +1,9 @@
 # unit-test console output: Svc/StaticPrmDb
 
 ==============================================================================
-PASSED  fprime-samd_Svc_StaticPrmDb_ut_exe  (0.09s)
+PASSED  fprime-samd_Svc_StaticPrmDb_ut_exe  (0.04s)
 ==============================================================================
-[STest::Random] Generated seed 612264 from system time
+[STest::Random] Generated seed 456335 from system time
 [==========] Running 18 tests from 3 test suites.
 [----------] Global test environment set-up.
 [----------] 1 test from Params
@@ -16,8 +16,8 @@ PASSED  fprime-samd_Svc_StaticPrmDb_ut_exe  (0.09s)
 ***************************************
 parameters set through setPrm read back VALID, others INVALID
 ***************************************
-[       OK ] Params.SetGet (2 ms)
-[----------] 1 test from Params (3 ms total)
+[       OK ] Params.SetGet (1 ms)
+[----------] 1 test from Params (1 ms total)
 
 [----------] 9 tests from Store
 [ RUN      ] Store.SaveLoad
@@ -29,7 +29,7 @@ parameters set through setPrm read back VALID, others INVALID
 ***************************************
 a save followed by a REPLACE load restores every value
 ***************************************
-[       OK ] Store.SaveLoad (1 ms)
+[       OK ] Store.SaveLoad (0 ms)
 [ RUN      ] Store.BitFlip
 
 ***************************************
@@ -43,7 +43,7 @@ a save followed by a REPLACE load restores every value
 ***************************************
 a flipped bit invalidates only the parameter owning the record
 ***************************************
-[       OK ] Store.BitFlip (1 ms)
+[       OK ] Store.BitFlip (0 ms)
 [ RUN      ] Store.DictionaryChange
 
 ***************************************
@@ -71,7 +71,7 @@ records of an older dictionary load in any slot order, unknown records are skipp
 ***************************************
 a MERGE load fills in invalid parameters without overwriting valid ones
 ***************************************
-[       OK ] Store.Merge (1 ms)
+[       OK ] Store.Merge (0 ms)
 [ RUN      ] Store.InterruptedSave
 
 ***************************************
@@ -85,7 +85,7 @@ a MERGE load fills in invalid parameters without overwriting valid ones
 ***************************************
 a save interrupted at any record loads each parameter whole from one save, or invalid
 ***************************************
-[       OK ] Store.InterruptedSave (14 ms)
+[       OK ] Store.InterruptedSave (6 ms)
 [ RUN      ] Store.MergeMixedSaves
 
 ***************************************
@@ -99,7 +99,7 @@ a save interrupted at any record loads each parameter whole from one save, or in
 ***************************************
 a MERGE never completes a parameter with segments of another save
 ***************************************
-[       OK ] Store.MergeMixedSaves (2 ms)
+[       OK ] Store.MergeMixedSaves (1 ms)
 [ RUN      ] Store.StaleDuplicate
 
 ***************************************
@@ -130,7 +130,7 @@ a save leaves out invalid parameters and clears records of an earlier save
 an erased store loads with every parameter invalid
 ***************************************
 [       OK ] Store.BlankStore (0 ms)
-[----------] 9 tests from Store (25 ms total)
+[----------] 9 tests from Store (11 ms total)
 
 [----------] 8 tests from Storage
 [ RUN      ] Storage.ReadFailure
@@ -142,7 +142,7 @@ an erased store loads with every parameter invalid
 ***************************************
 a failed read keeps the records already loaded and the values it did not reach
 ***************************************
-[       OK ] Storage.ReadFailure (1 ms)
+[       OK ] Storage.ReadFailure (0 ms)
 [ RUN      ] Storage.ReadFailureSplitParam
 
 ***************************************
@@ -152,7 +152,7 @@ a failed read keeps the records already loaded and the values it did not reach
 ***************************************
 a failed read invalidates only a parameter whose records it loaded part of
 ***************************************
-[       OK ] Storage.ReadFailureSplitParam (2 ms)
+[       OK ] Storage.ReadFailureSplitParam (0 ms)
 [ RUN      ] Storage.WriteFailure
 
 ***************************************
@@ -166,7 +166,7 @@ a failed read invalidates only a parameter whose records it loaded part of
 ***************************************
 a failed write fails SAVE with a throttled event; a successful save emits none
 ***************************************
-[       OK ] Storage.WriteFailure (1 ms)
+[       OK ] Storage.WriteFailure (0 ms)
 [ RUN      ] Storage.Busy
 
 ***************************************
@@ -221,9 +221,9 @@ a command sent from the response of the last one starts after it, one transfer a
 without storage connected, SAVE and LOAD fail with an event
 ***************************************
 [       OK ] Storage.NoStorage (0 ms)
-[----------] 8 tests from Storage (10 ms total)
+[----------] 8 tests from Storage (3 ms total)
 
 [----------] Global test environment tear-down
-[==========] 18 tests from 3 test suites ran. (39 ms total)
+[==========] 18 tests from 3 test suites ran. (17 ms total)
 [  PASSED  ] 18 tests.
 

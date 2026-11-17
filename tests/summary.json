@@ -4,88 +4,88 @@
   "passed": 16,
   "failed": 0,
   "skipped": 0,
-  "duration": 4.925,
+  "duration": 3.121,
   "report": "tests/index.html",
   "cases": [
     {
       "name": "fprime-samd_Drv_AdcDriver_ut_exe",
       "status": "passed",
-      "duration": 0.52
+      "duration": 0.329
     },
     {
       "name": "fprime-samd_Drv_RtcDriver_ut_exe",
       "status": "passed",
-      "duration": 0.937
+      "duration": 0.546
     },
     {
       "name": "fprime-samd_Drv_UsartDriver_ut_exe",
       "status": "passed",
-      "duration": 0.498
+      "duration": 0.312
     },
     {
       "name": "fprime-samd_Drv_I2cDriver_ut_exe",
       "status": "passed",
-      "duration": 0.093
+      "duration": 0.054
     },
     {
       "name": "fprime-samd_Drv_SpiDriver_ut_exe",
       "status": "passed",
-      "duration": 2.181
+      "duration": 1.43
     },
     {
       "name": "fprime-samd_Drv_GpioDriver_ut_exe",
       "status": "passed",
-      "duration": 0.031
+      "duration": 0.017
     },
     {
       "name": "fprime-samd_Drv_SystemInfo_ut_exe",
       "status": "passed",
-      "duration": 0.037
+      "duration": 0.02
     },
     {
       "name": "fprime-samd_Svc_ProcTime_ut_exe",
       "status": "passed",
-      "duration": 0.035
+      "duration": 0.022
     },
     {
       "name": "fprime-samd_Svc_ThinBufferManager_ut_exe",
       "status": "passed",
-      "duration": 0.04
+      "duration": 0.027
     },
     {
       "name": "fprime-samd_Svc_Framer_ut_exe",
       "status": "passed",
-      "duration": 0.036
+      "duration": 0.027
     },
     {
       "name": "fprime-samd_Svc_TmFramer_ut_exe",
       "status": "passed",
-      "duration": 0.271
+      "duration": 0.165
     },
     {
       "name": "fprime-samd_Svc_Seq_ut_exe",
       "status": "passed",
-      "duration": 0.051
+      "duration": 0.044
     },
     {
       "name": "fprime-samd_Svc_StaticTlmPacketizer_ut_exe",
       "status": "passed",
-      "duration": 0.036
+      "duration": 0.027
     },
     {
       "name": "fprime-samd_Svc_StaticCmdDispatcher_ut_exe",
       "status": "passed",
-      "duration": 0.035
+      "duration": 0.026
     },
     {
       "name": "fprime-samd_Svc_StaticPrmDb_ut_exe",
       "status": "passed",
-      "duration": 0.087
+      "duration": 0.044
     },
     {
       "name": "fprime-samd_Svc_PrmStorage_ut_exe",
       "status": "passed",
-      "duration": 0.035
+      "duration": 0.029
     }
   ]
 }

@@ -26,7 +26,7 @@
     </tr>
     <tr>
       <th scope="row">Date:</th>
-      <td>2026-11-16 19:51:08</td>
+      <td>2026-11-17 23:56:33</td>
     </tr>
   </table>
 </div>
@@ -40,9 +40,9 @@
     </tr>
     <tr>
       <th scope="row">Lines:</th>
-      <td>189</td>
-      <td>192</td>
-      <td class="coverage-high">98.4%</td>
+      <td>191</td>
+      <td>194</td>
+      <td class="coverage-high">98.5%</td>
     </tr>
     <tr>
       <th scope="row">Functions:</th>
@@ -52,8 +52,8 @@
     </tr>
     <tr>
       <th scope="row">Branches:</th>
-      <td>159</td>
-      <td>176</td>
+      <td>168</td>
+      <td>186</td>
       <td class="coverage-high">90.3%</td>
     </tr>
   </table>
@@ -71,16 +71,16 @@
       <th>Block coverage</th>
     </tr>
     <tr><td><a href="#l46">Samd21::SpiDriver::SpiDriver(char const*) (line 46)</a></td><td>called 25 times</td><td>87.0%</td></tr>
-    <tr><td><a href="#l134">Samd21::SpiDriver::SpiWriteRead_handler(short, Fw::Buffer&amp;, Fw::Buffer&amp;) (line 134)</a></td><td>called 651 times</td><td>71.0%</td></tr>
-    <tr><td><a href="#l206">Samd21::SpiDriver::activeIn_handler(short, unsigned int) (line 206)</a></td><td>called 657 times</td><td>92.0%</td></tr>
+    <tr><td><a href="#l134">Samd21::SpiDriver::SpiWriteRead_handler(short, Fw::Buffer&amp;, Fw::Buffer&amp;) (line 134)</a></td><td>called 652 times</td><td>71.0%</td></tr>
+    <tr><td><a href="#l206">Samd21::SpiDriver::activeIn_handler(short, unsigned int) (line 206)</a></td><td>called 660 times</td><td>93.0%</td></tr>
     <tr><td><a href="#l25">Samd21::SpiDriver::calculateBaud(unsigned int, unsigned int) (line 25)</a></td><td>called 7 times</td><td>58.0%</td></tr>
     <tr><td><a href="#l68">Samd21::SpiDriver::configure(Samd21::SercomKind, unsigned int, Samd21::SpiDriver::DataOrder, Samd21::SpiDriver::ClockPolarity, Samd21::SpiDriver::ClockPhase, Samd21::SpiDriver::DataInPinout, Samd21::SpiDriver::DataOutPinout, Samd21::SpiDriver::RunInStandby, Samd21::SpiDriver::HardwareChipSelect) (line 68)</a></td><td>called 21 times</td><td>71.0%</td></tr>
-    <tr><td><a href="#l339">Samd21::SpiDriver::deassertChipSelect() (line 339)</a></td><td>called 548 times</td><td>81.0%</td></tr>
-    <tr><td><a href="#l226">Samd21::SpiDriver::deliver(Samd21::SpiDriver::PendingReply&amp;, short) (line 226)</a></td><td>called 5256 times</td><td>74.0%</td></tr>
-    <tr><td><a href="#l245">Samd21::SpiDriver::dmaReplyIn_handler(short, Samd21::Dma::Reply const&amp;) (line 245)</a></td><td>called 1088 times</td><td>82.0%</td></tr>
-    <tr><td><a href="#l305">Samd21::SpiDriver::isrHandler() (line 305)</a></td><td>called 9 times</td><td>75.0%</td></tr>
-    <tr><td><a href="#l350">Samd21::SpiDriver::latchReply(short, Fw::Buffer const&amp;, Fw::Buffer const&amp;, Drv::SpiStatus::T) (line 350)</a></td><td>called 647 times</td><td>79.0%</td></tr>
-    <tr><td><a href="#l298">Samd21::SpiDriver::s_spiDriverIsrHandler(Fw::PassiveComponentBase*, Samd21::SercomKind) (line 298)</a></td><td>called 9 times</td><td>59.0%</td></tr>
+    <tr><td><a href="#l342">Samd21::SpiDriver::deassertChipSelect() (line 342)</a></td><td>called 548 times</td><td>81.0%</td></tr>
+    <tr><td><a href="#l228">Samd21::SpiDriver::deliver(Samd21::SpiDriver::PendingReply&amp;, short) (line 228)</a></td><td>called 5280 times</td><td>74.0%</td></tr>
+    <tr><td><a href="#l248">Samd21::SpiDriver::dmaReplyIn_handler(short, Samd21::Dma::Reply const&amp;) (line 248)</a></td><td>called 1088 times</td><td>82.0%</td></tr>
+    <tr><td><a href="#l308">Samd21::SpiDriver::isrHandler() (line 308)</a></td><td>called 9 times</td><td>75.0%</td></tr>
+    <tr><td><a href="#l353">Samd21::SpiDriver::latchReply(short, Fw::Buffer const&amp;, Fw::Buffer const&amp;, Drv::SpiStatus::T) (line 353)</a></td><td>called 648 times</td><td>79.0%</td></tr>
+    <tr><td><a href="#l301">Samd21::SpiDriver::s_spiDriverIsrHandler(Fw::PassiveComponentBase*, Samd21::SercomKind) (line 301)</a></td><td>called 9 times</td><td>59.0%</td></tr>
     <tr><td><a href="#l110">Samd21::SpiDriver::setBaudRate(unsigned int) (line 110)</a></td><td>called 8 times</td><td>80.0%</td></tr>
     <tr><td><a href="#l130">Samd21::SpiDriver::setBaudRate_handler(short, unsigned int) (line 130)</a></td><td>called 4 times</td><td>100.0%</td></tr>
     <tr><td><a href="#l66">Samd21::SpiDriver::~SpiDriver() (line 66)</a></td><td>called 25 times</td><td>100.0%</td></tr>
@@ -1167,7 +1167,7 @@
       <td class="lineno"><a id="l134" href="#l134">134</a></td>
       <td class="linebranch">
       </td>
-      <td class="linecount coveredLine">651</td>
+      <td class="linecount coveredLine">652</td>
       <td class="src coveredLine"><span class="kt">void</span><span class="w"> </span><span class="n">SpiDriver</span><span class="w"> </span><span class="o">::</span><span class="n">SpiWriteRead_handler</span><span class="p">(</span><span class="n">FwIndexType</span><span class="w"> </span><span class="n">portNum</span><span class="p">,</span><span class="w"> </span><span class="n">Fw</span><span class="o">::</span><span class="n">Buffer</span><span class="o">&amp;</span><span class="w"> </span><span class="n">writeBuffer</span><span class="p">,</span><span class="w"> </span><span class="n">Fw</span><span class="o">::</span><span class="n">Buffer</span><span class="o">&amp;</span><span class="w"> </span><span class="n">readBuffer</span><span class="p">)</span><span class="w"> </span><span class="p">{</span></td>
     </tr>
     <tr class="source-line">
@@ -1181,21 +1181,21 @@
       <td class="lineno"><a id="l136" href="#l136">136</a></td>
       <td class="linebranch">
       </td>
-      <td class="linecount coveredLine">651</td>
+      <td class="linecount coveredLine">652</td>
       <td class="src coveredLine"><span class="w">    </span><span class="n">FW_ASSERT</span><span class="p">(</span><span class="n">writeBuffer</span><span class="p">.</span><span class="n">getSize</span><span class="p">()</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">readBuffer</span><span class="p">.</span><span class="n">getSize</span><span class="p">(),</span><span class="w"> </span><span class="n">writeBuffer</span><span class="p">.</span><span class="n">getSize</span><span class="p">(),</span><span class="w"> </span><span class="n">readBuffer</span><span class="p">.</span><span class="n">getSize</span><span class="p">());</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l137" href="#l137">137</a></td>
       <td class="linebranch">
       </td>
-      <td class="linecount coveredLine">651</td>
+      <td class="linecount coveredLine">652</td>
       <td class="src coveredLine"><span class="w">    </span><span class="n">FW_ASSERT</span><span class="p">(</span><span class="n">writeBuffer</span><span class="p">.</span><span class="n">getSize</span><span class="p">()</span><span class="w"> </span><span class="o">&lt;=</span><span class="w"> </span><span class="mh">0xFFFF</span><span class="p">);</span><span class="w">  </span><span class="c1">// DMA block transfer count is 16 bits</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l138" href="#l138">138</a></td>
       <td class="linebranch">
       </td>
-      <td class="linecount coveredLine">651</td>
+      <td class="linecount coveredLine">652</td>
       <td class="src coveredLine"><span class="w">    </span><span class="n">FW_ASSERT</span><span class="p">(</span><span class="n">portNum</span><span class="w"> </span><span class="o">&gt;=</span><span class="w"> </span><span class="mi">0</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="n">portNum</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">NUM_SPIWRITEREAD_INPUT_PORTS</span><span class="p">,</span><span class="w"> </span><span class="n">portNum</span><span class="p">);</span></td>
     </tr>
     <tr class="source-line">
@@ -1225,11 +1225,11 @@
         <details class="linebranchDetails">
           <summary class="linebranchSummary">1/1</summary>
           <div class="linebranchContents">
-            <div class="takenBranch">&check; Branch 2 taken 651 times.</div>
+            <div class="takenBranch">&check; Branch 2 taken 652 times.</div>
           </div>
         </details>
       </td>
-      <td class="linecount coveredLine">651</td>
+      <td class="linecount coveredLine">652</td>
       <td class="src coveredLine"><span class="w">        </span><span class="n">Samd21</span><span class="o">::</span><span class="n">CriticalSection</span><span class="w"> </span><span class="n">cs</span><span class="p">;</span></td>
     </tr>
     <tr class="source-line">
@@ -1287,14 +1287,14 @@
         <details class="linebranchDetails">
           <summary class="linebranchSummary">4/4</summary>
           <div class="linebranchContents">
-            <div class="takenBranch">&check; Branch 4 taken 99 times.</div>
+            <div class="takenBranch">&check; Branch 4 taken 100 times.</div>
             <div class="takenBranch">&check; Branch 5 taken 552 times.</div>
             <div class="takenBranch">&check; Branch 10 taken 1 times.</div>
-            <div class="takenBranch">&check; Branch 11 taken 98 times.</div>
+            <div class="takenBranch">&check; Branch 11 taken 99 times.</div>
           </div>
         </details>
       </td>
-      <td class="linecount coveredLine">651</td>
+      <td class="linecount coveredLine">652</td>
       <td class="src coveredLine"><span class="w">        </span><span class="k">const</span><span class="w"> </span><span class="kt">bool</span><span class="w"> </span><span class="n">slotInFlight</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="k">this</span><span class="o">-&gt;</span><span class="n">m_busy</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="p">(</span><span class="k">this</span><span class="o">-&gt;</span><span class="n">m_portNum</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">portNum</span><span class="p">);</span></td>
     </tr>
     <tr class="source-line">
@@ -1303,16 +1303,16 @@
         <details class="linebranchDetails">
           <summary class="linebranchSummary">5/6</summary>
           <div class="linebranchContents">
-            <div class="takenBranch">&check; Branch 0 taken 650 times.</div>
+            <div class="takenBranch">&check; Branch 0 taken 651 times.</div>
             <div class="takenBranch">&check; Branch 1 taken 1 times.</div>
             <div class="notTakenBranch">&cross; Branch 6 not taken.</div>
-            <div class="takenBranch">&check; Branch 7 taken 650 times.</div>
+            <div class="takenBranch">&check; Branch 7 taken 651 times.</div>
             <div class="takenBranch">&check; Branch 8 taken 3 times.</div>
-            <div class="takenBranch">&check; Branch 9 taken 647 times.</div>
+            <div class="takenBranch">&check; Branch 9 taken 648 times.</div>
           </div>
         </details>
       </td>
-      <td class="linecount partialCoveredLine">651</td>
+      <td class="linecount partialCoveredLine">652</td>
       <td class="src partialCoveredLine"><span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">slotInFlight</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="k">this</span><span class="o">-&gt;</span><span class="n">m_pending</span><span class="p">[</span><span class="n">portNum</span><span class="p">].</span><span class="n">pending</span><span class="p">)</span><span class="w"> </span><span class="p">{</span></td>
     </tr>
     <tr class="source-line">
@@ -1397,13 +1397,13 @@
           <summary class="linebranchSummary">3/4</summary>
           <div class="linebranchContents">
             <div class="notTakenBranch">&cross; Branch 3 not taken.</div>
-            <div class="takenBranch">&check; Branch 4 taken 647 times.</div>
+            <div class="takenBranch">&check; Branch 4 taken 648 times.</div>
             <div class="takenBranch">&check; Branch 5 taken 1 times.</div>
-            <div class="takenBranch">&check; Branch 6 taken 646 times.</div>
+            <div class="takenBranch">&check; Branch 6 taken 647 times.</div>
           </div>
         </details>
       </td>
-      <td class="linecount partialCoveredLine">647</td>
+      <td class="linecount partialCoveredLine">648</td>
       <td class="src partialCoveredLine"><span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="k">this</span><span class="o">-&gt;</span><span class="n">m_configured</span><span class="p">)</span><span class="w"> </span><span class="p">{</span></td>
     </tr>
     <tr class="source-line">
@@ -1439,12 +1439,12 @@
         <details class="linebranchDetails">
           <summary class="linebranchSummary">2/2</summary>
           <div class="linebranchContents">
-            <div class="takenBranch">&check; Branch 4 taken 97 times.</div>
+            <div class="takenBranch">&check; Branch 4 taken 98 times.</div>
             <div class="takenBranch">&check; Branch 5 taken 549 times.</div>
           </div>
         </details>
       </td>
-      <td class="linecount coveredLine">646</td>
+      <td class="linecount coveredLine">647</td>
       <td class="src coveredLine"><span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="k">this</span><span class="o">-&gt;</span><span class="n">m_busy</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span><span class="w"> </span><span class="p">{</span></td>
     </tr>
     <tr class="source-line">
@@ -1453,18 +1453,18 @@
         <details class="linebranchDetails">
           <summary class="linebranchSummary">1/1</summary>
           <div class="linebranchContents">
-            <div class="takenBranch">&check; Branch 6 taken 97 times.</div>
+            <div class="takenBranch">&check; Branch 6 taken 98 times.</div>
           </div>
         </details>
       </td>
-      <td class="linecount coveredLine">97</td>
+      <td class="linecount coveredLine">98</td>
       <td class="src coveredLine"><span class="w">            </span><span class="k">this</span><span class="o">-&gt;</span><span class="n">latchReply</span><span class="p">(</span><span class="n">portNum</span><span class="p">,</span><span class="w"> </span><span class="n">writeBuffer</span><span class="p">,</span><span class="w"> </span><span class="n">readBuffer</span><span class="p">,</span><span class="w"> </span><span class="n">Drv</span><span class="o">::</span><span class="n">SpiStatus</span><span class="o">::</span><span class="n">SPI_BUSY_ERR</span><span class="p">);</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l167" href="#l167">167</a></td>
       <td class="linebranch">
       </td>
-      <td class="linecount coveredLine">97</td>
+      <td class="linecount coveredLine">98</td>
       <td class="src coveredLine"><span class="w">            </span><span class="k">return</span><span class="p">;</span></td>
     </tr>
     <tr class="source-line">
@@ -1518,7 +1518,7 @@
       <td class="lineno"><a id="l173" href="#l173">173</a></td>
       <td class="linebranch">
       </td>
-      <td class="linecount coveredLine">651</td>
+      <td class="linecount coveredLine">652</td>
       <td class="src coveredLine"><span class="w">    </span><span class="p">}</span></td>
     </tr>
     <tr class="source-line">
@@ -1850,7 +1850,7 @@
       <td class="lineno"><a id="l206" href="#l206">206</a></td>
       <td class="linebranch">
       </td>
-      <td class="linecount coveredLine">657</td>
+      <td class="linecount coveredLine">660</td>
       <td class="src coveredLine"><span class="kt">bool</span><span class="w"> </span><span class="n">SpiDriver</span><span class="w"> </span><span class="o">::</span><span class="n">activeIn_handler</span><span class="p">(</span><span class="n">FwIndexType</span><span class="w"> </span><span class="n">portNum</span><span class="p">,</span><span class="w"> </span><span class="n">U32</span><span class="w"> </span><span class="n">context</span><span class="p">)</span><span class="w"> </span><span class="p">{</span></td>
     </tr>
     <tr class="source-line">
@@ -1866,387 +1866,418 @@
         <details class="linebranchDetails">
           <summary class="linebranchSummary">1/1</summary>
           <div class="linebranchContents">
-            <div class="takenBranch">&check; Branch 2 taken 657 times.</div>
+            <div class="takenBranch">&check; Branch 2 taken 660 times.</div>
           </div>
         </details>
       </td>
-      <td class="linecount coveredLine">657</td>
+      <td class="linecount coveredLine">660</td>
       <td class="src coveredLine"><span class="w">        </span><span class="n">Samd21</span><span class="o">::</span><span class="n">CriticalSection</span><span class="w"> </span><span class="n">cs</span><span class="p">;</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l209" href="#l209">209</a></td>
       <td class="linebranch">
       </td>
-      <td class="linecount coveredLine">657</td>
+      <td class="linecount coveredLine">660</td>
       <td class="src coveredLine"><span class="w">        </span><span class="k">this</span><span class="o">-&gt;</span><span class="n">m_latched</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">false</span><span class="p">;</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l210" href="#l210">210</a></td>
       <td class="linebranch">
       </td>
-      <td class="linecount coveredLine">657</td>
+      <td class="linecount coveredLine">660</td>
       <td class="src coveredLine"><span class="w">    </span><span class="p">}</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l211" href="#l211">211</a></td>
       <td class="linebranch">
-        <details class="linebranchDetails">
-          <summary class="linebranchSummary">2/2</summary>
-          <div class="linebranchContents">
-            <div class="takenBranch">&check; Branch 0 taken 2628 times.</div>
-            <div class="takenBranch">&check; Branch 1 taken 657 times.</div>
-          </div>
-        </details>
       </td>
-      <td class="linecount coveredLine">3285</td>
-      <td class="src coveredLine"><span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="n">FwIndexType</span><span class="w"> </span><span class="n">slot</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">slot</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">NUM_SPIWRITEREAD_INPUT_PORTS</span><span class="p">;</span><span class="w"> </span><span class="n">slot</span><span class="o">++</span><span class="p">)</span><span class="w"> </span><span class="p">{</span></td>
+      <td class="linecount coveredLine">660</td>
+      <td class="src coveredLine"><span class="w">    </span><span class="kt">bool</span><span class="w"> </span><span class="n">delivered</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">false</span><span class="p">;</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l212" href="#l212">212</a></td>
       <td class="linebranch">
+        <details class="linebranchDetails">
+          <summary class="linebranchSummary">2/2</summary>
+          <div class="linebranchContents">
+            <div class="takenBranch">&check; Branch 0 taken 2640 times.</div>
+            <div class="takenBranch">&check; Branch 1 taken 660 times.</div>
+          </div>
+        </details>
       </td>
-      <td class="linecount "></td>
-      <td class="src "><span class="w">        </span><span class="c1">// Deliver the refusal (if any) first: it carries no data and tells the client its</span></td>
+      <td class="linecount coveredLine">3300</td>
+      <td class="src coveredLine"><span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="n">FwIndexType</span><span class="w"> </span><span class="n">slot</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">slot</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">NUM_SPIWRITEREAD_INPUT_PORTS</span><span class="p">;</span><span class="w"> </span><span class="n">slot</span><span class="o">++</span><span class="p">)</span><span class="w"> </span><span class="p">{</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l213" href="#l213">213</a></td>
       <td class="linebranch">
       </td>
       <td class="linecount "></td>
-      <td class="src "><span class="w">        </span><span class="c1">// re-request was dropped before the older request&#39;s outcome lets it re-arm.</span></td>
+      <td class="src "><span class="w">        </span><span class="c1">// Deliver the refusal (if any) first: it carries no data and tells the client its</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l214" href="#l214">214</a></td>
       <td class="linebranch">
-        <details class="linebranchDetails">
-          <summary class="linebranchSummary">1/1</summary>
-          <div class="linebranchContents">
-            <div class="takenBranch">&check; Branch 7 taken 2628 times.</div>
-          </div>
-        </details>
       </td>
-      <td class="linecount coveredLine">2628</td>
-      <td class="src coveredLine"><span class="w">        </span><span class="k">this</span><span class="o">-&gt;</span><span class="n">deliver</span><span class="p">(</span><span class="k">this</span><span class="o">-&gt;</span><span class="n">m_refused</span><span class="p">[</span><span class="n">slot</span><span class="p">],</span><span class="w"> </span><span class="n">slot</span><span class="p">);</span></td>
+      <td class="linecount "></td>
+      <td class="src "><span class="w">        </span><span class="c1">// re-request was dropped before the older request&#39;s outcome lets it re-arm.</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l215" href="#l215">215</a></td>
       <td class="linebranch">
         <details class="linebranchDetails">
-          <summary class="linebranchSummary">1/1</summary>
+          <summary class="linebranchSummary">5/5</summary>
           <div class="linebranchContents">
-            <div class="takenBranch">&check; Branch 8 taken 2628 times.</div>
+            <div class="takenBranch">&check; Branch 7 taken 2640 times.</div>
+            <div class="takenBranch">&check; Branch 9 taken 2636 times.</div>
+            <div class="takenBranch">&check; Branch 10 taken 4 times.</div>
+            <div class="takenBranch">&check; Branch 11 taken 984 times.</div>
+            <div class="takenBranch">&check; Branch 12 taken 1652 times.</div>
           </div>
         </details>
       </td>
-      <td class="linecount coveredLine">2628</td>
-      <td class="src coveredLine"><span class="w">        </span><span class="k">this</span><span class="o">-&gt;</span><span class="n">deliver</span><span class="p">(</span><span class="k">this</span><span class="o">-&gt;</span><span class="n">m_pending</span><span class="p">[</span><span class="n">slot</span><span class="p">],</span><span class="w"> </span><span class="n">slot</span><span class="p">);</span></td>
+      <td class="linecount coveredLine">2640</td>
+      <td class="src coveredLine"><span class="w">        </span><span class="n">delivered</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">this</span><span class="o">-&gt;</span><span class="n">deliver</span><span class="p">(</span><span class="k">this</span><span class="o">-&gt;</span><span class="n">m_refused</span><span class="p">[</span><span class="n">slot</span><span class="p">],</span><span class="w"> </span><span class="n">slot</span><span class="p">)</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="n">delivered</span><span class="p">;</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l216" href="#l216">216</a></td>
       <td class="linebranch">
+        <details class="linebranchDetails">
+          <summary class="linebranchSummary">5/5</summary>
+          <div class="linebranchContents">
+            <div class="takenBranch">&check; Branch 8 taken 2640 times.</div>
+            <div class="takenBranch">&check; Branch 10 taken 1992 times.</div>
+            <div class="takenBranch">&check; Branch 11 taken 648 times.</div>
+            <div class="takenBranch">&check; Branch 12 taken 983 times.</div>
+            <div class="takenBranch">&check; Branch 13 taken 1009 times.</div>
+          </div>
+        </details>
       </td>
-      <td class="linecount "></td>
-      <td class="src "><span class="w">    </span><span class="p">}</span></td>
+      <td class="linecount coveredLine">2640</td>
+      <td class="src coveredLine"><span class="w">        </span><span class="n">delivered</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">this</span><span class="o">-&gt;</span><span class="n">deliver</span><span class="p">(</span><span class="k">this</span><span class="o">-&gt;</span><span class="n">m_pending</span><span class="p">[</span><span class="n">slot</span><span class="p">],</span><span class="w"> </span><span class="n">slot</span><span class="p">)</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="n">delivered</span><span class="p">;</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l217" href="#l217">217</a></td>
       <td class="linebranch">
       </td>
       <td class="linecount "></td>
-      <td class="src "><span class="w">    </span><span class="c1">// Ask for another pass before the deployment sleeps if a reply record was latched during</span></td>
+      <td class="src "><span class="w">    </span><span class="p">}</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l218" href="#l218">218</a></td>
       <td class="linebranch">
       </td>
       <td class="linecount "></td>
-      <td class="src "><span class="w">    </span><span class="c1">// this call (an ISR landed inside it, or a callback&#39;s re-request was refused) or, when</span></td>
+      <td class="src "><span class="w">    </span><span class="c1">// Ask for another pass before the deployment sleeps if a reply was delivered (the client</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l219" href="#l219">219</a></td>
       <td class="linebranch">
       </td>
       <td class="linecount "></td>
-      <td class="src "><span class="w">    </span><span class="c1">// configured, while a transfer is in flight, so its completion is delivered before the</span></td>
+      <td class="src "><span class="w">    </span><span class="c1">// may have left work for its own activeIn, earlier in the cycle), if a reply record was</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l220" href="#l220">220</a></td>
       <td class="linebranch">
       </td>
       <td class="linecount "></td>
-      <td class="src "><span class="w">    </span><span class="c1">// next wfi instead of at the next tick.</span></td>
+      <td class="src "><span class="w">    </span><span class="c1">// latched during this call (an ISR landed inside it, or a callback&#39;s re-request was</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l221" href="#l221">221</a></td>
       <td class="linebranch">
-        <details class="linebranchDetails">
-          <summary class="linebranchSummary">1/1</summary>
-          <div class="linebranchContents">
-            <div class="takenBranch">&check; Branch 2 taken 657 times.</div>
-          </div>
-        </details>
       </td>
-      <td class="linecount coveredLine">657</td>
-      <td class="src coveredLine"><span class="w">    </span><span class="n">Samd21</span><span class="o">::</span><span class="n">CriticalSection</span><span class="w"> </span><span class="n">cs</span><span class="p">;</span></td>
+      <td class="linecount "></td>
+      <td class="src "><span class="w">    </span><span class="c1">// refused) or, when configured, while a transfer is in flight, so its completion is</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l222" href="#l222">222</a></td>
       <td class="linebranch">
-        <details class="linebranchDetails">
-          <summary class="linebranchSummary">3/4</summary>
-          <div class="linebranchContents">
-            <div class="notTakenBranch">&cross; Branch 3 not taken.</div>
-            <div class="takenBranch">&check; Branch 4 taken 657 times.</div>
-            <div class="takenBranch">&check; Branch 5 taken 654 times.</div>
-            <div class="takenBranch">&check; Branch 6 taken 3 times.</div>
-          </div>
-        </details>
       </td>
-      <td class="linecount partialCoveredLine">1311</td>
-      <td class="src partialCoveredLine"><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="k">this</span><span class="o">-&gt;</span><span class="n">m_latched</span><span class="w"> </span><span class="o">||</span></td>
+      <td class="linecount "></td>
+      <td class="src "><span class="w">    </span><span class="c1">// delivered before the next wfi instead of at the next tick.</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l223" href="#l223">223</a></td>
       <td class="linebranch">
         <details class="linebranchDetails">
-          <summary class="linebranchSummary">2/2</summary>
+          <summary class="linebranchSummary">1/1</summary>
           <div class="linebranchContents">
-            <div class="takenBranch">&check; Branch 4 taken 100 times.</div>
-            <div class="takenBranch">&check; Branch 5 taken 554 times.</div>
+            <div class="takenBranch">&check; Branch 2 taken 660 times.</div>
           </div>
         </details>
       </td>
-      <td class="linecount coveredLine">1311</td>
-      <td class="src coveredLine"><span class="w">           </span><span class="p">((</span><span class="n">Samd21</span><span class="o">::</span><span class="n">SpiDriverConfig</span><span class="o">::</span><span class="n">SPI_REPOLL_DURING_OUTSTANDING_TRANSACTION</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="p">(</span><span class="k">this</span><span class="o">-&gt;</span><span class="n">m_busy</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="mi">0</span><span class="p">));</span></td>
+      <td class="linecount coveredLine">660</td>
+      <td class="src coveredLine"><span class="w">    </span><span class="n">Samd21</span><span class="o">::</span><span class="n">CriticalSection</span><span class="w"> </span><span class="n">cs</span><span class="p">;</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l224" href="#l224">224</a></td>
       <td class="linebranch">
+        <details class="linebranchDetails">
+          <summary class="linebranchSummary">4/6</summary>
+          <div class="linebranchContents">
+            <div class="takenBranch">&check; Branch 0 taken 14 times.</div>
+            <div class="takenBranch">&check; Branch 1 taken 646 times.</div>
+            <div class="notTakenBranch">&cross; Branch 5 not taken.</div>
+            <div class="takenBranch">&check; Branch 6 taken 14 times.</div>
+            <div class="takenBranch">&check; Branch 7 taken 14 times.</div>
+            <div class="notTakenBranch">&cross; Branch 8 not taken.</div>
+          </div>
+        </details>
       </td>
-      <td class="linecount coveredLine">657</td>
-      <td class="src coveredLine"><span class="p">}</span></td>
+      <td class="linecount partialCoveredLine">674</td>
+      <td class="src partialCoveredLine"><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">delivered</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="k">this</span><span class="o">-&gt;</span><span class="n">m_latched</span><span class="w"> </span><span class="o">||</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l225" href="#l225">225</a></td>
+      <td class="linebranch">
+        <details class="linebranchDetails">
+          <summary class="linebranchSummary">2/2</summary>
+          <div class="linebranchContents">
+            <div class="takenBranch">&check; Branch 4 taken 3 times.</div>
+            <div class="takenBranch">&check; Branch 5 taken 11 times.</div>
+          </div>
+        </details>
+      </td>
+      <td class="linecount coveredLine">674</td>
+      <td class="src coveredLine"><span class="w">           </span><span class="p">((</span><span class="n">Samd21</span><span class="o">::</span><span class="n">SpiDriverConfig</span><span class="o">::</span><span class="n">SPI_REPOLL_DURING_OUTSTANDING_TRANSACTION</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="p">(</span><span class="k">this</span><span class="o">-&gt;</span><span class="n">m_busy</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="mi">0</span><span class="p">));</span></td>
+    </tr>
+    <tr class="source-line">
+      <td class="lineno"><a id="l226" href="#l226">226</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount coveredLine">660</td>
+      <td class="src coveredLine"><span class="p">}</span></td>
+    </tr>
+    <tr class="source-line">
+      <td class="lineno"><a id="l227" href="#l227">227</a></td>
       <td class="linebranch">
       </td>
       <td class="linecount "></td>
       <td class="src "></td>
     </tr>
     <tr class="source-line">
-      <td class="lineno"><a id="l226" href="#l226">226</a></td>
-      <td class="linebranch">
-      </td>
-      <td class="linecount coveredLine">5256</td>
-      <td class="src coveredLine"><span class="kt">void</span><span class="w"> </span><span class="n">SpiDriver</span><span class="w"> </span><span class="o">::</span><span class="n">deliver</span><span class="p">(</span><span class="n">PendingReply</span><span class="o">&amp;</span><span class="w"> </span><span class="n">record</span><span class="p">,</span><span class="w"> </span><span class="n">FwIndexType</span><span class="w"> </span><span class="n">slot</span><span class="p">)</span><span class="w"> </span><span class="p">{</span></td>
-    </tr>
-    <tr class="source-line">
-      <td class="lineno"><a id="l227" href="#l227">227</a></td>
-      <td class="linebranch">
-        <details class="linebranchDetails">
-          <summary class="linebranchSummary">2/2</summary>
-          <div class="linebranchContents">
-            <div class="takenBranch">&check; Branch 2 taken 5256 times.</div>
-            <div class="takenBranch">&check; Branch 5 taken 5256 times.</div>
-          </div>
-        </details>
-      </td>
-      <td class="linecount coveredLine">5256</td>
-      <td class="src coveredLine"><span class="w">    </span><span class="n">PendingReply</span><span class="w"> </span><span class="n">reply</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{};</span></td>
-    </tr>
-    <tr class="source-line">
       <td class="lineno"><a id="l228" href="#l228">228</a></td>
       <td class="linebranch">
       </td>
-      <td class="linecount "></td>
-      <td class="src "><span class="w">    </span><span class="p">{</span></td>
+      <td class="linecount coveredLine">5280</td>
+      <td class="src coveredLine"><span class="kt">bool</span><span class="w"> </span><span class="n">SpiDriver</span><span class="w"> </span><span class="o">::</span><span class="n">deliver</span><span class="p">(</span><span class="n">PendingReply</span><span class="o">&amp;</span><span class="w"> </span><span class="n">record</span><span class="p">,</span><span class="w"> </span><span class="n">FwIndexType</span><span class="w"> </span><span class="n">slot</span><span class="p">)</span><span class="w"> </span><span class="p">{</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l229" href="#l229">229</a></td>
       <td class="linebranch">
+        <details class="linebranchDetails">
+          <summary class="linebranchSummary">2/2</summary>
+          <div class="linebranchContents">
+            <div class="takenBranch">&check; Branch 2 taken 5280 times.</div>
+            <div class="takenBranch">&check; Branch 5 taken 5280 times.</div>
+          </div>
+        </details>
       </td>
-      <td class="linecount "></td>
-      <td class="src "><span class="w">        </span><span class="c1">// The ISR paths write the record; copy and clear it with interrupts masked, then</span></td>
+      <td class="linecount coveredLine">5280</td>
+      <td class="src coveredLine"><span class="w">    </span><span class="n">PendingReply</span><span class="w"> </span><span class="n">reply</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{};</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l230" href="#l230">230</a></td>
       <td class="linebranch">
       </td>
       <td class="linecount "></td>
-      <td class="src "><span class="w">        </span><span class="c1">// call the client with them enabled (the callback may start the next transfer).</span></td>
+      <td class="src "><span class="w">    </span><span class="p">{</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l231" href="#l231">231</a></td>
       <td class="linebranch">
-        <details class="linebranchDetails">
-          <summary class="linebranchSummary">1/1</summary>
-          <div class="linebranchContents">
-            <div class="takenBranch">&check; Branch 2 taken 5256 times.</div>
-          </div>
-        </details>
       </td>
-      <td class="linecount coveredLine">5256</td>
-      <td class="src coveredLine"><span class="w">        </span><span class="n">Samd21</span><span class="o">::</span><span class="n">CriticalSection</span><span class="w"> </span><span class="n">cs</span><span class="p">;</span></td>
+      <td class="linecount "></td>
+      <td class="src "><span class="w">        </span><span class="c1">// The ISR paths write the record; copy and clear it with interrupts masked, then</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l232" href="#l232">232</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount "></td>
+      <td class="src "><span class="w">        </span><span class="c1">// call the client with them enabled (the callback may start the next transfer).</span></td>
+    </tr>
+    <tr class="source-line">
+      <td class="lineno"><a id="l233" href="#l233">233</a></td>
+      <td class="linebranch">
+        <details class="linebranchDetails">
+          <summary class="linebranchSummary">1/1</summary>
+          <div class="linebranchContents">
+            <div class="takenBranch">&check; Branch 2 taken 5280 times.</div>
+          </div>
+        </details>
+      </td>
+      <td class="linecount coveredLine">5280</td>
+      <td class="src coveredLine"><span class="w">        </span><span class="n">Samd21</span><span class="o">::</span><span class="n">CriticalSection</span><span class="w"> </span><span class="n">cs</span><span class="p">;</span></td>
+    </tr>
+    <tr class="source-line">
+      <td class="lineno"><a id="l234" href="#l234">234</a></td>
       <td class="linebranch">
         <details class="linebranchDetails">
           <summary class="linebranchSummary">3/4</summary>
           <div class="linebranchContents">
             <div class="notTakenBranch">&cross; Branch 1 not taken.</div>
-            <div class="takenBranch">&check; Branch 2 taken 5256 times.</div>
-            <div class="takenBranch">&check; Branch 3 taken 4605 times.</div>
-            <div class="takenBranch">&check; Branch 4 taken 651 times.</div>
+            <div class="takenBranch">&check; Branch 2 taken 5280 times.</div>
+            <div class="takenBranch">&check; Branch 3 taken 4628 times.</div>
+            <div class="takenBranch">&check; Branch 4 taken 652 times.</div>
           </div>
         </details>
       </td>
-      <td class="linecount partialCoveredLine">5256</td>
+      <td class="linecount partialCoveredLine">5280</td>
       <td class="src partialCoveredLine"><span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">record</span><span class="p">.</span><span class="n">pending</span><span class="p">)</span><span class="w"> </span><span class="p">{</span></td>
     </tr>
     <tr class="source-line">
-      <td class="lineno"><a id="l233" href="#l233">233</a></td>
+      <td class="lineno"><a id="l235" href="#l235">235</a></td>
       <td class="linebranch">
       </td>
-      <td class="linecount coveredLine">4605</td>
-      <td class="src coveredLine"><span class="w">            </span><span class="k">return</span><span class="p">;</span></td>
+      <td class="linecount coveredLine">4628</td>
+      <td class="src coveredLine"><span class="w">            </span><span class="k">return</span><span class="w"> </span><span class="nb">false</span><span class="p">;</span></td>
     </tr>
     <tr class="source-line">
-      <td class="lineno"><a id="l234" href="#l234">234</a></td>
+      <td class="lineno"><a id="l236" href="#l236">236</a></td>
       <td class="linebranch">
       </td>
       <td class="linecount "></td>
       <td class="src "><span class="w">        </span><span class="p">}</span></td>
     </tr>
     <tr class="source-line">
-      <td class="lineno"><a id="l235" href="#l235">235</a></td>
-      <td class="linebranch">
-      </td>
-      <td class="linecount coveredLine">651</td>
-      <td class="src coveredLine"><span class="w">        </span><span class="n">reply</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">record</span><span class="p">;</span></td>
-    </tr>
-    <tr class="source-line">
-      <td class="lineno"><a id="l236" href="#l236">236</a></td>
-      <td class="linebranch">
-      </td>
-      <td class="linecount coveredLine">651</td>
-      <td class="src coveredLine"><span class="w">        </span><span class="n">record</span><span class="p">.</span><span class="n">pending</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">false</span><span class="p">;</span></td>
-    </tr>
-    <tr class="source-line">
       <td class="lineno"><a id="l237" href="#l237">237</a></td>
       <td class="linebranch">
       </td>
-      <td class="linecount coveredLine">5256</td>
-      <td class="src coveredLine"><span class="w">    </span><span class="p">}</span></td>
+      <td class="linecount coveredLine">652</td>
+      <td class="src coveredLine"><span class="w">        </span><span class="n">reply</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">record</span><span class="p">;</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l238" href="#l238">238</a></td>
       <td class="linebranch">
-        <details class="linebranchDetails">
-          <summary class="linebranchSummary">1/1</summary>
-          <div class="linebranchContents">
-            <div class="takenBranch">&check; Branch 2 taken 651 times.</div>
-          </div>
-        </details>
       </td>
-      <td class="linecount coveredLine">651</td>
-      <td class="src coveredLine"><span class="w">    </span><span class="n">Fw</span><span class="o">::</span><span class="n">Buffer</span><span class="w"> </span><span class="n">write</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">reply</span><span class="p">.</span><span class="n">write</span><span class="p">.</span><span class="n">getBuffer</span><span class="p">();</span></td>
+      <td class="linecount coveredLine">652</td>
+      <td class="src coveredLine"><span class="w">        </span><span class="n">record</span><span class="p">.</span><span class="n">pending</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">false</span><span class="p">;</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l239" href="#l239">239</a></td>
       <td class="linebranch">
-        <details class="linebranchDetails">
-          <summary class="linebranchSummary">1/1</summary>
-          <div class="linebranchContents">
-            <div class="takenBranch">&check; Branch 2 taken 651 times.</div>
-          </div>
-        </details>
       </td>
-      <td class="linecount coveredLine">651</td>
-      <td class="src coveredLine"><span class="w">    </span><span class="n">Fw</span><span class="o">::</span><span class="n">Buffer</span><span class="w"> </span><span class="n">read</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">reply</span><span class="p">.</span><span class="n">read</span><span class="p">.</span><span class="n">getBuffer</span><span class="p">();</span></td>
+      <td class="linecount coveredLine">5280</td>
+      <td class="src coveredLine"><span class="w">    </span><span class="p">}</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l240" href="#l240">240</a></td>
       <td class="linebranch">
         <details class="linebranchDetails">
-          <summary class="linebranchSummary">2/3</summary>
+          <summary class="linebranchSummary">1/1</summary>
           <div class="linebranchContents">
-            <div class="takenBranch">&check; Branch 5 taken 651 times.</div>
-            <div class="takenBranch">&check; Branch 7 taken 651 times.</div>
-            <div class="notTakenBranch">&cross; Branch 8 not taken.</div>
+            <div class="takenBranch">&check; Branch 2 taken 652 times.</div>
           </div>
         </details>
       </td>
-      <td class="linecount partialCoveredLine">651</td>
-      <td class="src partialCoveredLine"><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="k">this</span><span class="o">-&gt;</span><span class="n">isConnected_SpiWriteReadComplete_OutputPort</span><span class="p">(</span><span class="n">slot</span><span class="p">))</span><span class="w"> </span><span class="p">{</span></td>
+      <td class="linecount coveredLine">652</td>
+      <td class="src coveredLine"><span class="w">    </span><span class="n">Fw</span><span class="o">::</span><span class="n">Buffer</span><span class="w"> </span><span class="n">write</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">reply</span><span class="p">.</span><span class="n">write</span><span class="p">.</span><span class="n">getBuffer</span><span class="p">();</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l241" href="#l241">241</a></td>
       <td class="linebranch">
         <details class="linebranchDetails">
-          <summary class="linebranchSummary">3/4</summary>
+          <summary class="linebranchSummary">1/1</summary>
           <div class="linebranchContents">
-            <div class="notTakenBranch">&cross; Branch 5 not taken.</div>
-            <div class="takenBranch">&check; Branch 6 taken 651 times.</div>
-            <div class="takenBranch">&check; Branch 8 taken 651 times.</div>
-            <div class="takenBranch">&check; Branch 12 taken 651 times.</div>
+            <div class="takenBranch">&check; Branch 2 taken 652 times.</div>
           </div>
         </details>
       </td>
-      <td class="linecount partialCoveredLine">651</td>
-      <td class="src partialCoveredLine"><span class="w">        </span><span class="k">this</span><span class="o">-&gt;</span><span class="n">SpiWriteReadComplete_out</span><span class="p">(</span><span class="n">slot</span><span class="p">,</span><span class="w"> </span><span class="n">write</span><span class="p">,</span><span class="w"> </span><span class="n">read</span><span class="p">,</span><span class="w"> </span><span class="n">reply</span><span class="p">.</span><span class="n">status</span><span class="p">);</span></td>
+      <td class="linecount coveredLine">652</td>
+      <td class="src coveredLine"><span class="w">    </span><span class="n">Fw</span><span class="o">::</span><span class="n">Buffer</span><span class="w"> </span><span class="n">read</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">reply</span><span class="p">.</span><span class="n">read</span><span class="p">.</span><span class="n">getBuffer</span><span class="p">();</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l242" href="#l242">242</a></td>
       <td class="linebranch">
+        <details class="linebranchDetails">
+          <summary class="linebranchSummary">2/3</summary>
+          <div class="linebranchContents">
+            <div class="takenBranch">&check; Branch 5 taken 652 times.</div>
+            <div class="takenBranch">&check; Branch 7 taken 652 times.</div>
+            <div class="notTakenBranch">&cross; Branch 8 not taken.</div>
+          </div>
+        </details>
       </td>
-      <td class="linecount "></td>
-      <td class="src "><span class="w">    </span><span class="p">}</span></td>
+      <td class="linecount partialCoveredLine">652</td>
+      <td class="src partialCoveredLine"><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="k">this</span><span class="o">-&gt;</span><span class="n">isConnected_SpiWriteReadComplete_OutputPort</span><span class="p">(</span><span class="n">slot</span><span class="p">))</span><span class="w"> </span><span class="p">{</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l243" href="#l243">243</a></td>
       <td class="linebranch">
+        <details class="linebranchDetails">
+          <summary class="linebranchSummary">3/4</summary>
+          <div class="linebranchContents">
+            <div class="notTakenBranch">&cross; Branch 5 not taken.</div>
+            <div class="takenBranch">&check; Branch 6 taken 652 times.</div>
+            <div class="takenBranch">&check; Branch 8 taken 652 times.</div>
+            <div class="takenBranch">&check; Branch 12 taken 652 times.</div>
+          </div>
+        </details>
       </td>
-      <td class="linecount coveredLine">651</td>
-      <td class="src coveredLine"><span class="p">}</span></td>
+      <td class="linecount partialCoveredLine">652</td>
+      <td class="src partialCoveredLine"><span class="w">        </span><span class="k">this</span><span class="o">-&gt;</span><span class="n">SpiWriteReadComplete_out</span><span class="p">(</span><span class="n">slot</span><span class="p">,</span><span class="w"> </span><span class="n">write</span><span class="p">,</span><span class="w"> </span><span class="n">read</span><span class="p">,</span><span class="w"> </span><span class="n">reply</span><span class="p">.</span><span class="n">status</span><span class="p">);</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l244" href="#l244">244</a></td>
       <td class="linebranch">
       </td>
       <td class="linecount "></td>
-      <td class="src "></td>
+      <td class="src "><span class="w">    </span><span class="p">}</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l245" href="#l245">245</a></td>
       <td class="linebranch">
       </td>
-      <td class="linecount coveredLine">1088</td>
-      <td class="src coveredLine"><span class="kt">void</span><span class="w"> </span><span class="n">SpiDriver</span><span class="w"> </span><span class="o">::</span><span class="n">dmaReplyIn_handler</span><span class="p">(</span><span class="n">FwIndexType</span><span class="w"> </span><span class="n">portNum</span><span class="p">,</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="n">Samd21</span><span class="o">::</span><span class="n">Dma</span><span class="o">::</span><span class="n">Reply</span><span class="o">&amp;</span><span class="w"> </span><span class="n">reply</span><span class="p">)</span><span class="w"> </span><span class="p">{</span></td>
+      <td class="linecount coveredLine">652</td>
+      <td class="src coveredLine"><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nb">true</span><span class="p">;</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l246" href="#l246">246</a></td>
       <td class="linebranch">
       </td>
-      <td class="linecount "></td>
-      <td class="src "><span class="w">    </span><span class="c1">// Two replies (Tx, Rx) arrive in either order; the transfer is done when both are in.</span></td>
+      <td class="linecount coveredLine">652</td>
+      <td class="src coveredLine"><span class="p">}</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l247" href="#l247">247</a></td>
       <td class="linebranch">
       </td>
       <td class="linecount "></td>
-      <td class="src "><span class="w">    </span><span class="c1">// A reply with nothing in flight, or for an unknown channel, cannot be acted on: it is</span></td>
+      <td class="src "></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l248" href="#l248">248</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount coveredLine">1088</td>
+      <td class="src coveredLine"><span class="kt">void</span><span class="w"> </span><span class="n">SpiDriver</span><span class="w"> </span><span class="o">::</span><span class="n">dmaReplyIn_handler</span><span class="p">(</span><span class="n">FwIndexType</span><span class="w"> </span><span class="n">portNum</span><span class="p">,</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="n">Samd21</span><span class="o">::</span><span class="n">Dma</span><span class="o">::</span><span class="n">Reply</span><span class="o">&amp;</span><span class="w"> </span><span class="n">reply</span><span class="p">)</span><span class="w"> </span><span class="p">{</span></td>
+    </tr>
+    <tr class="source-line">
+      <td class="lineno"><a id="l249" href="#l249">249</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount "></td>
+      <td class="src "><span class="w">    </span><span class="c1">// Two replies (Tx, Rx) arrive in either order; the transfer is done when both are in.</span></td>
+    </tr>
+    <tr class="source-line">
+      <td class="lineno"><a id="l250" href="#l250">250</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount "></td>
+      <td class="src "><span class="w">    </span><span class="c1">// A reply with nothing in flight, or for an unknown channel, cannot be acted on: it is</span></td>
+    </tr>
+    <tr class="source-line">
+      <td class="lineno"><a id="l251" href="#l251">251</a></td>
       <td class="linebranch">
       </td>
       <td class="linecount "></td>
       <td class="src "><span class="w">    </span><span class="c1">// dropped rather than asserted on (no assert in response to bus traffic).</span></td>
     </tr>
     <tr class="source-line">
-      <td class="lineno"><a id="l249" href="#l249">249</a></td>
+      <td class="lineno"><a id="l252" href="#l252">252</a></td>
       <td class="linebranch">
         <details class="linebranchDetails">
           <summary class="linebranchSummary">2/2</summary>
@@ -2260,42 +2291,42 @@
       <td class="src coveredLine"><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="k">this</span><span class="o">-&gt;</span><span class="n">m_busy</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span><span class="w"> </span><span class="p">{</span></td>
     </tr>
     <tr class="source-line">
-      <td class="lineno"><a id="l250" href="#l250">250</a></td>
+      <td class="lineno"><a id="l253" href="#l253">253</a></td>
       <td class="linebranch">
       </td>
       <td class="linecount coveredLine">5</td>
       <td class="src coveredLine"><span class="w">        </span><span class="k">return</span><span class="p">;</span></td>
     </tr>
     <tr class="source-line">
-      <td class="lineno"><a id="l251" href="#l251">251</a></td>
+      <td class="lineno"><a id="l254" href="#l254">254</a></td>
       <td class="linebranch">
       </td>
       <td class="linecount "></td>
       <td class="src "><span class="w">    </span><span class="p">}</span></td>
     </tr>
     <tr class="source-line">
-      <td class="lineno"><a id="l252" href="#l252">252</a></td>
+      <td class="lineno"><a id="l255" href="#l255">255</a></td>
       <td class="linebranch">
       </td>
       <td class="linecount "></td>
       <td class="src "><span class="w">    </span><span class="n">U8</span><span class="w"> </span><span class="n">doneBit</span><span class="p">;</span></td>
     </tr>
     <tr class="source-line">
-      <td class="lineno"><a id="l253" href="#l253">253</a></td>
+      <td class="lineno"><a id="l256" href="#l256">256</a></td>
       <td class="linebranch">
       </td>
       <td class="linecount "></td>
       <td class="src "><span class="w">    </span><span class="n">SpiDriver_DmaChannel</span><span class="o">::</span><span class="n">T</span><span class="w"> </span><span class="n">otherChannel</span><span class="p">;</span></td>
     </tr>
     <tr class="source-line">
-      <td class="lineno"><a id="l254" href="#l254">254</a></td>
+      <td class="lineno"><a id="l257" href="#l257">257</a></td>
       <td class="linebranch">
       </td>
       <td class="linecount "></td>
       <td class="src "><span class="w">    </span><span class="n">U8</span><span class="w"> </span><span class="n">otherBit</span><span class="p">;</span></td>
     </tr>
     <tr class="source-line">
-      <td class="lineno"><a id="l255" href="#l255">255</a></td>
+      <td class="lineno"><a id="l258" href="#l258">258</a></td>
       <td class="linebranch">
         <details class="linebranchDetails">
           <summary class="linebranchSummary">2/2</summary>
@@ -2309,28 +2340,28 @@
       <td class="src coveredLine"><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">portNum</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">SpiDriver_DmaChannel</span><span class="o">::</span><span class="n">MISO</span><span class="p">)</span><span class="w"> </span><span class="p">{</span></td>
     </tr>
     <tr class="source-line">
-      <td class="lineno"><a id="l256" href="#l256">256</a></td>
+      <td class="lineno"><a id="l259" href="#l259">259</a></td>
       <td class="linebranch">
       </td>
       <td class="linecount coveredLine">542</td>
       <td class="src coveredLine"><span class="w">        </span><span class="n">doneBit</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">BusyBit</span><span class="o">::</span><span class="n">RX_BUSY</span><span class="p">;</span></td>
     </tr>
     <tr class="source-line">
-      <td class="lineno"><a id="l257" href="#l257">257</a></td>
+      <td class="lineno"><a id="l260" href="#l260">260</a></td>
       <td class="linebranch">
       </td>
       <td class="linecount coveredLine">542</td>
       <td class="src coveredLine"><span class="w">        </span><span class="n">otherChannel</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">SpiDriver_DmaChannel</span><span class="o">::</span><span class="n">MOSI</span><span class="p">;</span></td>
     </tr>
     <tr class="source-line">
-      <td class="lineno"><a id="l258" href="#l258">258</a></td>
+      <td class="lineno"><a id="l261" href="#l261">261</a></td>
       <td class="linebranch">
       </td>
       <td class="linecount coveredLine">542</td>
       <td class="src coveredLine"><span class="w">        </span><span class="n">otherBit</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">BusyBit</span><span class="o">::</span><span class="n">TX_BUSY</span><span class="p">;</span></td>
     </tr>
     <tr class="source-line">
-      <td class="lineno"><a id="l259" href="#l259">259</a></td>
+      <td class="lineno"><a id="l262" href="#l262">262</a></td>
       <td class="linebranch">
         <details class="linebranchDetails">
           <summary class="linebranchSummary">1/2</summary>
@@ -2344,49 +2375,49 @@
       <td class="src partialCoveredLine"><span class="w">    </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">portNum</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">SpiDriver_DmaChannel</span><span class="o">::</span><span class="n">MOSI</span><span class="p">)</span><span class="w"> </span><span class="p">{</span></td>
     </tr>
     <tr class="source-line">
-      <td class="lineno"><a id="l260" href="#l260">260</a></td>
+      <td class="lineno"><a id="l263" href="#l263">263</a></td>
       <td class="linebranch">
       </td>
       <td class="linecount coveredLine">541</td>
       <td class="src coveredLine"><span class="w">        </span><span class="n">doneBit</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">BusyBit</span><span class="o">::</span><span class="n">TX_BUSY</span><span class="p">;</span></td>
     </tr>
     <tr class="source-line">
-      <td class="lineno"><a id="l261" href="#l261">261</a></td>
+      <td class="lineno"><a id="l264" href="#l264">264</a></td>
       <td class="linebranch">
       </td>
       <td class="linecount coveredLine">541</td>
       <td class="src coveredLine"><span class="w">        </span><span class="n">otherChannel</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">SpiDriver_DmaChannel</span><span class="o">::</span><span class="n">MISO</span><span class="p">;</span></td>
     </tr>
     <tr class="source-line">
-      <td class="lineno"><a id="l262" href="#l262">262</a></td>
+      <td class="lineno"><a id="l265" href="#l265">265</a></td>
       <td class="linebranch">
       </td>
       <td class="linecount coveredLine">541</td>
       <td class="src coveredLine"><span class="w">        </span><span class="n">otherBit</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">BusyBit</span><span class="o">::</span><span class="n">RX_BUSY</span><span class="p">;</span></td>
     </tr>
     <tr class="source-line">
-      <td class="lineno"><a id="l263" href="#l263">263</a></td>
+      <td class="lineno"><a id="l266" href="#l266">266</a></td>
       <td class="linebranch">
       </td>
       <td class="linecount "></td>
       <td class="src "><span class="w">    </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{</span></td>
     </tr>
     <tr class="source-line">
-      <td class="lineno"><a id="l264" href="#l264">264</a></td>
+      <td class="lineno"><a id="l267" href="#l267">267</a></td>
       <td class="linebranch">
       </td>
       <td class="linecount uncoveredLine">&cross;</td>
       <td class="src uncoveredLine"><span class="w">        </span><span class="k">return</span><span class="p">;</span></td>
     </tr>
     <tr class="source-line">
-      <td class="lineno"><a id="l265" href="#l265">265</a></td>
+      <td class="lineno"><a id="l268" href="#l268">268</a></td>
       <td class="linebranch">
       </td>
       <td class="linecount "></td>
       <td class="src "><span class="w">    </span><span class="p">}</span></td>
     </tr>
     <tr class="source-line">
-      <td class="lineno"><a id="l266" href="#l266">266</a></td>
+      <td class="lineno"><a id="l269" href="#l269">269</a></td>
       <td class="linebranch">
         <details class="linebranchDetails">
           <summary class="linebranchSummary">2/2</summary>
@@ -2400,35 +2431,35 @@
       <td class="src coveredLine"><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">((</span><span class="k">this</span><span class="o">-&gt;</span><span class="n">m_busy</span><span class="w"> </span><span class="o">&amp;</span><span class="w"> </span><span class="n">doneBit</span><span class="p">)</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span><span class="w"> </span><span class="p">{</span></td>
     </tr>
     <tr class="source-line">
-      <td class="lineno"><a id="l267" href="#l267">267</a></td>
+      <td class="lineno"><a id="l270" href="#l270">270</a></td>
       <td class="linebranch">
       </td>
       <td class="linecount "></td>
       <td class="src "><span class="w">        </span><span class="c1">// Duplicate completion of a channel already accounted for: ignore</span></td>
     </tr>
     <tr class="source-line">
-      <td class="lineno"><a id="l268" href="#l268">268</a></td>
+      <td class="lineno"><a id="l271" href="#l271">271</a></td>
       <td class="linebranch">
       </td>
       <td class="linecount coveredLine">1</td>
       <td class="src coveredLine"><span class="w">        </span><span class="k">return</span><span class="p">;</span></td>
     </tr>
     <tr class="source-line">
-      <td class="lineno"><a id="l269" href="#l269">269</a></td>
+      <td class="lineno"><a id="l272" href="#l272">272</a></td>
       <td class="linebranch">
       </td>
       <td class="linecount "></td>
       <td class="src "><span class="w">    </span><span class="p">}</span></td>
     </tr>
     <tr class="source-line">
-      <td class="lineno"><a id="l270" href="#l270">270</a></td>
+      <td class="lineno"><a id="l273" href="#l273">273</a></td>
       <td class="linebranch">
       </td>
       <td class="linecount coveredLine">1082</td>
       <td class="src coveredLine"><span class="w">    </span><span class="k">this</span><span class="o">-&gt;</span><span class="n">m_busy</span><span class="w"> </span><span class="o">&amp;=</span><span class="w"> </span><span class="k">static_cast</span><span class="o">&lt;</span><span class="n">U8</span><span class="o">&gt;</span><span class="p">(</span><span class="o">~</span><span class="n">doneBit</span><span class="p">);</span></td>
     </tr>
     <tr class="source-line">
-      <td class="lineno"><a id="l271" href="#l271">271</a></td>
+      <td class="lineno"><a id="l274" href="#l274">274</a></td>
       <td class="linebranch">
         <details class="linebranchDetails">
           <summary class="linebranchSummary">2/2</summary>
@@ -2442,35 +2473,35 @@
       <td class="src coveredLine"><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">reply</span><span class="p">.</span><span class="n">get_status</span><span class="p">()</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="n">Samd21</span><span class="o">::</span><span class="n">Dma</span><span class="o">::</span><span class="n">Status</span><span class="o">::</span><span class="n">OK</span><span class="p">)</span><span class="w"> </span><span class="p">{</span></td>
     </tr>
     <tr class="source-line">
-      <td class="lineno"><a id="l272" href="#l272">272</a></td>
+      <td class="lineno"><a id="l275" href="#l275">275</a></td>
       <td class="linebranch">
       </td>
       <td class="linecount "></td>
       <td class="src "><span class="w">        </span><span class="c1">// The stream faulted part-way (AHB bus error on a caller buffer): the bytes were</span></td>
     </tr>
     <tr class="source-line">
-      <td class="lineno"><a id="l273" href="#l273">273</a></td>
+      <td class="lineno"><a id="l276" href="#l276">276</a></td>
       <td class="linebranch">
       </td>
       <td class="linecount "></td>
       <td class="src "><span class="w">        </span><span class="c1">// not all moved, so the transfer cannot be reported SPI_OK, and the other stream</span></td>
     </tr>
     <tr class="source-line">
-      <td class="lineno"><a id="l274" href="#l274">274</a></td>
+      <td class="lineno"><a id="l277" href="#l277">277</a></td>
       <td class="linebranch">
       </td>
       <td class="linecount "></td>
       <td class="src "><span class="w">        </span><span class="c1">// would otherwise wait forever for its trigger. Stop it, release the bus and</span></td>
     </tr>
     <tr class="source-line">
-      <td class="lineno"><a id="l275" href="#l275">275</a></td>
+      <td class="lineno"><a id="l278" href="#l278">278</a></td>
       <td class="linebranch">
       </td>
       <td class="linecount "></td>
       <td class="src "><span class="w">        </span><span class="c1">// fail the request. The DMA driver raises no reply for an aborted channel.</span></td>
     </tr>
     <tr class="source-line">
-      <td class="lineno"><a id="l276" href="#l276">276</a></td>
+      <td class="lineno"><a id="l279" href="#l279">279</a></td>
       <td class="linebranch">
         <details class="linebranchDetails">
           <summary class="linebranchSummary">2/2</summary>
@@ -2484,35 +2515,35 @@
       <td class="src coveredLine"><span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="k">this</span><span class="o">-&gt;</span><span class="n">m_busy</span><span class="w"> </span><span class="o">&amp;</span><span class="w"> </span><span class="n">otherBit</span><span class="p">)</span><span class="w"> </span><span class="p">{</span></td>
     </tr>
     <tr class="source-line">
-      <td class="lineno"><a id="l277" href="#l277">277</a></td>
+      <td class="lineno"><a id="l280" href="#l280">280</a></td>
       <td class="linebranch">
       </td>
       <td class="linecount coveredLine">2</td>
       <td class="src coveredLine"><span class="w">            </span><span class="k">this</span><span class="o">-&gt;</span><span class="n">dmaTransactionAbortOut_out</span><span class="p">(</span><span class="n">otherChannel</span><span class="p">);</span></td>
     </tr>
     <tr class="source-line">
-      <td class="lineno"><a id="l278" href="#l278">278</a></td>
+      <td class="lineno"><a id="l281" href="#l281">281</a></td>
       <td class="linebranch">
       </td>
       <td class="linecount "></td>
       <td class="src "><span class="w">        </span><span class="p">}</span></td>
     </tr>
     <tr class="source-line">
-      <td class="lineno"><a id="l279" href="#l279">279</a></td>
+      <td class="lineno"><a id="l282" href="#l282">282</a></td>
       <td class="linebranch">
       </td>
       <td class="linecount "></td>
       <td class="src "><span class="w">        </span><span class="c1">// Characters already clocked in but not collected would be read by the next</span></td>
     </tr>
     <tr class="source-line">
-      <td class="lineno"><a id="l280" href="#l280">280</a></td>
+      <td class="lineno"><a id="l283" href="#l283">283</a></td>
       <td class="linebranch">
       </td>
       <td class="linecount "></td>
       <td class="src "><span class="w">        </span><span class="c1">// transfer: drain the receiver and clear the flags, as after an overrun.</span></td>
     </tr>
     <tr class="source-line">
-      <td class="lineno"><a id="l281" href="#l281">281</a></td>
+      <td class="lineno"><a id="l284" href="#l284">284</a></td>
       <td class="linebranch">
         <details class="linebranchDetails">
           <summary class="linebranchSummary">2/2</summary>
@@ -2526,21 +2557,21 @@
       <td class="src coveredLine"><span class="w">        </span><span class="n">SpiHardware</span><span class="o">::</span><span class="n">SpiHal</span><span class="o">::</span><span class="n">acknowledgeError</span><span class="p">(</span><span class="k">this</span><span class="o">-&gt;</span><span class="n">m_sercom</span><span class="p">);</span></td>
     </tr>
     <tr class="source-line">
-      <td class="lineno"><a id="l282" href="#l282">282</a></td>
+      <td class="lineno"><a id="l285" href="#l285">285</a></td>
       <td class="linebranch">
       </td>
       <td class="linecount coveredLine">3</td>
       <td class="src coveredLine"><span class="w">        </span><span class="k">this</span><span class="o">-&gt;</span><span class="n">m_busy</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span></td>
     </tr>
     <tr class="source-line">
-      <td class="lineno"><a id="l283" href="#l283">283</a></td>
+      <td class="lineno"><a id="l286" href="#l286">286</a></td>
       <td class="linebranch">
       </td>
       <td class="linecount coveredLine">3</td>
       <td class="src coveredLine"><span class="w">        </span><span class="k">this</span><span class="o">-&gt;</span><span class="n">deassertChipSelect</span><span class="p">();</span></td>
     </tr>
     <tr class="source-line">
-      <td class="lineno"><a id="l284" href="#l284">284</a></td>
+      <td class="lineno"><a id="l287" href="#l287">287</a></td>
       <td class="linebranch">
         <details class="linebranchDetails">
           <summary class="linebranchSummary">3/3</summary>
@@ -2555,28 +2586,28 @@
       <td class="src coveredLine"><span class="w">        </span><span class="k">this</span><span class="o">-&gt;</span><span class="n">latchReply</span><span class="p">(</span><span class="k">this</span><span class="o">-&gt;</span><span class="n">m_portNum</span><span class="p">,</span><span class="w"> </span><span class="k">this</span><span class="o">-&gt;</span><span class="n">m_write</span><span class="p">.</span><span class="n">getBuffer</span><span class="p">(),</span><span class="w"> </span><span class="k">this</span><span class="o">-&gt;</span><span class="n">m_read</span><span class="p">.</span><span class="n">getBuffer</span><span class="p">(),</span></td>
     </tr>
     <tr class="source-line">
-      <td class="lineno"><a id="l285" href="#l285">285</a></td>
+      <td class="lineno"><a id="l288" href="#l288">288</a></td>
       <td class="linebranch">
       </td>
       <td class="linecount "></td>
       <td class="src "><span class="w">                         </span><span class="n">Drv</span><span class="o">::</span><span class="n">SpiStatus</span><span class="o">::</span><span class="n">SPI_OTHER_ERR</span><span class="p">);</span></td>
     </tr>
     <tr class="source-line">
-      <td class="lineno"><a id="l286" href="#l286">286</a></td>
+      <td class="lineno"><a id="l289" href="#l289">289</a></td>
       <td class="linebranch">
       </td>
       <td class="linecount coveredLine">3</td>
       <td class="src coveredLine"><span class="w">        </span><span class="k">return</span><span class="p">;</span></td>
     </tr>
     <tr class="source-line">
-      <td class="lineno"><a id="l287" href="#l287">287</a></td>
+      <td class="lineno"><a id="l290" href="#l290">290</a></td>
       <td class="linebranch">
       </td>
       <td class="linecount "></td>
       <td class="src "><span class="w">    </span><span class="p">}</span></td>
     </tr>
     <tr class="source-line">
-      <td class="lineno"><a id="l288" href="#l288">288</a></td>
+      <td class="lineno"><a id="l291" href="#l291">291</a></td>
       <td class="linebranch">
         <details class="linebranchDetails">
           <summary class="linebranchSummary">2/2</summary>
@@ -2590,14 +2621,14 @@
       <td class="src coveredLine"><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="k">this</span><span class="o">-&gt;</span><span class="n">m_busy</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span><span class="w"> </span><span class="p">{</span></td>
     </tr>
     <tr class="source-line">
-      <td class="lineno"><a id="l289" href="#l289">289</a></td>
+      <td class="lineno"><a id="l292" href="#l292">292</a></td>
       <td class="linebranch">
       </td>
       <td class="linecount coveredLine">538</td>
       <td class="src coveredLine"><span class="w">        </span><span class="k">this</span><span class="o">-&gt;</span><span class="n">deassertChipSelect</span><span class="p">();</span></td>
     </tr>
     <tr class="source-line">
-      <td class="lineno"><a id="l290" href="#l290">290</a></td>
+      <td class="lineno"><a id="l293" href="#l293">293</a></td>
       <td class="linebranch">
         <details class="linebranchDetails">
           <summary class="linebranchSummary">3/3</summary>
@@ -2612,119 +2643,119 @@
       <td class="src coveredLine"><span class="w">        </span><span class="k">this</span><span class="o">-&gt;</span><span class="n">latchReply</span><span class="p">(</span><span class="k">this</span><span class="o">-&gt;</span><span class="n">m_portNum</span><span class="p">,</span><span class="w"> </span><span class="k">this</span><span class="o">-&gt;</span><span class="n">m_write</span><span class="p">.</span><span class="n">getBuffer</span><span class="p">(),</span><span class="w"> </span><span class="k">this</span><span class="o">-&gt;</span><span class="n">m_read</span><span class="p">.</span><span class="n">getBuffer</span><span class="p">(),</span><span class="w"> </span><span class="n">Drv</span><span class="o">::</span><span class="n">SpiStatus</span><span class="o">::</span><span class="n">SPI_OK</span><span class="p">);</span></td>
     </tr>
     <tr class="source-line">
-      <td class="lineno"><a id="l291" href="#l291">291</a></td>
+      <td class="lineno"><a id="l294" href="#l294">294</a></td>
       <td class="linebranch">
       </td>
       <td class="linecount "></td>
       <td class="src "><span class="w">    </span><span class="p">}</span></td>
     </tr>
     <tr class="source-line">
-      <td class="lineno"><a id="l292" href="#l292">292</a></td>
+      <td class="lineno"><a id="l295" href="#l295">295</a></td>
       <td class="linebranch">
       </td>
       <td class="linecount "></td>
       <td class="src "><span class="p">}</span></td>
     </tr>
     <tr class="source-line">
-      <td class="lineno"><a id="l293" href="#l293">293</a></td>
-      <td class="linebranch">
-      </td>
-      <td class="linecount "></td>
-      <td class="src "></td>
-    </tr>
-    <tr class="source-line">
-      <td class="lineno"><a id="l294" href="#l294">294</a></td>
-      <td class="linebranch">
-      </td>
-      <td class="linecount "></td>
-      <td class="src "><span class="c1">// ----------------------------------------------------------------------</span></td>
-    </tr>
-    <tr class="source-line">
-      <td class="lineno"><a id="l295" href="#l295">295</a></td>
-      <td class="linebranch">
-      </td>
-      <td class="linecount "></td>
-      <td class="src "><span class="c1">// SERCOM interrupt handling</span></td>
-    </tr>
-    <tr class="source-line">
       <td class="lineno"><a id="l296" href="#l296">296</a></td>
       <td class="linebranch">
       </td>
       <td class="linecount "></td>
-      <td class="src "><span class="c1">// ----------------------------------------------------------------------</span></td>
+      <td class="src "></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l297" href="#l297">297</a></td>
       <td class="linebranch">
       </td>
       <td class="linecount "></td>
-      <td class="src "></td>
+      <td class="src "><span class="c1">// ----------------------------------------------------------------------</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l298" href="#l298">298</a></td>
       <td class="linebranch">
       </td>
-      <td class="linecount coveredLine">9</td>
-      <td class="src coveredLine"><span class="kt">void</span><span class="w"> </span><span class="n">SpiDriver</span><span class="w"> </span><span class="o">::</span><span class="n">s_spiDriverIsrHandler</span><span class="p">(</span><span class="n">Fw</span><span class="o">::</span><span class="n">PassiveComponentBase</span><span class="o">*</span><span class="w"> </span><span class="n">spiDriverRaw</span><span class="p">,</span><span class="w"> </span><span class="n">SercomKind</span><span class="w"> </span><span class="n">sercom</span><span class="p">)</span><span class="w"> </span><span class="p">{</span></td>
+      <td class="linecount "></td>
+      <td class="src "><span class="c1">// SERCOM interrupt handling</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l299" href="#l299">299</a></td>
       <td class="linebranch">
       </td>
-      <td class="linecount coveredLine">9</td>
-      <td class="src coveredLine"><span class="w">    </span><span class="k">auto</span><span class="w"> </span><span class="n">spiDriver</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">reinterpret_cast</span><span class="o">&lt;</span><span class="n">SpiDriver</span><span class="o">*&gt;</span><span class="p">(</span><span class="n">spiDriverRaw</span><span class="p">);</span></td>
+      <td class="linecount "></td>
+      <td class="src "><span class="c1">// ----------------------------------------------------------------------</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l300" href="#l300">300</a></td>
-      <td class="linebranch">
-      </td>
-      <td class="linecount coveredLine">9</td>
-      <td class="src coveredLine"><span class="w">    </span><span class="n">FW_ASSERT</span><span class="p">(</span><span class="n">spiDriver</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="nb">nullptr</span><span class="p">);</span></td>
-    </tr>
-    <tr class="source-line">
-      <td class="lineno"><a id="l301" href="#l301">301</a></td>
-      <td class="linebranch">
-      </td>
-      <td class="linecount coveredLine">9</td>
-      <td class="src coveredLine"><span class="w">    </span><span class="n">FW_ASSERT</span><span class="p">(</span><span class="n">sercom</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">spiDriver</span><span class="o">-&gt;</span><span class="n">m_sercom</span><span class="p">,</span><span class="w"> </span><span class="n">sercom</span><span class="p">,</span><span class="w"> </span><span class="n">spiDriver</span><span class="o">-&gt;</span><span class="n">m_sercom</span><span class="p">);</span></td>
-    </tr>
-    <tr class="source-line">
-      <td class="lineno"><a id="l302" href="#l302">302</a></td>
-      <td class="linebranch">
-      </td>
-      <td class="linecount coveredLine">9</td>
-      <td class="src coveredLine"><span class="w">    </span><span class="n">spiDriver</span><span class="o">-&gt;</span><span class="n">isrHandler</span><span class="p">();</span></td>
-    </tr>
-    <tr class="source-line">
-      <td class="lineno"><a id="l303" href="#l303">303</a></td>
-      <td class="linebranch">
-      </td>
-      <td class="linecount coveredLine">9</td>
-      <td class="src coveredLine"><span class="p">}</span></td>
-    </tr>
-    <tr class="source-line">
-      <td class="lineno"><a id="l304" href="#l304">304</a></td>
       <td class="linebranch">
       </td>
       <td class="linecount "></td>
       <td class="src "></td>
     </tr>
     <tr class="source-line">
+      <td class="lineno"><a id="l301" href="#l301">301</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount coveredLine">9</td>
+      <td class="src coveredLine"><span class="kt">void</span><span class="w"> </span><span class="n">SpiDriver</span><span class="w"> </span><span class="o">::</span><span class="n">s_spiDriverIsrHandler</span><span class="p">(</span><span class="n">Fw</span><span class="o">::</span><span class="n">PassiveComponentBase</span><span class="o">*</span><span class="w"> </span><span class="n">spiDriverRaw</span><span class="p">,</span><span class="w"> </span><span class="n">SercomKind</span><span class="w"> </span><span class="n">sercom</span><span class="p">)</span><span class="w"> </span><span class="p">{</span></td>
+    </tr>
+    <tr class="source-line">
+      <td class="lineno"><a id="l302" href="#l302">302</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount coveredLine">9</td>
+      <td class="src coveredLine"><span class="w">    </span><span class="k">auto</span><span class="w"> </span><span class="n">spiDriver</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">reinterpret_cast</span><span class="o">&lt;</span><span class="n">SpiDriver</span><span class="o">*&gt;</span><span class="p">(</span><span class="n">spiDriverRaw</span><span class="p">);</span></td>
+    </tr>
+    <tr class="source-line">
+      <td class="lineno"><a id="l303" href="#l303">303</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount coveredLine">9</td>
+      <td class="src coveredLine"><span class="w">    </span><span class="n">FW_ASSERT</span><span class="p">(</span><span class="n">spiDriver</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="nb">nullptr</span><span class="p">);</span></td>
+    </tr>
+    <tr class="source-line">
+      <td class="lineno"><a id="l304" href="#l304">304</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount coveredLine">9</td>
+      <td class="src coveredLine"><span class="w">    </span><span class="n">FW_ASSERT</span><span class="p">(</span><span class="n">sercom</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">spiDriver</span><span class="o">-&gt;</span><span class="n">m_sercom</span><span class="p">,</span><span class="w"> </span><span class="n">sercom</span><span class="p">,</span><span class="w"> </span><span class="n">spiDriver</span><span class="o">-&gt;</span><span class="n">m_sercom</span><span class="p">);</span></td>
+    </tr>
+    <tr class="source-line">
       <td class="lineno"><a id="l305" href="#l305">305</a></td>
       <td class="linebranch">
       </td>
       <td class="linecount coveredLine">9</td>
-      <td class="src coveredLine"><span class="kt">void</span><span class="w"> </span><span class="n">SpiDriver</span><span class="w"> </span><span class="o">::</span><span class="n">isrHandler</span><span class="p">()</span><span class="w"> </span><span class="p">{</span></td>
+      <td class="src coveredLine"><span class="w">    </span><span class="n">spiDriver</span><span class="o">-&gt;</span><span class="n">isrHandler</span><span class="p">();</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l306" href="#l306">306</a></td>
       <td class="linebranch">
       </td>
       <td class="linecount coveredLine">9</td>
-      <td class="src coveredLine"><span class="w">    </span><span class="n">FW_ASSERT</span><span class="p">(</span><span class="k">this</span><span class="o">-&gt;</span><span class="n">m_configured</span><span class="p">,</span><span class="w"> </span><span class="k">this</span><span class="o">-&gt;</span><span class="n">m_sercom</span><span class="p">);</span></td>
+      <td class="src coveredLine"><span class="p">}</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l307" href="#l307">307</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount "></td>
+      <td class="src "></td>
+    </tr>
+    <tr class="source-line">
+      <td class="lineno"><a id="l308" href="#l308">308</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount coveredLine">9</td>
+      <td class="src coveredLine"><span class="kt">void</span><span class="w"> </span><span class="n">SpiDriver</span><span class="w"> </span><span class="o">::</span><span class="n">isrHandler</span><span class="p">()</span><span class="w"> </span><span class="p">{</span></td>
+    </tr>
+    <tr class="source-line">
+      <td class="lineno"><a id="l309" href="#l309">309</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount coveredLine">9</td>
+      <td class="src coveredLine"><span class="w">    </span><span class="n">FW_ASSERT</span><span class="p">(</span><span class="k">this</span><span class="o">-&gt;</span><span class="n">m_configured</span><span class="p">,</span><span class="w"> </span><span class="k">this</span><span class="o">-&gt;</span><span class="n">m_sercom</span><span class="p">);</span></td>
+    </tr>
+    <tr class="source-line">
+      <td class="lineno"><a id="l310" href="#l310">310</a></td>
       <td class="linebranch">
         <details class="linebranchDetails">
           <summary class="linebranchSummary">2/2</summary>
@@ -2738,7 +2769,7 @@
       <td class="src coveredLine"><span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="n">SpiHardware</span><span class="o">::</span><span class="n">SpiErrorStatus</span><span class="w"> </span><span class="n">status</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">SpiHardware</span><span class="o">::</span><span class="n">SpiHal</span><span class="o">::</span><span class="n">readErrorStatus</span><span class="p">(</span><span class="k">this</span><span class="o">-&gt;</span><span class="n">m_sercom</span><span class="p">);</span></td>
     </tr>
     <tr class="source-line">
-      <td class="lineno"><a id="l308" href="#l308">308</a></td>
+      <td class="lineno"><a id="l311" href="#l311">311</a></td>
       <td class="linebranch">
         <details class="linebranchDetails">
           <summary class="linebranchSummary">3/4</summary>
@@ -2754,81 +2785,53 @@
       <td class="src partialCoveredLine"><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">status</span><span class="p">.</span><span class="n">error</span><span class="p">)</span><span class="w"> </span><span class="p">{</span></td>
     </tr>
     <tr class="source-line">
-      <td class="lineno"><a id="l309" href="#l309">309</a></td>
+      <td class="lineno"><a id="l312" href="#l312">312</a></td>
       <td class="linebranch">
       </td>
       <td class="linecount "></td>
       <td class="src "><span class="w">        </span><span class="c1">// ERROR is the only interrupt enabled; anything else is spurious</span></td>
     </tr>
     <tr class="source-line">
-      <td class="lineno"><a id="l310" href="#l310">310</a></td>
+      <td class="lineno"><a id="l313" href="#l313">313</a></td>
       <td class="linebranch">
       </td>
       <td class="linecount coveredLine">1</td>
       <td class="src coveredLine"><span class="w">        </span><span class="k">return</span><span class="p">;</span></td>
     </tr>
     <tr class="source-line">
-      <td class="lineno"><a id="l311" href="#l311">311</a></td>
-      <td class="linebranch">
-      </td>
-      <td class="linecount "></td>
-      <td class="src "><span class="w">    </span><span class="p">}</span></td>
-    </tr>
-    <tr class="source-line">
-      <td class="lineno"><a id="l312" href="#l312">312</a></td>
-      <td class="linebranch">
-      </td>
-      <td class="linecount "></td>
-      <td class="src "><span class="w">    </span><span class="c1">// Stop the DMA streams that have not completed before touching the peripheral, so</span></td>
-    </tr>
-    <tr class="source-line">
-      <td class="lineno"><a id="l313" href="#l313">313</a></td>
-      <td class="linebranch">
-      </td>
-      <td class="linecount "></td>
-      <td class="src "><span class="w">    </span><span class="c1">// no further characters are pushed while the receiver is drained. The DMA driver</span></td>
-    </tr>
-    <tr class="source-line">
       <td class="lineno"><a id="l314" href="#l314">314</a></td>
       <td class="linebranch">
       </td>
       <td class="linecount "></td>
-      <td class="src "><span class="w">    </span><span class="c1">// raises no reply for an aborted channel and clears its pending flags, so no stale</span></td>
+      <td class="src "><span class="w">    </span><span class="p">}</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l315" href="#l315">315</a></td>
       <td class="linebranch">
       </td>
       <td class="linecount "></td>
-      <td class="src "><span class="w">    </span><span class="c1">// dmaReplyIn follows.</span></td>
+      <td class="src "><span class="w">    </span><span class="c1">// Stop the DMA streams that have not completed before touching the peripheral, so</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l316" href="#l316">316</a></td>
       <td class="linebranch">
-        <details class="linebranchDetails">
-          <summary class="linebranchSummary">2/2</summary>
-          <div class="linebranchContents">
-            <div class="takenBranch">&check; Branch 4 taken 6 times.</div>
-            <div class="takenBranch">&check; Branch 5 taken 2 times.</div>
-          </div>
-        </details>
       </td>
-      <td class="linecount coveredLine">8</td>
-      <td class="src coveredLine"><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="k">this</span><span class="o">-&gt;</span><span class="n">m_busy</span><span class="w"> </span><span class="o">&amp;</span><span class="w"> </span><span class="n">BusyBit</span><span class="o">::</span><span class="n">RX_BUSY</span><span class="p">)</span><span class="w"> </span><span class="p">{</span></td>
+      <td class="linecount "></td>
+      <td class="src "><span class="w">    </span><span class="c1">// no further characters are pushed while the receiver is drained. The DMA driver</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l317" href="#l317">317</a></td>
       <td class="linebranch">
       </td>
-      <td class="linecount coveredLine">6</td>
-      <td class="src coveredLine"><span class="w">        </span><span class="k">this</span><span class="o">-&gt;</span><span class="n">dmaTransactionAbortOut_out</span><span class="p">(</span><span class="n">SpiDriver_DmaChannel</span><span class="o">::</span><span class="n">MISO</span><span class="p">);</span></td>
+      <td class="linecount "></td>
+      <td class="src "><span class="w">    </span><span class="c1">// raises no reply for an aborted channel and clears its pending flags, so no stale</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l318" href="#l318">318</a></td>
       <td class="linebranch">
       </td>
       <td class="linecount "></td>
-      <td class="src "><span class="w">    </span><span class="p">}</span></td>
+      <td class="src "><span class="w">    </span><span class="c1">// dmaReplyIn follows.</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l319" href="#l319">319</a></td>
@@ -2842,14 +2845,14 @@
         </details>
       </td>
       <td class="linecount coveredLine">8</td>
-      <td class="src coveredLine"><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="k">this</span><span class="o">-&gt;</span><span class="n">m_busy</span><span class="w"> </span><span class="o">&amp;</span><span class="w"> </span><span class="n">BusyBit</span><span class="o">::</span><span class="n">TX_BUSY</span><span class="p">)</span><span class="w"> </span><span class="p">{</span></td>
+      <td class="src coveredLine"><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="k">this</span><span class="o">-&gt;</span><span class="n">m_busy</span><span class="w"> </span><span class="o">&amp;</span><span class="w"> </span><span class="n">BusyBit</span><span class="o">::</span><span class="n">RX_BUSY</span><span class="p">)</span><span class="w"> </span><span class="p">{</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l320" href="#l320">320</a></td>
       <td class="linebranch">
       </td>
       <td class="linecount coveredLine">6</td>
-      <td class="src coveredLine"><span class="w">        </span><span class="k">this</span><span class="o">-&gt;</span><span class="n">dmaTransactionAbortOut_out</span><span class="p">(</span><span class="n">SpiDriver_DmaChannel</span><span class="o">::</span><span class="n">MOSI</span><span class="p">);</span></td>
+      <td class="src coveredLine"><span class="w">        </span><span class="k">this</span><span class="o">-&gt;</span><span class="n">dmaTransactionAbortOut_out</span><span class="p">(</span><span class="n">SpiDriver_DmaChannel</span><span class="o">::</span><span class="n">MISO</span><span class="p">);</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l321" href="#l321">321</a></td>
@@ -2861,19 +2864,47 @@
     <tr class="source-line">
       <td class="lineno"><a id="l322" href="#l322">322</a></td>
       <td class="linebranch">
+        <details class="linebranchDetails">
+          <summary class="linebranchSummary">2/2</summary>
+          <div class="linebranchContents">
+            <div class="takenBranch">&check; Branch 4 taken 6 times.</div>
+            <div class="takenBranch">&check; Branch 5 taken 2 times.</div>
+          </div>
+        </details>
+      </td>
+      <td class="linecount coveredLine">8</td>
+      <td class="src coveredLine"><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="k">this</span><span class="o">-&gt;</span><span class="n">m_busy</span><span class="w"> </span><span class="o">&amp;</span><span class="w"> </span><span class="n">BusyBit</span><span class="o">::</span><span class="n">TX_BUSY</span><span class="p">)</span><span class="w"> </span><span class="p">{</span></td>
+    </tr>
+    <tr class="source-line">
+      <td class="lineno"><a id="l323" href="#l323">323</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount coveredLine">6</td>
+      <td class="src coveredLine"><span class="w">        </span><span class="k">this</span><span class="o">-&gt;</span><span class="n">dmaTransactionAbortOut_out</span><span class="p">(</span><span class="n">SpiDriver_DmaChannel</span><span class="o">::</span><span class="n">MOSI</span><span class="p">);</span></td>
+    </tr>
+    <tr class="source-line">
+      <td class="lineno"><a id="l324" href="#l324">324</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount "></td>
+      <td class="src "><span class="w">    </span><span class="p">}</span></td>
+    </tr>
+    <tr class="source-line">
+      <td class="lineno"><a id="l325" href="#l325">325</a></td>
+      <td class="linebranch">
       </td>
       <td class="linecount "></td>
       <td class="src "><span class="w">    </span><span class="c1">// Let the shifter finish, drain the receiver and clear the flags so the interrupt</span></td>
     </tr>
     <tr class="source-line">
-      <td class="lineno"><a id="l323" href="#l323">323</a></td>
+      <td class="lineno"><a id="l326" href="#l326">326</a></td>
       <td class="linebranch">
       </td>
       <td class="linecount "></td>
       <td class="src "><span class="w">    </span><span class="c1">// cannot re-fire and the next transfer starts on an empty receive buffer.</span></td>
     </tr>
     <tr class="source-line">
-      <td class="lineno"><a id="l324" href="#l324">324</a></td>
+      <td class="lineno"><a id="l327" href="#l327">327</a></td>
       <td class="linebranch">
         <details class="linebranchDetails">
           <summary class="linebranchSummary">2/2</summary>
@@ -2887,7 +2918,7 @@
       <td class="src coveredLine"><span class="w">    </span><span class="n">SpiHardware</span><span class="o">::</span><span class="n">SpiHal</span><span class="o">::</span><span class="n">acknowledgeError</span><span class="p">(</span><span class="k">this</span><span class="o">-&gt;</span><span class="n">m_sercom</span><span class="p">);</span></td>
     </tr>
     <tr class="source-line">
-      <td class="lineno"><a id="l325" href="#l325">325</a></td>
+      <td class="lineno"><a id="l328" href="#l328">328</a></td>
       <td class="linebranch">
         <details class="linebranchDetails">
           <summary class="linebranchSummary">2/2</summary>
@@ -2901,42 +2932,42 @@
       <td class="src coveredLine"><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="k">this</span><span class="o">-&gt;</span><span class="n">m_busy</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span><span class="w"> </span><span class="p">{</span></td>
     </tr>
     <tr class="source-line">
-      <td class="lineno"><a id="l326" href="#l326">326</a></td>
+      <td class="lineno"><a id="l329" href="#l329">329</a></td>
       <td class="linebranch">
       </td>
       <td class="linecount "></td>
       <td class="src "><span class="w">        </span><span class="c1">// Nothing in flight to fail (the transfer finished before the flag was seen)</span></td>
     </tr>
     <tr class="source-line">
-      <td class="lineno"><a id="l327" href="#l327">327</a></td>
+      <td class="lineno"><a id="l330" href="#l330">330</a></td>
       <td class="linebranch">
       </td>
       <td class="linecount coveredLine">1</td>
       <td class="src coveredLine"><span class="w">        </span><span class="k">return</span><span class="p">;</span></td>
     </tr>
     <tr class="source-line">
-      <td class="lineno"><a id="l328" href="#l328">328</a></td>
+      <td class="lineno"><a id="l331" href="#l331">331</a></td>
       <td class="linebranch">
       </td>
       <td class="linecount "></td>
       <td class="src "><span class="w">    </span><span class="p">}</span></td>
     </tr>
     <tr class="source-line">
-      <td class="lineno"><a id="l329" href="#l329">329</a></td>
+      <td class="lineno"><a id="l332" href="#l332">332</a></td>
       <td class="linebranch">
       </td>
       <td class="linecount coveredLine">7</td>
       <td class="src coveredLine"><span class="w">    </span><span class="k">this</span><span class="o">-&gt;</span><span class="n">m_busy</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span></td>
     </tr>
     <tr class="source-line">
-      <td class="lineno"><a id="l330" href="#l330">330</a></td>
+      <td class="lineno"><a id="l333" href="#l333">333</a></td>
       <td class="linebranch">
       </td>
       <td class="linecount coveredLine">7</td>
       <td class="src coveredLine"><span class="w">    </span><span class="k">this</span><span class="o">-&gt;</span><span class="n">deassertChipSelect</span><span class="p">();</span></td>
     </tr>
     <tr class="source-line">
-      <td class="lineno"><a id="l331" href="#l331">331</a></td>
+      <td class="lineno"><a id="l334" href="#l334">334</a></td>
       <td class="linebranch">
         <details class="linebranchDetails">
           <summary class="linebranchSummary">3/3</summary>
@@ -2951,63 +2982,63 @@
       <td class="src coveredLine"><span class="w">    </span><span class="k">this</span><span class="o">-&gt;</span><span class="n">latchReply</span><span class="p">(</span><span class="k">this</span><span class="o">-&gt;</span><span class="n">m_portNum</span><span class="p">,</span><span class="w"> </span><span class="k">this</span><span class="o">-&gt;</span><span class="n">m_write</span><span class="p">.</span><span class="n">getBuffer</span><span class="p">(),</span><span class="w"> </span><span class="k">this</span><span class="o">-&gt;</span><span class="n">m_read</span><span class="p">.</span><span class="n">getBuffer</span><span class="p">(),</span></td>
     </tr>
     <tr class="source-line">
-      <td class="lineno"><a id="l332" href="#l332">332</a></td>
+      <td class="lineno"><a id="l335" href="#l335">335</a></td>
       <td class="linebranch">
       </td>
       <td class="linecount "></td>
       <td class="src "><span class="w">                     </span><span class="n">Drv</span><span class="o">::</span><span class="n">SpiStatus</span><span class="o">::</span><span class="n">SPI_OTHER_ERR</span><span class="p">);</span></td>
     </tr>
     <tr class="source-line">
-      <td class="lineno"><a id="l333" href="#l333">333</a></td>
+      <td class="lineno"><a id="l336" href="#l336">336</a></td>
       <td class="linebranch">
       </td>
       <td class="linecount "></td>
       <td class="src "><span class="p">}</span></td>
     </tr>
     <tr class="source-line">
-      <td class="lineno"><a id="l334" href="#l334">334</a></td>
-      <td class="linebranch">
-      </td>
-      <td class="linecount "></td>
-      <td class="src "></td>
-    </tr>
-    <tr class="source-line">
-      <td class="lineno"><a id="l335" href="#l335">335</a></td>
-      <td class="linebranch">
-      </td>
-      <td class="linecount "></td>
-      <td class="src "><span class="c1">// ----------------------------------------------------------------------</span></td>
-    </tr>
-    <tr class="source-line">
-      <td class="lineno"><a id="l336" href="#l336">336</a></td>
-      <td class="linebranch">
-      </td>
-      <td class="linecount "></td>
-      <td class="src "><span class="c1">// Helpers</span></td>
-    </tr>
-    <tr class="source-line">
       <td class="lineno"><a id="l337" href="#l337">337</a></td>
       <td class="linebranch">
       </td>
       <td class="linecount "></td>
-      <td class="src "><span class="c1">// ----------------------------------------------------------------------</span></td>
+      <td class="src "></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l338" href="#l338">338</a></td>
       <td class="linebranch">
       </td>
       <td class="linecount "></td>
-      <td class="src "></td>
+      <td class="src "><span class="c1">// ----------------------------------------------------------------------</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l339" href="#l339">339</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount "></td>
+      <td class="src "><span class="c1">// Helpers</span></td>
+    </tr>
+    <tr class="source-line">
+      <td class="lineno"><a id="l340" href="#l340">340</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount "></td>
+      <td class="src "><span class="c1">// ----------------------------------------------------------------------</span></td>
+    </tr>
+    <tr class="source-line">
+      <td class="lineno"><a id="l341" href="#l341">341</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount "></td>
+      <td class="src "></td>
+    </tr>
+    <tr class="source-line">
+      <td class="lineno"><a id="l342" href="#l342">342</a></td>
       <td class="linebranch">
       </td>
       <td class="linecount coveredLine">548</td>
       <td class="src coveredLine"><span class="kt">void</span><span class="w"> </span><span class="n">SpiDriver</span><span class="w"> </span><span class="o">::</span><span class="n">deassertChipSelect</span><span class="p">()</span><span class="w"> </span><span class="p">{</span></td>
     </tr>
     <tr class="source-line">
-      <td class="lineno"><a id="l340" href="#l340">340</a></td>
+      <td class="lineno"><a id="l343" href="#l343">343</a></td>
       <td class="linebranch">
         <details class="linebranchDetails">
           <summary class="linebranchSummary">3/4</summary>
@@ -3023,7 +3054,7 @@
       <td class="src partialCoveredLine"><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="k">this</span><span class="o">-&gt;</span><span class="n">m_hardware_chip_select</span><span class="p">)</span><span class="w"> </span><span class="p">{</span></td>
     </tr>
     <tr class="source-line">
-      <td class="lineno"><a id="l341" href="#l341">341</a></td>
+      <td class="lineno"><a id="l344" href="#l344">344</a></td>
       <td class="linebranch">
         <details class="linebranchDetails">
           <summary class="linebranchSummary">1/2</summary>
@@ -3037,28 +3068,28 @@
       <td class="src partialCoveredLine"><span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="k">this</span><span class="o">-&gt;</span><span class="n">isConnected_chipSelectGpioOut_OutputPort</span><span class="p">(</span><span class="k">this</span><span class="o">-&gt;</span><span class="n">m_portNum</span><span class="p">))</span><span class="w"> </span><span class="p">{</span></td>
     </tr>
     <tr class="source-line">
-      <td class="lineno"><a id="l342" href="#l342">342</a></td>
+      <td class="lineno"><a id="l345" href="#l345">345</a></td>
       <td class="linebranch">
       </td>
       <td class="linecount "></td>
       <td class="src "><span class="w">            </span><span class="c1">// Release is best effort and may run in ISR context: the pin was proven an</span></td>
     </tr>
     <tr class="source-line">
-      <td class="lineno"><a id="l343" href="#l343">343</a></td>
+      <td class="lineno"><a id="l346" href="#l346">346</a></td>
       <td class="linebranch">
       </td>
       <td class="linecount "></td>
       <td class="src "><span class="w">            </span><span class="c1">// opened output by configure() and by the status check that started this</span></td>
     </tr>
     <tr class="source-line">
-      <td class="lineno"><a id="l344" href="#l344">344</a></td>
+      <td class="lineno"><a id="l347" href="#l347">347</a></td>
       <td class="linebranch">
       </td>
       <td class="linecount "></td>
       <td class="src "><span class="w">            </span><span class="c1">// transfer, so the status cannot differ from OP_OK here, and an ISR must not assert.</span></td>
     </tr>
     <tr class="source-line">
-      <td class="lineno"><a id="l345" href="#l345">345</a></td>
+      <td class="lineno"><a id="l348" href="#l348">348</a></td>
       <td class="linebranch">
         <details class="linebranchDetails">
           <summary class="linebranchSummary">2/2</summary>
@@ -3072,166 +3103,166 @@
       <td class="src coveredLine"><span class="w">            </span><span class="p">(</span><span class="kt">void</span><span class="p">)</span><span class="k">this</span><span class="o">-&gt;</span><span class="n">chipSelectGpioOut_out</span><span class="p">(</span><span class="k">this</span><span class="o">-&gt;</span><span class="n">m_portNum</span><span class="p">,</span><span class="w"> </span><span class="n">Fw</span><span class="o">::</span><span class="n">Logic</span><span class="o">::</span><span class="n">HIGH</span><span class="p">);</span></td>
     </tr>
     <tr class="source-line">
-      <td class="lineno"><a id="l346" href="#l346">346</a></td>
+      <td class="lineno"><a id="l349" href="#l349">349</a></td>
       <td class="linebranch">
       </td>
       <td class="linecount "></td>
       <td class="src "><span class="w">        </span><span class="p">}</span></td>
     </tr>
     <tr class="source-line">
-      <td class="lineno"><a id="l347" href="#l347">347</a></td>
+      <td class="lineno"><a id="l350" href="#l350">350</a></td>
       <td class="linebranch">
       </td>
       <td class="linecount "></td>
       <td class="src "><span class="w">    </span><span class="p">}</span></td>
     </tr>
     <tr class="source-line">
-      <td class="lineno"><a id="l348" href="#l348">348</a></td>
+      <td class="lineno"><a id="l351" href="#l351">351</a></td>
       <td class="linebranch">
       </td>
       <td class="linecount coveredLine">548</td>
       <td class="src coveredLine"><span class="p">}</span></td>
     </tr>
     <tr class="source-line">
-      <td class="lineno"><a id="l349" href="#l349">349</a></td>
+      <td class="lineno"><a id="l352" href="#l352">352</a></td>
       <td class="linebranch">
       </td>
       <td class="linecount "></td>
       <td class="src "></td>
     </tr>
     <tr class="source-line">
-      <td class="lineno"><a id="l350" href="#l350">350</a></td>
+      <td class="lineno"><a id="l353" href="#l353">353</a></td>
       <td class="linebranch">
       </td>
-      <td class="linecount coveredLine">647</td>
+      <td class="linecount coveredLine">648</td>
       <td class="src coveredLine"><span class="kt">void</span><span class="w"> </span><span class="n">SpiDriver</span><span class="w"> </span><span class="o">::</span><span class="n">latchReply</span><span class="p">(</span><span class="n">FwIndexType</span><span class="w"> </span><span class="n">portNum</span><span class="p">,</span></td>
     </tr>
     <tr class="source-line">
-      <td class="lineno"><a id="l351" href="#l351">351</a></td>
+      <td class="lineno"><a id="l354" href="#l354">354</a></td>
       <td class="linebranch">
       </td>
       <td class="linecount "></td>
       <td class="src "><span class="w">                            </span><span class="k">const</span><span class="w"> </span><span class="n">Fw</span><span class="o">::</span><span class="n">Buffer</span><span class="o">&amp;</span><span class="w"> </span><span class="n">writeBuffer</span><span class="p">,</span></td>
     </tr>
     <tr class="source-line">
-      <td class="lineno"><a id="l352" href="#l352">352</a></td>
+      <td class="lineno"><a id="l355" href="#l355">355</a></td>
       <td class="linebranch">
       </td>
       <td class="linecount "></td>
       <td class="src "><span class="w">                            </span><span class="k">const</span><span class="w"> </span><span class="n">Fw</span><span class="o">::</span><span class="n">Buffer</span><span class="o">&amp;</span><span class="w"> </span><span class="n">readBuffer</span><span class="p">,</span></td>
     </tr>
     <tr class="source-line">
-      <td class="lineno"><a id="l353" href="#l353">353</a></td>
+      <td class="lineno"><a id="l356" href="#l356">356</a></td>
       <td class="linebranch">
       </td>
       <td class="linecount "></td>
       <td class="src "><span class="w">                            </span><span class="n">Drv</span><span class="o">::</span><span class="n">SpiStatus</span><span class="o">::</span><span class="n">T</span><span class="w"> </span><span class="n">status</span><span class="p">)</span><span class="w"> </span><span class="p">{</span></td>
     </tr>
     <tr class="source-line">
-      <td class="lineno"><a id="l354" href="#l354">354</a></td>
+      <td class="lineno"><a id="l357" href="#l357">357</a></td>
       <td class="linebranch">
       </td>
-      <td class="linecount coveredLine">647</td>
+      <td class="linecount coveredLine">648</td>
       <td class="src coveredLine"><span class="w">    </span><span class="n">FW_ASSERT</span><span class="p">(</span><span class="n">portNum</span><span class="w"> </span><span class="o">&gt;=</span><span class="w"> </span><span class="mi">0</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="n">portNum</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">NUM_SPIWRITEREAD_INPUT_PORTS</span><span class="p">,</span><span class="w"> </span><span class="n">portNum</span><span class="p">);</span></td>
     </tr>
     <tr class="source-line">
-      <td class="lineno"><a id="l355" href="#l355">355</a></td>
+      <td class="lineno"><a id="l358" href="#l358">358</a></td>
       <td class="linebranch">
       </td>
-      <td class="linecount coveredLine">647</td>
+      <td class="linecount coveredLine">648</td>
       <td class="src coveredLine"><span class="w">    </span><span class="n">PendingReply</span><span class="o">&amp;</span><span class="w"> </span><span class="n">slot</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">this</span><span class="o">-&gt;</span><span class="n">m_pending</span><span class="p">[</span><span class="n">portNum</span><span class="p">];</span></td>
     </tr>
     <tr class="source-line">
-      <td class="lineno"><a id="l356" href="#l356">356</a></td>
+      <td class="lineno"><a id="l359" href="#l359">359</a></td>
       <td class="linebranch">
       </td>
       <td class="linecount "></td>
       <td class="src "><span class="w">    </span><span class="c1">// Invariant kept by SpiWriteRead_handler (a request on a slot with an undelivered</span></td>
     </tr>
     <tr class="source-line">
-      <td class="lineno"><a id="l357" href="#l357">357</a></td>
+      <td class="lineno"><a id="l360" href="#l360">360</a></td>
       <td class="linebranch">
       </td>
       <td class="linecount "></td>
       <td class="src "><span class="w">    </span><span class="c1">// outcome goes to the refusal record instead), so this never fires on hardware traffic.</span></td>
     </tr>
     <tr class="source-line">
-      <td class="lineno"><a id="l358" href="#l358">358</a></td>
-      <td class="linebranch">
-      </td>
-      <td class="linecount coveredLine">647</td>
-      <td class="src coveredLine"><span class="w">    </span><span class="n">FW_ASSERT</span><span class="p">(</span><span class="o">!</span><span class="n">slot</span><span class="p">.</span><span class="n">pending</span><span class="p">,</span><span class="w"> </span><span class="n">portNum</span><span class="p">,</span><span class="w"> </span><span class="k">static_cast</span><span class="o">&lt;</span><span class="n">FwAssertArgType</span><span class="o">&gt;</span><span class="p">(</span><span class="n">slot</span><span class="p">.</span><span class="n">status</span><span class="p">));</span></td>
-    </tr>
-    <tr class="source-line">
-      <td class="lineno"><a id="l359" href="#l359">359</a></td>
-      <td class="linebranch">
-        <details class="linebranchDetails">
-          <summary class="linebranchSummary">1/1</summary>
-          <div class="linebranchContents">
-            <div class="takenBranch">&check; Branch 2 taken 647 times.</div>
-          </div>
-        </details>
-      </td>
-      <td class="linecount coveredLine">647</td>
-      <td class="src coveredLine"><span class="w">    </span><span class="n">slot</span><span class="p">.</span><span class="n">write</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Samd21</span><span class="o">::</span><span class="n">ThinBuffer</span><span class="p">(</span><span class="n">writeBuffer</span><span class="p">);</span></td>
-    </tr>
-    <tr class="source-line">
-      <td class="lineno"><a id="l360" href="#l360">360</a></td>
-      <td class="linebranch">
-        <details class="linebranchDetails">
-          <summary class="linebranchSummary">1/1</summary>
-          <div class="linebranchContents">
-            <div class="takenBranch">&check; Branch 2 taken 647 times.</div>
-          </div>
-        </details>
-      </td>
-      <td class="linecount coveredLine">647</td>
-      <td class="src coveredLine"><span class="w">    </span><span class="n">slot</span><span class="p">.</span><span class="n">read</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Samd21</span><span class="o">::</span><span class="n">ThinBuffer</span><span class="p">(</span><span class="n">readBuffer</span><span class="p">);</span></td>
-    </tr>
-    <tr class="source-line">
       <td class="lineno"><a id="l361" href="#l361">361</a></td>
       <td class="linebranch">
       </td>
-      <td class="linecount coveredLine">647</td>
-      <td class="src coveredLine"><span class="w">    </span><span class="n">slot</span><span class="p">.</span><span class="n">status</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">status</span><span class="p">;</span></td>
+      <td class="linecount coveredLine">648</td>
+      <td class="src coveredLine"><span class="w">    </span><span class="n">FW_ASSERT</span><span class="p">(</span><span class="o">!</span><span class="n">slot</span><span class="p">.</span><span class="n">pending</span><span class="p">,</span><span class="w"> </span><span class="n">portNum</span><span class="p">,</span><span class="w"> </span><span class="k">static_cast</span><span class="o">&lt;</span><span class="n">FwAssertArgType</span><span class="o">&gt;</span><span class="p">(</span><span class="n">slot</span><span class="p">.</span><span class="n">status</span><span class="p">));</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l362" href="#l362">362</a></td>
       <td class="linebranch">
+        <details class="linebranchDetails">
+          <summary class="linebranchSummary">1/1</summary>
+          <div class="linebranchContents">
+            <div class="takenBranch">&check; Branch 2 taken 648 times.</div>
+          </div>
+        </details>
       </td>
-      <td class="linecount coveredLine">647</td>
-      <td class="src coveredLine"><span class="w">    </span><span class="n">slot</span><span class="p">.</span><span class="n">pending</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">true</span><span class="p">;</span></td>
+      <td class="linecount coveredLine">648</td>
+      <td class="src coveredLine"><span class="w">    </span><span class="n">slot</span><span class="p">.</span><span class="n">write</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Samd21</span><span class="o">::</span><span class="n">ThinBuffer</span><span class="p">(</span><span class="n">writeBuffer</span><span class="p">);</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l363" href="#l363">363</a></td>
       <td class="linebranch">
+        <details class="linebranchDetails">
+          <summary class="linebranchSummary">1/1</summary>
+          <div class="linebranchContents">
+            <div class="takenBranch">&check; Branch 2 taken 648 times.</div>
+          </div>
+        </details>
       </td>
-      <td class="linecount coveredLine">647</td>
-      <td class="src coveredLine"><span class="w">    </span><span class="k">this</span><span class="o">-&gt;</span><span class="n">m_latched</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">true</span><span class="p">;</span></td>
+      <td class="linecount coveredLine">648</td>
+      <td class="src coveredLine"><span class="w">    </span><span class="n">slot</span><span class="p">.</span><span class="n">read</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Samd21</span><span class="o">::</span><span class="n">ThinBuffer</span><span class="p">(</span><span class="n">readBuffer</span><span class="p">);</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l364" href="#l364">364</a></td>
       <td class="linebranch">
       </td>
-      <td class="linecount coveredLine">647</td>
-      <td class="src coveredLine"><span class="p">}</span></td>
+      <td class="linecount coveredLine">648</td>
+      <td class="src coveredLine"><span class="w">    </span><span class="n">slot</span><span class="p">.</span><span class="n">status</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">status</span><span class="p">;</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l365" href="#l365">365</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount coveredLine">648</td>
+      <td class="src coveredLine"><span class="w">    </span><span class="n">slot</span><span class="p">.</span><span class="n">pending</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">true</span><span class="p">;</span></td>
+    </tr>
+    <tr class="source-line">
+      <td class="lineno"><a id="l366" href="#l366">366</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount coveredLine">648</td>
+      <td class="src coveredLine"><span class="w">    </span><span class="k">this</span><span class="o">-&gt;</span><span class="n">m_latched</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">true</span><span class="p">;</span></td>
+    </tr>
+    <tr class="source-line">
+      <td class="lineno"><a id="l367" href="#l367">367</a></td>
+      <td class="linebranch">
+      </td>
+      <td class="linecount coveredLine">648</td>
+      <td class="src coveredLine"><span class="p">}</span></td>
+    </tr>
+    <tr class="source-line">
+      <td class="lineno"><a id="l368" href="#l368">368</a></td>
       <td class="linebranch">
       </td>
       <td class="linecount "></td>
       <td class="src "></td>
     </tr>
     <tr class="source-line">
-      <td class="lineno"><a id="l366" href="#l366">366</a></td>
+      <td class="lineno"><a id="l369" href="#l369">369</a></td>
       <td class="linebranch">
       </td>
       <td class="linecount "></td>
       <td class="src "><span class="p">}</span><span class="w">  </span><span class="c1">// namespace Samd21</span></td>
     </tr>
     <tr class="source-line">
-      <td class="lineno"><a id="l367" href="#l367">367</a></td>
+      <td class="lineno"><a id="l370" href="#l370">370</a></td>
       <td class="linebranch">
       </td>
       <td class="linecount "></td>

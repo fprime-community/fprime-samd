@@ -13,7 +13,7 @@ lib/fprime-samd/fprime-samd/Drv/I2cDriver/I2cDriver.cpp
 lib/fprime-samd/fprime-samd/Drv/RtcDriver/RtcDriver.cpp
                                               71      67    94%   90-91,106-107
 lib/fprime-samd/fprime-samd/Drv/SpiDriver/SpiDriver.cpp
-                                             192     189    98%   89-90,264
+                                             194     191    98%   89-90,267
 lib/fprime-samd/fprime-samd/Drv/SystemInfo/SystemInfo.cpp
                                               10      10   100%
 lib/fprime-samd/fprime-samd/Drv/Types/Sercom.cpp
@@ -51,5 +51,5 @@ lib/fprime-samd/fprime-samd/Svc/Types/PrmRecord.cpp
 lib/fprime-samd/fprime-samd/Svc/Types/PrmRecord.hpp
                                                6       6   100%
 ------------------------------------------------------------------------------
-TOTAL                                       1974    1917    97%
+TOTAL                                       1976    1919    97%
 ------------------------------------------------------------------------------

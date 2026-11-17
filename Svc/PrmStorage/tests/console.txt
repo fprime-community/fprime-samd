@@ -1,9 +1,9 @@
 # unit-test console output: Svc/PrmStorage
 
 ==============================================================================
-PASSED  fprime-samd_Svc_PrmStorage_ut_exe  (0.04s)
+PASSED  fprime-samd_Svc_PrmStorage_ut_exe  (0.03s)
 ==============================================================================
-[STest::Random] Generated seed 689259 from system time
+[STest::Random] Generated seed 498317 from system time
 [==========] Running 13 tests from 3 test suites.
 [----------] Global test environment set-up.
 [----------] 4 tests from Transfer
@@ -163,9 +163,9 @@ save, load and a failed chunk complete with F-RAM completions delivered inside t
 a load started from the return of a save runs as a transfer of its own
 ***************************************
 [       OK ] Fram.ChainedTransfer (0 ms)
-[----------] 6 tests from Fram (3 ms total)
+[----------] 6 tests from Fram (2 ms total)
 
 [----------] Global test environment tear-down
-[==========] 13 tests from 3 test suites ran. (9 ms total)
+[==========] 13 tests from 3 test suites ran. (7 ms total)
 [  PASSED  ] 13 tests.
 
