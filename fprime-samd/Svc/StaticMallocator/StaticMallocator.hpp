@@ -1,7 +1,7 @@
 /**
  * \file
  * \author A. Tumbar
- * \brief A MemAllocator implementation class that uses static memory buckets.
+ * \brief A MemAllocator implementation class that hands out a static memory arena.
  *
  * \copyright
  * Copyright 2026, by the California Institute of Technology.
@@ -21,68 +21,72 @@
 
 namespace Samd21 {
 
-//! \brief static memory based memory allocator
+//! \brief static memory arena handed out by bumping an offset
 //!
-//! This class implements a memory allocator that uses static memory buckets.
-template <size_t BUCKET_SIZE, FwEnumStoreType IDENT>
+//! Allocations are carved back to back from a single arena of SIZE bytes, so any number of differently sized users
+//! can share one instance and waste nothing beyond alignment padding. Individual allocations are never recovered: the
+//! arena resets only once every allocation has been deallocated. This fits users that allocate once at boot and never
+//! free in flight, while still letting unit tests create and teardown.
+template <FwSizeType SIZE>
 class StaticMallocator : public Fw::MemAllocator {
   public:
-    static_assert(BUCKET_SIZE % 8 == 0, "Bucket size must a multiple of 8");
+    static_assert(SIZE > 0, "Arena size must be non-zero");
 
     StaticMallocator() = default;
-    virtual ~StaticMallocator() = default;
+    ~StaticMallocator() override = default;
 
     //! Allocate memory
     //!
-    //! Allocate memory using malloc(). The identifier is unused and memory is never recoverable.
-    //! malloc() guarantees alignment for any type and so does this allocator. It will not respect smaller alignments.
-    //!
     //! \param identifier the allocating entity identifier (not used)
-    //! \param size the requested size (not changed)
+    //! \param size the requested size, set to 0 when the arena cannot fit the request
     //! \param recoverable - flag to indicate the memory could be recoverable (always set to false)
-    //! \param alignment - alignment requirement for the allocation. Default: maximum alignment defined by C++.
-    //! \return the pointer to memory. Zero if unable to allocate.
+    //! \param alignment - alignment requirement for the allocation, at most alignof(std::max_align_t)
+    //! \return the pointer to memory, nullptr when the arena cannot fit the request
     void* allocate(const FwEnumStoreType identifier,
                    FwSizeType& size,
                    bool& recoverable,
                    FwSizeType alignment = alignof(std::max_align_t)) override {
-        FW_ASSERT(identifier == IDENT, static_cast<FwAssertArgType>(identifier), static_cast<FwAssertArgType>(IDENT));
-        FW_ASSERT(size <= BUCKET_SIZE, static_cast<FwAssertArgType>(size), static_cast<FwAssertArgType>(BUCKET_SIZE));
-        // `data` is declared alignas(std::max_align_t), so the bound here is exactly the
-        // default argument above. It used to read `alignment <= 8`, which made the DEFAULT
-        // call self-inconsistent on any host where alignof(std::max_align_t) is 16 -- true
-        // of Linux x86-64, where `long double` is 16-byte aligned. Darwin arm64 has it at
-        // 8, so the bug was invisible there and only surfaced when a unit test ran on
-        // Linux. Keep this comparing against the same expression `data` is aligned to.
+        (void)identifier;
+        FW_ASSERT((alignment > 0) && ((alignment & (alignment - 1)) == 0), static_cast<FwAssertArgType>(alignment));
+        // `m_arena` is declared alignas(std::max_align_t), so the bound here is exactly the default argument above.
+        // alignof(std::max_align_t) is 8 on the SAMD21 but 16 on Linux x86-64, keep the two expressions the same.
         FW_ASSERT(alignment <= alignof(std::max_align_t), static_cast<FwAssertArgType>(alignment));
-        FW_ASSERT(!used);
+        recoverable = false;
 
-        recoverable = true;
-        this->used = true;
-        return reinterpret_cast<void*>(this->data);
+        // m_used <= SIZE so the round up cannot overflow
+        const FwSizeType start = (this->m_used + alignment - 1) & ~(alignment - 1);
+        if ((start > SIZE) || (size > (SIZE - start))) {
+            size = 0;
+            return nullptr;
+        }
+        this->m_used = start + size;
+        this->m_allocations++;
+        return &this->m_arena[start];
     }
+
     //! Deallocate memory
     //!
-    //! Deallocate memory previously allocated by allocate() using free(). The identifier is unused but should still
-    //! match the original call.
+    //! The memory stays allocated until every allocation has been deallocated, which resets the arena.
     //!
     //! \param identifier the memory segment identifier (not used)
     //! \param ptr the pointer to memory returned by allocate()
     void deallocate(const FwEnumStoreType identifier, void* ptr) override {
-        FW_ASSERT(identifier == IDENT, static_cast<FwAssertArgType>(identifier), static_cast<FwAssertArgType>(IDENT));
-        FW_ASSERT(used);
-        FW_ASSERT(ptr == reinterpret_cast<void*>(this->data));
-        this->used = false;
+        (void)identifier;
+        FW_ASSERT((ptr >= static_cast<void*>(&this->m_arena[0])) && (ptr < static_cast<void*>(&this->m_arena[SIZE])));
+        FW_ASSERT(this->m_allocations > 0);
+        this->m_allocations--;
+        if (this->m_allocations == 0) {
+            this->m_used = 0;
+        }
     }
 
+    //! \return bytes of the arena consumed, including alignment padding
+    FwSizeType getUsed() const { return this->m_used; }
+
   private:
-    // U64 for 64-bit alignment, and alignas() on top of it so the storage really does
-    // satisfy the alignment this class advertises as its default argument. On the SAMD21
-    // (arm-none-eabi, 32-bit) alignof(std::max_align_t) is 8 and the U64 array is already
-    // 8-aligned, so this costs nothing on target; it only widens the alignment on hosts
-    // where max_align_t is 16, i.e. in unit tests.
-    alignas(std::max_align_t) U64 data[BUCKET_SIZE / 8];
-    bool used = false;
+    alignas(std::max_align_t) U8 m_arena[SIZE];  //!< Backing storage
+    FwSizeType m_used = 0;                       //!< Offset of the first unallocated byte
+    FwSizeType m_allocations = 0;                //!< Number of outstanding allocations
 };
 
 }  // namespace Samd21

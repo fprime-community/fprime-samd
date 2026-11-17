@@ -11,7 +11,7 @@ register_fprime_config(
     CHOOSES_IMPLEMENTATIONS
         Os_File_Stub
         Os_CountingSemaphore_Stub
-        Os_Generic_PriorityQueue
+        Os_Queue_Samd21
         Os_Mutex_Samd21
         Os_RawTime_Samd21
         Os_Cpu_Baremetal
