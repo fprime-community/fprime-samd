@@ -150,9 +150,9 @@ class SpiDriver final : public SpiDriverComponentBase {
                                        ) override;
 
     //! Handler implementation for activeIn: delivers every latched reply (main context),
-    //! per slot the refusal before the outcome. Returns true if a reply was latched during the
-    //! call or, when SpiDriverConfig::SPI_REPOLL_DURING_OUTSTANDING_TRANSACTION is non-zero,
-    //! if a transfer is still in flight; false otherwise (see sdd.md section 3.3).
+    //! per slot the refusal before the outcome. Returns true if a reply was delivered or
+    //! latched during the call or, when SpiDriverConfig::SPI_REPOLL_DURING_OUTSTANDING_TRANSACTION
+    //! is non-zero, if a transfer is still in flight; false otherwise (see sdd.md section 3.3).
     bool activeIn_handler(FwIndexType portNum,  //!< The port number
                           U32 context           //!< The call order
                           ) override;
@@ -183,8 +183,8 @@ class SpiDriver final : public SpiDriverComponentBase {
     void deassertChipSelect();
 
     //! Copy-and-clear `record` under a critical section and, if it was pending, emit it on
-    //! SpiWriteReadComplete[slot] with interrupts enabled.
-    void deliver(PendingReply& record, FwIndexType slot);
+    //! SpiWriteReadComplete[slot] with interrupts enabled. True if it was pending.
+    bool deliver(PendingReply& record, FwIndexType slot);
 
     //! Latch an outcome for `portNum` to be delivered by the next activeIn. The slot's
     //! outcome record is free by construction (SpiWriteRead_handler sends a request on an
