@@ -309,6 +309,7 @@ FwSizeType StaticPrmDb::transferReturned(const Fw::Buffer& buffer, StaticPrmDb_I
 // ----------------------------------------------------------------------
 
 Fw::ParamValid StaticPrmDb::readValue(const ParamLayout& layout, Fw::ParamBuffer& val) {
+    StaticPrmDb::assertLayout(layout);
     if ((*layout.validity & layout.mask) != layout.mask) {
         return Fw::ParamValid::INVALID;
     }
@@ -318,6 +319,7 @@ Fw::ParamValid StaticPrmDb::readValue(const ParamLayout& layout, Fw::ParamBuffer
 }
 
 void StaticPrmDb::writeValue(const ParamLayout& layout, const Fw::ParamBuffer& val) {
+    StaticPrmDb::assertLayout(layout);
     FW_ASSERT(val.getSize() == layout.size, static_cast<FwAssertArgType>(val.getSize()),
               static_cast<FwAssertArgType>(layout.size));
     (void)::memcpy(layout.value, val.getBuffAddr(), static_cast<size_t>(layout.size));
@@ -331,6 +333,8 @@ StaticPrmDb::RecordLoad StaticPrmDb::loadSegment(const U8* record,
                                                  bool merge,
                                                  const ParamLayout& layout,
                                                  FwSizeType segment) {
+    FW_ASSERT(record != nullptr);
+    StaticPrmDb::assertLayout(layout);
     FW_ASSERT(segment < PrmRecord::recordCount(layout.size), static_cast<FwAssertArgType>(segment));
     const U32 bit = static_cast<U32>(1U << (layout.firstBit + segment));
     FW_ASSERT((bit & layout.mask) != 0, static_cast<FwAssertArgType>(bit));
@@ -348,17 +352,22 @@ StaticPrmDb::RecordLoad StaticPrmDb::loadSegment(const U8* record,
     const FwSizeType end = ((start + PrmRecord::VALUE_SIZE) < stored) ? (start + PrmRecord::VALUE_SIZE) : stored;
     const U8* bytes = &record[PrmRecord::VALUE_OFFSET];
     const FwSizeType valueEnd = (end < layout.size) ? end : layout.size;
-    if (start < valueEnd) {
-        (void)::memcpy(&layout.value[start], bytes, static_cast<size_t>(valueEnd - start));
+    // Value bytes in this segment; zero when it holds only check bytes
+    const FwSizeType valueLength = (start < valueEnd) ? (valueEnd - start) : 0;
+    if (valueLength > 0) {
+        (void)::memcpy(&layout.value[start], bytes, static_cast<size_t>(valueLength));
     }
     if (end > layout.size) {
         FW_ASSERT(layout.check != nullptr);
         const FwSizeType checkStart = (start > layout.size) ? (start - layout.size) : 0;
         const FwSizeType checkLength = end - ((start > layout.size) ? start : layout.size);
-        // Update only this segment's bytes of the check, in its in-memory byte order
+        FW_ASSERT(valueLength + checkLength <= PrmRecord::VALUE_SIZE, static_cast<FwAssertArgType>(valueLength),
+                  static_cast<FwAssertArgType>(checkLength));
+        // Update only this segment's bytes of the check, in its in-memory byte order. They follow
+        // the segment's value bytes (saveSegment packs them the same way)
         U8 check[PrmRecord::CHECK_SIZE];
         (void)::memcpy(check, layout.check, sizeof(check));
-        (void)::memcpy(&check[checkStart], &bytes[valueEnd - start], static_cast<size_t>(checkLength));
+        (void)::memcpy(&check[checkStart], &bytes[valueLength], static_cast<size_t>(checkLength));
         (void)::memcpy(layout.check, check, sizeof(check));
     }
     *layout.loaded |= bit;
@@ -366,6 +375,8 @@ StaticPrmDb::RecordLoad StaticPrmDb::loadSegment(const U8* record,
 }
 
 bool StaticPrmDb::saveSegment(U8* record, U16 recordId, const ParamLayout& layout, FwSizeType segment) {
+    FW_ASSERT(record != nullptr);
+    StaticPrmDb::assertLayout(layout);
     FW_ASSERT(segment < PrmRecord::recordCount(layout.size), static_cast<FwAssertArgType>(segment));
     // Parameters without a valid value are left out: a load leaves them invalid
     if ((*layout.validity & layout.mask) != layout.mask) {
@@ -392,6 +403,7 @@ bool StaticPrmDb::saveSegment(U8* record, U16 recordId, const ParamLayout& layou
 }
 
 U32 StaticPrmDb::commitValue(bool complete, bool merge, const ParamLayout& layout) {
+    StaticPrmDb::assertLayout(layout);
     const U32 loaded = *layout.loaded & layout.mask;
     if (loaded == 0) {
         // Its value in memory is untouched. A REPLACE that read the whole store did not find it;
@@ -413,6 +425,13 @@ U32 StaticPrmDb::commitValue(bool complete, bool merge, const ParamLayout& layou
     }
     *layout.validity |= layout.mask;
     return 0;
+}
+
+void StaticPrmDb::assertLayout(const ParamLayout& layout) {
+    // The check is optional (nullptr for single-record parameters) and asserted where used
+    FW_ASSERT(layout.value != nullptr);
+    FW_ASSERT(layout.validity != nullptr);
+    FW_ASSERT(layout.loaded != nullptr);
 }
 
 }  // namespace Samd21

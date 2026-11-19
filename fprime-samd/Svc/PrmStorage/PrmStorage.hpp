@@ -17,8 +17,9 @@ namespace Samd21 {
 //! the selected bank and returns the buffer to the database when the last one
 //! completes. The bytes are not interpreted: the database detects missing or
 //! corrupted records, and the deployment sequences loading the redundant bank
-//! with SELECT_BANK. The bank layout is compile-time configuration
-//! (PrmStorageConfig.hpp), checked against the StaticPrmDbConfig store size
+//! with SELECT_BANK. The number of banks and the offset they are packed from
+//! are compile-time configuration (PrmStorageConfig.hpp); each bank is one
+//! StaticPrmDbConfig store, and the layout is checked against the F-RAM size
 //! at build time (PrmStorageLayout.hpp).
 class PrmStorage final : public PrmStorageComponentBase {
   public:
@@ -34,8 +35,6 @@ class PrmStorage final : public PrmStorageComponentBase {
     ~PrmStorage();
 
   private:
-    static_assert(PrmBank::NUM_CONSTANTS == 2, "bankOffset() maps every PrmBank");
-
     // ----------------------------------------------------------------------
     // Handler implementations for typed input ports
     // ----------------------------------------------------------------------
@@ -89,9 +88,9 @@ class PrmStorage final : public PrmStorageComponentBase {
     //! Handler implementation for command SELECT_BANK
     //!
     //! Point the following saves and loads at a bank
-    void SELECT_BANK_cmdHandler(FwOpcodeType opCode,         //!< The opcode
-                                U32 cmdSeq,                  //!< The command sequence number
-                                const Samd21::PrmBank& bank  //!< Bank of the following saves and loads
+    void SELECT_BANK_cmdHandler(FwOpcodeType opCode,  //!< The opcode
+                                U32 cmdSeq,           //!< The command sequence number
+                                U8 bank               //!< Bank index, 0 to PrmStorageConfig::NUM_BANKS - 1
                                 ) override;
 
   private:
@@ -125,7 +124,7 @@ class PrmStorage final : public PrmStorageComponentBase {
     // State
     // ----------------------------------------------------------------------
 
-    PrmBank m_bank;  //!< Bank of the next transfer
+    U8 m_bank;  //!< Bank of the next transfer
 
     bool m_busy;          //!< A transfer is in progress
     bool m_retryPending;  //!< The request was rejected BUSY; schedIn retries it

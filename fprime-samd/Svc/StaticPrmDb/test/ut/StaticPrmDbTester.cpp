@@ -66,6 +66,76 @@ bool validMask(U32 mask) {
     return (s_testValidity[0] & mask) == mask;
 }
 
+// Boundary layout, selected by s_boundaryLayout in place of A, B and C. Its parameters are larger
+// than a ParamBuffer may be, so the tests set and read them in layout memory (as setPrm would):
+//  - D (15 bytes): the value check is split over D:1 and D:2, and D:2 holds only check bytes
+//  - H (16 bytes): H:2 holds only the check, starting exactly at the end of the value
+//  - G (206 bytes, 26 records): takes the rest of its validity word, up to bit 31
+//  - E (254 bytes): the largest storable parameter, 32 records filling a whole validity word
+// Its 64 records fill the store exactly, so a save writes no empty record.
+
+static_assert(PrmRecord::recordCount(StaticPrmDbTester::SIZE_D) == 3, "D takes three records");
+static_assert(PrmRecord::recordCount(StaticPrmDbTester::SIZE_H) == 3, "H takes three records");
+static_assert(PrmRecord::recordCount(StaticPrmDbTester::SIZE_G) == 26, "G takes 26 records");
+static_assert(PrmRecord::recordCount(StaticPrmDbTester::SIZE_E) == 32, "E takes the most records a parameter may");
+static_assert(3 + 3 + 26 + 32 == StaticPrmDbTester::STORE_RECORDS, "The boundary layout fills the store exactly");
+
+bool s_boundaryLayout = false;
+
+U32 s_boundaryValidity[2] = {};
+U32 s_boundaryLoaded[2] = {};
+struct {
+    U8 d[StaticPrmDbTester::SIZE_D];
+    U8 h[StaticPrmDbTester::SIZE_H];
+    U8 g[StaticPrmDbTester::SIZE_G];
+    U8 e[StaticPrmDbTester::SIZE_E];
+} s_boundaryValues = {};
+struct {
+    U16 d;
+    U16 h;
+    U16 g;
+    U16 e;
+} s_boundaryChecks = {};
+
+constexpr StaticPrmDb::ParamLayout LAYOUT_D = {s_boundaryValues.d,
+                                               StaticPrmDbTester::SIZE_D,
+                                               &s_boundaryChecks.d,
+                                               &s_boundaryValidity[0],
+                                               &s_boundaryLoaded[0],
+                                               0x00000007,
+                                               0};
+constexpr StaticPrmDb::ParamLayout LAYOUT_H = {s_boundaryValues.h,
+                                               StaticPrmDbTester::SIZE_H,
+                                               &s_boundaryChecks.h,
+                                               &s_boundaryValidity[0],
+                                               &s_boundaryLoaded[0],
+                                               0x00000038,
+                                               3};
+constexpr StaticPrmDb::ParamLayout LAYOUT_G = {s_boundaryValues.g,
+                                               StaticPrmDbTester::SIZE_G,
+                                               &s_boundaryChecks.g,
+                                               &s_boundaryValidity[0],
+                                               &s_boundaryLoaded[0],
+                                               0xFFFFFFC0,
+                                               6};
+constexpr StaticPrmDb::ParamLayout LAYOUT_E = {s_boundaryValues.e,
+                                               StaticPrmDbTester::SIZE_E,
+                                               &s_boundaryChecks.e,
+                                               &s_boundaryValidity[1],
+                                               &s_boundaryLoaded[1],
+                                               0xFFFFFFFF,
+                                               0};
+
+//! Boundary parameters in parameter (save) order, and the record ID of each one's segment 0
+const StaticPrmDb::ParamLayout* const BOUNDARY_LAYOUTS[StaticPrmDbTester::BOUNDARY_PARAMS] = {&LAYOUT_D, &LAYOUT_H,
+                                                                                              &LAYOUT_G, &LAYOUT_E};
+constexpr U16 BOUNDARY_RECORDS[StaticPrmDbTester::BOUNDARY_PARAMS] = {0x4D00, 0x4800, 0x4700, 0x4E00};
+
+//! Byte i of a test value seeded by seed
+U8 pattern(U8 seed, FwSizeType i) {
+    return static_cast<U8>(seed + (i * 13));
+}
+
 }  // namespace
 
 Fw::ParamValid StaticPrmDb::readParam(FwPrmIdType id, Fw::ParamBuffer& val) {
@@ -87,11 +157,36 @@ StaticPrmDb::RecordLoad StaticPrmDb::loadRecord(const U8* record, bool merge) {
         case StaticPrmDbTester::RECORD_C:
             return StaticPrmDb::loadSegment(record, merge, LAYOUT_C, 0);
         default:
-            return RecordLoad::UNKNOWN;
+            break;
     }
+    if (!s_boundaryLayout) {
+        return RecordLoad::UNKNOWN;
+    }
+    const U16 id = PrmRecord::getId(record);
+    for (FwSizeType k = 0; k < StaticPrmDbTester::BOUNDARY_PARAMS; k++) {
+        const FwSizeType segment = static_cast<FwSizeType>(id) - BOUNDARY_RECORDS[k];
+        if ((id >= BOUNDARY_RECORDS[k]) && (segment < PrmRecord::recordCount(BOUNDARY_LAYOUTS[k]->size))) {
+            return StaticPrmDb::loadSegment(record, merge, *BOUNDARY_LAYOUTS[k], segment);
+        }
+    }
+    return RecordLoad::UNKNOWN;
 }
 
 bool StaticPrmDb::saveRecord(FwSizeType index, U8* record) {
+    if (s_boundaryLayout) {
+        FwSizeType first = 0;
+        for (FwSizeType k = 0; k < StaticPrmDbTester::BOUNDARY_PARAMS; k++) {
+            const FwSizeType records = PrmRecord::recordCount(BOUNDARY_LAYOUTS[k]->size);
+            if (index < first + records) {
+                const FwSizeType segment = index - first;
+                return StaticPrmDb::saveSegment(record, static_cast<U16>(BOUNDARY_RECORDS[k] + segment),
+                                                *BOUNDARY_LAYOUTS[k], segment);
+            }
+            first += records;
+        }
+        FW_ASSERT(false, static_cast<FwAssertArgType>(index));
+        return false;
+    }
     switch (index) {
         case 0:
             return StaticPrmDb::saveSegment(record, StaticPrmDbTester::RECORD_A, LAYOUT_A, 0);
@@ -109,10 +204,17 @@ bool StaticPrmDb::saveRecord(FwSizeType index, U8* record) {
 
 void StaticPrmDb::beginLoad() {
     s_testLoaded[0] = 0;
+    (void)::memset(s_boundaryLoaded, 0, sizeof(s_boundaryLoaded));
 }
 
 U32 StaticPrmDb::commitLoad(bool complete, bool merge) {
     U32 incoherent = 0;
+    if (s_boundaryLayout) {
+        for (const StaticPrmDb::ParamLayout* layout : BOUNDARY_LAYOUTS) {
+            incoherent += StaticPrmDb::commitValue(complete, merge, *layout);
+        }
+        return incoherent;
+    }
     incoherent += StaticPrmDb::commitValue(complete, merge, LAYOUT_A);
     incoherent += StaticPrmDb::commitValue(complete, merge, LAYOUT_B);
     incoherent += StaticPrmDb::commitValue(complete, merge, LAYOUT_C);
@@ -120,12 +222,19 @@ U32 StaticPrmDb::commitLoad(bool complete, bool merge) {
 }
 
 U32 StaticPrmDb::countInvalidParams() {
+    if (s_boundaryLayout) {
+        U32 invalid = 0;
+        for (const StaticPrmDb::ParamLayout* layout : BOUNDARY_LAYOUTS) {
+            invalid += ((*layout->validity & layout->mask) == layout->mask) ? 0U : 1U;
+        }
+        return invalid;
+    }
     return (validMask(LAYOUT_A.mask) ? 0U : 1U) + (validMask(LAYOUT_B.mask) ? 0U : 1U) +
            (validMask(LAYOUT_C.mask) ? 0U : 1U);
 }
 
 FwSizeType StaticPrmDb::numRecords() {
-    return 4;
+    return s_boundaryLayout ? StaticPrmDbTester::STORE_RECORDS : 4;
 }
 
 void StaticPrmDb::loadParameters() {
@@ -139,6 +248,11 @@ constexpr FwPrmIdType StaticPrmDbTester::PRM_C;
 constexpr FwSizeType StaticPrmDbTester::SIZE_A;
 constexpr FwSizeType StaticPrmDbTester::SIZE_B;
 constexpr FwSizeType StaticPrmDbTester::SIZE_C;
+constexpr FwSizeType StaticPrmDbTester::SIZE_D;
+constexpr FwSizeType StaticPrmDbTester::SIZE_H;
+constexpr FwSizeType StaticPrmDbTester::SIZE_G;
+constexpr FwSizeType StaticPrmDbTester::SIZE_E;
+constexpr FwSizeType StaticPrmDbTester::BOUNDARY_PARAMS;
 constexpr U16 StaticPrmDbTester::RECORD_A;
 constexpr U16 StaticPrmDbTester::RECORD_B0;
 constexpr U16 StaticPrmDbTester::RECORD_B1;
@@ -170,6 +284,11 @@ StaticPrmDbTester::StaticPrmDbTester()
     (void)::memset(s_testLoaded, 0, sizeof(s_testLoaded));
     (void)::memset(&s_testValues, 0, sizeof(s_testValues));
     (void)::memset(&s_testChecks, 0, sizeof(s_testChecks));
+    s_boundaryLayout = false;
+    (void)::memset(s_boundaryValidity, 0, sizeof(s_boundaryValidity));
+    (void)::memset(s_boundaryLoaded, 0, sizeof(s_boundaryLoaded));
+    (void)::memset(&s_boundaryValues, 0, sizeof(s_boundaryValues));
+    (void)::memset(&s_boundaryChecks, 0, sizeof(s_boundaryChecks));
     s_loadParametersCalls = 0;
 }
 
@@ -359,6 +478,36 @@ void StaticPrmDbTester::assertTransfers(bool write) const {
         ASSERT_EQ(offset, t * StaticPrmDbConfig::SCRATCH_RECORDS * PrmRecord::SIZE);
         ASSERT_EQ(buffer.getSize(), records * PrmRecord::SIZE);
     }
+}
+
+void StaticPrmDbTester::setBoundaryParams(U8 seed) {
+    // As setPrm would: the value, its check and all of its validity bits
+    for (FwSizeType k = 0; k < BOUNDARY_PARAMS; k++) {
+        const StaticPrmDb::ParamLayout& layout = *BOUNDARY_LAYOUTS[k];
+        for (FwSizeType i = 0; i < layout.size; i++) {
+            layout.value[i] = pattern(static_cast<U8>(seed + k), i);
+        }
+        *layout.check = PrmRecord::valueCheck(layout.value, layout.size);
+        *layout.validity |= layout.mask;
+    }
+}
+
+U8 StaticPrmDbTester::boundarySeed(FwSizeType param, U8 seedA, U8 seedB) const {
+    const StaticPrmDb::ParamLayout& layout = *BOUNDARY_LAYOUTS[param];
+    if ((*layout.validity & layout.mask) != layout.mask) {
+        return 0;
+    }
+    for (const U8 seed : {seedA, seedB}) {
+        bool match = true;
+        for (FwSizeType i = 0; i < layout.size; i++) {
+            match = match && (layout.value[i] == pattern(static_cast<U8>(seed + param), i));
+        }
+        if (match) {
+            return seed;
+        }
+    }
+    ADD_FAILURE() << "boundary parameter " << param << " is a mix of two saves";
+    return 0;
 }
 
 // ----------------------------------------------------------------------
@@ -774,6 +923,67 @@ void StaticPrmDbTester::testChainedCommand() {
     const FwSizeType transfers =
         (STORE_RECORDS + StaticPrmDbConfig::SCRATCH_RECORDS - 1) / StaticPrmDbConfig::SCRATCH_RECORDS;
     ASSERT_EQ(this->fromPortHistory_writeOut->size(), transfers + 1);
+}
+
+void StaticPrmDbTester::testBoundaryLayout() {
+    s_boundaryLayout = true;
+    this->setBoundaryParams(0x10);
+    this->save();
+    this->assertTransfers(true);
+    // The records fill the store: no slot is left empty
+    for (FwSizeType s = 0; s < STORE_RECORDS; s++) {
+        ASSERT_FALSE(PrmRecord::isEmpty(&this->m_store[s * PrmRecord::SIZE])) << "slot " << s;
+    }
+    U8 earlier[STORE_SIZE];
+    (void)::memcpy(earlier, this->m_store, sizeof(earlier));
+    this->setBoundaryParams(0x50);
+    this->save();
+    U8 later[STORE_SIZE];
+    (void)::memcpy(later, this->m_store, sizeof(later));
+
+    // Every parameter loads back whole, including the check-only last records
+    (void)::memset(&s_boundaryValues, 0, sizeof(s_boundaryValues));
+    this->load(StaticPrmDb_LoadMode::REPLACE);
+    ASSERT_EVENTS_LoadedDatabase(0, StaticPrmDb_LoadMode::REPLACE, StaticPrmDb_LoadResult::COMPLETE,
+                                 static_cast<U32>(STORE_RECORDS), 0, 0, 0, 0);
+    for (FwSizeType k = 0; k < BOUNDARY_PARAMS; k++) {
+        ASSERT_EQ(this->boundarySeed(k, 0x10, 0x50), 0x50) << "parameter " << k;
+    }
+
+    // Power lost after each record of the later save. Records are saved in parameter order, all
+    // valid, so a parameter's records sit in consecutive slots. One cut between them (D:2 or H:2
+    // being the earlier save's, which holds only check bytes) must leave it incoherent.
+    for (FwSizeType slots = 0; slots <= STORE_RECORDS; slots++) {
+        (void)::memcpy(this->m_store, later, sizeof(later));
+        this->interruptSave(earlier, slots);
+        this->load(StaticPrmDb_LoadMode::REPLACE);
+
+        U32 mixed = 0;
+        FwSizeType first = 0;
+        for (FwSizeType k = 0; k < BOUNDARY_PARAMS; k++) {
+            const FwSizeType records = PrmRecord::recordCount(BOUNDARY_LAYOUTS[k]->size);
+            const bool cut = (slots > first) && (slots < first + records);
+            const U8 expected = cut ? 0 : ((slots >= first + records) ? 0x50 : 0x10);
+            mixed += cut ? 1U : 0U;
+            ASSERT_EQ(this->boundarySeed(k, 0x10, 0x50), expected)
+                << "parameter " << k << ", interrupted after " << slots << " slots";
+            first += records;
+        }
+        ASSERT_EQ(this->eventHistory_LoadedDatabase->at(0).incoherentParameters, mixed)
+            << "interrupted after " << slots << " slots";
+        ASSERT_EQ(this->eventHistory_LoadedDatabase->at(0).invalidParameters, mixed);
+    }
+
+    // A bit flip in D:2, which holds only check bytes, invalidates D alone
+    (void)::memcpy(this->m_store, later, sizeof(later));
+    this->m_store[(2 * PrmRecord::SIZE) + PrmRecord::VALUE_OFFSET] ^= 0x01;
+    this->load(StaticPrmDb_LoadMode::REPLACE);
+    ASSERT_EVENTS_LoadedDatabase(0, StaticPrmDb_LoadMode::REPLACE, StaticPrmDb_LoadResult::COMPLETE,
+                                 static_cast<U32>(STORE_RECORDS - 1), 1, 0, 0, 1);
+    ASSERT_EQ(this->boundarySeed(0, 0x10, 0x50), 0);
+    for (FwSizeType k = 1; k < BOUNDARY_PARAMS; k++) {
+        ASSERT_EQ(this->boundarySeed(k, 0x10, 0x50), 0x50) << "parameter " << k;
+    }
 }
 
 void StaticPrmDbTester::testNoStorage() {

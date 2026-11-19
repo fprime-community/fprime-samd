@@ -141,6 +141,16 @@ TEST(Storage, NoStorage) {
     tester.testNoStorage();
 }
 
+TEST(Store, BoundaryLayout) {
+    REQUIREMENT("PRM-DB-001");
+    REQUIREMENT("PRM-DB-002");
+    REQUIREMENT("PRM-DB-003");
+    REQUIREMENT("PRM-DB-014");
+    COMMENT("split and check-only segments, the largest parameter and a full store round-trip");
+    Samd21::StaticPrmDbTester tester;
+    tester.testBoundaryLayout();
+}
+
 int main(int argc, char** argv) {
     STest::Random::seed();
     ::testing::InitGoogleTest(&argc, argv);

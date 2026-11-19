@@ -10,13 +10,14 @@
 namespace Samd21 {
 namespace PrmStorageConfig {
 
-//! F-RAM offset of the PRIME bank. Each bank holds one parameter store
-//! (StaticPrmDbConfig::STORE_RECORDS records); PrmStorage checks at build time
-//! that the banks hold it without overlapping (PrmStorageLayout.hpp).
-static constexpr U32 PRIME_OFFSET = 0x0000;
+//! F-RAM offset of bank 0. Each bank holds one parameter store
+//! (StaticPrmDbConfig::STORE_RECORDS records), and the banks are packed back to
+//! back from here. PrmStorage checks at build time that they fit the F-RAM
+//! (PrmStorageLayout.hpp).
+static constexpr U32 BASE_OFFSET = 0x0000;
 
-//! F-RAM offset of the BACKUP bank
-static constexpr U32 BACKUP_OFFSET = 0x1000;
+//! Redundant copies of the parameter store (at least 1). Bank 0 is selected at boot.
+static constexpr U8 NUM_BANKS = 2;
 
 //! schedIn ticks an F-RAM request rejected BUSY is retried before the transfer is failed
 static constexpr U32 BUSY_RETRY_LIMIT = 8;

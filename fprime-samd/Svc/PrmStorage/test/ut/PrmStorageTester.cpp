@@ -13,8 +13,9 @@
 namespace Samd21 {
 
 // Definitions of the ODR-used class constants (C++14)
-constexpr U32 PrmStorageTester::PRIME_OFFSET;
-constexpr U32 PrmStorageTester::BACKUP_OFFSET;
+constexpr U8 PrmStorageTester::NUM_BANKS;
+constexpr U32 PrmStorageTester::BANK0_OFFSET;
+constexpr U32 PrmStorageTester::BANK1_OFFSET;
 constexpr FwSizeType PrmStorageTester::IMAGE_SIZE;
 constexpr FwSizeType PrmStorageTester::FRAM_SIZE;
 
@@ -124,7 +125,7 @@ void PrmStorageTester::sendLoad(FwSizeType size, U32 offset) {
     this->invoke_to_readIn(0, offset, image);
 }
 
-void PrmStorageTester::sendSelectBank(PrmBank bank, U32 cmdSeq) {
+void PrmStorageTester::sendSelectBank(U8 bank, U32 cmdSeq) {
     this->clearHistory();
     this->sendCmd_SELECT_BANK(TEST_INSTANCE_ID, cmdSeq, bank);
 }
@@ -184,21 +185,21 @@ void PrmStorageTester::testSave() {
     ASSERT_from_writeReturnOut_SIZE(0);
     this->drain();
     this->assertSaveDone(Drv::ByteStreamStatus::OP_OK);
-    this->assertChunks(PRIME_OFFSET);
+    this->assertChunks(BANK0_OFFSET);
     ASSERT_from_framRead_SIZE(0);
     ASSERT_EVENTS_SIZE(0);
     // The image is stored verbatim
-    assertPattern(&this->m_fram[PRIME_OFFSET], 0x10);
+    assertPattern(&this->m_fram[BANK0_OFFSET], 0x10);
 }
 
 void PrmStorageTester::testLoad() {
     for (FwSizeType i = 0; i < IMAGE_SIZE; i++) {
-        this->m_fram[PRIME_OFFSET + i] = static_cast<U8>(0x20 + (i * 7));
+        this->m_fram[BANK0_OFFSET + i] = static_cast<U8>(0x20 + (i * 7));
     }
     this->sendLoad();
     this->drain();
     this->assertLoadDone(Drv::ByteStreamStatus::OP_OK);
-    this->assertChunks(PRIME_OFFSET);
+    this->assertChunks(BANK0_OFFSET);
     ASSERT_from_framWrite_SIZE(0);
     ASSERT_EVENTS_SIZE(0);
     assertPattern(this->m_image, 0x20);
@@ -210,31 +211,94 @@ void PrmStorageTester::testSelectBank() {
     this->drain();
 
     const U32 cmdSeq = STest::Pick::any();
-    this->sendSelectBank(PrmBank::BACKUP, cmdSeq);
+    this->sendSelectBank(1, cmdSeq);
     ASSERT_CMD_RESPONSE_SIZE(1);
     ASSERT_CMD_RESPONSE(0, PrmStorageComponentBase::OPCODE_SELECT_BANK, cmdSeq, Fw::CmdResponse::OK);
     // Selecting a bank is routine (every save cycle): telemetry only, no event
     ASSERT_EVENTS_SIZE(0);
     ASSERT_TLM_ActiveBank_SIZE(1);
-    ASSERT_TLM_ActiveBank(0, PrmBank::BACKUP);
+    ASSERT_TLM_ActiveBank(0, 1);
 
-    // The save goes to BACKUP, PRIME keeps the old image
+    // The save goes to bank 1, bank 0 keeps the old image
     this->fillImage(0x31);
     this->sendSave();
     this->drain();
     this->assertSaveDone(Drv::ByteStreamStatus::OP_OK);
-    this->assertChunks(BACKUP_OFFSET);
-    assertPattern(&this->m_fram[BACKUP_OFFSET], 0x31);
-    assertPattern(&this->m_fram[PRIME_OFFSET], 0x30);
+    this->assertChunks(BANK1_OFFSET);
+    assertPattern(&this->m_fram[BANK1_OFFSET], 0x31);
+    assertPattern(&this->m_fram[BANK0_OFFSET], 0x30);
 
-    // Back to PRIME: the load returns its image
-    this->sendSelectBank(PrmBank::PRIME, cmdSeq);
-    ASSERT_TLM_ActiveBank(0, PrmBank::PRIME);
+    // Back to bank 0: the load returns its image
+    this->sendSelectBank(0, cmdSeq);
+    ASSERT_TLM_ActiveBank(0, 0);
     this->sendLoad();
     this->drain();
     this->assertLoadDone(Drv::ByteStreamStatus::OP_OK);
-    this->assertChunks(PRIME_OFFSET);
+    this->assertChunks(BANK0_OFFSET);
     assertPattern(this->m_image, 0x30);
+}
+
+void PrmStorageTester::testBankLayout() {
+    // Bank b starts BANK_SIZE bytes after bank b - 1, the first at BASE_OFFSET
+    ASSERT_EQ(BANK0_OFFSET, PrmStorageConfig::BASE_OFFSET);
+    for (U8 bank = 0; bank < NUM_BANKS; bank++) {
+        ASSERT_EQ(PrmStorageLayout::bankOffset(bank),
+                  static_cast<U32>(PrmStorageConfig::BASE_OFFSET + (bank * PrmStorageLayout::BANK_SIZE)));
+    }
+
+    // A full-size store saved to each bank lands in that bank alone
+    U8 store[PrmStorageLayout::BANK_SIZE];
+    for (U8 bank = 0; bank < NUM_BANKS; bank++) {
+        this->sendSelectBank(bank, 0);
+        ASSERT_TLM_ActiveBank(0, bank);
+        (void)::memset(store, 0xB0 + bank, sizeof(store));
+        this->clearHistory();
+        Fw::Buffer buffer(store, sizeof(store));
+        this->invoke_to_writeIn(0, 0, buffer);
+        this->drain();
+        ASSERT_from_writeReturnOut_SIZE(1);
+        ASSERT_from_writeReturnOut(0, buffer, Drv::ByteStreamStatus::OP_OK);
+    }
+    for (U8 bank = 0; bank < NUM_BANKS; bank++) {
+        for (FwSizeType i = 0; i < PrmStorageLayout::BANK_SIZE; i++) {
+            ASSERT_EQ(this->m_fram[PrmStorageLayout::bankOffset(bank) + i], static_cast<U8>(0xB0 + bank))
+                << "bank " << static_cast<U32>(bank) << " byte " << i;
+        }
+    }
+
+    // Each bank loads back its own store
+    for (U8 bank = 0; bank < NUM_BANKS; bank++) {
+        this->sendSelectBank(bank, 0);
+        (void)::memset(store, 0, sizeof(store));
+        this->clearHistory();
+        Fw::Buffer buffer(store, sizeof(store));
+        this->invoke_to_readIn(0, 0, buffer);
+        this->drain();
+        ASSERT_from_readReturnOut_SIZE(1);
+        ASSERT_from_readReturnOut(0, buffer, Drv::ByteStreamStatus::OP_OK);
+        for (FwSizeType i = 0; i < sizeof(store); i++) {
+            ASSERT_EQ(store[i], static_cast<U8>(0xB0 + bank)) << "bank " << static_cast<U32>(bank) << " byte " << i;
+        }
+    }
+}
+
+void PrmStorageTester::testSelectInvalidBank() {
+    this->sendSelectBank(1, 0);
+    const U32 cmdSeq = STest::Pick::any();
+    const U8 bank = static_cast<U8>(STest::Pick::lowerUpper(NUM_BANKS, 0xFF));
+    this->sendSelectBank(bank, cmdSeq);
+    ASSERT_CMD_RESPONSE_SIZE(1);
+    ASSERT_CMD_RESPONSE(0, PrmStorageComponentBase::OPCODE_SELECT_BANK, cmdSeq, Fw::CmdResponse::VALIDATION_ERROR);
+    ASSERT_EVENTS_InvalidBank_SIZE(1);
+    ASSERT_EVENTS_InvalidBank(0, bank, NUM_BANKS);
+    ASSERT_TLM_SIZE(0);
+
+    // The selection is unchanged
+    this->fillImage(0xC0);
+    this->sendSave();
+    this->drain();
+    this->assertSaveDone(Drv::ByteStreamStatus::OP_OK);
+    this->assertChunks(BANK1_OFFSET);
 }
 
 void PrmStorageTester::testSelectBankBusy() {
@@ -243,27 +307,26 @@ void PrmStorageTester::testSelectBankBusy() {
     ASSERT_TRUE(this->m_pending.valid);
 
     const U32 cmdSeq = STest::Pick::any();
-    this->sendSelectBank(PrmBank::BACKUP, cmdSeq);
+    this->sendSelectBank(1, cmdSeq);
     ASSERT_CMD_RESPONSE_SIZE(1);
     ASSERT_CMD_RESPONSE(0, PrmStorageComponentBase::OPCODE_SELECT_BANK, cmdSeq, Fw::CmdResponse::BUSY);
     ASSERT_EVENTS_SIZE(0);
     ASSERT_TLM_SIZE(0);
 
-    // The rest of the save stays on PRIME
+    // The rest of the save stays on bank 0
     this->drain();
     ASSERT_from_writeReturnOut_SIZE(1);
-    assertPattern(&this->m_fram[PRIME_OFFSET], 0x40);
+    assertPattern(&this->m_fram[BANK0_OFFSET], 0x40);
     for (FwSizeType i = 0; i < IMAGE_SIZE; i++) {
-        ASSERT_EQ(this->m_fram[BACKUP_OFFSET + i], 0);
+        ASSERT_EQ(this->m_fram[BANK1_OFFSET + i], 0);
     }
 }
 
 void PrmStorageTester::testStorageFailure() {
-    const PrmBank banks[] = {PrmBank::PRIME, PrmBank::BACKUP};
     const Fram::Op ops[] = {Fram::Op::WRITE, Fram::Op::READ};
-    for (const PrmBank bank : banks) {
+    for (U8 bank = 0; bank < NUM_BANKS; bank++) {
         this->sendSelectBank(bank, 0);
-        const U32 bankOffset = (bank == PrmBank::BACKUP) ? BACKUP_OFFSET : PRIME_OFFSET;
+        const U32 bankOffset = PrmStorageLayout::bankOffset(bank);
         for (const Fram::Op op : ops) {
             // Fail the second chunk
             this->m_failRequestNumber = this->m_requests + 2;
@@ -305,7 +368,7 @@ void PrmStorageTester::testBusyRetry() {
     this->drain();
     this->assertSaveDone(Drv::ByteStreamStatus::OP_OK);
     ASSERT_EVENTS_SIZE(0);
-    assertPattern(&this->m_fram[PRIME_OFFSET], 0x50);
+    assertPattern(&this->m_fram[BANK0_OFFSET], 0x50);
 
     // A schedIn with nothing to retry does nothing
     this->clearHistory();
@@ -324,7 +387,7 @@ void PrmStorageTester::testBusyRetryExhausted() {
     }
     this->assertLoadDone(Drv::ByteStreamStatus::OTHER_ERROR);
     ASSERT_EVENTS_StorageFailed_SIZE(1);
-    ASSERT_EVENTS_StorageFailed(0, Fram::Op::READ, PrmBank::PRIME, PRIME_OFFSET, Fram::Status::BUSY);
+    ASSERT_EVENTS_StorageFailed(0, Fram::Op::READ, 0, BANK0_OFFSET, Fram::Status::BUSY);
     // The transfer is over: no more retries
     this->invoke_to_schedIn(0, 0);
     ASSERT_from_framRead_SIZE(PrmStorageConfig::BUSY_RETRY_LIMIT + 1);
@@ -337,7 +400,7 @@ void PrmStorageTester::testRequestRejected() {
     // Failed inside the call, no retry
     this->assertSaveDone(Drv::ByteStreamStatus::OTHER_ERROR);
     ASSERT_EVENTS_StorageFailed_SIZE(1);
-    ASSERT_EVENTS_StorageFailed(0, Fram::Op::WRITE, PrmBank::PRIME, PRIME_OFFSET, Fram::Status::WRITE_PROTECTED);
+    ASSERT_EVENTS_StorageFailed(0, Fram::Op::WRITE, 0, BANK0_OFFSET, Fram::Status::WRITE_PROTECTED);
     this->invoke_to_schedIn(0, 0);
     ASSERT_from_framWrite_SIZE(1);
     ASSERT_from_writeReturnOut_SIZE(1);
@@ -351,21 +414,21 @@ void PrmStorageTester::testOffset() {
     this->sendSave(size, offset);
     this->drain();
     this->assertSaveDone(Drv::ByteStreamStatus::OP_OK, size);
-    this->assertChunks(PRIME_OFFSET + offset, size);
-    assertPattern(&this->m_fram[PRIME_OFFSET + offset], 0x60, size);
+    this->assertChunks(BANK0_OFFSET + offset, size);
+    assertPattern(&this->m_fram[BANK0_OFFSET + offset], 0x60, size);
     for (U32 i = 0; i < offset; i++) {
-        ASSERT_EQ(this->m_fram[PRIME_OFFSET + i], 0) << "byte " << i;
+        ASSERT_EQ(this->m_fram[BANK0_OFFSET + i], 0) << "byte " << i;
     }
 
-    this->sendSelectBank(PrmBank::BACKUP, 0);
+    this->sendSelectBank(1, 0);
     (void)::memset(this->m_image, 0, sizeof(this->m_image));
     for (FwSizeType i = 0; i < size; i++) {
-        this->m_fram[BACKUP_OFFSET + offset + i] = static_cast<U8>(0x61 + (i * 7));
+        this->m_fram[BANK1_OFFSET + offset + i] = static_cast<U8>(0x61 + (i * 7));
     }
     this->sendLoad(size, offset);
     this->drain();
     this->assertLoadDone(Drv::ByteStreamStatus::OP_OK, size);
-    this->assertChunks(BACKUP_OFFSET + offset, size);
+    this->assertChunks(BANK1_OFFSET + offset, size);
     assertPattern(this->m_image, 0x61, size);
 }
 
@@ -385,7 +448,7 @@ void PrmStorageTester::testInCallCompletion() {
     this->assertSaveDone(Drv::ByteStreamStatus::OTHER_ERROR);
     ASSERT_from_framWrite_SIZE(2);
     ASSERT_EVENTS_StorageFailed_SIZE(1);
-    ASSERT_EVENTS_StorageFailed(0, Fram::Op::WRITE, PrmBank::PRIME, PRIME_OFFSET + Fram::FramConfig::MaxTransfer,
+    ASSERT_EVENTS_StorageFailed(0, Fram::Op::WRITE, 0, BANK0_OFFSET + Fram::FramConfig::MaxTransfer,
                                 Fram::Status::SPI_ERROR);
 }
 
@@ -431,7 +494,7 @@ void PrmStorageTester::testBusyRetryPerChunk() {
     this->drain();
     this->assertSaveDone(Drv::ByteStreamStatus::OP_OK);
     ASSERT_EVENTS_SIZE(0);
-    assertPattern(&this->m_fram[PRIME_OFFSET], 0x90);
+    assertPattern(&this->m_fram[BANK0_OFFSET], 0x90);
 }
 
 void PrmStorageTester::testSelectBankDuringRetry() {
@@ -442,19 +505,19 @@ void PrmStorageTester::testSelectBankDuringRetry() {
     ASSERT_FALSE(this->m_pending.valid);
 
     const U32 cmdSeq = STest::Pick::any();
-    this->sendSelectBank(PrmBank::BACKUP, cmdSeq);
+    this->sendSelectBank(1, cmdSeq);
     ASSERT_CMD_RESPONSE_SIZE(1);
     ASSERT_CMD_RESPONSE(0, PrmStorageComponentBase::OPCODE_SELECT_BANK, cmdSeq, Fw::CmdResponse::BUSY);
     ASSERT_TLM_SIZE(0);
 
-    // The retry and the rest of the save stay on PRIME
+    // The retry and the rest of the save stay on bank 0
     this->invoke_to_schedIn(0, 0);
     this->drain();
     this->assertSaveDone(Drv::ByteStreamStatus::OP_OK);
-    this->assertChunks(PRIME_OFFSET);
-    assertPattern(&this->m_fram[PRIME_OFFSET], 0xA0);
+    this->assertChunks(BANK0_OFFSET);
+    assertPattern(&this->m_fram[BANK0_OFFSET], 0xA0);
     for (FwSizeType i = 0; i < IMAGE_SIZE; i++) {
-        ASSERT_EQ(this->m_fram[BACKUP_OFFSET + i], 0);
+        ASSERT_EQ(this->m_fram[BANK1_OFFSET + i], 0);
     }
 }
 
