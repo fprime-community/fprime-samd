@@ -16,11 +16,15 @@ namespace Samd21 {
 //! Converts a store transfer into a run of Fram requests at its offset within
 //! the selected bank and returns the buffer to the database when the last one
 //! completes. The bytes are not interpreted: the database detects missing or
-//! corrupted records, and the deployment sequences loading the redundant bank
-//! with SELECT_BANK. The number of banks and the offset they are packed from
-//! are compile-time configuration (PrmStorageConfig.hpp); each bank is one
-//! StaticPrmDbConfig store, and the layout is checked against the F-RAM size
-//! at build time (PrmStorageLayout.hpp).
+//! corrupted records.
+//!
+//! The store is kept in PrmStorageConfig::NUM_BANKS redundant banks, each one
+//! StaticPrmDbConfig store, packed back to back from
+//! PrmStorageConfig::BASE_OFFSET. Bank 0 is selected at boot, and SELECT_BANK
+//! points the following transfers at another; the deployment's sequences decide
+//! the order banks are saved to and loaded (LOAD REPLACE, then LOAD MERGE from
+//! each further bank). The layout is checked against the F-RAM size at build
+//! time (PrmStorageLayout.hpp).
 class PrmStorage final : public PrmStorageComponentBase {
   public:
     // ----------------------------------------------------------------------
