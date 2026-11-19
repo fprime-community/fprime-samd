@@ -5,7 +5,9 @@ Directory: ../../../../..
 File                                       Lines    Exec  Cover   Missing
 ------------------------------------------------------------------------------
 lib/fprime-samd/fprime-samd/Svc/PrmStorage/PrmStorage.cpp
-                                              88      88   100%
+                                              92      92   100%
+lib/fprime-samd/fprime-samd/Svc/PrmStorage/PrmStorageLayout.hpp
+                                               2       2   100%
 ------------------------------------------------------------------------------
-TOTAL                                         88      88   100%
+TOTAL                                         94      94   100%
 ------------------------------------------------------------------------------
