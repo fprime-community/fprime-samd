@@ -31,6 +31,18 @@ class StaticPrmDbTester : public StaticPrmDbGTestBase {
     static constexpr FwSizeType SIZE_B = 12;
     static constexpr FwSizeType SIZE_C = 1;
 
+    // The test parameters must fit a ParamBuffer of the project configuration
+    static_assert(SIZE_B <= FW_PARAM_BUFFER_MAX_SIZE,
+                  "StaticPrmDb UTs need FW_PARAM_BUFFER_MAX_SIZE >= 12 (the largest setPrm test parameter)");
+
+    //! Boundary layout parameters (StaticPrmDbTester.cpp), set in layout memory rather than setPrm:
+    //! a value check split over two records, check-only last records, and the 32-record maximum
+    static constexpr FwSizeType SIZE_D = 15;
+    static constexpr FwSizeType SIZE_H = 16;
+    static constexpr FwSizeType SIZE_G = 206;
+    static constexpr FwSizeType SIZE_E = 32 * PrmRecord::VALUE_SIZE - PrmRecord::CHECK_SIZE;
+    static constexpr FwSizeType BOUNDARY_PARAMS = 4;
+
     //! Record IDs of the test layout
     static constexpr U16 RECORD_A = 0x1111;
     static constexpr U16 RECORD_B0 = 0x2220;
@@ -111,6 +123,10 @@ class StaticPrmDbTester : public StaticPrmDbGTestBase {
     //! Without storage connected, SAVE and LOAD fail with an event instead of a port assert.
     void testNoStorage();
 
+    //! Split and check-only segments, the largest parameter and a full store save, load and
+    //! detect a save interrupted at any record.
+    void testBoundaryLayout();
+
   protected:
     //! Record a command response; with m_chainSave, answer it with another SAVE
     void cmdResponseIn(FwOpcodeType opCode, U32 cmdSeq, Fw::CmdResponse response) override;
@@ -182,6 +198,12 @@ class StaticPrmDbTester : public StaticPrmDbGTestBase {
     //! Value of a parameter after a load that must give it whole from one of two seeds, or invalid.
     //! The seed it came from, 0 when invalid.
     U8 paramSeed(FwPrmIdType id, FwSizeType size, U8 seedA, U8 seedB);
+
+    //! Set every boundary layout parameter to a pattern seeded by seed (plus its index)
+    void setBoundaryParams(U8 seed);
+
+    //! Seed (seedA or seedB) a boundary layout parameter holds whole, 0 when invalid
+    U8 boundarySeed(FwSizeType param, U8 seedA, U8 seedB) const;
 
     //! Assert the store holds exactly the given records (any order) and empty slots
     void assertStoreRecords(const U16* ids, FwSizeType count) const;

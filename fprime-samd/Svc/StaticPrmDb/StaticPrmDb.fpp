@@ -116,7 +116,7 @@ module Samd21 {
             throttle 5
 
         ###############################################################################
-        # Standard AC Ports: Required for Channels, Events, Commands, and Parameters  #
+        # Standard AC Ports: Required for Channels, Events and Commands               #
         ###############################################################################
 
         @ Port for requesting the current time
@@ -130,12 +130,6 @@ module Samd21 {
 
         @ Enables telemetry channels handling
         import Fw.Channel
-
-        @ Port to return the value of a parameter
-        param get port prmGet
-
-        @Port to set the value of a parameter
-        param set port prmSet
 
     }
 }

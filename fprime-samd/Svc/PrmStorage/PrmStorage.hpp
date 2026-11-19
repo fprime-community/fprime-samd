@@ -16,10 +16,15 @@ namespace Samd21 {
 //! Converts a store transfer into a run of Fram requests at its offset within
 //! the selected bank and returns the buffer to the database when the last one
 //! completes. The bytes are not interpreted: the database detects missing or
-//! corrupted records, and the deployment sequences loading the redundant bank
-//! with SELECT_BANK. The bank layout is compile-time configuration
-//! (PrmStorageConfig.hpp), checked against the StaticPrmDbConfig store size
-//! at build time (PrmStorageLayout.hpp).
+//! corrupted records.
+//!
+//! The store is kept in PrmStorageConfig::NUM_BANKS redundant banks, each one
+//! StaticPrmDbConfig store, packed back to back from
+//! PrmStorageConfig::BASE_OFFSET. Bank 0 is selected at boot, and SELECT_BANK
+//! points the following transfers at another; the deployment's sequences decide
+//! the order banks are saved to and loaded (LOAD REPLACE, then LOAD MERGE from
+//! each further bank). The layout is checked against the F-RAM size at build
+//! time (PrmStorageLayout.hpp).
 class PrmStorage final : public PrmStorageComponentBase {
   public:
     // ----------------------------------------------------------------------
@@ -34,8 +39,6 @@ class PrmStorage final : public PrmStorageComponentBase {
     ~PrmStorage();
 
   private:
-    static_assert(PrmBank::NUM_CONSTANTS == 2, "bankOffset() maps every PrmBank");
-
     // ----------------------------------------------------------------------
     // Handler implementations for typed input ports
     // ----------------------------------------------------------------------
@@ -89,9 +92,9 @@ class PrmStorage final : public PrmStorageComponentBase {
     //! Handler implementation for command SELECT_BANK
     //!
     //! Point the following saves and loads at a bank
-    void SELECT_BANK_cmdHandler(FwOpcodeType opCode,         //!< The opcode
-                                U32 cmdSeq,                  //!< The command sequence number
-                                const Samd21::PrmBank& bank  //!< Bank of the following saves and loads
+    void SELECT_BANK_cmdHandler(FwOpcodeType opCode,  //!< The opcode
+                                U32 cmdSeq,           //!< The command sequence number
+                                U8 bank               //!< Bank index, 0 to PrmStorageConfig::NUM_BANKS - 1
                                 ) override;
 
   private:
@@ -125,7 +128,7 @@ class PrmStorage final : public PrmStorageComponentBase {
     // State
     // ----------------------------------------------------------------------
 
-    PrmBank m_bank;  //!< Bank of the next transfer
+    U8 m_bank;  //!< Bank of the next transfer
 
     bool m_busy;          //!< A transfer is in progress
     bool m_retryPending;  //!< The request was rejected BUSY; schedIn retries it

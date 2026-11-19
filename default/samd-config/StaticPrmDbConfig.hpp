@@ -5,7 +5,7 @@
  * size (RECORD_VALUE_SIZE) is an FPP constant in Samd21StaticPrmDbConfig.fpp, since the
  * autocoder needs it too; the record size and every size below derive from it.
  *
- * PrmStorage checks the store (STORE_RECORDS records) against its bank layout at build time.
+ * PrmStorage sizes each of its banks to one store (STORE_RECORDS records) and checks they fit the F-RAM.
  */
 #ifndef SAMD21_STATIC_PRM_DB_CFG_HPP_
 #define SAMD21_STATIC_PRM_DB_CFG_HPP_

@@ -12,7 +12,7 @@ TEST(Transfer, Save) {
     REQUIREMENT("PRM-STORE-001");
     REQUIREMENT("PRM-STORE-002");
     REQUIREMENT("PRM-STORE-004");
-    COMMENT("a save writes the image verbatim to PRIME, selected at boot, in MaxTransfer chunks");
+    COMMENT("a save writes the image verbatim to bank 0, selected at boot, in MaxTransfer chunks");
     Samd21::PrmStorageTester tester;
     tester.testSave();
 }
@@ -44,6 +44,21 @@ TEST(Bank, Select) {
     COMMENT("SELECT_BANK moves the following transfers to the other bank");
     Samd21::PrmStorageTester tester;
     tester.testSelectBank();
+}
+
+TEST(Bank, Layout) {
+    REQUIREMENT("PRM-STORE-004");
+    REQUIREMENT("PRM-STORE-008");
+    COMMENT("NUM_BANKS banks of one store each are packed back to back from BASE_OFFSET");
+    Samd21::PrmStorageTester tester;
+    tester.testBankLayout();
+}
+
+TEST(Bank, SelectInvalid) {
+    REQUIREMENT("PRM-STORE-010");
+    COMMENT("SELECT_BANK of a bank that does not exist is rejected and the selection is unchanged");
+    Samd21::PrmStorageTester tester;
+    tester.testSelectInvalidBank();
 }
 
 TEST(Bank, SelectBusy) {

@@ -22,19 +22,19 @@ class PrmStorageTester : public PrmStorageGTestBase {
     // Test instance ID
     static constexpr FwEnumStoreType TEST_INSTANCE_ID = 0;
 
-    //! Bank layout under test (default PrmStorageConfig.hpp)
-    static constexpr U32 PRIME_OFFSET = PrmStorageConfig::PRIME_OFFSET;
-    static constexpr U32 BACKUP_OFFSET = PrmStorageConfig::BACKUP_OFFSET;
+    //! Bank layout under test (PrmStorageConfig.hpp)
+    static constexpr U8 NUM_BANKS = PrmStorageConfig::NUM_BANKS;
+    static constexpr U32 BANK0_OFFSET = PrmStorageLayout::bankOffset(0);
+    static constexpr U32 BANK1_OFFSET = PrmStorageLayout::bankOffset(1);
 
     //! Database image size: two full F-RAM chunks and a partial one
     static constexpr FwSizeType IMAGE_SIZE = 2 * Fram::FramConfig::MaxTransfer + 21;
 
-    //! Simulated F-RAM, a window over the start of the device holding both banks
-    static constexpr FwSizeType FRAM_SIZE = 0x2000;
+    //! Simulated F-RAM, a window over the start of the device holding every bank
+    static constexpr FwSizeType FRAM_SIZE = PrmStorageLayout::bankOffset(NUM_BANKS);
 
-    static_assert(PrmStorageLayout::banksHold(IMAGE_SIZE), "Test image must fit the default bank layout");
-    static_assert((PRIME_OFFSET + IMAGE_SIZE <= FRAM_SIZE) && (BACKUP_OFFSET + IMAGE_SIZE <= FRAM_SIZE),
-                  "Simulated F-RAM must hold both banks");
+    static_assert(NUM_BANKS >= 2, "Bank selection tests need at least two banks");
+    static_assert(IMAGE_SIZE <= PrmStorageLayout::BANK_SIZE, "Test image must fit one bank");
 
     // Construction and destruction
     PrmStorageTester();
@@ -50,6 +50,12 @@ class PrmStorageTester : public PrmStorageGTestBase {
     //! SELECT_BANK moves the following transfers to the other bank, leaving the
     //! first untouched.
     void testSelectBank();
+
+    //! Every bank holds its own image, packed back to back from BASE_OFFSET.
+    void testBankLayout();
+
+    //! SELECT_BANK of a bank that does not exist is rejected and changes nothing.
+    void testSelectInvalidBank();
 
     //! SELECT_BANK while a transfer is in progress is rejected BUSY and the
     //! transfer stays on its bank.
@@ -154,7 +160,7 @@ class PrmStorageTester : public PrmStorageGTestBase {
     void sendLoad(FwSizeType size = IMAGE_SIZE, U32 offset = 0);
 
     //! Clear history and send SELECT_BANK
-    void sendSelectBank(PrmBank bank, U32 cmdSeq);
+    void sendSelectBank(U8 bank, U32 cmdSeq);
 
     //! Deliver outstanding completions until none is left
     void drain();
