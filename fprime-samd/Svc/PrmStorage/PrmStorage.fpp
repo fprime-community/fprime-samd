@@ -1,13 +1,9 @@
 module Samd21 {
-    @ Region of persistent storage the parameter database is saved to and loaded from
-    enum PrmBank : U8 {
-        PRIME = 0 @< Selected at boot
-        BACKUP = 1 @< Redundant copy
-    }
-
     @ Adapts the Samd21.StaticPrmDb store transfers to offset-addressed, size-limited Fram
     @ requests. Each transfer is moved as-is, in Fram.FramConfig.MaxTransfer chunks, at its
-    @ offset within the selected bank; validating the records is the database's job.
+    @ offset within the selected bank; validating the records is the database's job. The
+    @ PrmStorageConfig::NUM_BANKS banks are packed back to back from PrmStorageConfig::BASE_OFFSET,
+    @ each holding one store of StaticPrmDbConfig::STORE_RECORDS records.
     passive component PrmStorage {
 
         # ----------------------------------------------------------------------
@@ -49,26 +45,35 @@ module Samd21 {
         # Commands
         # ----------------------------------------------------------------------
 
-        @ Point the following saves and loads at a bank. BUSY while a transfer is in progress.
-        sync command SELECT_BANK(bank: Samd21.PrmBank) opcode 0
+        @ Point the following saves and loads at a bank. BUSY while a transfer is in progress,
+        @ VALIDATION_ERROR when the bank does not exist.
+        sync command SELECT_BANK(
+            bank: U8 @< Bank index, 0 to PrmStorageConfig::NUM_BANKS - 1
+        ) opcode 0
 
         # ----------------------------------------------------------------------
         # Telemetry
         # ----------------------------------------------------------------------
 
         @ Bank the next save or load uses
-        telemetry ActiveBank: Samd21.PrmBank id 0
+        telemetry ActiveBank: U8 id 0
 
         # ----------------------------------------------------------------------
         # Events
         # ----------------------------------------------------------------------
 
         @ An F-RAM request failed; the transfer was ended with OTHER_ERROR
-        event StorageFailed(op: Fram.Op, bank: Samd21.PrmBank, offset: U32, $status: Fram.Status) \
+        event StorageFailed(op: Fram.Op, bank: U8, offset: U32, $status: Fram.Status) \
             severity warning high \
             id 0 \
-            format "F-RAM {} of parameter {} bank at offset {} failed: {}" \
+            format "F-RAM {} of parameter bank {} at offset {} failed: {}" \
             throttle 5
+
+        @ SELECT_BANK named a bank that does not exist; the selection is unchanged
+        event InvalidBank(bank: U8, numBanks: U8) \
+            severity warning low \
+            id 1 \
+            format "Parameter bank {} does not exist ({} banks)"
 
         ###############################################################################
         # Standard AC Ports: Required for Channels, Events, Commands, and Parameters  #

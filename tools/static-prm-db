@@ -528,6 +528,18 @@ def generate_ac_functions(
             if check_members
             else ""
         )
+        # A deployment without parameters has no values or validity to keep: emitting them
+        # anyway leaves unused variables (-Wunused-variable)
+        storage = (
+            "|//! Validity bits: one per record, a parameter's records share a word\n"
+            f"|U32 s_prmValidity[{max(validity_words, 1)}] = {{}};\n"
+            "|\n"
+            "|//! Serialized parameter values\n"
+            "|struct {\n"
+            f"{members}|}} s_prmValues = {{}};\n"
+            if param_rows
+            else "|// The deployment has no parameters: no values or validity are stored\n"
+        )
         layouts = "".join(
             f"|constexpr {prm_db_name}::ParamLayout {layout(row)} = {{\n"
             f"|    s_prmValues.{row[2]}, {row[3]}, "
@@ -551,15 +563,9 @@ def generate_ac_functions(
             |// The storage is only reached through the functions below
             |namespace {{
             |
-            |//! Validity bits: one per record, a parameter's records share a word
-            |U32 s_prmValidity[{max(validity_words, 1)}] = {{}};
-            |
-            |//! Records copied into memory by the load in progress, laid out as s_prmValidity
+            {storage}|
+            |//! Records copied into memory by the load in progress: one bit per record, as the validity
             |U32 s_prmLoaded[{max(validity_words, 1)}] = {{}};
-            |
-            |//! Serialized parameter values
-            |struct {{
-            {members}|}} s_prmValues = {{}};
             {checks}|
             |//! Where each parameter lives, passed to the shared helpers of {prm_db_name}
             {layouts}|

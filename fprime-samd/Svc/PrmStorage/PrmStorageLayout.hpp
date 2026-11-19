@@ -1,32 +1,36 @@
 // ======================================================================
 // \title  PrmStorageLayout.hpp
 // \author tumbar
-// \brief  Compile-time check of the PrmStorage bank layout
+// \brief  F-RAM bank layout of PrmStorage
 // ======================================================================
 #ifndef Samd21_PrmStorageLayout_HPP
 #define Samd21_PrmStorageLayout_HPP
 
 #include "FramConfig/FramConfig.hpp"
+#include "fprime-samd/Svc/Types/PrmRecord.hpp"
 #include "samd-config/PrmStorageConfig.hpp"
+#include "samd-config/StaticPrmDbConfig.hpp"
 
 namespace Samd21 {
 namespace PrmStorageLayout {
 
-//! True when a bank at offset holds storeSize bytes inside the F-RAM
-constexpr bool bankFits(U32 offset, FwSizeType storeSize) {
-    return (storeSize <= static_cast<FwSizeType>(Fram::FramConfig::Size)) &&
-           (static_cast<FwSizeType>(offset) <= static_cast<FwSizeType>(Fram::FramConfig::Size) - storeSize);
+//! Bytes of one bank: one parameter store of StaticPrmDbConfig::STORE_RECORDS records
+constexpr FwSizeType BANK_SIZE = StaticPrmDbConfig::STORE_RECORDS * PrmRecord::SIZE;
+
+//! F-RAM offset of a bank. The banks are packed back to back from PrmStorageConfig::BASE_OFFSET.
+constexpr U32 bankOffset(U8 bank) {
+    return static_cast<U32>(static_cast<FwSizeType>(PrmStorageConfig::BASE_OFFSET) +
+                            (static_cast<FwSizeType>(bank) * BANK_SIZE));
 }
 
-//! True when both banks hold a store of storeSize bytes inside the F-RAM and
-//! do not overlap. PrmStorage static_asserts this with the StaticPrmDbConfig store size.
-constexpr bool banksHold(FwSizeType storeSize) {
-    return bankFits(PrmStorageConfig::PRIME_OFFSET, storeSize) &&
-           bankFits(PrmStorageConfig::BACKUP_OFFSET, storeSize) &&
-           ((static_cast<FwSizeType>(PrmStorageConfig::PRIME_OFFSET) + storeSize <=
-             static_cast<FwSizeType>(PrmStorageConfig::BACKUP_OFFSET)) ||
-            (static_cast<FwSizeType>(PrmStorageConfig::BACKUP_OFFSET) + storeSize <=
-             static_cast<FwSizeType>(PrmStorageConfig::PRIME_OFFSET)));
+//! True when there is at least one bank and all PrmStorageConfig::NUM_BANKS banks lie inside
+//! the F-RAM. PrmStorage static_asserts this.
+constexpr bool banksFit() {
+    return (PrmStorageConfig::NUM_BANKS > 0) &&
+           (static_cast<FwSizeType>(PrmStorageConfig::BASE_OFFSET) <=
+            static_cast<FwSizeType>(Fram::FramConfig::Size)) &&
+           (static_cast<FwSizeType>(PrmStorageConfig::NUM_BANKS) * BANK_SIZE <=
+            static_cast<FwSizeType>(Fram::FramConfig::Size) - static_cast<FwSizeType>(PrmStorageConfig::BASE_OFFSET));
 }
 
 }  // namespace PrmStorageLayout

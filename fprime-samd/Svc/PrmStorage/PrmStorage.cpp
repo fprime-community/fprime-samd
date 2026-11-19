@@ -13,9 +13,15 @@
 
 namespace Samd21 {
 
-// Both banks hold the StaticPrmDb store inside the F-RAM without overlapping
-static_assert(PrmStorageLayout::banksHold(StaticPrmDbConfig::STORE_RECORDS * PrmRecord::SIZE),
-              "The parameter store (StaticPrmDbConfig::STORE_RECORDS records) does not fit the PrmStorage banks");
+// Every bank holds the StaticPrmDb store inside the F-RAM
+static_assert(PrmStorageLayout::banksFit(),
+              "PrmStorageConfig::NUM_BANKS stores of StaticPrmDbConfig::STORE_RECORDS records, packed from "
+              "PrmStorageConfig::BASE_OFFSET, do not fit the F-RAM");
+
+// One StaticPrmDb transfer is one F-RAM request. A driver completing inside the request call then
+// issues no nested request, so a transfer never recurses through send() / complete().
+static_assert(StaticPrmDbConfig::SCRATCH_RECORDS * PrmRecord::SIZE <= Fram::FramConfig::MaxTransfer,
+              "StaticPrmDbConfig::SCRATCH_RECORDS records must fit one Fram.FramConfig.MaxTransfer request");
 
 // ----------------------------------------------------------------------
 // Component construction and destruction
@@ -23,7 +29,7 @@ static_assert(PrmStorageLayout::banksHold(StaticPrmDbConfig::STORE_RECORDS * Prm
 
 PrmStorage::PrmStorage(const char* const compName)
     : PrmStorageComponentBase(compName),
-      m_bank(PrmBank::PRIME),
+      m_bank(0),
       m_busy(false),
       m_retryPending(false),
       m_op(Fram::Op::READ),
@@ -72,7 +78,12 @@ void PrmStorage::schedIn_handler(FwIndexType portNum, U32 context) {
 // Handler implementations for commands
 // ----------------------------------------------------------------------
 
-void PrmStorage::SELECT_BANK_cmdHandler(FwOpcodeType opCode, U32 cmdSeq, const Samd21::PrmBank& bank) {
+void PrmStorage::SELECT_BANK_cmdHandler(FwOpcodeType opCode, U32 cmdSeq, U8 bank) {
+    if (bank >= PrmStorageConfig::NUM_BANKS) {
+        this->log_WARNING_LO_InvalidBank(bank, PrmStorageConfig::NUM_BANKS);
+        this->cmdResponse_out(opCode, cmdSeq, Fw::CmdResponse::VALIDATION_ERROR);
+        return;
+    }
     if (this->m_busy) {
         // The transfer in progress keeps the bank it started on
         this->cmdResponse_out(opCode, cmdSeq, Fw::CmdResponse::BUSY);
@@ -163,7 +174,7 @@ void PrmStorage::finish(Drv::ByteStreamStatus status) {
 }
 
 U32 PrmStorage::bankOffset() const {
-    return (this->m_bank == PrmBank::BACKUP) ? PrmStorageConfig::BACKUP_OFFSET : PrmStorageConfig::PRIME_OFFSET;
+    return PrmStorageLayout::bankOffset(this->m_bank);
 }
 
 }  // namespace Samd21

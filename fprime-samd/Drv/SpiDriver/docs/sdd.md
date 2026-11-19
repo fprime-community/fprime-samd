@@ -47,7 +47,7 @@ selects on `FPRIME_PLATFORM`.
 | SPI-ERR-003 | After an overrun reply the driver shall accept a new transaction immediately. | Unit Test, Hardware Test |
 | SPI-ERR-004 | A SERCOM interrupt without `INTFLAG.ERROR`, or an overrun with no transaction in flight, shall not abort, reply or alter the transaction state (the latter is acknowledged). | Unit Test |
 | SPI-ERR-005 | A DMA completion reporting `BUS_ERROR` on either stream shall abort the other stream if still outstanding, deassert the chip select (software mode) and reply on the requesting port with `SPI_OTHER_ERR` and the caller's buffers; the driver shall accept a new transaction immediately afterwards. | Unit Test |
-| SPI-SCHED-001 | `activeIn` shall return `true` if any reply record (outcome or refusal, on any slot) is latched between the start of the call and its return, whether or not that record is delivered in the same call. | Unit Test |
+| SPI-SCHED-001 | `activeIn` shall return `true` if it delivers any reply (outcome or refusal, on any slot), or if any reply record is latched between the start of the call and its return, whether or not that record is delivered in the same call. | Unit Test |
 | SPI-SCHED-002 | When `Samd21::SpiDriverConfig::SPI_REPOLL_DURING_OUTSTANDING_TRANSACTION` is non-zero, `activeIn` shall also return `true` if a transfer is in flight at the moment the call returns. | Unit Test (one build per option value) |
 | SPI-SCHED-003 | `activeIn` shall return `false` whenever neither SPI-SCHED-001 nor SPI-SCHED-002 applies. | Unit Test (one build per option value) |
 
@@ -128,8 +128,11 @@ before the deployment sleeps (`cycler.cycle(); wfi`). Every latch path (ISR outc
 unconfigured/busy/chip-select refusals from the request) sets a `m_latched` flag; `activeIn`
 clears it under `CriticalSection` on entry and reads it, together with `m_busy`, under
 `CriticalSection` just before returning, so no latch between entry and return is lost. It returns
-`true` if the flag is set — a record was latched during the pass, by an ISR that landed inside the
-call or by a client starting its next transfer from inside a callback — or, when
+`true` if it delivered a reply — the client may have recorded the completion and left the next
+step to its own `activeIn`, which the cycler may already have called this pass (StaticPrmDb does
+this; without the extra pass each of its transfers waited for the next tick) — if the flag is set
+— a record was latched during the pass, by an ISR that landed inside the call or by a client
+starting its next transfer from inside a callback — or, when
 `SpiDriverConfig::SPI_REPOLL_DURING_OUTSTANDING_TRANSACTION` (default 1, project-overridable in
 `samd-config/SpiDriverConfig.hpp`) is non-zero, if a transfer is in flight at that moment. The
 option trades sleep for latency: with it on, the cycler re-polls for the whole frame (~136 µs for

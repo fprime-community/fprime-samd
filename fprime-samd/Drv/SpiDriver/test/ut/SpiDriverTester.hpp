@@ -166,7 +166,7 @@ class SpiDriverTester final : public SpiDriverGTestBase {
     void assertDelivered(FwSizeType index, FwIndexType port, Drv::SpiStatus::T status);
 
     //! Assert exactly one reply was emitted on port with the request buffers and status
-    void assertReply(FwIndexType port, Drv::SpiStatus::T status, bool transferInFlight = false);
+    void assertReply(FwIndexType port, Drv::SpiStatus::T status);
     void injectOverrun();
     void assertAbort(FwSizeType index, SpiDriver_DmaChannel::T channel);
 

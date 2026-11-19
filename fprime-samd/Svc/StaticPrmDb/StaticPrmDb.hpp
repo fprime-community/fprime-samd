@@ -178,6 +178,9 @@ class StaticPrmDb final : public StaticPrmDbComponentBase {
     //! loaded but failed the value check.
     static U32 commitValue(bool complete, bool merge, const ParamLayout& layout);
 
+    //! Assert the layout's storage pointers are set
+    static void assertLayout(const ParamLayout& layout);
+
   private:
     // ----------------------------------------------------------------------
     // Helpers

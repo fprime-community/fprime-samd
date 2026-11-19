@@ -208,29 +208,31 @@ bool SpiDriver ::activeIn_handler(FwIndexType portNum, U32 context) {
         Samd21::CriticalSection cs;
         this->m_latched = false;
     }
+    bool delivered = false;
     for (FwIndexType slot = 0; slot < NUM_SPIWRITEREAD_INPUT_PORTS; slot++) {
         // Deliver the refusal (if any) first: it carries no data and tells the client its
         // re-request was dropped before the older request's outcome lets it re-arm.
-        this->deliver(this->m_refused[slot], slot);
-        this->deliver(this->m_pending[slot], slot);
+        delivered = this->deliver(this->m_refused[slot], slot) || delivered;
+        delivered = this->deliver(this->m_pending[slot], slot) || delivered;
     }
-    // Ask for another pass before the deployment sleeps if a reply record was latched during
-    // this call (an ISR landed inside it, or a callback's re-request was refused) or, when
-    // configured, while a transfer is in flight, so its completion is delivered before the
-    // next wfi instead of at the next tick.
+    // Ask for another pass before the deployment sleeps if a reply was delivered (the client
+    // may have left work for its own activeIn, earlier in the cycle), if a reply record was
+    // latched during this call (an ISR landed inside it, or a callback's re-request was
+    // refused) or, when configured, while a transfer is in flight, so its completion is
+    // delivered before the next wfi instead of at the next tick.
     Samd21::CriticalSection cs;
-    return this->m_latched ||
+    return delivered || this->m_latched ||
            ((Samd21::SpiDriverConfig::SPI_REPOLL_DURING_OUTSTANDING_TRANSACTION != 0) && (this->m_busy != 0));
 }
 
-void SpiDriver ::deliver(PendingReply& record, FwIndexType slot) {
+bool SpiDriver ::deliver(PendingReply& record, FwIndexType slot) {
     PendingReply reply = {};
     {
         // The ISR paths write the record; copy and clear it with interrupts masked, then
         // call the client with them enabled (the callback may start the next transfer).
         Samd21::CriticalSection cs;
         if (!record.pending) {
-            return;
+            return false;
         }
         reply = record;
         record.pending = false;
@@ -240,6 +242,7 @@ void SpiDriver ::deliver(PendingReply& record, FwIndexType slot) {
     if (this->isConnected_SpiWriteReadComplete_OutputPort(slot)) {
         this->SpiWriteReadComplete_out(slot, write, read, reply.status);
     }
+    return true;
 }
 
 void SpiDriver ::dmaReplyIn_handler(FwIndexType portNum, const Samd21::Dma::Reply& reply) {
