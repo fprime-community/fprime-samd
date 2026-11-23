@@ -13,15 +13,24 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 env:
-  # The harness. `main` rather than a pinned SHA so a harness fix does not require a
+  # The harness. A branch rather than a pinned SHA so a harness fix does not require a
   # commit here; the trade-off is that an unrelated harness regression can turn this red,
   # which the job log makes obvious because the failure is in the reference's own code.
+  # The branch itself is picked by the harness-ref job; see reusable-get-harness-ref.yml.
   HARNESS_REPO: fprime-community/fprime-samd-reference
-  HARNESS_REF: main
 
 jobs:
+  harness-ref:
+    # A harness branch named pr-<number>, or after this branch, is used when one
+    # exists, so a change spanning both repositories can be tested before it lands.
+    uses: ./.github/workflows/reusable-get-harness-ref.yml
+    with:
+      repository: fprime-community/fprime-samd-reference
+      default-ref: main
+
   native-ut:
     name: "Native unit tests"
+    needs: harness-ref
     runs-on: ubuntu-24.04
     timeout-minutes: 45
     steps:
@@ -29,7 +38,7 @@ jobs:
         uses: actions/checkout@v5
         with:
           repository: ${{ env.HARNESS_REPO }}
-          ref: ${{ env.HARNESS_REF }}
+          ref: ${{ needs.harness-ref.outputs.ref }}
           filter: blob:none
 
       - name: "Initialise the harness's other submodules"

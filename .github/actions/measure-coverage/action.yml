@@ -36,7 +36,7 @@ inputs:
   fprime-actions-ref:
     description: >-
       Ref of that repository. `devel` rather than a pinned SHA for the same reason
-      unit-tests.yml floats HARNESS_REF: an upstream fix does not require a commit
+      unit-tests.yml floats the harness branch: an upstream fix does not require a commit
       here. Pin it if you would rather an upstream regression could not turn this
       job red.
     required: false
