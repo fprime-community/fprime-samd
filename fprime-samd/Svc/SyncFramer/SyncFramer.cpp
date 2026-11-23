@@ -62,10 +62,6 @@ void SyncFramer ::comPacketIn_handler(FwIndexType portNum, Fw::ComBuffer& data, 
     FW_ASSERT(sendStatus == Drv::ByteStreamStatus::OP_OK, sendStatus);
 }
 
-void SyncFramer ::sendFatalPacket(Fw::ComBuffer& data) {
-    this->comPacketIn_handler(0, data, 0);
-}
-
 void SyncFramer ::drvConnected_handler(FwIndexType portNum) {}
 
 }  // namespace Samd21
