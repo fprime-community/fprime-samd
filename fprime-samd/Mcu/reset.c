@@ -25,8 +25,12 @@
 /* Default empty handler */
 void Dummy_Handler(void) {
     __BKPT(4);
-    for (;;) {
-    }
+    NVIC_SystemReset();
+}
+
+/* Hard faults reset the MCU */
+void HardFault_Handler(void) {
+    NVIC_SystemReset();
 }
 
 #if defined(__SAMD51__)
@@ -34,7 +38,7 @@ void Dummy_Handler(void) {
 /* Cortex-M4 processor handlers */
 void Reset_Handler(void);
 void NMI_Handler(void) __attribute__((weak, alias("Dummy_Handler")));
-void HardFault_Handler(void) __attribute__((weak, alias("Dummy_Handler")));
+void HardFault_Handler(void);
 void MemManage_Handler(void) __attribute__((weak, alias("Dummy_Handler")));
 void BusFault_Handler(void) __attribute__((weak, alias("Dummy_Handler")));
 void UsageFault_Handler(void) __attribute__((weak, alias("Dummy_Handler")));
@@ -345,7 +349,7 @@ __attribute__((used)) __attribute__((section(".isr_vector"))) const DeviceVector
 #else
 
 /* Cortex-M0+ core handlers */
-void HardFault_Handler(void) __attribute__((weak, alias("Dummy_Handler")));
+void HardFault_Handler(void);
 void Reset_Handler(void);
 void NMI_Handler(void) __attribute__((weak, alias("Dummy_Handler")));
 void SVC_Handler(void) __attribute__((weak, alias("Dummy_Handler")));
