@@ -15,15 +15,23 @@ concurrency:
 
 env:
   HARNESS_REPO: fprime-community/fprime-samd-reference
-  HARNESS_REF: main
   DEPLOYMENT: CuriosityReference
   TOOLCHAIN: samd21g17
   # Distinct per deployment; the reporter uses it to find and update its own comment.
   REPORT_MARKER: samd-size-CuriosityReference
 
 jobs:
+  harness-ref:
+    # A harness branch named pr-<number>, or after this branch, is used when one
+    # exists, so a change spanning both repositories can be tested before it lands.
+    uses: ./.github/workflows/reusable-get-harness-ref.yml
+    with:
+      repository: fprime-community/fprime-samd-reference
+      default-ref: main
+
   build:
     name: "SAMD21 build and size report"
+    needs: harness-ref
     runs-on: ubuntu-24.04
     timeout-minutes: 60
     steps:
@@ -31,7 +39,7 @@ jobs:
         uses: actions/checkout@v5
         with:
           repository: ${{ env.HARNESS_REPO }}
-          ref: ${{ env.HARNESS_REF }}
+          ref: ${{ needs.harness-ref.outputs.ref }}
           filter: blob:none
 
       - name: "Initialise the harness's other submodules"
@@ -107,7 +115,7 @@ jobs:
         uses: actions/checkout@v5
         with:
           repository: ${{ env.HARNESS_REPO }}
-          # The SHA resolved above, not HARNESS_REF, so head and baseline share a
+          # The SHA resolved above, not the branch, so head and baseline share a
           # byte-identical harness.
           ref: ${{ steps.harness.outputs.sha }}
           filter: blob:none
