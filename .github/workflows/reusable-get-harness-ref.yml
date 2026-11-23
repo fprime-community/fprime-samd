@@ -1,0 +1,82 @@
+# Picks the harness branch a run should build against, so a change that needs a matching
+# change in the harness can be tested before either side merges. Modelled on
+# lib/fprime's reusable-get-pr-branch.yml. First match wins:
+#
+#   1. pr-<number>         a pull request with a harness branch named after its number
+#   2. <head branch>       the branch this run is for: the pull request's source branch,
+#                          or the pushed branch
+#   3. <base branch>       the branch a pull request merges into, e.g. a release/ branch
+#                          with a tracking branch on the harness
+#   4. default-ref
+#
+# git ls-remote rather than the REST API: it needs no token and is not subject to the
+# unauthenticated API rate limit, which a shared runner IP can exhaust.
+
+name: "Get Harness Ref"
+
+on:
+  workflow_call:
+    inputs:
+      repository:
+        description: "The harness repository to look for a matching branch in"
+        type: string
+        required: true
+      default-ref:
+        description: "Ref to use if no matching branch is found"
+        type: string
+        required: false
+        default: main
+    outputs:
+      ref:
+        description: "The harness branch to check out"
+        value: ${{ jobs.resolve.outputs.ref }}
+
+permissions:
+  contents: read
+
+jobs:
+  resolve:
+    name: "Resolve the harness branch"
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    outputs:
+      ref: ${{ steps.resolve.outputs.ref }}
+    steps:
+      - name: "Look for a matching harness branch"
+        id: resolve
+        shell: bash
+        env:
+          # All of these are passed through the environment, never interpolated into the
+          # script: branch names come from the pull request author.
+          HARNESS_REPO: ${{ inputs.repository }}
+          DEFAULT_REF: ${{ inputs.default-ref }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          HEAD_BRANCH: ${{ github.head_ref || (github.ref_type == 'branch' && github.ref_name || '') }}
+          BASE_BRANCH: ${{ github.base_ref }}
+        run: |
+          set -euo pipefail
+          candidates=()
+          [ -n "${PR_NUMBER}" ] && candidates+=("pr-${PR_NUMBER}")
+          [ -n "${HEAD_BRANCH}" ] && candidates+=("${HEAD_BRANCH}")
+          [ -n "${BASE_BRANCH}" ] && candidates+=("${BASE_BRANCH}")
+
+          ref="${DEFAULT_REF}"
+          for candidate in "${candidates[@]}"; do
+            echo "Looking for '${candidate}' on ${HARNESS_REPO}"
+            # Exit code 2 is "no matching ref"; anything else non-zero is a real failure
+            # and should not silently fall through to the default.
+            status=0
+            git ls-remote --exit-code --heads "https://github.com/${HARNESS_REPO}.git" \
+              "refs/heads/${candidate}" > /dev/null || status=$?
+            if [ "${status}" -eq 0 ]; then
+              ref="${candidate}"
+              break
+            elif [ "${status}" -ne 2 ]; then
+              echo "::error::git ls-remote against ${HARNESS_REPO} failed (exit ${status})"
+              exit "${status}"
+            fi
+          done
+
+          echo "Using ${HARNESS_REPO}@${ref}"
+          echo "ref=${ref}" >> "${GITHUB_OUTPUT}"
+          echo "Harness: \`${HARNESS_REPO}@${ref}\`" >> "${GITHUB_STEP_SUMMARY}"

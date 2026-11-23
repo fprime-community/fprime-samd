@@ -30,11 +30,19 @@ env:
   # The harness fprime-samd's unit tests are built and run inside. Kept identical to
   # unit-tests.yml so coverage measures the same build those tests pass in.
   HARNESS_REPO: fprime-community/fprime-samd-reference
-  HARNESS_REF: main
 
 jobs:
+  harness-ref:
+    # A harness branch named pr-<number>, or after this branch, is used when one
+    # exists, so a change spanning both repositories can be tested before it lands.
+    uses: ./.github/workflows/reusable-get-harness-ref.yml
+    with:
+      repository: fprime-community/fprime-samd-reference
+      default-ref: main
+
   coverage-check:
     name: "Coverage [PR]"
+    needs: harness-ref
     # ubuntu-24.04 for gcov-13. gcov-11 (the 22.04 default) has counter-overflow bugs
     # and pathological slowness on templated test code that can turn a 30 s coverage
     # run into a 30+ minute one; both are fixed in gcc-12+.
@@ -45,7 +53,7 @@ jobs:
         uses: actions/checkout@v5
         with:
           repository: ${{ env.HARNESS_REPO }}
-          ref: ${{ env.HARNESS_REF }}
+          ref: ${{ needs.harness-ref.outputs.ref }}
           filter: blob:none
 
       - name: "Initialise the harness's other submodules"
