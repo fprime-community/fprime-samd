@@ -1,9 +1,9 @@
 # unit-test console output: Svc/StaticPrmDb
 
 ==============================================================================
-PASSED  fprime-samd_Svc_StaticPrmDb_ut_exe  (0.06s)
+PASSED  fprime-samd_Svc_StaticPrmDb_ut_exe  (0.05s)
 ==============================================================================
-[STest::Random] Generated seed 723002 from system time
+[STest::Random] Generated seed 235805 from system time
 [==========] Running 19 tests from 3 test suites.
 [----------] Global test environment set-up.
 [----------] 1 test from Params
@@ -29,7 +29,7 @@ parameters set through setPrm read back VALID, others INVALID
 ***************************************
 a save followed by a REPLACE load restores every value
 ***************************************
-[       OK ] Store.SaveLoad (0 ms)
+[       OK ] Store.SaveLoad (1 ms)
 [ RUN      ] Store.BitFlip
 
 ***************************************
@@ -71,7 +71,7 @@ records of an older dictionary load in any slot order, unknown records are skipp
 ***************************************
 a MERGE load fills in invalid parameters without overwriting valid ones
 ***************************************
-[       OK ] Store.Merge (0 ms)
+[       OK ] Store.Merge (1 ms)
 [ RUN      ] Store.InterruptedSave
 
 ***************************************
@@ -151,8 +151,8 @@ an erased store loads with every parameter invalid
 ***************************************
 split and check-only segments, the largest parameter and a full store round-trip
 ***************************************
-[       OK ] Store.BoundaryLayout (8 ms)
-[----------] 10 tests from Store (22 ms total)
+[       OK ] Store.BoundaryLayout (9 ms)
+[----------] 10 tests from Store (23 ms total)
 
 [----------] 8 tests from Storage
 [ RUN      ] Storage.ReadFailure
@@ -246,6 +246,6 @@ without storage connected, SAVE and LOAD fail with an event
 [----------] 8 tests from Storage (4 ms total)
 
 [----------] Global test environment tear-down
-[==========] 19 tests from 3 test suites ran. (28 ms total)
+[==========] 19 tests from 3 test suites ran. (29 ms total)
 [  PASSED  ] 19 tests.
 

@@ -32,12 +32,12 @@ pre {
   white-space: pre-wrap; word-break: break-word;
 }
 .empty { color: #57606a; padding: 0.75rem 1rem; border-top: 1px solid #d0d7de; margin: 0; }
-</style></head><body><h1>Unit-test console output &mdash; <code>Drv/SpiDriver</code></h1><div class="meta"><span class="pill passed">passed</span> 1 passed &middot; 1.95s &middot; <a href="../../../index.html">← back to the module list</a> &middot; <a href="console.txt">plain text</a></div><details><summary><span class="pill passed">passed</span><span class="name">fprime-samd_Drv_SpiDriver_ut_exe</span><span class="time">1.95s</span></summary><pre>[STest::Random] Generated seed 312321 from system time
+</style></head><body><h1>Unit-test console output &mdash; <code>Drv/SpiDriver</code></h1><div class="meta"><span class="pill passed">passed</span> 1 passed &middot; 1.14s &middot; <a href="../../../index.html">← back to the module list</a> &middot; <a href="console.txt">plain text</a></div><details><summary><span class="pill passed">passed</span><span class="name">fprime-samd_Drv_SpiDriver_ut_exe</span><span class="time">1.14s</span></summary><pre>[STest::Random] Generated seed 535941 from system time
 [==========] Running 22 tests from 2 test suites.
 [----------] Global test environment set-up.
 [----------] 10 tests from Nominal
 [ RUN      ] Nominal.ConfigureSoftwareChipSelect
-[       OK ] Nominal.ConfigureSoftwareChipSelect (1 ms)
+[       OK ] Nominal.ConfigureSoftwareChipSelect (0 ms)
 [ RUN      ] Nominal.ConfigureHardwareChipSelect
 [       OK ] Nominal.ConfigureHardwareChipSelect (0 ms)
 [ RUN      ] Nominal.Transaction
@@ -45,9 +45,9 @@ pre {
 [ RUN      ] Nominal.HardwareChipSelectTransaction
 [       OK ] Nominal.HardwareChipSelectTransaction (0 ms)
 [ RUN      ] Nominal.CalculateBaud
-[       OK ] Nominal.CalculateBaud (1004 ms)
+[       OK ] Nominal.CalculateBaud (493 ms)
 [ RUN      ] Nominal.RandomTransactions
-[       OK ] Nominal.RandomTransactions (23 ms)
+[       OK ] Nominal.RandomTransactions (15 ms)
 [ RUN      ] Nominal.SetBaudRate
 [       OK ] Nominal.SetBaudRate (0 ms)
 [ RUN      ] Nominal.SetBaudRatePort
@@ -56,23 +56,23 @@ pre {
 [       OK ] Nominal.SchedIdle (0 ms)
 [ RUN      ] Nominal.SchedRePoll
 [       OK ] Nominal.SchedRePoll (0 ms)
-[----------] 10 tests from Nominal (1032 ms total)
+[----------] 10 tests from Nominal (511 ms total)
 
 [----------] 12 tests from OffNominal
 [ RUN      ] OffNominal.Busy
-[       OK ] OffNominal.Busy (166 ms)
+[       OK ] OffNominal.Busy (119 ms)
 [ RUN      ] OffNominal.SameSlotReRequest
-[       OK ] OffNominal.SameSlotReRequest (166 ms)
+[       OK ] OffNominal.SameSlotReRequest (136 ms)
 [ RUN      ] OffNominal.ChipSelectFailure
-[       OK ] OffNominal.ChipSelectFailure (180 ms)
+[       OK ] OffNominal.ChipSelectFailure (106 ms)
 [ RUN      ] OffNominal.DmaBusError
 [       OK ] OffNominal.DmaBusError (0 ms)
 [ RUN      ] OffNominal.ConfigureTwice
-[       OK ] OffNominal.ConfigureTwice (209 ms)
+[       OK ] OffNominal.ConfigureTwice (112 ms)
 [ RUN      ] OffNominal.RequestBeforeConfigure
 [       OK ] OffNominal.RequestBeforeConfigure (0 ms)
 [ RUN      ] OffNominal.SizeMismatch
-[       OK ] OffNominal.SizeMismatch (168 ms)
+[       OK ] OffNominal.SizeMismatch (126 ms)
 [ RUN      ] OffNominal.ReceiveOverrun
 [       OK ] OffNominal.ReceiveOverrun (0 ms)
 [ RUN      ] OffNominal.ReceiveOverrunAfterTxComplete
@@ -83,9 +83,9 @@ pre {
 [       OK ] OffNominal.ReceiveOverrunIdle (0 ms)
 [ RUN      ] OffNominal.UnexpectedDmaReply
 [       OK ] OffNominal.UnexpectedDmaReply (0 ms)
-[----------] 12 tests from OffNominal (894 ms total)
+[----------] 12 tests from OffNominal (604 ms total)
 
 [----------] Global test environment tear-down
-[==========] 22 tests from 2 test suites ran. (1927 ms total)
+[==========] 22 tests from 2 test suites ran. (1116 ms total)
 [  PASSED  ] 22 tests.
 </pre></details></body></html>
