@@ -116,7 +116,7 @@ From the Breadboard deployment:
 
 ```fpp
 instance fatalFramer: Samd21.SyncFramer base id FixedBaseIds.NO_DICTIONARY
-instance fatalHandler: Samd21.FatalHandler base id 0
+instance fatalHandler: Samd21.FatalHandler base id 0x1010
 
 connections FaultProtection {
     downlink.FatalAnnounce -> fatalHandler.FatalReceive
@@ -134,7 +134,6 @@ connections FaultProtection {
 - **Keep it off the normal downlink.** Don't route `fatalOut` through the event logger or a
   queued framer; those may be what failed.
 - **Use one instance.** Only the most recently constructed `FatalHandler` reports.
-- **Base ID:** any base ID works; the packet's event ID follows the instance's base.
 
 ## 7. Tested Configurations
 
