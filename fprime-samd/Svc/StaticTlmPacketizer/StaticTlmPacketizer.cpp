@@ -28,7 +28,8 @@ StaticTlmPacketizer::~StaticTlmPacketizer() {}
 // ----------------------------------------------------------------------
 
 void StaticTlmPacketizer::pktSendIn_handler(FwIndexType portNum, U32 context) {
-    this->sendPkt(static_cast<FwTlmPacketizeIdType>(portNum));
+    // An unknown packet id is already reported by sendPkt() as PacketNotFound
+    (void)this->sendPkt(static_cast<FwTlmPacketizeIdType>(portNum));
 }
 
 void StaticTlmPacketizer::tlmRecvIn_handler(FwIndexType portNum,

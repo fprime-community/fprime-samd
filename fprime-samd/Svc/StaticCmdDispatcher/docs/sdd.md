@@ -7,9 +7,10 @@ A small bare-metal implementation of CmdDispatcher
 `StaticCmdDispatcher` is
 [`Baremetal::PassiveCmdDispatcher`](../../../../../fprime-baremetal/fprime-baremetal/Svc/PassiveCmdDispatcher/docs/sdd.md)
 with the runtime opcode-registration table replaced by a compile-time opcode-to-port
-lookup autocoded from the deployment topology. The port, command, and event set is
-otherwise the same, so **anything not listed under Delta behaves as documented there**.
-Requirements are likewise inherited.
+lookup autocoded from the deployment topology. Ports are the same, and the command and
+event set is the parent's plus the additions listed under Delta, so **anything not listed
+under Delta behaves as documented there**. The parent SDD has no requirements; the ones
+below are this component's own.
 
 ## Delta
 
@@ -21,10 +22,12 @@ Requirements are likewise inherited.
 | `compCmdReg`    | Stores `{opcode, port}`                                                             | Stores nothing. Asserts the autocoded table resolves the opcode to the port the registration arrived on — a wiring/table disagreement is a FATAL at boot                                                                               |
 | `regCommands()` | Required                                                                            | Optional; when called it is purely that boot-time consistency check                                                                                                                                                                    |
 | Events          | —                                                                                   | Same names, ids, severities and formats. The opcode argument is spelled `opCode` rather than `$opcode`, and `OpCodeDispatched.$port` is `I32` rather than `FwIndexType` (the same type on SAMD21). Dictionary-visible, wire-identical. |
+| Added command   | —                                                                                   | `SET_EVENT_EMISSION(portIdx, enabled)` silences `OpCodeDispatched`/`OpCodeCompleted` for one sequence port; errors are still logged                                                                                                    |
+| Added events    | —                                                                                   | `PortIndexOutOfRange` (`SET_EVENT_EMISSION` index past the sequence ports) and `UnexpectedCommandResponse` (a response no tracked command matches; the parent drops it silently)                                                       |
 
 ## Requirements
 
-The inherited requirements, as the unit tests trace them:
+As the unit tests trace them:
 
 | Name | Description | Validation |
 |---|---|---|
@@ -32,12 +35,12 @@ The inherited requirements, as the unit tests trace them:
 | STATIC-CMD-002 | An opcode outside the dispatch table (or the reserved `0xFFFFFFFF`) shall fail `INVALID_OPCODE` with `InvalidCommand` and reach no instance. | Unit Test |
 | STATIC-CMD-003 | An error response shall reach the sender and log `OpCodeError`. | Unit Test |
 | STATIC-CMD-004 | A command packet that does not deserialize shall fail `VALIDATION_ERROR` with `MalformedCommand`. | Unit Test |
-| STATIC-CMD-005 | At most `CMD_DISPATCHER_SEQUENCER_TABLE_SIZE` commands shall be outstanding; past that a command fails `EXECUTION_ERROR` with `TooManyCommands`. `CLEAR_TRACKING` frees every slot; a response no slot tracks logs `UnexpectedCommandResponse`. | Unit Test |
+| STATIC-CMD-005 | At most `CMD_DISPATCHER_SEQUENCER_TABLE_SIZE` commands shall be outstanding; past that a command fails `EXECUTION_ERROR` with `TooManyCommands`. `CLEAR_TRACKING` shall free every other slot, answer each cleared command's sender `CLEARED`, and complete `OK` on its own sender; a response no slot tracks logs `UnexpectedCommandResponse`. | Unit Test |
 | STATIC-CMD-006 | `SET_EVENT_EMISSION` shall silence `OpCodeDispatched`/`OpCodeCompleted` for one sequence port; an index past the sequence ports fails `EXECUTION_ERROR` with `PortIndexOutOfRange`. | Unit Test |
+| STATIC-CMD-007 | Shall need no allocator, runtime opcode table or setup call; RAM is the sequence tracker and per-port event flags only. | Code inspection |
 
-`CLEAR_TRACKING` also clears its own tracking entry, so it gets no response on its sequence port
-and logs `UnexpectedCommandResponse`; a sequencer waiting on it will time out. The unit tests pin
-this behavior.
+A command cleared by `CLEAR_TRACKING` that later completes is no longer tracked, so its
+response logs `UnexpectedCommandResponse` and is dropped; its sender already got `CLEARED`.
 
 ## Testing
 

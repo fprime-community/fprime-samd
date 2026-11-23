@@ -20,13 +20,16 @@ static_assert(CMD_DISPATCHER_SEQUENCER_TABLE_SIZE <= std::numeric_limits<U32>::m
 // Indicates that an entry in the sequence tracker is unused
 constexpr FwOpcodeType OPCODE_UNUSED = std::numeric_limits<FwOpcodeType>::max();
 
+// Indicates that no port was found
+constexpr FwIndexType PORT_NONE = -1;
+
 // ----------------------------------------------------------------------
 // Component construction and destruction
 // ----------------------------------------------------------------------
 
 StaticCmdDispatcher ::StaticCmdDispatcher(const char* const compName)
     : StaticCmdDispatcherComponentBase(compName), m_seq(0), m_eventDisabled() {
-    for (auto i = 0; i < CMD_DISPATCHER_SEQUENCER_TABLE_SIZE; i++) {
+    for (U32 i = 0; i < CMD_DISPATCHER_SEQUENCER_TABLE_SIZE; i++) {
         this->m_sequenceTracker[i].opcode = OPCODE_UNUSED;
     }
 }
@@ -41,7 +44,7 @@ void StaticCmdDispatcher ::compCmdReg_handler(FwIndexType portNum, FwOpcodeType 
     // The opcode -> port mapping is already known statically from the topology, so
     // there is nothing to register at runtime. Just sanity check that the autocoded
     // table agrees with the connection this registration came in on.
-    FwIndexType port = -1;
+    FwIndexType port = PORT_NONE;
     auto success = this->lookupDispatchPort(opCode, port);
     FW_ASSERT(success == Fw::Success::SUCCESS && (port == portNum), static_cast<FwAssertArgType>(opCode));
 }
@@ -54,10 +57,10 @@ void StaticCmdDispatcher ::compCmdStat_handler(FwIndexType portNum,
     FW_ASSERT(opCode != OPCODE_UNUSED, portNum);
 
     // Search for the command source
-    FwIndexType portToCall = -1;
+    FwIndexType portToCall = PORT_NONE;
     U32 context = 0;
-    for (auto pending = 0; pending < CMD_DISPATCHER_SEQUENCER_TABLE_SIZE; pending++) {
-        auto entry = &this->m_sequenceTracker[pending];
+    for (U32 pending = 0; pending < CMD_DISPATCHER_SEQUENCER_TABLE_SIZE; pending++) {
+        SequenceTracker* entry = &this->m_sequenceTracker[pending];
         if ((entry->opcode != OPCODE_UNUSED) && (entry->seq == cmdSeq)) {
             portToCall = entry->callerPort;
             context = entry->context;
@@ -71,7 +74,7 @@ void StaticCmdDispatcher ::compCmdStat_handler(FwIndexType portNum,
 
     FW_ASSERT(portToCall < NUM_SEQCMDSTATUS_OUTPUT_PORTS);
 
-    if (portToCall != -1) {
+    if (portToCall != PORT_NONE) {
         // Check the command response and log success/failure
         if (response.e == Fw::CmdResponse::OK) {
             if (!m_eventDisabled[portToCall]) {
@@ -98,7 +101,7 @@ void StaticCmdDispatcher ::seqCmd_helper(FwIndexType portNum,
                                          U32 context,
                                          Fw::CmdArgBuffer& args) {
     // Look up the output port for this opcode. Ignore OPCODE_UNUSED, reserved for internal use
-    FwIndexType port = -1;
+    FwIndexType port = PORT_NONE;
     bool found = (opcode != OPCODE_UNUSED) && this->lookupDispatchPort(opcode, port) == Fw::Success::SUCCESS;
 
     if (found && this->isConnected_compCmdSend_OutputPort(port)) {
@@ -175,9 +178,20 @@ void StaticCmdDispatcher ::CMD_NO_OP_cmdHandler(FwOpcodeType opCode, U32 cmdSeq)
 }
 
 void StaticCmdDispatcher ::CMD_CLEAR_TRACKING_cmdHandler(FwOpcodeType opCode, U32 cmdSeq) {
-    // Clear the sequence tracking table
-    for (FwOpcodeType entry = 0; entry < CMD_DISPATCHER_SEQUENCER_TABLE_SIZE; entry++) {
-        this->m_sequenceTracker[entry].opcode = OPCODE_UNUSED;
+    // Clear every tracked command but this one, so this command's own response still
+    // reaches its sender. The senders of the cleared commands are told their status
+    // will never arrive.
+    for (U32 i = 0; i < CMD_DISPATCHER_SEQUENCER_TABLE_SIZE; i++) {
+        SequenceTracker* entry = &this->m_sequenceTracker[i];
+        if ((entry->opcode != OPCODE_UNUSED) && (entry->seq != cmdSeq)) {
+            const FwOpcodeType clearedOpcode = entry->opcode;
+            entry->opcode = OPCODE_UNUSED;
+            FW_ASSERT(entry->callerPort < this->getNum_seqCmdStatus_OutputPorts(),
+                      static_cast<FwAssertArgType>(entry->callerPort));
+            if (this->isConnected_seqCmdStatus_OutputPort(entry->callerPort)) {
+                this->seqCmdStatus_out(entry->callerPort, clearedOpcode, entry->context, Fw::CmdResponse::CLEARED);
+            }
+        }
     }
     this->cmdResponse_out(opCode, cmdSeq, Fw::CmdResponse::OK);
 }

@@ -22,6 +22,18 @@ applies.
 | SAMD21-TLM-004 | Shall reject an unknown packet id with a `PacketNotFound` warning and an `EXECUTION_ERROR` response, emitting no packet. | `SEND_PKT` takes ground input. | Unit Test |
 | SAMD21-TLM-005 | Shall require no runtime configuration, allocator, or task. | Baremetal deployments have no allocator. | Code inspection |
 
+## Ports
+
+| Name | Kind | Type | Size | Description |
+|---|---|---|---|---|
+| `pktSendIn` | sync input | `Svc.Sched` | `NUM_TLM_PACKETS` | Send the packet whose id is the port index |
+| `tlmRecvIn` | sync input | `Fw.Tlm` | 1 | Channel updates; the value is copied into every packet holding the channel |
+| `pktSendOut` | output | `Fw.Com` | `NUM_PKT_OUT` | Packet output; every connected index gets a copy of every packet sent |
+| `timeCaller` | time get | `Fw.Time` | 1 | Packet time tag |
+
+Plus the standard command (`cmdIn`, `cmdRegOut`, `cmdResponseOut`) and event (`logOut`,
+`logTextOut`) ports.
+
 ## Design
 
 The autocoder reads the topology's packet set and generates, per deployment, one
@@ -53,6 +65,9 @@ Failure modes:
   `EXECUTION_ERROR` and no packet is emitted.
 - **Packet larger than the `Fw::ComBuffer`** — runtime FATAL assert; there is no
   build-time size check.
+- **Channel value of the wrong size** — FATAL assert in the generated `writePoint`. The
+  value is serialized by the channel's own autocoded type, so a mismatch is a software
+  bug rather than an input to recover from.
 
 ## Usage / Topology Integration
 
@@ -98,10 +113,10 @@ topology must appear either in a packet or in the trailing `omit` block. From
 ```fpp
         telemetry packets Main {
 
-            packet Error group 1 {
+            packet Error id PacketId.ERROR group 1 {
                 i2cDriver.BusErrorCount
                 framer.DroppedPackets
-                testSensor.I2cErrors
+                testSensor.I2cErrorCount
             }
 
             ...
@@ -142,19 +157,24 @@ the FPP pattern specifiers — `telemetry connections instance tlm` is mandatory
 `pktSendOut` is an array port, sized by `Samd21.StaticTlmPacketizerConfig.NUM_PKT_OUT`,
 and must be hand-wired. Every connected index gets a copy of every packet sent — this is
 how the same packet set reaches more than one downlink. `Breadboard` wires a single
-index into the event downlink's framer:
+index into the event downlink's framer (`Breadboard/Breadboard/topology.fpp`):
 
 ```fpp
         connections Link {
             # Telemetry downlink pipeline
             downlink.PktSend        -> framer.comPacketQueueIn
-            tlm.pktSendOut          -> framer.comPacketQueueIn
+            tlm.pktSendOut[0]       -> framer.comPacketQueueIn
 ```
 
+`FFB` overrides `NUM_PKT_OUT = 2` (`FFB/ffb-config`) and sends every packet to both the
+GSE and the flight-computer downlink (`FFB/FFB/topology.fpp`):
 
 ```fpp
-        tlm.pktSendOut[Ports_PacketTransmit.F1] -> framer1.comPacketQueueIn
-        tlm.pktSendOut[Ports_PacketTransmit.F2]  -> framer2.comPacketQueueIn
+    connections Downlink {
+        events.PktSend -> Gse.Subtopology.comDownlink
+        tlm.pktSendOut -> Gse.Subtopology.comDownlink
+        tlm.pktSendOut -> Fc.Subtopology.comDownlink
+    }
 ```
 
 Neither deployment connects `pktSendIn`, so packets today are emitted only by the
@@ -191,7 +211,8 @@ budget. Static RAM cost is the sum of all packet payloads, paid unconditionally.
 The unit tests run against `test/StaticTopology` (a native-only deployment topology in this
 library), so they exercise the code `static-tlm-packetizer` generates for its packet set
 together with the component: every channel type, a channel in several packets, two instances
-of one component, non-contiguous packet ids, an empty packet and omitted channels. A new
+of one component, non-contiguous packet ids, an empty packet, omitted channels, and fan-out
+to two of three `pktSendOut` indices (`NUM_PKT_OUT = 3` in `test/StaticTopology/config`). A new
 generator edge case is covered by adding to that topology. Enable with
 `-DFPRIME_SAMD_STATIC_TOPOLOGY_TESTS=ON` in a native unit-test build.
 
@@ -208,4 +229,3 @@ generator edge case is covered by adding to that topology. Enable with
 - An unpacketized channel is a silent no-op; a channel id outside the dictionary is a
   FATAL assert. The declared `NoChan` event is never emitted.
 - No change tracking and no critical section around the packet buffers.
-- No bounds check against the incoming `Fw::TlmBuffer` length when copying a channel.

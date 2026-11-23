@@ -66,7 +66,8 @@ def generate_ac_functions(
 
     # Find the output port for sending commands
     try:
-        # TODO(tumbar) Consider lookup for output ports that emit `Fw.Cmd` instead of a hardcoded name
+        # The dispatch port is found by name: `compCmdSend` is part of the component's contract
+        # with this autocoder, documented as a build-time constraint in the component SDD.
         cmd_send_pii = cmd_disp.get_port_instance_identifier("compCmdSend")
     except fpp.DiagnosticError as e:
         e.diagnostic.add_note(
