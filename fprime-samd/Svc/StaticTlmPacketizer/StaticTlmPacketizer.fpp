@@ -1,13 +1,12 @@
 module Samd21 {
     @ static-tlm-packetizer
-    @ A small bare-metal implementation on StaticTlmPacketizer
+    @ A small bare-metal implementation of TlmPacketizer
     passive component StaticTlmPacketizer {
 
         @ Send a telemetry packet
         sync input port pktSendIn: [Samd21.StaticTlmPacketizerConfig.NUM_TLM_PACKETS] Svc.Sched
 
-        @ Packet send port
-        @ Ordered by Section, Group
+        @ Packet send port. Every connected index gets a copy of every packet sent
         output port pktSendOut: [Samd21.StaticTlmPacketizerConfig.NUM_PKT_OUT] Fw.Com
 
         @ Telemetry input port

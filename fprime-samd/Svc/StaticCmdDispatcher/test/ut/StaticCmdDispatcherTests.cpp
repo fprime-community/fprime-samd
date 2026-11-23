@@ -194,17 +194,26 @@ TEST_F(StaticCmdDispatcherTest, OutstandingCommandsLimit) {
 
 TEST_F(StaticCmdDispatcherTest, ClearTracking) {
     REQUIREMENT("STATIC-CMD-005");
-    COMMENT("CLEAR_TRACKING frees the slots; a late response is reported as unexpected");
+    COMMENT("CLEAR_TRACKING tells each cleared sender CLEARED, acknowledges itself, and frees the slots");
     // CLEAR_TRACKING is itself tracked, so leave it a slot
     const FwOpcodeType hold = target.getIdBase() + Target::LOCAL_OPCODE_HOLD;
     for (U32 i = 0; i < CMD_DISPATCHER_SEQUENCER_TABLE_SIZE - 1; i++) {
         commandNoArgs(hold, i);
     }
     commandNoArgs(dispOpcode(DISP_OPCODE_CLEAR_TRACKING), 50);
-    // CLEAR_TRACKING also clears its own entry, so its response is untracked: the sender gets
-    // no response and UnexpectedCommandResponse is logged. Current behavior, pinned here.
-    EXPECT_EQ(ground.getResponseCount(), 0U);
-    EXPECT_EQ(dispEvents(DISP_EVENT_UNEXPECTED_RESPONSE), 1U);
+
+    // Every cleared command's sender is told CLEARED with its own context, then the clear
+    // itself completes OK on its sender
+    ASSERT_EQ(ground.getResponseCount(), static_cast<FwSizeType>(CMD_DISPATCHER_SEQUENCER_TABLE_SIZE));
+    for (U32 i = 0; i < CMD_DISPATCHER_SEQUENCER_TABLE_SIZE - 1; i++) {
+        EXPECT_EQ(ground.getResponse(i).opCode, hold);
+        EXPECT_EQ(ground.getResponse(i).context, i);
+        EXPECT_EQ(ground.getResponse(i).response, Fw::CmdResponse::CLEARED);
+    }
+    EXPECT_EQ(ground.getLastResponse().opCode, dispOpcode(DISP_OPCODE_CLEAR_TRACKING));
+    EXPECT_EQ(ground.getLastResponse().context, 50U);
+    EXPECT_EQ(ground.getLastResponse().response, Fw::CmdResponse::OK);
+    EXPECT_EQ(dispEvents(DISP_EVENT_UNEXPECTED_RESPONSE), 0U);
 
     // The whole table is free again
     ground.reset();
@@ -222,6 +231,23 @@ TEST_F(StaticCmdDispatcherTest, ClearTracking) {
     EXPECT_EQ(ground.getResponseCount(), 0U);
     EXPECT_EQ(dispEvents(DISP_EVENT_UNEXPECTED_RESPONSE),
               static_cast<FwSizeType>(CMD_DISPATCHER_SEQUENCER_TABLE_SIZE - 1));
+}
+
+TEST_F(StaticCmdDispatcherTest, ClearTrackingOtherPort) {
+    REQUIREMENT("STATIC-CMD-005");
+    COMMENT("a command cleared by CLEAR_TRACKING from another sequence port is told CLEARED on its own port");
+    const FwOpcodeType hold = target.getIdBase() + Target::LOCAL_OPCODE_HOLD;
+    Fw::CmdArgBuffer args;
+    sequencer.sendCmd(hold, 77, args);
+    ASSERT_EQ(target.getHeldCount(), 1U);
+
+    commandNoArgs(dispOpcode(DISP_OPCODE_CLEAR_TRACKING), 51);
+    ASSERT_EQ(sequencer.getResponseCount(), 1U);
+    EXPECT_EQ(sequencer.getLastResponse().context, 77U);
+    EXPECT_EQ(sequencer.getLastResponse().response, Fw::CmdResponse::CLEARED);
+    ASSERT_EQ(ground.getResponseCount(), 1U);
+    EXPECT_EQ(ground.getLastResponse().context, 51U);
+    EXPECT_EQ(ground.getLastResponse().response, Fw::CmdResponse::OK);
 }
 
 TEST_F(StaticCmdDispatcherTest, ClearTrackingWhenFull) {

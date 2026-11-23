@@ -11,6 +11,8 @@
 #include "Fw/Com/ComPacket.hpp"
 #include "Fw/Test/UnitTest.hpp"
 
+#include <cstring>
+
 namespace StaticTopology {
 
 // Local ids, mirrored from StaticTlmPacketizer.fpp (the generated ones are protected)
@@ -210,6 +212,28 @@ TEST_F(StaticTlmPacketizerTest, PortTrigger) {
     U32 value = 0;
     ASSERT_EQ(packet.payload.deserializeTo(value), Fw::FW_SERIALIZE_OK);
     EXPECT_EQ(value, 77U);
+}
+
+TEST_F(StaticTlmPacketizerTest, FanOut) {
+    REQUIREMENT("SAMD21-TLM-002");
+    COMMENT("a packet goes to every connected pktSendOut index, and an unconnected index is skipped");
+    setValue(target, 0x5A5A5A5A);
+    sendPacket(PACKET_PRIMARY);
+
+    // pktSendOut[0] -> ground, pktSendOut[1] unconnected, pktSendOut[2] -> sequencer
+    ASSERT_EQ(ground.getPacketCount(), 1U);
+    ASSERT_EQ(sequencer.getPacketCount(), 1U);
+    const Fw::ComBuffer& first = ground.getLastPacket().data;
+    const Fw::ComBuffer& second = sequencer.getLastPacket().data;
+    ASSERT_EQ(first.getSize(), second.getSize());
+    EXPECT_EQ(::memcmp(first.getBuffAddr(), second.getBuffAddr(), first.getSize()), 0);
+
+    Decoded packet;
+    decode(second, packet);
+    EXPECT_EQ(packet.id, PACKET_PRIMARY);
+    U32 value = 0;
+    ASSERT_EQ(packet.payload.deserializeTo(value), Fw::FW_SERIALIZE_OK);
+    EXPECT_EQ(value, 0x5A5A5A5AU);
 }
 
 }  // namespace StaticTopology

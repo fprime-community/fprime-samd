@@ -18,6 +18,7 @@ Coverage lands on the component's own module because its test is registered ther
 | `Ground/` | Ground/sequencer stand-in: sends command packets or `Fw.Cmd` commands, records responses, triggers and records packets. One instance per dispatcher sequence port |
 | `EventLog/` | Records every event |
 | `Clock/` | Time source the test sets |
+| `config/` | `samd-config` overrides the topology needs (`NUM_PKT_OUT = 3`, for packet fan-out) |
 
 A new edge case of a generator is covered by adding to the topology (an instance, a channel, a
 packet, a harness component), not by hand-writing the generated code.

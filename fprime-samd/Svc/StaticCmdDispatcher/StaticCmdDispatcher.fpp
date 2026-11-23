@@ -13,7 +13,7 @@ module Samd21 {
         @ Clear command tracking info to recover from components that are not returning status
         sync command CMD_CLEAR_TRACKING opcode 0x1
 
-        @ Enable or dispatch OpCodeDispatched/OpCodeCompleted events for commands that come in on a certain port index
+        @ Enable or disable OpCodeDispatched/OpCodeCompleted events for commands that come in on a certain port index
         sync command SET_EVENT_EMISSION(portIdx: U8, enabled: bool) opcode 0x2
 
         ###############################################################################
@@ -62,13 +62,13 @@ module Samd21 {
             id 0x6 \
             format "Received a NO_OP command"
 
-        @ Received a NO_OP command
+        @ SET_EVENT_EMISSION named a port index past the sequence ports
         event PortIndexOutOfRange(idx: U8) \
             severity warning low \
             id 0x7 \
             format "Event emission port index {} out of range"
 
-        @ Received a NO_OP command
+        @ Received a command response that matches no tracked command
         event UnexpectedCommandResponse(
             opCode: FwOpcodeType
             cmdSeq: U32
