@@ -3,7 +3,7 @@
 ==============================================================================
 PASSED  fprime-samd_Drv_AdcDriver_ut_exe  (0.48s)
 ==============================================================================
-[STest::Random] Generated seed 7562 from system time
+[STest::Random] Generated seed 801275 from system time
 [==========] Running 22 tests from 4 test suites.
 [----------] Global test environment set-up.
 [----------] 6 tests from Configure
@@ -66,7 +66,7 @@ configure() asserts when averaging (samples > 1) is paired with 8- or 10-bit res
 ***************************************
 (RQ)       SAMD21-ADC-001: The AdcDriver shall reject hardware averaging with a resolution other than 12-bit, since averaged results are always 12-bit
 ***************************************
-[       OK ] Configure.AveragingBadRes (341 ms)
+[       OK ] Configure.AveragingBadRes (340 ms)
 [----------] 6 tests from Configure (341 ms total)
 
 [----------] 1 test from ConfigureChannel
@@ -247,6 +247,6 @@ handleInterrupt() spurious interrupt with overrun flag clears flags and doesn't 
 [----------] 7 tests from Interrupt (0 ms total)
 
 [----------] Global test environment tear-down
-[==========] 22 tests from 4 test suites ran. (342 ms total)
+[==========] 22 tests from 4 test suites ran. (343 ms total)
 [  PASSED  ] 22 tests.
 

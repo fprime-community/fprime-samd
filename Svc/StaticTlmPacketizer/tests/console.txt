@@ -1,7 +1,7 @@
 # unit-test console output: Svc/StaticTlmPacketizer
 
 ==============================================================================
-PASSED  fprime-samd_Svc_StaticTlmPacketizer_ut_exe  (0.02s)
+PASSED  fprime-samd_Svc_StaticTlmPacketizer_ut_exe  (0.03s)
 ==============================================================================
 [==========] Running 9 tests from 1 test suite.
 [----------] Global test environment set-up.
@@ -96,9 +96,9 @@ a pktSendIn call sends the packet whose id is the port number
 a packet goes to every connected pktSendOut index, and an unconnected index is skipped
 ***************************************
 [       OK ] StaticTlmPacketizerTest.FanOut (0 ms)
-[----------] 9 tests from StaticTlmPacketizerTest (1 ms total)
+[----------] 9 tests from StaticTlmPacketizerTest (2 ms total)
 
 [----------] Global test environment tear-down
-[==========] 9 tests from 1 test suite ran. (1 ms total)
+[==========] 9 tests from 1 test suite ran. (3 ms total)
 [  PASSED  ] 9 tests.
 
