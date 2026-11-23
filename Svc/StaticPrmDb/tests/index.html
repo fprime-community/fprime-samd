@@ -32,7 +32,7 @@ pre {
   white-space: pre-wrap; word-break: break-word;
 }
 .empty { color: #57606a; padding: 0.75rem 1rem; border-top: 1px solid #d0d7de; margin: 0; }
-</style></head><body><h1>Unit-test console output &mdash; <code>Svc/StaticPrmDb</code></h1><div class="meta"><span class="pill passed">passed</span> 1 passed &middot; 0.09s &middot; <a href="../../../index.html">← back to the module list</a> &middot; <a href="console.txt">plain text</a></div><details><summary><span class="pill passed">passed</span><span class="name">fprime-samd_Svc_StaticPrmDb_ut_exe</span><span class="time">0.09s</span></summary><pre>[STest::Random] Generated seed 892863 from system time
+</style></head><body><h1>Unit-test console output &mdash; <code>Svc/StaticPrmDb</code></h1><div class="meta"><span class="pill passed">passed</span> 1 passed &middot; 0.04s &middot; <a href="../../../index.html">← back to the module list</a> &middot; <a href="console.txt">plain text</a></div><details><summary><span class="pill passed">passed</span><span class="name">fprime-samd_Svc_StaticPrmDb_ut_exe</span><span class="time">0.04s</span></summary><pre>[STest::Random] Generated seed 709816 from system time
 [==========] Running 19 tests from 3 test suites.
 [----------] Global test environment set-up.
 [----------] 1 test from Params
@@ -45,8 +45,8 @@ pre {
 ***************************************
 parameters set through setPrm read back VALID, others INVALID
 ***************************************
-[       OK ] Params.SetGet (2 ms)
-[----------] 1 test from Params (2 ms total)
+[       OK ] Params.SetGet (1 ms)
+[----------] 1 test from Params (1 ms total)
 
 [----------] 10 tests from Store
 [ RUN      ] Store.SaveLoad
@@ -58,7 +58,7 @@ parameters set through setPrm read back VALID, others INVALID
 ***************************************
 a save followed by a REPLACE load restores every value
 ***************************************
-[       OK ] Store.SaveLoad (1 ms)
+[       OK ] Store.SaveLoad (0 ms)
 [ RUN      ] Store.BitFlip
 
 ***************************************
@@ -72,7 +72,7 @@ a save followed by a REPLACE load restores every value
 ***************************************
 a flipped bit invalidates only the parameter owning the record
 ***************************************
-[       OK ] Store.BitFlip (1 ms)
+[       OK ] Store.BitFlip (0 ms)
 [ RUN      ] Store.DictionaryChange
 
 ***************************************
@@ -100,7 +100,7 @@ records of an older dictionary load in any slot order, unknown records are skipp
 ***************************************
 a MERGE load fills in invalid parameters without overwriting valid ones
 ***************************************
-[       OK ] Store.Merge (1 ms)
+[       OK ] Store.Merge (0 ms)
 [ RUN      ] Store.InterruptedSave
 
 ***************************************
@@ -114,7 +114,7 @@ a MERGE load fills in invalid parameters without overwriting valid ones
 ***************************************
 a save interrupted at any record loads each parameter whole from one save, or invalid
 ***************************************
-[       OK ] Store.InterruptedSave (16 ms)
+[       OK ] Store.InterruptedSave (4 ms)
 [ RUN      ] Store.MergeMixedSaves
 
 ***************************************
@@ -128,7 +128,7 @@ a save interrupted at any record loads each parameter whole from one save, or in
 ***************************************
 a MERGE never completes a parameter with segments of another save
 ***************************************
-[       OK ] Store.MergeMixedSaves (2 ms)
+[       OK ] Store.MergeMixedSaves (0 ms)
 [ RUN      ] Store.StaleDuplicate
 
 ***************************************
@@ -180,8 +180,8 @@ an erased store loads with every parameter invalid
 ***************************************
 split and check-only segments, the largest parameter and a full store round-trip
 ***************************************
-[       OK ] Store.BoundaryLayout (18 ms)
-[----------] 10 tests from Store (45 ms total)
+[       OK ] Store.BoundaryLayout (6 ms)
+[----------] 10 tests from Store (15 ms total)
 
 [----------] 8 tests from Storage
 [ RUN      ] Storage.ReadFailure
@@ -193,7 +193,7 @@ split and check-only segments, the largest parameter and a full store round-trip
 ***************************************
 a failed read keeps the records already loaded and the values it did not reach
 ***************************************
-[       OK ] Storage.ReadFailure (1 ms)
+[       OK ] Storage.ReadFailure (0 ms)
 [ RUN      ] Storage.ReadFailureSplitParam
 
 ***************************************
@@ -203,7 +203,7 @@ a failed read keeps the records already loaded and the values it did not reach
 ***************************************
 a failed read invalidates only a parameter whose records it loaded part of
 ***************************************
-[       OK ] Storage.ReadFailureSplitParam (1 ms)
+[       OK ] Storage.ReadFailureSplitParam (0 ms)
 [ RUN      ] Storage.WriteFailure
 
 ***************************************
@@ -217,7 +217,7 @@ a failed read invalidates only a parameter whose records it loaded part of
 ***************************************
 a failed write fails SAVE with a throttled event; a successful save emits none
 ***************************************
-[       OK ] Storage.WriteFailure (1 ms)
+[       OK ] Storage.WriteFailure (0 ms)
 [ RUN      ] Storage.Busy
 
 ***************************************
@@ -272,9 +272,9 @@ a command sent from the response of the last one starts after it, one transfer a
 without storage connected, SAVE and LOAD fail with an event
 ***************************************
 [       OK ] Storage.NoStorage (0 ms)
-[----------] 8 tests from Storage (7 ms total)
+[----------] 8 tests from Storage (3 ms total)
 
 [----------] Global test environment tear-down
-[==========] 19 tests from 3 test suites ran. (55 ms total)
+[==========] 19 tests from 3 test suites ran. (20 ms total)
 [  PASSED  ] 19 tests.
 </pre></details></body></html>

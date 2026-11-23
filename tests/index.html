@@ -32,7 +32,7 @@ pre {
   white-space: pre-wrap; word-break: break-word;
 }
 .empty { color: #57606a; padding: 0.75rem 1rem; border-top: 1px solid #d0d7de; margin: 0; }
-</style></head><body><h1>Unit-test console output &mdash; <code>fprime-community/fprime-samd@main</code></h1><div class="meta"><span class="pill passed">passed</span> 16 passed &middot; 5.05s &middot; <a href="../index.html">← back to the module list</a> &middot; <a href="console.txt">plain text</a></div><details><summary><span class="pill passed">passed</span><span class="name">fprime-samd_Drv_AdcDriver_ut_exe</span><span class="time">0.64s</span></summary><pre>[STest::Random] Generated seed 125416 from system time
+</style></head><body><h1>Unit-test console output &mdash; <code>fprime-community/fprime-samd@main</code></h1><div class="meta"><span class="pill passed">passed</span> 16 passed &middot; 2.89s &middot; <a href="../index.html">← back to the module list</a> &middot; <a href="console.txt">plain text</a></div><details><summary><span class="pill passed">passed</span><span class="name">fprime-samd_Drv_AdcDriver_ut_exe</span><span class="time">0.48s</span></summary><pre>[STest::Random] Generated seed 7562 from system time
 [==========] Running 22 tests from 4 test suites.
 [----------] Global test environment set-up.
 [----------] 6 tests from Configure
@@ -45,7 +45,7 @@ configure() initializes ADC with all parameters and calls sync waits
 ***************************************
 (RQ)       SAMD21-ADC-001: The AdcDriver shall configure the ADC peripheral with configurable voltage reference, resolution, hardware averaging, sampling time, and gain
 ***************************************
-[       OK ] Configure.Configure (1 ms)
+[       OK ] Configure.Configure (0 ms)
 [ RUN      ] Configure.AllReferences
 
 ***************************************
@@ -95,8 +95,8 @@ configure() asserts when averaging (samples &gt; 1) is paired with 8- or 10-bit 
 ***************************************
 (RQ)       SAMD21-ADC-001: The AdcDriver shall reject hardware averaging with a resolution other than 12-bit, since averaged results are always 12-bit
 ***************************************
-[       OK ] Configure.AveragingBadRes (441 ms)
-[----------] 6 tests from Configure (443 ms total)
+[       OK ] Configure.AveragingBadRes (341 ms)
+[----------] 6 tests from Configure (341 ms total)
 
 [----------] 1 test from ConfigureChannel
 [ RUN      ] ConfigureChannel.Comprehensive
@@ -200,7 +200,7 @@ Multiple activeIn() calls while idle do not produce spurious results
 (RQ)       SAMD21-ADC-006: The AdcDriver shall deliver every conversion result exactly once from the main context (via activeIn)
 ***************************************
 [       OK ] Conversion.MultipleactiveInIdle (0 ms)
-[----------] 8 tests from Conversion (1 ms total)
+[----------] 8 tests from Conversion (0 ms total)
 
 [----------] 7 tests from Interrupt
 [ RUN      ] Interrupt.ResultReady
@@ -273,12 +273,12 @@ handleInterrupt() spurious interrupt with overrun flag clears flags and doesn&#x
 (RQ)       SAMD21-ADC-007: The AdcDriver shall ignore spurious interrupts (flags set with nothing requested) without corrupting driver state
 ***************************************
 [       OK ] Interrupt.SpuriousWithOverrun (0 ms)
-[----------] 7 tests from Interrupt (1 ms total)
+[----------] 7 tests from Interrupt (0 ms total)
 
 [----------] Global test environment tear-down
-[==========] 22 tests from 4 test suites ran. (446 ms total)
+[==========] 22 tests from 4 test suites ran. (342 ms total)
 [  PASSED  ] 22 tests.
-</pre></details><details><summary><span class="pill passed">passed</span><span class="name">fprime-samd_Drv_RtcDriver_ut_exe</span><span class="time">0.95s</span></summary><pre>[STest::Random] Generated seed 619459 from system time
+</pre></details><details><summary><span class="pill passed">passed</span><span class="name">fprime-samd_Drv_RtcDriver_ut_exe</span><span class="time">0.53s</span></summary><pre>[STest::Random] Generated seed 369624 from system time
 [==========] Running 15 tests from 2 test suites.
 [----------] Global test environment set-up.
 [----------] 9 tests from Nominal
@@ -295,7 +295,7 @@ handleInterrupt() spurious interrupt with overrun flag clears flags and doesn&#x
 ***************************************
 (RQ)       SAMD21-RTC-005: The RtcDriver shall support internal, external, and ULP clock sources
 ***************************************
-[       OK ] Nominal.testConfigure (1 ms)
+[       OK ] Nominal.testConfigure (0 ms)
 [ RUN      ] Nominal.testEnable
 
 ***************************************
@@ -352,7 +352,7 @@ handleInterrupt() spurious interrupt with overrun flag clears flags and doesn&#x
 (RQ)       SAMD21-RTC-007: The RtcDriver shall provide an Os::RawTime implementation (timeInterval() computes the absolute difference between two times)
 ***************************************
 [       OK ] Nominal.testTimeInterval (0 ms)
-[----------] 9 tests from Nominal (4 ms total)
+[----------] 9 tests from Nominal (1 ms total)
 
 [----------] 6 tests from OffNominal
 [ RUN      ] OffNominal.testConfigureAssertsOnDoubleConfigure
@@ -360,25 +360,25 @@ handleInterrupt() spurious interrupt with overrun flag clears flags and doesn&#x
 ***************************************
 (RQ)       SAMD21-RTC-001: The RtcDriver shall configure the RTC peripheral for periodic interrupts
 ***************************************
-[       OK ] OffNominal.testConfigureAssertsOnDoubleConfigure (248 ms)
+[       OK ] OffNominal.testConfigureAssertsOnDoubleConfigure (134 ms)
 [ RUN      ] OffNominal.testConfigureAssertsOnInvalidRate
 
 ***************************************
 (RQ)       SAMD21-RTC-002: The RtcDriver shall support configurable interrupt periods (1-128 Hz)
 ***************************************
-[       OK ] OffNominal.testConfigureAssertsOnInvalidRate (221 ms)
+[       OK ] OffNominal.testConfigureAssertsOnInvalidRate (122 ms)
 [ RUN      ] OffNominal.testConfigureAssertsOnInvalidClockSource
 
 ***************************************
 (RQ)       SAMD21-RTC-005: The RtcDriver shall support internal, external, and ULP clock sources
 ***************************************
-[       OK ] OffNominal.testConfigureAssertsOnInvalidClockSource (223 ms)
+[       OK ] OffNominal.testConfigureAssertsOnInvalidClockSource (131 ms)
 [ RUN      ] OffNominal.testEnableAssertsWhenNotConfigured
 
 ***************************************
 (RQ)       SAMD21-RTC-001: The RtcDriver shall configure the RTC peripheral for periodic interrupts
 ***************************************
-[       OK ] OffNominal.testEnableAssertsWhenNotConfigured (218 ms)
+[       OK ] OffNominal.testEnableAssertsWhenNotConfigured (124 ms)
 [ RUN      ] OffNominal.testCycleOverrun
 
 ***************************************
@@ -391,12 +391,12 @@ handleInterrupt() spurious interrupt with overrun flag clears flags and doesn&#x
 (RQ)       SAMD21-RTC-008: The RtcDriver shall detect when processing exceeds the configured period
 ***************************************
 [       OK ] OffNominal.testCycleOverrunAccumulates (0 ms)
-[----------] 6 tests from OffNominal (912 ms total)
+[----------] 6 tests from OffNominal (513 ms total)
 
 [----------] Global test environment tear-down
-[==========] 15 tests from 2 test suites ran. (917 ms total)
+[==========] 15 tests from 2 test suites ran. (514 ms total)
 [  PASSED  ] 15 tests.
-</pre></details><details><summary><span class="pill passed">passed</span><span class="name">fprime-samd_Drv_UsartDriver_ut_exe</span><span class="time">0.49s</span></summary><pre>[STest::Random] Generated seed 566354 from system time
+</pre></details><details><summary><span class="pill passed">passed</span><span class="name">fprime-samd_Drv_UsartDriver_ut_exe</span><span class="time">0.26s</span></summary><pre>[STest::Random] Generated seed 903796 from system time
 [==========] Running 19 tests from 6 test suites.
 [----------] Global test environment set-up.
 [----------] 3 tests from Configure
@@ -409,7 +409,7 @@ configure() programs the SERCOM once and announces readiness
 ***************************************
 (RQ)       SAMD21-UART-001: The UsartDriver shall configure SERCOM peripherals for USART operation
 ***************************************
-[       OK ] Configure.Nominal (2 ms)
+[       OK ] Configure.Nominal (1 ms)
 [ RUN      ] Configure.AllParameters
 
 ***************************************
@@ -434,7 +434,7 @@ configure() primes both RX buffers into the RX DMA channel
 (RQ)       SAMD21-UART-003: The UsartDriver shall implement double-buffering for continuous RX
 ***************************************
 [       OK ] Configure.QueuesRxBuffers (0 ms)
-[----------] 3 tests from Configure (3 ms total)
+[----------] 3 tests from Configure (1 ms total)
 
 [----------] 4 tests from Send
 [ RUN      ] Send.Nominal
@@ -480,8 +480,8 @@ TX DMA bus error asserts (invalid buffer pointer handed to DMA)
 ***************************************
 (RQ)       SAMD21-UART-002: The UsartDriver shall use DMA for transmission (an unrecoverable TX DMA bus error asserts)
 ***************************************
-[       OK ] Send.ChannelError (220 ms)
-[----------] 4 tests from Send (222 ms total)
+[       OK ] Send.ChannelError (122 ms)
+[----------] 4 tests from Send (123 ms total)
 
 [----------] 1 test from SendSync
 [ RUN      ] SendSync.Nominal
@@ -526,7 +526,7 @@ schedIn detects a SERCOM RX overflow and counts it in telemetry
 ***************************************
 (RQ)       SAMD21-UART-004: The UsartDriver shall detect a SERCOM RX hardware overflow on each rate group tick and count it in the rxOverflows telemetry channel
 ***************************************
-[       OK ] Rx.SchedInRxOverflow (1 ms)
+[       OK ] Rx.SchedInRxOverflow (0 ms)
 [ RUN      ] Rx.MultiplePartials
 
 ***************************************
@@ -576,8 +576,8 @@ RX DMA bus error asserts (invalid buffer pointer handed to DMA)
 ***************************************
 (RQ)       SAMD21-UART-002: The UsartDriver shall use DMA for reception (an unrecoverable RX DMA bus error asserts)
 ***************************************
-[       OK ] Rx.ChannelError (220 ms)
-[----------] 8 tests from Rx (226 ms total)
+[       OK ] Rx.ChannelError (111 ms)
+[----------] 8 tests from Rx (114 ms total)
 
 [----------] 2 tests from Unconfigured
 [ RUN      ] Unconfigured.SchedIn
@@ -600,7 +600,7 @@ activeIn before configure() is a safe no-op
 (RQ)       SAMD21-UART-005: The UsartDriver shall queue TX requests with asynchronous completion (an activeIn tick before configure() delivers nothing)
 ***************************************
 [       OK ] Unconfigured.ActiveIn (0 ms)
-[----------] 2 tests from Unconfigured (0 ms total)
+[----------] 2 tests from Unconfigured (1 ms total)
 
 [----------] 1 test from TriggerSource
 [ RUN      ] TriggerSource.Mapping
@@ -612,13 +612,13 @@ each SERCOM maps to its matching RX DMA trigger source
 ***************************************
 (RQ)       SAMD21-UART-002: The UsartDriver shall use DMA for both transmission and reception (the correct DMA trigger is selected per SERCOM)
 ***************************************
-[       OK ] TriggerSource.Mapping (1 ms)
-[----------] 1 test from TriggerSource (1 ms total)
+[       OK ] TriggerSource.Mapping (0 ms)
+[----------] 1 test from TriggerSource (0 ms total)
 
 [----------] Global test environment tear-down
-[==========] 19 tests from 6 test suites ran. (455 ms total)
+[==========] 19 tests from 6 test suites ran. (242 ms total)
 [  PASSED  ] 19 tests.
-</pre></details><details><summary><span class="pill passed">passed</span><span class="name">fprime-samd_Drv_I2cDriver_ut_exe</span><span class="time">0.08s</span></summary><pre>[STest::Random] Generated seed 57447 from system time
+</pre></details><details><summary><span class="pill passed">passed</span><span class="name">fprime-samd_Drv_I2cDriver_ut_exe</span><span class="time">0.06s</span></summary><pre>[STest::Random] Generated seed 170703 from system time
 [==========] Running 39 tests from 10 test suites.
 [----------] Global test environment set-up.
 [----------] 3 tests from Configure
@@ -631,7 +631,7 @@ configure() programs the SERCOM once with the requested parameters
 ***************************************
 (RQ)       SAMD21-I2C-001: The I2cDriver shall configure a SERCOM peripheral for I2C host operation
 ***************************************
-[       OK ] Configure.Nominal (3 ms)
+[       OK ] Configure.Nominal (1 ms)
 [ RUN      ] Configure.AllParameters
 
 ***************************************
@@ -652,7 +652,7 @@ configure() registers the component&#x27;s ISR trampoline
 (RQ)       SAMD21-I2C-001: The I2cDriver shall configure a SERCOM peripheral for I2C host operation (the driver&#x27;s ISR trampoline is registered for its SERCOM)
 ***************************************
 [       OK ] Configure.RegistersIsr (0 ms)
-[----------] 3 tests from Configure (5 ms total)
+[----------] 3 tests from Configure (3 ms total)
 
 [----------] 3 tests from Read
 [ RUN      ] Read.Nominal
@@ -664,7 +664,7 @@ read() queues an RX DMA transfer and kicks off the peripheral
 ***************************************
 (RQ)       SAMD21-I2C-002: The I2cDriver shall perform 7-bit-addressed read transactions using DMA for the data payload
 ***************************************
-[       OK ] Read.Nominal (1 ms)
+[       OK ] Read.Nominal (0 ms)
 [ RUN      ] Read.Completion
 
 ***************************************
@@ -678,7 +678,7 @@ RX DMA completion returns the buffer OK and frees the driver
 ***************************************
 (RQ)       SAMD21-I2C-006: The I2cDriver shall deliver every completion callback from the main context (via activeIn), not from interrupt context
 ***************************************
-[       OK ] Read.Completion (1 ms)
+[       OK ] Read.Completion (0 ms)
 [ RUN      ] Read.Busy
 
 ***************************************
@@ -689,7 +689,7 @@ read() while busy is rejected with OTHER_ERR
 (RQ)       SAMD21-I2C-005: The I2cDriver shall reject a new request that arrives while a transaction is in progress, returning I2C_OTHER_ERR on the matching completion callback
 ***************************************
 [       OK ] Read.Busy (0 ms)
-[----------] 3 tests from Read (3 ms total)
+[----------] 3 tests from Read (2 ms total)
 
 [----------] 3 tests from Write
 [ RUN      ] Write.Nominal
@@ -701,7 +701,7 @@ write() queues a TX DMA transfer with an automatic STOP
 ***************************************
 (RQ)       SAMD21-I2C-002: The I2cDriver shall perform 7-bit-addressed write transactions using DMA for the data payload
 ***************************************
-[       OK ] Write.Nominal (1 ms)
+[       OK ] Write.Nominal (0 ms)
 [ RUN      ] Write.Completion
 
 ***************************************
@@ -715,7 +715,7 @@ TX DMA completion returns the buffer OK and frees the driver
 ***************************************
 (RQ)       SAMD21-I2C-006: The I2cDriver shall deliver every completion callback from the main context (via activeIn), not from interrupt context
 ***************************************
-[       OK ] Write.Completion (1 ms)
+[       OK ] Write.Completion (0 ms)
 [ RUN      ] Write.Busy
 
 ***************************************
@@ -725,8 +725,8 @@ write() while busy is rejected with OTHER_ERR
 ***************************************
 (RQ)       SAMD21-I2C-005: The I2cDriver shall reject a new request that arrives while a transaction is in progress, returning I2C_OTHER_ERR on the matching completion callback
 ***************************************
-[       OK ] Write.Busy (1 ms)
-[----------] 3 tests from Write (3 ms total)
+[       OK ] Write.Busy (0 ms)
+[----------] 3 tests from Write (2 ms total)
 
 [----------] 6 tests from WriteRead
 [ RUN      ] WriteRead.Nominal
@@ -742,7 +742,7 @@ writeRead() queues both DMA transfers and writes without a STOP
 ***************************************
 (RQ)       SAMD21-I2C-003: The I2cDriver shall implement writeRead as a repeated START with no intervening STOP
 ***************************************
-[       OK ] WriteRead.Nominal (1 ms)
+[       OK ] WriteRead.Nominal (0 ms)
 [ RUN      ] WriteRead.FullSequence
 
 ***************************************
@@ -756,7 +756,7 @@ write-read walks write DMA -&gt; master-on-bus -&gt; read DMA -&gt; OK
 ***************************************
 (RQ)       SAMD21-I2C-006: The I2cDriver shall deliver every completion callback from the main context (via activeIn), not from interrupt context
 ***************************************
-[       OK ] WriteRead.FullSequence (1 ms)
+[       OK ] WriteRead.FullSequence (0 ms)
 [ RUN      ] WriteRead.Busy
 
 ***************************************
@@ -766,7 +766,7 @@ writeRead() while busy is rejected with OTHER_ERR
 ***************************************
 (RQ)       SAMD21-I2C-005: The I2cDriver shall reject a new request that arrives while a transaction is in progress, returning I2C_OTHER_ERR on the matching completion callback
 ***************************************
-[       OK ] WriteRead.Busy (1 ms)
+[       OK ] WriteRead.Busy (0 ms)
 [ RUN      ] WriteRead.PointerNack
 
 ***************************************
@@ -776,7 +776,7 @@ a client NACK of the register pointer fails the write-read with WRITE_ERR, no re
 ***************************************
 (RQ)       SAMD21-I2C-004: The I2cDriver shall fail the in-flight transaction with the appropriate status (a NACKed register pointer fails the write-read with I2C_WRITE_ERR)
 ***************************************
-[       OK ] WriteRead.PointerNack (1 ms)
+[       OK ] WriteRead.PointerNack (0 ms)
 [ RUN      ] WriteRead.MbAlreadyLatched
 
 ***************************************
@@ -797,7 +797,7 @@ the stale SERCOM interrupt after an inline handoff is a benign no-op, not an ass
 (RQ)       SAMD21-I2C-003: The I2cDriver shall implement writeRead as a repeated START with no intervening STOP (a stale SERCOM interrupt after the inline handoff is a benign no-op)
 ***************************************
 [       OK ] WriteRead.MbAlreadyLatchedSpuriousIsr (0 ms)
-[----------] 6 tests from WriteRead (6 ms total)
+[----------] 6 tests from WriteRead (4 ms total)
 
 [----------] 8 tests from Isr
 [ RUN      ] Isr.ErrorIdleUnexpected
@@ -809,7 +809,7 @@ an error interrupt while IDLE logs the error and an unexpected warning
 ***************************************
 (RQ)       SAMD21-I2C-004: The I2cDriver shall report bus errors as events (an error with no transaction in flight also raises UnexpectedInterrupt)
 ***************************************
-[       OK ] Isr.ErrorIdleUnexpected (1 ms)
+[       OK ] Isr.ErrorIdleUnexpected (0 ms)
 [ RUN      ] Isr.ErrorDuringRead
 
 ***************************************
@@ -819,7 +819,7 @@ an error during a read aborts the DMA and replies READ_ERR
 ***************************************
 (RQ)       SAMD21-I2C-004: The I2cDriver shall report bus errors as events and fail the in-flight transaction with the appropriate status (I2C_READ_ERR during a read)
 ***************************************
-[       OK ] Isr.ErrorDuringRead (1 ms)
+[       OK ] Isr.ErrorDuringRead (0 ms)
 [ RUN      ] Isr.ErrorDuringWrite
 
 ***************************************
@@ -839,7 +839,7 @@ an error while writing a write-read aborts both channels, replies WRITE_ERR
 ***************************************
 (RQ)       SAMD21-I2C-004: The I2cDriver shall report bus errors as events and fail the in-flight transaction with the appropriate status (I2C_WRITE_ERR during the write half of a write-read)
 ***************************************
-[       OK ] Isr.ErrorDuringWriteReadWriting (1 ms)
+[       OK ] Isr.ErrorDuringWriteReadWriting (0 ms)
 [ RUN      ] Isr.ErrorDuringWriteReadReading
 
 ***************************************
@@ -849,7 +849,7 @@ an error while reading a write-read aborts the read channel, replies READ_ERR
 ***************************************
 (RQ)       SAMD21-I2C-004: The I2cDriver shall report bus errors as events and fail the in-flight transaction with the appropriate status (I2C_READ_ERR during the read half of a write-read)
 ***************************************
-[       OK ] Isr.ErrorDuringWriteReadReading (1 ms)
+[       OK ] Isr.ErrorDuringWriteReadReading (0 ms)
 [ RUN      ] Isr.AllErrorFlags
 
 ***************************************
@@ -859,7 +859,7 @@ every error STATUS bit maps to its own event and increments the counter
 ***************************************
 (RQ)       SAMD21-I2C-004: The I2cDriver shall report bus errors as events and count them in telemetry
 ***************************************
-[       OK ] Isr.AllErrorFlags (1 ms)
+[       OK ] Isr.AllErrorFlags (0 ms)
 [ RUN      ] Isr.MasterOnBusUnexpected
 
 ***************************************
@@ -879,8 +879,8 @@ an error while in WRITE_READ_WRITING_WAIT disables the armed MB interrupt (leak 
 ***************************************
 (RQ)       SAMD21-I2C-004: The I2cDriver shall fail the in-flight transaction with the appropriate status and return to service (the error path disables the armed MB interrupt)
 ***************************************
-[       OK ] Isr.ErrorDuringWriteReadWaitDisablesMb (1 ms)
-[----------] 8 tests from Isr (8 ms total)
+[       OK ] Isr.ErrorDuringWriteReadWaitDisablesMb (0 ms)
+[----------] 8 tests from Isr (6 ms total)
 
 [----------] 7 tests from StallWatchdog
 [ RUN      ] StallWatchdog.NoRecoveryBeforeThreshold
@@ -892,7 +892,7 @@ an in-flight transaction is not recovered until the tick threshold is reached
 ***************************************
 (RQ)       SAMD21-I2C-007: The I2cDriver shall force-recover a transaction whose completion interrupt is lost (only once the stall threshold is reached)
 ***************************************
-[       OK ] StallWatchdog.NoRecoveryBeforeThreshold (1 ms)
+[       OK ] StallWatchdog.NoRecoveryBeforeThreshold (0 ms)
 [ RUN      ] StallWatchdog.RecoversWriteRead
 
 ***************************************
@@ -902,7 +902,7 @@ a write-read with a lost MB completion is force-recovered after the threshold
 ***************************************
 (RQ)       SAMD21-I2C-007: The I2cDriver shall force-recover a write-read whose completion interrupt is lost, reply to the caller with an error, and return to service
 ***************************************
-[       OK ] StallWatchdog.RecoversWriteRead (1 ms)
+[       OK ] StallWatchdog.RecoversWriteRead (0 ms)
 [ RUN      ] StallWatchdog.RecoversRead
 
 ***************************************
@@ -912,7 +912,7 @@ a stuck read is force-recovered and the caller gets an error reply
 ***************************************
 (RQ)       SAMD21-I2C-007: The I2cDriver shall force-recover a stalled read, reply to the caller with an error, and return to service
 ***************************************
-[       OK ] StallWatchdog.RecoversRead (1 ms)
+[       OK ] StallWatchdog.RecoversRead (0 ms)
 [ RUN      ] StallWatchdog.RecoversWrite
 
 ***************************************
@@ -922,7 +922,7 @@ a stuck write is force-recovered and the caller gets an error reply
 ***************************************
 (RQ)       SAMD21-I2C-007: The I2cDriver shall force-recover a stalled write, reply to the caller with an error, and return to service
 ***************************************
-[       OK ] StallWatchdog.RecoversWrite (1 ms)
+[       OK ] StallWatchdog.RecoversWrite (0 ms)
 [ RUN      ] StallWatchdog.ResetsWhenIdle
 
 ***************************************
@@ -932,7 +932,7 @@ ticks while IDLE never trigger a recovery
 ***************************************
 (RQ)       SAMD21-I2C-007: The I2cDriver shall force-recover only stalled transactions (an IDLE driver is never recovered)
 ***************************************
-[       OK ] StallWatchdog.ResetsWhenIdle (1 ms)
+[       OK ] StallWatchdog.ResetsWhenIdle (0 ms)
 [ RUN      ] StallWatchdog.ResetsOnCompletion
 
 ***************************************
@@ -942,7 +942,7 @@ a normal completion resets the stall counter so it does not spuriously recover
 ***************************************
 (RQ)       SAMD21-I2C-007: The I2cDriver shall force-recover only stalled transactions (the stall counter resets when a transaction completes normally)
 ***************************************
-[       OK ] StallWatchdog.ResetsOnCompletion (1 ms)
+[       OK ] StallWatchdog.ResetsOnCompletion (0 ms)
 [ RUN      ] StallWatchdog.RecoveryCountTelemetry
 
 ***************************************
@@ -952,8 +952,8 @@ StallRecoveryCount telemetry tracks the number of recoveries
 ***************************************
 (RQ)       SAMD21-I2C-007: The I2cDriver shall force-recover a stalled transaction and count the recovery in telemetry
 ***************************************
-[       OK ] StallWatchdog.RecoveryCountTelemetry (1 ms)
-[----------] 7 tests from StallWatchdog (8 ms total)
+[       OK ] StallWatchdog.RecoveryCountTelemetry (0 ms)
+[----------] 7 tests from StallWatchdog (6 ms total)
 
 [----------] 3 tests from DmaReply
 [ RUN      ] DmaReply.WrongChannelRead
@@ -965,7 +965,7 @@ a WRITE-channel reply during a read is flagged InvalidDmaReply
 ***************************************
 (RQ)       SAMD21-I2C-004: The I2cDriver shall report a DMA reply on an unexpected channel as an event without advancing the in-flight read
 ***************************************
-[       OK ] DmaReply.WrongChannelRead (1 ms)
+[       OK ] DmaReply.WrongChannelRead (0 ms)
 [ RUN      ] DmaReply.WrongChannelWrite
 
 ***************************************
@@ -975,7 +975,7 @@ a READ-channel reply during a write is flagged InvalidDmaReply
 ***************************************
 (RQ)       SAMD21-I2C-004: The I2cDriver shall report a DMA reply on an unexpected channel as an event without advancing the in-flight write
 ***************************************
-[       OK ] DmaReply.WrongChannelWrite (1 ms)
+[       OK ] DmaReply.WrongChannelWrite (0 ms)
 [ RUN      ] DmaReply.IdleIgnored
 
 ***************************************
@@ -985,8 +985,8 @@ a DMA reply while IDLE is silently ignored
 ***************************************
 (RQ)       SAMD21-I2C-006: The I2cDriver shall deliver completion callbacks only for transactions it has in flight (a DMA reply while IDLE is ignored)
 ***************************************
-[       OK ] DmaReply.IdleIgnored (1 ms)
-[----------] 3 tests from DmaReply (4 ms total)
+[       OK ] DmaReply.IdleIgnored (0 ms)
+[----------] 3 tests from DmaReply (2 ms total)
 
 [----------] 3 tests from Boundary
 [ RUN      ] Boundary.WriteMaxPayload
@@ -1062,24 +1062,24 @@ CLEAR_ERRORS resets the error counter and responds OK
 [----------] 1 test from Command (0 ms total)
 
 [----------] Global test environment tear-down
-[==========] 39 tests from 10 test suites ran. (45 ms total)
+[==========] 39 tests from 10 test suites ran. (31 ms total)
 [  PASSED  ] 39 tests.
-</pre></details><details><summary><span class="pill passed">passed</span><span class="name">fprime-samd_Drv_SpiDriver_ut_exe</span><span class="time">2.17s</span></summary><pre>[STest::Random] Generated seed 138146 from system time
+</pre></details><details><summary><span class="pill passed">passed</span><span class="name">fprime-samd_Drv_SpiDriver_ut_exe</span><span class="time">1.13s</span></summary><pre>[STest::Random] Generated seed 230077 from system time
 [==========] Running 22 tests from 2 test suites.
 [----------] Global test environment set-up.
 [----------] 10 tests from Nominal
 [ RUN      ] Nominal.ConfigureSoftwareChipSelect
-[       OK ] Nominal.ConfigureSoftwareChipSelect (1 ms)
+[       OK ] Nominal.ConfigureSoftwareChipSelect (0 ms)
 [ RUN      ] Nominal.ConfigureHardwareChipSelect
 [       OK ] Nominal.ConfigureHardwareChipSelect (0 ms)
 [ RUN      ] Nominal.Transaction
-[       OK ] Nominal.Transaction (1 ms)
+[       OK ] Nominal.Transaction (0 ms)
 [ RUN      ] Nominal.HardwareChipSelectTransaction
 [       OK ] Nominal.HardwareChipSelectTransaction (0 ms)
 [ RUN      ] Nominal.CalculateBaud
-[       OK ] Nominal.CalculateBaud (931 ms)
+[       OK ] Nominal.CalculateBaud (490 ms)
 [ RUN      ] Nominal.RandomTransactions
-[       OK ] Nominal.RandomTransactions (34 ms)
+[       OK ] Nominal.RandomTransactions (13 ms)
 [ RUN      ] Nominal.SetBaudRate
 [       OK ] Nominal.SetBaudRate (0 ms)
 [ RUN      ] Nominal.SetBaudRatePort
@@ -1088,25 +1088,25 @@ CLEAR_ERRORS resets the error counter and responds OK
 [       OK ] Nominal.SchedIdle (0 ms)
 [ RUN      ] Nominal.SchedRePoll
 [       OK ] Nominal.SchedRePoll (0 ms)
-[----------] 10 tests from Nominal (971 ms total)
+[----------] 10 tests from Nominal (506 ms total)
 
 [----------] 12 tests from OffNominal
 [ RUN      ] OffNominal.Busy
-[       OK ] OffNominal.Busy (233 ms)
+[       OK ] OffNominal.Busy (119 ms)
 [ RUN      ] OffNominal.SameSlotReRequest
-[       OK ] OffNominal.SameSlotReRequest (229 ms)
+[       OK ] OffNominal.SameSlotReRequest (114 ms)
 [ RUN      ] OffNominal.ChipSelectFailure
-[       OK ] OffNominal.ChipSelectFailure (238 ms)
+[       OK ] OffNominal.ChipSelectFailure (129 ms)
 [ RUN      ] OffNominal.DmaBusError
-[       OK ] OffNominal.DmaBusError (1 ms)
+[       OK ] OffNominal.DmaBusError (0 ms)
 [ RUN      ] OffNominal.ConfigureTwice
-[       OK ] OffNominal.ConfigureTwice (224 ms)
+[       OK ] OffNominal.ConfigureTwice (123 ms)
 [ RUN      ] OffNominal.RequestBeforeConfigure
 [       OK ] OffNominal.RequestBeforeConfigure (0 ms)
 [ RUN      ] OffNominal.SizeMismatch
-[       OK ] OffNominal.SizeMismatch (231 ms)
+[       OK ] OffNominal.SizeMismatch (111 ms)
 [ RUN      ] OffNominal.ReceiveOverrun
-[       OK ] OffNominal.ReceiveOverrun (1 ms)
+[       OK ] OffNominal.ReceiveOverrun (0 ms)
 [ RUN      ] OffNominal.ReceiveOverrunAfterTxComplete
 [       OK ] OffNominal.ReceiveOverrunAfterTxComplete (0 ms)
 [ RUN      ] OffNominal.SpuriousInterrupt
@@ -1115,12 +1115,12 @@ CLEAR_ERRORS resets the error counter and responds OK
 [       OK ] OffNominal.ReceiveOverrunIdle (0 ms)
 [ RUN      ] OffNominal.UnexpectedDmaReply
 [       OK ] OffNominal.UnexpectedDmaReply (0 ms)
-[----------] 12 tests from OffNominal (1163 ms total)
+[----------] 12 tests from OffNominal (602 ms total)
 
 [----------] Global test environment tear-down
-[==========] 22 tests from 2 test suites ran. (2135 ms total)
+[==========] 22 tests from 2 test suites ran. (1109 ms total)
 [  PASSED  ] 22 tests.
-</pre></details><details><summary><span class="pill passed">passed</span><span class="name">fprime-samd_Drv_GpioDriver_ut_exe</span><span class="time">0.03s</span></summary><pre>[STest::Random] Generated seed 303779 from system time
+</pre></details><details><summary><span class="pill passed">passed</span><span class="name">fprime-samd_Drv_GpioDriver_ut_exe</span><span class="time">0.02s</span></summary><pre>[STest::Random] Generated seed 358756 from system time
 [==========] Running 13 tests from 2 test suites.
 [----------] Global test environment set-up.
 [----------] 7 tests from Nominal
@@ -1170,7 +1170,7 @@ CLEAR_ERRORS resets the error counter and responds OK
 (RQ)       GPIO-008: On each configured edge, the driver shall emit a cycle on the gpioInterrupt output port when it is connected
 ***************************************
 [       OK ] Nominal.testInterruptFiresWhenConnected (0 ms)
-[----------] 7 tests from Nominal (1 ms total)
+[----------] 7 tests from Nominal (0 ms total)
 
 [----------] 6 tests from OffNominal
 [ RUN      ] OffNominal.testWriteUnconfigured
@@ -1212,9 +1212,9 @@ CLEAR_ERRORS resets the error counter and responds OK
 [----------] 6 tests from OffNominal (0 ms total)
 
 [----------] Global test environment tear-down
-[==========] 13 tests from 2 test suites ran. (3 ms total)
+[==========] 13 tests from 2 test suites ran. (1 ms total)
 [  PASSED  ] 13 tests.
-</pre></details><details><summary><span class="pill passed">passed</span><span class="name">fprime-samd_Drv_SystemInfo_ut_exe</span><span class="time">0.03s</span></summary><pre>[STest::Random] Generated seed 330395 from system time
+</pre></details><details><summary><span class="pill passed">passed</span><span class="name">fprime-samd_Drv_SystemInfo_ut_exe</span><span class="time">0.02s</span></summary><pre>[STest::Random] Generated seed 377524 from system time
 [==========] Running 4 tests from 1 test suite.
 [----------] Global test environment set-up.
 [----------] 4 tests from Nominal
@@ -1223,7 +1223,7 @@ CLEAR_ERRORS resets the error counter and responds OK
 ***************************************
 (RQ)       SAMD21-HEALTH-001: SystemInfo shall report the cause of the most recent reset when emit() is called
 ***************************************
-[       OK ] Nominal.testEmitSystemInfoReportsResetReason (1 ms)
+[       OK ] Nominal.testEmitSystemInfoReportsResetReason (0 ms)
 [ RUN      ] Nominal.testCommitStampsAreReported
 
 ***************************************
@@ -1234,12 +1234,12 @@ CLEAR_ERRORS resets the error counter and responds OK
 [       OK ] Nominal.testHardwareQueriedOncePerCommand (0 ms)
 [ RUN      ] Nominal.testRepeatedEmit
 [       OK ] Nominal.testRepeatedEmit (0 ms)
-[----------] 4 tests from Nominal (3 ms total)
+[----------] 4 tests from Nominal (1 ms total)
 
 [----------] Global test environment tear-down
-[==========] 4 tests from 1 test suite ran. (3 ms total)
+[==========] 4 tests from 1 test suite ran. (1 ms total)
 [  PASSED  ] 4 tests.
-</pre></details><details><summary><span class="pill passed">passed</span><span class="name">fprime-samd_Svc_ProcTime_ut_exe</span><span class="time">0.03s</span></summary><pre>[==========] Running 3 tests from 1 test suite.
+</pre></details><details><summary><span class="pill passed">passed</span><span class="name">fprime-samd_Svc_ProcTime_ut_exe</span><span class="time">0.02s</span></summary><pre>[==========] Running 3 tests from 1 test suite.
 [----------] Global test environment set-up.
 [----------] 3 tests from Nominal
 [ RUN      ] Nominal.testTimeBase
@@ -1260,16 +1260,16 @@ CLEAR_ERRORS resets the error counter and responds OK
 (RQ)       SAMD21-PROCTIME-002: ProcTime shall report the time elapsed on the Os::RawTime clock
 ***************************************
 [       OK ] Nominal.testTimeIsMonotonic (0 ms)
-[----------] 3 tests from Nominal (2 ms total)
+[----------] 3 tests from Nominal (0 ms total)
 
 [----------] Global test environment tear-down
-[==========] 3 tests from 1 test suite ran. (2 ms total)
+[==========] 3 tests from 1 test suite ran. (1 ms total)
 [  PASSED  ] 3 tests.
-</pre></details><details><summary><span class="pill passed">passed</span><span class="name">fprime-samd_Svc_ThinBufferManager_ut_exe</span><span class="time">0.03s</span></summary><pre>[==========] Running 3 tests from 1 test suite.
+</pre></details><details><summary><span class="pill passed">passed</span><span class="name">fprime-samd_Svc_ThinBufferManager_ut_exe</span><span class="time">0.02s</span></summary><pre>[==========] Running 3 tests from 1 test suite.
 [----------] Global test environment set-up.
 [----------] 3 tests from Nominal
 [ RUN      ] Nominal.Setup
-[       OK ] Nominal.Setup (1 ms)
+[       OK ] Nominal.Setup (0 ms)
 [ RUN      ] Nominal.OneSize
 Returning buffer 3
 Returning buffer 1
@@ -1283,12 +1283,12 @@ Returning buffer 2
 [----------] Global test environment tear-down
 [==========] 3 tests from 1 test suite ran. (2 ms total)
 [  PASSED  ] 3 tests.
-</pre></details><details><summary><span class="pill passed">passed</span><span class="name">fprime-samd_Svc_Framer_ut_exe</span><span class="time">0.04s</span></summary><pre>[STest::Random] Generated seed 434235 from system time
+</pre></details><details><summary><span class="pill passed">passed</span><span class="name">fprime-samd_Svc_Framer_ut_exe</span><span class="time">0.02s</span></summary><pre>[STest::Random] Generated seed 444051 from system time
 [==========] Running 6 tests from 2 test suites.
 [----------] Global test environment set-up.
 [----------] 5 tests from Nominal
 [ RUN      ] Nominal.SinglePacket
-[       OK ] Nominal.SinglePacket (1 ms)
+[       OK ] Nominal.SinglePacket (0 ms)
 [ RUN      ] Nominal.MultiPacketAccumulation
 [       OK ] Nominal.MultiPacketAccumulation (0 ms)
 [ RUN      ] Nominal.BufferOverflow
@@ -1297,7 +1297,7 @@ Returning buffer 2
 [       OK ] Nominal.DoubleBufferLifecycle (0 ms)
 [ RUN      ] Nominal.SchedInFlush
 [       OK ] Nominal.SchedInFlush (0 ms)
-[----------] 5 tests from Nominal (3 ms total)
+[----------] 5 tests from Nominal (0 ms total)
 
 [----------] 1 test from OffNominal
 [ RUN      ] OffNominal.Backpressure
@@ -1305,14 +1305,14 @@ Returning buffer 2
 [----------] 1 test from OffNominal (0 ms total)
 
 [----------] Global test environment tear-down
-[==========] 6 tests from 2 test suites ran. (3 ms total)
+[==========] 6 tests from 2 test suites ran. (1 ms total)
 [  PASSED  ] 6 tests.
-</pre></details><details><summary><span class="pill passed">passed</span><span class="name">fprime-samd_Svc_TmFramer_ut_exe</span><span class="time">0.26s</span></summary><pre>[STest::Random] Generated seed 474499 from system time
+</pre></details><details><summary><span class="pill passed">passed</span><span class="name">fprime-samd_Svc_TmFramer_ut_exe</span><span class="time">0.16s</span></summary><pre>[STest::Random] Generated seed 464675 from system time
 [==========] Running 11 tests from 2 test suites.
 [----------] Global test environment set-up.
 [----------] 8 tests from Nominal
 [ RUN      ] Nominal.NominalFraming
-[       OK ] Nominal.NominalFraming (1 ms)
+[       OK ] Nominal.NominalFraming (0 ms)
 [ RUN      ] Nominal.MultiPacketAccumulation
 [       OK ] Nominal.MultiPacketAccumulation (0 ms)
 [ RUN      ] Nominal.DeadZoneAvoidance
@@ -1326,22 +1326,22 @@ Returning buffer 2
 [ RUN      ] Nominal.PerApidSequenceCounts
 [       OK ] Nominal.PerApidSequenceCounts (0 ms)
 [ RUN      ] Nominal.FrameCountWrapAround
-[       OK ] Nominal.FrameCountWrapAround (23 ms)
-[----------] 8 tests from Nominal (27 ms total)
+[       OK ] Nominal.FrameCountWrapAround (12 ms)
+[----------] 8 tests from Nominal (15 ms total)
 
 [----------] 3 tests from OffNominal
 [ RUN      ] OffNominal.Backpressure
 [       OK ] OffNominal.Backpressure (0 ms)
 [ RUN      ] OffNominal.UnexpectedBufferReturn
-[       OK ] OffNominal.UnexpectedBufferReturn (203 ms)
+[       OK ] OffNominal.UnexpectedBufferReturn (127 ms)
 [ RUN      ] OffNominal.ApidTrackingOverflow
 [       OK ] OffNominal.ApidTrackingOverflow (0 ms)
-[----------] 3 tests from OffNominal (205 ms total)
+[----------] 3 tests from OffNominal (127 ms total)
 
 [----------] Global test environment tear-down
-[==========] 11 tests from 2 test suites ran. (233 ms total)
+[==========] 11 tests from 2 test suites ran. (143 ms total)
 [  PASSED  ] 11 tests.
-</pre></details><details><summary><span class="pill passed">passed</span><span class="name">fprime-samd_Svc_Seq_ut_exe</span><span class="time">0.07s</span></summary><pre>[STest::Random] Generated seed 736378 from system time
+</pre></details><details><summary><span class="pill passed">passed</span><span class="name">fprime-samd_Svc_Seq_ut_exe</span><span class="time">0.04s</span></summary><pre>[STest::Random] Generated seed 627297 from system time
 [==========] Running 27 tests from 5 test suites.
 [----------] Global test environment set-up.
 [----------] 10 tests from SequenceExecution
@@ -1445,7 +1445,7 @@ A command truncated within the cmdSize field emits InvalidSequence.
 (RQ)       SAMD21-SEQ-008
 ***************************************
 [       OK ] SequenceExecution.TruncatedCmdSizeFails (0 ms)
-[----------] 10 tests from SequenceExecution (8 ms total)
+[----------] 10 tests from SequenceExecution (5 ms total)
 
 [----------] 3 tests from WaitTicks
 [ RUN      ] WaitTicks.ZeroResumesNextTick
@@ -1457,7 +1457,7 @@ WAIT_TICKS(0) resumes the sequence on the very next rate-group tick.
 ***************************************
 (RQ)       SAMD21-SEQ-006
 ***************************************
-[       OK ] WaitTicks.ZeroResumesNextTick (1 ms)
+[       OK ] WaitTicks.ZeroResumesNextTick (0 ms)
 [ RUN      ] WaitTicks.BlocksNTicks
 
 ***************************************
@@ -1467,7 +1467,7 @@ WAIT_TICKS(n) blocks for exactly n rate-group ticks, then resumes.
 ***************************************
 (RQ)       SAMD21-SEQ-006
 ***************************************
-[       OK ] WaitTicks.BlocksNTicks (1 ms)
+[       OK ] WaitTicks.BlocksNTicks (0 ms)
 [ RUN      ] WaitTicks.AtEndOfSequence
 
 ***************************************
@@ -1477,8 +1477,8 @@ A WAIT_TICKS at the end of a sequence finishes cleanly without a spurious Invali
 ***************************************
 (RQ)       SAMD21-SEQ-006
 ***************************************
-[       OK ] WaitTicks.AtEndOfSequence (1 ms)
-[----------] 3 tests from WaitTicks (3 ms total)
+[       OK ] WaitTicks.AtEndOfSequence (0 ms)
+[----------] 3 tests from WaitTicks (1 ms total)
 
 [----------] 4 tests from WaitUntil
 [ RUN      ] WaitUntil.SleepsUntilTime
@@ -1490,7 +1490,7 @@ WAIT_UNTIL sleeps until the FSW clock reaches the requested time.
 ***************************************
 (RQ)       SAMD21-SEQ-006
 ***************************************
-[       OK ] WaitUntil.SleepsUntilTime (1 ms)
+[       OK ] WaitUntil.SleepsUntilTime (0 ms)
 [ RUN      ] WaitUntil.WakesOnExactTime
 
 ***************************************
@@ -1500,7 +1500,7 @@ WAIT_UNTIL wakes when the FSW clock exactly equals the requested time.
 ***************************************
 (RQ)       SAMD21-SEQ-006
 ***************************************
-[       OK ] WaitUntil.WakesOnExactTime (2 ms)
+[       OK ] WaitUntil.WakesOnExactTime (0 ms)
 [ RUN      ] WaitUntil.PastResumesImmediately
 
 ***************************************
@@ -1510,7 +1510,7 @@ WAIT_UNTIL whose requested time is already past resumes on the next schedIn tick
 ***************************************
 (RQ)       SAMD21-SEQ-006
 ***************************************
-[       OK ] WaitUntil.PastResumesImmediately (1 ms)
+[       OK ] WaitUntil.PastResumesImmediately (0 ms)
 [ RUN      ] WaitUntil.MismatchedBaseNeverWakes
 
 ***************************************
@@ -1520,8 +1520,8 @@ WAIT_UNTIL on a time base the FSW clock never reports never wakes.
 ***************************************
 (RQ)       SAMD21-SEQ-006
 ***************************************
-[       OK ] WaitUntil.MismatchedBaseNeverWakes (1 ms)
-[----------] 4 tests from WaitUntil (6 ms total)
+[       OK ] WaitUntil.MismatchedBaseNeverWakes (0 ms)
+[----------] 4 tests from WaitUntil (1 ms total)
 
 [----------] 4 tests from RunOnError
 [ RUN      ] RunOnError.StartsRecovery
@@ -1533,7 +1533,7 @@ RUN_ON_ERROR arms a recovery table that starts after a command failure.
 ***************************************
 (RQ)       SAMD21-SEQ-005
 ***************************************
-[       OK ] RunOnError.StartsRecovery (1 ms)
+[       OK ] RunOnError.StartsRecovery (0 ms)
 [ RUN      ] RunOnError.NotTriggeredOnSuccess
 
 ***************************************
@@ -1543,7 +1543,7 @@ RUN_ON_ERROR does not trigger when the sequence completes successfully.
 ***************************************
 (RQ)       SAMD21-SEQ-005
 ***************************************
-[       OK ] RunOnError.NotTriggeredOnSuccess (1 ms)
+[       OK ] RunOnError.NotTriggeredOnSuccess (0 ms)
 [ RUN      ] RunOnError.ClearsPendingRun
 
 ***************************************
@@ -1553,7 +1553,7 @@ Issuing RUN_ON_ERROR clears any pending normal RUN.
 ***************************************
 (RQ)       SAMD21-SEQ-005
 ***************************************
-[       OK ] RunOnError.ClearsPendingRun (1 ms)
+[       OK ] RunOnError.ClearsPendingRun (0 ms)
 [ RUN      ] RunOnError.IsOneShot
 
 ***************************************
@@ -1563,8 +1563,8 @@ The armed recovery is one-shot: a second failure does not re-trigger it.
 ***************************************
 (RQ)       SAMD21-SEQ-005
 ***************************************
-[       OK ] RunOnError.IsOneShot (1 ms)
-[----------] 4 tests from RunOnError (4 ms total)
+[       OK ] RunOnError.IsOneShot (0 ms)
+[----------] 4 tests from RunOnError (2 ms total)
 
 [----------] 6 tests from Cancel
 [ RUN      ] Cancel.WhileSleeping
@@ -1576,7 +1576,7 @@ CANCEL while a WAIT is sleeping stops the sleep; schedIn no longer dispatches.
 ***************************************
 (RQ)       SAMD21-SEQ-007
 ***************************************
-[       OK ] Cancel.WhileSleeping (1 ms)
+[       OK ] Cancel.WhileSleeping (0 ms)
 [ RUN      ] Cancel.WhileAwaitingResponse
 
 ***************************************
@@ -1586,7 +1586,7 @@ CANCEL while awaiting a response stops execution; the late response is dropped a
 ***************************************
 (RQ)       SAMD21-SEQ-007
 ***************************************
-[       OK ] Cancel.WhileAwaitingResponse (1 ms)
+[       OK ] Cancel.WhileAwaitingResponse (0 ms)
 [ RUN      ] Cancel.ClearsPendingRun
 
 ***************************************
@@ -1596,7 +1596,7 @@ CANCEL clears a pending RUN so it does not start on the next activeIn.
 ***************************************
 (RQ)       SAMD21-SEQ-007
 ***************************************
-[       OK ] Cancel.ClearsPendingRun (1 ms)
+[       OK ] Cancel.ClearsPendingRun (0 ms)
 [ RUN      ] Cancel.ResetsToStart
 
 ***************************************
@@ -1606,7 +1606,7 @@ A RUN after CANCEL re-executes the sequence from the first command.
 ***************************************
 (RQ)       SAMD21-SEQ-007
 ***************************************
-[       OK ] Cancel.ResetsToStart (1 ms)
+[       OK ] Cancel.ResetsToStart (0 ms)
 [ RUN      ] Cancel.WhileIdleNoOp
 
 ***************************************
@@ -1616,7 +1616,7 @@ CANCEL while idle with nothing pending is a harmless no-op.
 ***************************************
 (RQ)       SAMD21-SEQ-007
 ***************************************
-[       OK ] Cancel.WhileIdleNoOp (1 ms)
+[       OK ] Cancel.WhileIdleNoOp (0 ms)
 [ RUN      ] Cancel.ClearsRunOnError
 
 ***************************************
@@ -1626,15 +1626,15 @@ CANCEL clears an armed RUN_ON_ERROR recovery table.
 ***************************************
 (RQ)       SAMD21-SEQ-007
 ***************************************
-[       OK ] Cancel.ClearsRunOnError (1 ms)
-[----------] 6 tests from Cancel (6 ms total)
+[       OK ] Cancel.ClearsRunOnError (0 ms)
+[----------] 6 tests from Cancel (4 ms total)
 
 [----------] Global test environment tear-down
-[==========] 27 tests from 5 test suites ran. (30 ms total)
+[==========] 27 tests from 5 test suites ran. (15 ms total)
 [  PASSED  ] 27 tests.
-</pre></details><details><summary><span class="pill passed">passed</span><span class="name">fprime-samd_Svc_StaticTlmPacketizer_ut_exe</span><span class="time">0.04s</span></summary><pre>[==========] Running 8 tests from 1 test suite.
+</pre></details><details><summary><span class="pill passed">passed</span><span class="name">fprime-samd_Svc_StaticTlmPacketizer_ut_exe</span><span class="time">0.02s</span></summary><pre>[==========] Running 9 tests from 1 test suite.
 [----------] Global test environment set-up.
-[----------] 8 tests from StaticTlmPacketizerTest
+[----------] 9 tests from StaticTlmPacketizerTest
 [ RUN      ] StaticTlmPacketizerTest.PacketHeader
 
 ***************************************
@@ -1715,14 +1715,24 @@ SEND_PKT of a packet id not in the packet set fails EXECUTION_ERROR and sends no
 a pktSendIn call sends the packet whose id is the port number
 ***************************************
 [       OK ] StaticTlmPacketizerTest.PortTrigger (0 ms)
-[----------] 8 tests from StaticTlmPacketizerTest (2 ms total)
+[ RUN      ] StaticTlmPacketizerTest.FanOut
+
+***************************************
+(RQ)       SAMD21-TLM-002
+***************************************
+
+***************************************
+a packet goes to every connected pktSendOut index, and an unconnected index is skipped
+***************************************
+[       OK ] StaticTlmPacketizerTest.FanOut (0 ms)
+[----------] 9 tests from StaticTlmPacketizerTest (1 ms total)
 
 [----------] Global test environment tear-down
-[==========] 8 tests from 1 test suite ran. (4 ms total)
-[  PASSED  ] 8 tests.
-</pre></details><details><summary><span class="pill passed">passed</span><span class="name">fprime-samd_Svc_StaticCmdDispatcher_ut_exe</span><span class="time">0.04s</span></summary><pre>[==========] Running 13 tests from 1 test suite.
+[==========] 9 tests from 1 test suite ran. (1 ms total)
+[  PASSED  ] 9 tests.
+</pre></details><details><summary><span class="pill passed">passed</span><span class="name">fprime-samd_Svc_StaticCmdDispatcher_ut_exe</span><span class="time">0.02s</span></summary><pre>[==========] Running 14 tests from 1 test suite.
 [----------] Global test environment set-up.
-[----------] 13 tests from StaticCmdDispatcherTest
+[----------] 14 tests from StaticCmdDispatcherTest
 [ RUN      ] StaticCmdDispatcherTest.RoutesEachInstanceByBaseId
 
 ***************************************
@@ -1810,9 +1820,19 @@ past CMD_DISPATCHER_SEQUENCER_TABLE_SIZE outstanding commands, a command fails T
 ***************************************
 
 ***************************************
-CLEAR_TRACKING frees the slots; a late response is reported as unexpected
+CLEAR_TRACKING tells each cleared sender CLEARED, acknowledges itself, and frees the slots
 ***************************************
 [       OK ] StaticCmdDispatcherTest.ClearTracking (0 ms)
+[ RUN      ] StaticCmdDispatcherTest.ClearTrackingOtherPort
+
+***************************************
+(RQ)       STATIC-CMD-005
+***************************************
+
+***************************************
+a command cleared by CLEAR_TRACKING from another sequence port is told CLEARED on its own port
+***************************************
+[       OK ] StaticCmdDispatcherTest.ClearTrackingOtherPort (0 ms)
 [ RUN      ] StaticCmdDispatcherTest.ClearTrackingWhenFull
 
 ***************************************
@@ -1853,12 +1873,12 @@ SET_EVENT_EMISSION silences dispatch/completion events for one sequence port
 SET_EVENT_EMISSION on a port past the sequence ports fails EXECUTION_ERROR
 ***************************************
 [       OK ] StaticCmdDispatcherTest.EventEmissionPortOutOfRange (0 ms)
-[----------] 13 tests from StaticCmdDispatcherTest (2 ms total)
+[----------] 14 tests from StaticCmdDispatcherTest (1 ms total)
 
 [----------] Global test environment tear-down
-[==========] 13 tests from 1 test suite ran. (4 ms total)
-[  PASSED  ] 13 tests.
-</pre></details><details><summary><span class="pill passed">passed</span><span class="name">fprime-samd_Svc_StaticPrmDb_ut_exe</span><span class="time">0.09s</span></summary><pre>[STest::Random] Generated seed 892863 from system time
+[==========] 14 tests from 1 test suite ran. (2 ms total)
+[  PASSED  ] 14 tests.
+</pre></details><details><summary><span class="pill passed">passed</span><span class="name">fprime-samd_Svc_StaticPrmDb_ut_exe</span><span class="time">0.04s</span></summary><pre>[STest::Random] Generated seed 709816 from system time
 [==========] Running 19 tests from 3 test suites.
 [----------] Global test environment set-up.
 [----------] 1 test from Params
@@ -1871,8 +1891,8 @@ SET_EVENT_EMISSION on a port past the sequence ports fails EXECUTION_ERROR
 ***************************************
 parameters set through setPrm read back VALID, others INVALID
 ***************************************
-[       OK ] Params.SetGet (2 ms)
-[----------] 1 test from Params (2 ms total)
+[       OK ] Params.SetGet (1 ms)
+[----------] 1 test from Params (1 ms total)
 
 [----------] 10 tests from Store
 [ RUN      ] Store.SaveLoad
@@ -1884,7 +1904,7 @@ parameters set through setPrm read back VALID, others INVALID
 ***************************************
 a save followed by a REPLACE load restores every value
 ***************************************
-[       OK ] Store.SaveLoad (1 ms)
+[       OK ] Store.SaveLoad (0 ms)
 [ RUN      ] Store.BitFlip
 
 ***************************************
@@ -1898,7 +1918,7 @@ a save followed by a REPLACE load restores every value
 ***************************************
 a flipped bit invalidates only the parameter owning the record
 ***************************************
-[       OK ] Store.BitFlip (1 ms)
+[       OK ] Store.BitFlip (0 ms)
 [ RUN      ] Store.DictionaryChange
 
 ***************************************
@@ -1926,7 +1946,7 @@ records of an older dictionary load in any slot order, unknown records are skipp
 ***************************************
 a MERGE load fills in invalid parameters without overwriting valid ones
 ***************************************
-[       OK ] Store.Merge (1 ms)
+[       OK ] Store.Merge (0 ms)
 [ RUN      ] Store.InterruptedSave
 
 ***************************************
@@ -1940,7 +1960,7 @@ a MERGE load fills in invalid parameters without overwriting valid ones
 ***************************************
 a save interrupted at any record loads each parameter whole from one save, or invalid
 ***************************************
-[       OK ] Store.InterruptedSave (16 ms)
+[       OK ] Store.InterruptedSave (4 ms)
 [ RUN      ] Store.MergeMixedSaves
 
 ***************************************
@@ -1954,7 +1974,7 @@ a save interrupted at any record loads each parameter whole from one save, or in
 ***************************************
 a MERGE never completes a parameter with segments of another save
 ***************************************
-[       OK ] Store.MergeMixedSaves (2 ms)
+[       OK ] Store.MergeMixedSaves (0 ms)
 [ RUN      ] Store.StaleDuplicate
 
 ***************************************
@@ -2006,8 +2026,8 @@ an erased store loads with every parameter invalid
 ***************************************
 split and check-only segments, the largest parameter and a full store round-trip
 ***************************************
-[       OK ] Store.BoundaryLayout (18 ms)
-[----------] 10 tests from Store (45 ms total)
+[       OK ] Store.BoundaryLayout (6 ms)
+[----------] 10 tests from Store (15 ms total)
 
 [----------] 8 tests from Storage
 [ RUN      ] Storage.ReadFailure
@@ -2019,7 +2039,7 @@ split and check-only segments, the largest parameter and a full store round-trip
 ***************************************
 a failed read keeps the records already loaded and the values it did not reach
 ***************************************
-[       OK ] Storage.ReadFailure (1 ms)
+[       OK ] Storage.ReadFailure (0 ms)
 [ RUN      ] Storage.ReadFailureSplitParam
 
 ***************************************
@@ -2029,7 +2049,7 @@ a failed read keeps the records already loaded and the values it did not reach
 ***************************************
 a failed read invalidates only a parameter whose records it loaded part of
 ***************************************
-[       OK ] Storage.ReadFailureSplitParam (1 ms)
+[       OK ] Storage.ReadFailureSplitParam (0 ms)
 [ RUN      ] Storage.WriteFailure
 
 ***************************************
@@ -2043,7 +2063,7 @@ a failed read invalidates only a parameter whose records it loaded part of
 ***************************************
 a failed write fails SAVE with a throttled event; a successful save emits none
 ***************************************
-[       OK ] Storage.WriteFailure (1 ms)
+[       OK ] Storage.WriteFailure (0 ms)
 [ RUN      ] Storage.Busy
 
 ***************************************
@@ -2098,12 +2118,12 @@ a command sent from the response of the last one starts after it, one transfer a
 without storage connected, SAVE and LOAD fail with an event
 ***************************************
 [       OK ] Storage.NoStorage (0 ms)
-[----------] 8 tests from Storage (7 ms total)
+[----------] 8 tests from Storage (3 ms total)
 
 [----------] Global test environment tear-down
-[==========] 19 tests from 3 test suites ran. (55 ms total)
+[==========] 19 tests from 3 test suites ran. (20 ms total)
 [  PASSED  ] 19 tests.
-</pre></details><details><summary><span class="pill passed">passed</span><span class="name">fprime-samd_Svc_PrmStorage_ut_exe</span><span class="time">0.05s</span></summary><pre>[STest::Random] Generated seed 982199 from system time
+</pre></details><details><summary><span class="pill passed">passed</span><span class="name">fprime-samd_Svc_PrmStorage_ut_exe</span><span class="time">0.03s</span></summary><pre>[STest::Random] Generated seed 753690 from system time
 [==========] Running 15 tests from 3 test suites.
 [----------] Global test environment set-up.
 [----------] 4 tests from Transfer
@@ -2124,7 +2144,7 @@ without storage connected, SAVE and LOAD fail with an event
 ***************************************
 a save writes the image verbatim to bank 0, selected at boot, in MaxTransfer chunks
 ***************************************
-[       OK ] Transfer.Save (2 ms)
+[       OK ] Transfer.Save (0 ms)
 [ RUN      ] Transfer.Load
 
 ***************************************
@@ -2159,7 +2179,7 @@ a transfer lands at its offset within the selected bank
 a failed chunk ends the transfer with OTHER_ERROR and reports where it failed
 ***************************************
 [       OK ] Transfer.StorageFailure (0 ms)
-[----------] 4 tests from Transfer (5 ms total)
+[----------] 4 tests from Transfer (2 ms total)
 
 [----------] 5 tests from Bank
 [ RUN      ] Bank.Select
@@ -2185,7 +2205,7 @@ SELECT_BANK moves the following transfers to the other bank
 ***************************************
 NUM_BANKS banks of one store each are packed back to back from BASE_OFFSET
 ***************************************
-[       OK ] Bank.Layout (1 ms)
+[       OK ] Bank.Layout (0 ms)
 [ RUN      ] Bank.SelectInvalid
 
 ***************************************
@@ -2220,7 +2240,7 @@ SELECT_BANK during a transfer is rejected BUSY and the transfer keeps its bank
 SELECT_BANK while a request waits for a retry is rejected BUSY
 ***************************************
 [       OK ] Bank.SelectDuringRetry (0 ms)
-[----------] 5 tests from Bank (4 ms total)
+[----------] 5 tests from Bank (2 ms total)
 
 [----------] 6 tests from Fram
 [ RUN      ] Fram.BusyRetry
@@ -2287,9 +2307,9 @@ save, load and a failed chunk complete with F-RAM completions delivered inside t
 a load started from the return of a save runs as a transfer of its own
 ***************************************
 [       OK ] Fram.ChainedTransfer (0 ms)
-[----------] 6 tests from Fram (4 ms total)
+[----------] 6 tests from Fram (2 ms total)
 
 [----------] Global test environment tear-down
-[==========] 15 tests from 3 test suites ran. (14 ms total)
+[==========] 15 tests from 3 test suites ran. (6 ms total)
 [  PASSED  ] 15 tests.
 </pre></details></body></html>

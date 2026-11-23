@@ -32,9 +32,9 @@ pre {
   white-space: pre-wrap; word-break: break-word;
 }
 .empty { color: #57606a; padding: 0.75rem 1rem; border-top: 1px solid #d0d7de; margin: 0; }
-</style></head><body><h1>Unit-test console output &mdash; <code>Svc/StaticCmdDispatcher</code></h1><div class="meta"><span class="pill passed">passed</span> 1 passed &middot; 0.04s &middot; <a href="../../../index.html">← back to the module list</a> &middot; <a href="console.txt">plain text</a></div><details><summary><span class="pill passed">passed</span><span class="name">fprime-samd_Svc_StaticCmdDispatcher_ut_exe</span><span class="time">0.04s</span></summary><pre>[==========] Running 13 tests from 1 test suite.
+</style></head><body><h1>Unit-test console output &mdash; <code>Svc/StaticCmdDispatcher</code></h1><div class="meta"><span class="pill passed">passed</span> 1 passed &middot; 0.02s &middot; <a href="../../../index.html">← back to the module list</a> &middot; <a href="console.txt">plain text</a></div><details><summary><span class="pill passed">passed</span><span class="name">fprime-samd_Svc_StaticCmdDispatcher_ut_exe</span><span class="time">0.02s</span></summary><pre>[==========] Running 14 tests from 1 test suite.
 [----------] Global test environment set-up.
-[----------] 13 tests from StaticCmdDispatcherTest
+[----------] 14 tests from StaticCmdDispatcherTest
 [ RUN      ] StaticCmdDispatcherTest.RoutesEachInstanceByBaseId
 
 ***************************************
@@ -122,9 +122,19 @@ past CMD_DISPATCHER_SEQUENCER_TABLE_SIZE outstanding commands, a command fails T
 ***************************************
 
 ***************************************
-CLEAR_TRACKING frees the slots; a late response is reported as unexpected
+CLEAR_TRACKING tells each cleared sender CLEARED, acknowledges itself, and frees the slots
 ***************************************
 [       OK ] StaticCmdDispatcherTest.ClearTracking (0 ms)
+[ RUN      ] StaticCmdDispatcherTest.ClearTrackingOtherPort
+
+***************************************
+(RQ)       STATIC-CMD-005
+***************************************
+
+***************************************
+a command cleared by CLEAR_TRACKING from another sequence port is told CLEARED on its own port
+***************************************
+[       OK ] StaticCmdDispatcherTest.ClearTrackingOtherPort (0 ms)
 [ RUN      ] StaticCmdDispatcherTest.ClearTrackingWhenFull
 
 ***************************************
@@ -165,9 +175,9 @@ SET_EVENT_EMISSION silences dispatch/completion events for one sequence port
 SET_EVENT_EMISSION on a port past the sequence ports fails EXECUTION_ERROR
 ***************************************
 [       OK ] StaticCmdDispatcherTest.EventEmissionPortOutOfRange (0 ms)
-[----------] 13 tests from StaticCmdDispatcherTest (2 ms total)
+[----------] 14 tests from StaticCmdDispatcherTest (1 ms total)
 
 [----------] Global test environment tear-down
-[==========] 13 tests from 1 test suite ran. (4 ms total)
-[  PASSED  ] 13 tests.
+[==========] 14 tests from 1 test suite ran. (2 ms total)
+[  PASSED  ] 14 tests.
 </pre></details></body></html>

@@ -1,11 +1,11 @@
 # unit-test console output: Svc/StaticCmdDispatcher
 
 ==============================================================================
-PASSED  fprime-samd_Svc_StaticCmdDispatcher_ut_exe  (0.04s)
+PASSED  fprime-samd_Svc_StaticCmdDispatcher_ut_exe  (0.02s)
 ==============================================================================
-[==========] Running 13 tests from 1 test suite.
+[==========] Running 14 tests from 1 test suite.
 [----------] Global test environment set-up.
-[----------] 13 tests from StaticCmdDispatcherTest
+[----------] 14 tests from StaticCmdDispatcherTest
 [ RUN      ] StaticCmdDispatcherTest.RoutesEachInstanceByBaseId
 
 ***************************************
@@ -93,9 +93,19 @@ past CMD_DISPATCHER_SEQUENCER_TABLE_SIZE outstanding commands, a command fails T
 ***************************************
 
 ***************************************
-CLEAR_TRACKING frees the slots; a late response is reported as unexpected
+CLEAR_TRACKING tells each cleared sender CLEARED, acknowledges itself, and frees the slots
 ***************************************
 [       OK ] StaticCmdDispatcherTest.ClearTracking (0 ms)
+[ RUN      ] StaticCmdDispatcherTest.ClearTrackingOtherPort
+
+***************************************
+(RQ)       STATIC-CMD-005
+***************************************
+
+***************************************
+a command cleared by CLEAR_TRACKING from another sequence port is told CLEARED on its own port
+***************************************
+[       OK ] StaticCmdDispatcherTest.ClearTrackingOtherPort (0 ms)
 [ RUN      ] StaticCmdDispatcherTest.ClearTrackingWhenFull
 
 ***************************************
@@ -136,9 +146,9 @@ SET_EVENT_EMISSION silences dispatch/completion events for one sequence port
 SET_EVENT_EMISSION on a port past the sequence ports fails EXECUTION_ERROR
 ***************************************
 [       OK ] StaticCmdDispatcherTest.EventEmissionPortOutOfRange (0 ms)
-[----------] 13 tests from StaticCmdDispatcherTest (2 ms total)
+[----------] 14 tests from StaticCmdDispatcherTest (1 ms total)
 
 [----------] Global test environment tear-down
-[==========] 13 tests from 1 test suite ran. (4 ms total)
-[  PASSED  ] 13 tests.
+[==========] 14 tests from 1 test suite ran. (2 ms total)
+[  PASSED  ] 14 tests.
 

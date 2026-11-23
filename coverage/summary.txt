@@ -37,7 +37,7 @@ lib/fprime-samd/fprime-samd/Svc/Seq/Seq.cpp
 lib/fprime-samd/fprime-samd/Svc/Seq/Seq.hpp
                                                2       2   100%
 lib/fprime-samd/fprime-samd/Svc/StaticCmdDispatcher/StaticCmdDispatcher.cpp
-                                              93      93   100%
+                                              99      99   100%
 lib/fprime-samd/fprime-samd/Svc/StaticMallocator/StaticMallocator.hpp
                                               16      16   100%
 lib/fprime-samd/fprime-samd/Svc/StaticPrmDb/StaticPrmDb.cpp
@@ -53,5 +53,5 @@ lib/fprime-samd/fprime-samd/Svc/Types/PrmRecord.cpp
 lib/fprime-samd/fprime-samd/Svc/Types/PrmRecord.hpp
                                                6       6   100%
 ------------------------------------------------------------------------------
-TOTAL                                       1996    1939    97%
+TOTAL                                       2002    1945    97%
 ------------------------------------------------------------------------------

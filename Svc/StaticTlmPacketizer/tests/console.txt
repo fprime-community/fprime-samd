@@ -1,11 +1,11 @@
 # unit-test console output: Svc/StaticTlmPacketizer
 
 ==============================================================================
-PASSED  fprime-samd_Svc_StaticTlmPacketizer_ut_exe  (0.04s)
+PASSED  fprime-samd_Svc_StaticTlmPacketizer_ut_exe  (0.02s)
 ==============================================================================
-[==========] Running 8 tests from 1 test suite.
+[==========] Running 9 tests from 1 test suite.
 [----------] Global test environment set-up.
-[----------] 8 tests from StaticTlmPacketizerTest
+[----------] 9 tests from StaticTlmPacketizerTest
 [ RUN      ] StaticTlmPacketizerTest.PacketHeader
 
 ***************************************
@@ -86,9 +86,19 @@ SEND_PKT of a packet id not in the packet set fails EXECUTION_ERROR and sends no
 a pktSendIn call sends the packet whose id is the port number
 ***************************************
 [       OK ] StaticTlmPacketizerTest.PortTrigger (0 ms)
-[----------] 8 tests from StaticTlmPacketizerTest (2 ms total)
+[ RUN      ] StaticTlmPacketizerTest.FanOut
+
+***************************************
+(RQ)       SAMD21-TLM-002
+***************************************
+
+***************************************
+a packet goes to every connected pktSendOut index, and an unconnected index is skipped
+***************************************
+[       OK ] StaticTlmPacketizerTest.FanOut (0 ms)
+[----------] 9 tests from StaticTlmPacketizerTest (1 ms total)
 
 [----------] Global test environment tear-down
-[==========] 8 tests from 1 test suite ran. (4 ms total)
-[  PASSED  ] 8 tests.
+[==========] 9 tests from 1 test suite ran. (1 ms total)
+[  PASSED  ] 9 tests.
 
