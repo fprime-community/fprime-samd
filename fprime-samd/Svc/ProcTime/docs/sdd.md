@@ -10,10 +10,11 @@ to any external (wall clock) time.
 
 ## 2. Requirements
 
-| Name                | Description                                                          | Validation |
-| ------------------- | -------------------------------------------------------------------- | ---------- |
-| SAMD21-PROCTIME-001 | ProcTime shall report time in the TB_PROC_TIME time base.            | Unit Test  |
-| SAMD21-PROCTIME-002 | ProcTime shall report the time elapsed on the Os::RawTime clock.     | Unit Test  |
+| Name                | Description                                                                         | Validation |
+| ------------------- | ----------------------------------------------------------------------------------- | ---------- |
+| SAMD21-PROCTIME-001 | ProcTime shall report time in the TB_PROC_TIME time base with time context 0.       | Unit Test  |
+| SAMD21-PROCTIME-002 | ProcTime shall report the time elapsed on the Os::RawTime clock.                    | Unit Test  |
+| SAMD21-PROCTIME-003 | ProcTime shall return the current time to the caller synchronously on each request. | Unit Test  |
 
 ## 3. Design
 
@@ -34,7 +35,7 @@ its sub-tick counter.
 ## 5. Integration
 
 Instantiate it as the deployment's time component and connect it to the components' time get
-ports:
+ports, or feed it into another time component as a processor-time source:
 
 ```fpp
 instance timeHandler: Samd21.ProcTime base id 0x2000
@@ -44,6 +45,8 @@ instance timeHandler: Samd21.ProcTime base id 0x2000
 
 ## 6. Limitations
 
+- Each call reads the RTC `COUNT` register, which busy-waits for the RTC read synchronization
+  (a few RTC clock cycles).
 - Reports `0` until `Samd21.RtcDriver` has been configured.
 - Restarts from `0` on every reset; it is not persistent or synchronized to ground time.
 - The RTC tick counter is a `U32`, so the time wraps after 2^32 ticks (about 17 years at 8 Hz,

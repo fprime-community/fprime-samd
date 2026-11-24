@@ -1,14 +1,12 @@
 // ======================================================================
-// \title  PassiveDownlink.cpp
+// \title  PassiveEventManager.cpp
 // \author tumbar
-// \brief  cpp file for PassiveDownlink component implementation class
+// \brief  cpp file for PassiveEventManager component implementation class
 // ======================================================================
 
-#include "fprime-samd/Svc/PassiveDownlink/PassiveDownlink.hpp"
+#include "fprime-samd/Svc/PassiveEventManager/PassiveEventManager.hpp"
 #include "Fw/Log/LogPacket.hpp"
-#include "Fw/Types/Assert.hpp"
 #include "Fw/Types/Serializable.hpp"
-#include "config/FwAssertArgTypeAliasAc.h"
 
 namespace Samd21 {
 
@@ -16,15 +14,15 @@ namespace Samd21 {
 // Component construction and destruction
 // ----------------------------------------------------------------------
 
-PassiveDownlink ::PassiveDownlink(const char* const compName) : PassiveDownlinkComponentBase(compName) {}
+PassiveEventManager ::PassiveEventManager(const char* const compName) : PassiveEventManagerComponentBase(compName) {}
 
-PassiveDownlink ::~PassiveDownlink() {}
+PassiveEventManager ::~PassiveEventManager() {}
 
 // ----------------------------------------------------------------------
 // Handler implementations for typed input ports
 // ----------------------------------------------------------------------
 
-void PassiveDownlink ::LogRecv_handler(FwIndexType portNum,
+void PassiveEventManager ::LogRecv_handler(FwIndexType portNum,
                                        FwEventIdType id,
                                        Fw::Time& timeTag,
                                        const Fw::LogSeverity& severity,
@@ -35,10 +33,10 @@ void PassiveDownlink ::LogRecv_handler(FwIndexType portNum,
     logPacket.setTimeTag(timeTag);
     logPacket.setLogBuffer(args);
 
-    Fw::SerializeStatus stat = logPacket.serializeTo(buf);
-    FW_ASSERT(Fw::FW_SERIALIZE_OK == stat, static_cast<FwAssertArgType>(stat));
-
-    if (this->isConnected_PktSend_OutputPort(0)) {
+    // A maximum-size LogBuffer plus the packet header can exceed the com buffer capacity.
+    // Drop the packet rather than asserting; a FATAL is still announced below.
+    const Fw::SerializeStatus stat = logPacket.serializeTo(buf);
+    if ((Fw::FW_SERIALIZE_OK == stat) && this->isConnected_PktSend_OutputPort(0)) {
         this->PktSend_out(0, buf, 0);
     }
 

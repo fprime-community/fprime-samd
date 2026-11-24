@@ -1,28 +1,28 @@
 // ======================================================================
-// \title  PassiveDownlink.hpp
+// \title  PassiveEventManager.hpp
 // \author tumbar
-// \brief  hpp file for PassiveDownlink component implementation class
+// \brief  hpp file for PassiveEventManager component implementation class
 // ======================================================================
 
-#ifndef Samd21_PassiveDownlink_HPP
-#define Samd21_PassiveDownlink_HPP
+#ifndef Samd21_PassiveEventManager_HPP
+#define Samd21_PassiveEventManager_HPP
 
-#include "fprime-samd/Svc/PassiveDownlink/PassiveDownlinkComponentAc.hpp"
+#include "fprime-samd/Svc/PassiveEventManager/PassiveEventManagerComponentAc.hpp"
 
 namespace Samd21 {
 
-class PassiveDownlink final : public PassiveDownlinkComponentBase {
+class PassiveEventManager final : public PassiveEventManagerComponentBase {
   public:
     // ----------------------------------------------------------------------
     // Component construction and destruction
     // ----------------------------------------------------------------------
 
-    //! Construct PassiveDownlink object
-    PassiveDownlink(const char* const compName  //!< The component name
+    //! Construct PassiveEventManager object
+    PassiveEventManager(const char* const compName  //!< The component name
     );
 
-    //! Destroy PassiveDownlink object
-    ~PassiveDownlink();
+    //! Destroy PassiveEventManager object
+    ~PassiveEventManager();
 
   private:
     // ----------------------------------------------------------------------

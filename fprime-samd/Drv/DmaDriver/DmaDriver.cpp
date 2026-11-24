@@ -13,10 +13,13 @@
 #include "fprime-samd/Drv/Types/AddressIncrementStepSizeEnumAc.hpp"
 #include "fprime-samd/Drv/Types/BeatSizeEnumAc.hpp"
 #include "fprime-samd/Drv/Types/CriticalSection.hpp"
+#include "fprime-samd/Drv/Types/FppConstantsAc.hpp"
 #include "sam.h"
 #include "samd-config/DmaDriverConfig.hpp"
 
 namespace Samd21 {
+
+static_assert(DMAC_CH_NUM == Dma::CHANNEL_NUM, "Port arrays must cover every DMAC channel");
 
 // Singleton instance for ISR access
 DmaDriver* DmaDriver::s_instance = nullptr;
@@ -60,15 +63,21 @@ static void waitForDmacReset() {
     FW_ASSERT(limit != 0);
 }
 
+//! Bytes moved by one beat: BYTE = 1, HWORD = 2, WORD = 4
+static U32 bytesPerBeat(Samd21::Dma::BeatSize beatSize) {
+    return 1U << static_cast<U32>(beatSize.e);
+}
+
 static U32 calculateEndAddress(U32 startAddr,
                                U16 btcnt,
                                Samd21::Dma::BeatSize beatSize,
                                Samd21::Dma::AddressIncrementStepSize stepSize,
-                               bool increment) {
-    if (increment) {
-        return startAddr + btcnt * (beatSize.e + 1) * (1 << stepSize.e);
+                               bool applyStep) {
+    const U32 beatBytes = static_cast<U32>(btcnt) * bytesPerBeat(beatSize);
+    if (applyStep) {
+        return startAddr + beatBytes * (1U << static_cast<U32>(stepSize.e));
     } else {
-        return startAddr + btcnt * (beatSize.e + 1);
+        return startAddr + beatBytes;
     }
 }
 
@@ -82,14 +91,20 @@ static void setupDescriptor(DmacDescriptor* desc,
                             const Samd21::Dma::AddressIncrementStepSize& stepSize,
                             const Samd21::Dma::StepSelection& stepSelection) {
     static_assert(sizeof(::DmacDescriptor) == sizeof(Samd21::DmacDescriptor),
-                  "sam.h descriptor does not match Samd21::Dm");
+                  "sam.h descriptor does not match Samd21::DmacDescriptor");
 
     // Validate parameters
     FW_ASSERT(desc != nullptr);
+    FW_ASSERT(beatSize.isValid(), static_cast<FwAssertArgType>(beatSize.e));
+    FW_ASSERT(stepSize.isValid(), static_cast<FwAssertArgType>(stepSize.e));
+    FW_ASSERT(stepSelection.isValid(), static_cast<FwAssertArgType>(stepSelection.e));
     FW_ASSERT(sourceAddr != 0);
     FW_ASSERT(destAddr != 0);
+    // Both addresses must be aligned to the beat size
+    FW_ASSERT((sourceAddr % bytesPerBeat(beatSize)) == 0, static_cast<FwAssertArgType>(sourceAddr));
+    FW_ASSERT((destAddr % bytesPerBeat(beatSize)) == 0, static_cast<FwAssertArgType>(destAddr));
 
-    // Cast to hardware descriptor type (layout verified by static_assert at line 77)
+    // Cast to hardware descriptor type (layout verified by the static_assert above)
     auto* desc_hw = reinterpret_cast<::DmacDescriptor*>(desc);
 
     // Setup BTCTRL - Block Transfer Control
@@ -125,6 +140,8 @@ static void setupDescriptor(DmacDescriptor* desc,
 // ----------------------------------------------------------------------
 
 void DmaDriver::freeDescriptor(DmacDescriptor* desc) {
+    FW_ASSERT(desc != nullptr);
+
     // Check if this descriptor is from our pool
     if (desc < m_descriptors || desc >= m_descriptors + DmaDriverConfig::DMA_DESCRIPTOR_N) {
         // Not from our pool (e.g., dmac_base[]), nothing to free
@@ -137,30 +154,6 @@ void DmaDriver::freeDescriptor(DmacDescriptor* desc) {
 
     // Clear the bit
     this->m_descriptors_used &= ~(1U << index);
-}
-
-void DmaDriver::freeChain(DmacDescriptor* chainStart) {
-    auto current = reinterpret_cast<::DmacDescriptor*>(chainStart);
-
-    U32 bound = 0;
-    while (bound <= DmaDriverConfig::DMA_DESCRIPTOR_N && current != nullptr && current->DESCADDR.reg != 0) {
-        // Get next descriptor before freeing current
-        auto next = reinterpret_cast<::DmacDescriptor*>(current->DESCADDR.reg);
-
-        // Free current descriptor if it's from our pool
-        freeDescriptor(reinterpret_cast<DmacDescriptor*>(current));
-
-        current = next;
-        bound++;
-    }
-
-    // Make sure we didn't hit the descriptor bound
-    FW_ASSERT(bound <= DmaDriverConfig::DMA_DESCRIPTOR_N);
-
-    // Free the last descriptor (with DESCADDR == 0)
-    if (current != nullptr) {
-        freeDescriptor(reinterpret_cast<DmacDescriptor*>(current));
-    }
 }
 
 void DmaDriver::configure() {
@@ -183,16 +176,18 @@ void DmaDriver::configure() {
     DMAC->WRBADDR.reg = reinterpret_cast<U32>(dmac_writeback);
 
     // Clear descriptor memory
-    memset(dmac_base, 0, sizeof(dmac_base));
-    memset(dmac_writeback, 0, sizeof(dmac_writeback));
+    (void)memset(dmac_base, 0, sizeof(dmac_base));
+    (void)memset(dmac_writeback, 0, sizeof(dmac_writeback));
 
-    // Enable DMA controller with all priority levels
-    DMAC->CTRL.reg = DMAC_CTRL_DMAENABLE | DMAC_CTRL_LVLEN(0xF);
+    // Enable DMA controller with all four priority levels
+    static constexpr U32 ALL_PRIORITY_LEVELS = 0xF;
+    DMAC->CTRL.reg = DMAC_CTRL_DMAENABLE | DMAC_CTRL_LVLEN(ALL_PRIORITY_LEVELS);
 
     // Enable DMA interrupt at lowest priority
     static constexpr U32 LOWEST_PRIORITY = (1U << __NVIC_PRIO_BITS) - 1;
-    NVIC_EnableIRQ(DMAC_IRQn);
     NVIC_SetPriority(DMAC_IRQn, LOWEST_PRIORITY);
+    NVIC_ClearPendingIRQ(DMAC_IRQn);
+    NVIC_EnableIRQ(DMAC_IRQn);
 
     m_initialized = true;
 }
@@ -217,7 +212,7 @@ void DmaDriver::handleInterrupt() {
     // chain that the code after the callback then detached and orphaned, and the
     // next TCMPL asserted on a write-back link to nowhere.
     bool busError = false;
-    U16 busErrorRemaining = 0;
+    U32 busErrorRemainingBytes = 0;
     U32 okReplies = 0;
 
     // Handle Transfer Error (bus error)
@@ -228,8 +223,10 @@ void DmaDriver::handleInterrupt() {
             FW_ASSERT(false, id);
         } else {
             // Pure bus error - report it
+            // The write-back holds the remaining beats; the reply carries bytes
             busError = true;
-            busErrorRemaining = dmac_writeback[id].BTCNT.reg;
+            busErrorRemainingBytes = static_cast<U32>(dmac_writeback[id].BTCNT.reg)
+                                     << static_cast<U32>(dmac_writeback[id].BTCTRL.bit.BEATSIZE);
         }
 
         // Clear flag
@@ -377,7 +374,7 @@ void DmaDriver::handleInterrupt() {
     if (busError) {
         Samd21::Dma::Reply reply;
         reply.set_status(Samd21::Dma::Status::BUS_ERROR);
-        reply.set_remainingBytes(busErrorRemaining);
+        reply.set_remainingBytes(busErrorRemainingBytes);
         this->transactionIsrOut_out(id, reply);
     } else {
         for (U32 i = 0; i < okReplies; i++) {
@@ -448,13 +445,13 @@ void DmaDriver::sendTransactionIn_handler(FwIndexType portNum,
     DmacDescriptor* desc = nullptr;
     U32 i = 0;
     for (; i < DmaDriverConfig::DMA_DESCRIPTOR_N; i++) {
-        if (!(this->m_descriptors_used & (1 << i))) {
+        if (!(this->m_descriptors_used & (1U << i))) {
             desc = &this->m_descriptors[i];
             setupDescriptor(desc, sourceAddr, destAddr, btcnt, beatSize, incrementSource, incrementDestination,
                             stepSize, stepSelection);
 
             // Mark the descriptor as used
-            this->m_descriptors_used |= (1 << i);
+            this->m_descriptors_used |= (1U << i);
             break;
         }
     }
@@ -467,7 +464,8 @@ void DmaDriver::sendTransactionIn_handler(FwIndexType portNum,
     // Queue transaction on the channel
     bool wasIdle = !m_channels[portNum].isBusy();
 
-    m_channels[portNum].queueTransaction(trigger, action, priority, desc);
+    // The write-back patch indication is informational only
+    (void)m_channels[portNum].queueTransaction(trigger, action, priority, desc);
 
     // The descriptor was copied into dmac_base so we no longer need the one we allocated
     if (wasIdle) {

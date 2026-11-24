@@ -17,14 +17,8 @@ module Samd21 {
                 status: U32 @< The status of the operation
             ) \
             severity warning high \
-            format "Serializing com buffer failed with status {}"
-
-        @ An error occurred while deserializing a packet
-        event DeserializationError(
-                status: U32 @< The status of the operation
-            ) \
-            severity warning high \
-            format "Deserializing packet type failed with status {}"
+            format "Serializing com buffer failed with status {}" \
+            throttle 5 every { seconds = 60 }
 
         ###############################################################################
         # Standard AC Ports for Events 

@@ -47,8 +47,8 @@ void FprimeRouter ::dataIn_handler(FwIndexType portNum, Fw::Buffer& packetBuffer
         case Fw::ComPacketType::FW_PACKET_FILE: {
             // If the file uplink output port is connected, send the file packet directly.
             // Ownership is passed to the receiver and will come back on fileBufferReturnIn,
-            // at which point we return it to the deframer via dataReturnOut. fileOut carries
-            // only Fw::Buffer, so remember the context here to restore it on return.
+            // at which point we return it to the deframer via dataReturnOut. Unlike
+            // Svc::FprimeRouter, the context is not kept, so it is returned empty.
             if (this->isConnected_fileOut_OutputPort(0)) {
                 this->fileOut_out(0, packetBuffer);
             } else {
@@ -62,7 +62,7 @@ void FprimeRouter ::dataIn_handler(FwIndexType portNum, Fw::Buffer& packetBuffer
             // connected, forward packet and context for further processing.
             // Ownership is passed to the receiver and will come back on fileBufferReturnIn,
             // at which point we return it to the deframer via dataReturnOut. The return path
-            // (fileBufferReturnIn) carries no context, so remember it here to restore on return.
+            // (fileBufferReturnIn) carries no context and none is kept, so it is returned empty.
             if (this->isConnected_unknownDataOut_OutputPort(0)) {
                 this->unknownDataOut_out(0, packetBuffer, context);
             } else {

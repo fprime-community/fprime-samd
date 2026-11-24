@@ -15,3 +15,15 @@ register_fprime_module(
   HEADERS
     "${CMAKE_CURRENT_LIST_DIR}/FprimeRouter.hpp"
 )
+
+### Unit Tests ###
+register_fprime_ut(
+  AUTOCODER_INPUTS
+    "${CMAKE_CURRENT_LIST_DIR}/FprimeRouter.fpp"
+  SOURCES
+    "${CMAKE_CURRENT_LIST_DIR}/test/ut/FprimeRouterTestMain.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/test/ut/FprimeRouterTester.cpp"
+  DEPENDS
+    STest
+  UT_AUTO_HELPERS
+)

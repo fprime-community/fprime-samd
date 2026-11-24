@@ -142,7 +142,7 @@ instance per topology; a second is a hard autocoder error:
 
 **5. Wire it.** `tlmRecvIn`, `timeCaller`, and the command/event AC ports all come from
 the FPP pattern specifiers — `telemetry connections instance tlm` is mandatory, since
-`Samd21.PassiveDownlink` has no `Fw.Tlm` input port:
+`Samd21.PassiveEventManager` has no `Fw.Tlm` input port:
 
 ```fpp
         command connections instance cmdDisp

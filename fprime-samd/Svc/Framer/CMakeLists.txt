@@ -33,8 +33,11 @@ register_fprime_ut(
         "${CMAKE_CURRENT_LIST_DIR}/test/ut/FramerTestMain.cpp"
         "${CMAKE_CURRENT_LIST_DIR}/test/ut/FramerTester.cpp"
     DEPENDS
+        Fw_Test
         STest
         Svc_FprimeProtocol
+        Svc_FrameAccumulator # FprimeFrameDetector, to check frames the way the ground deframes them
+        Utils_Hash
         fprime-samd_Drv_Types
     UT_AUTO_HELPERS
 )
