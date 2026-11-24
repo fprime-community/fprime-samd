@@ -1,9 +1,9 @@
 # unit-test console output: Svc/Framer
 
 ==============================================================================
-PASSED  fprime-samd_Svc_Framer_ut_exe  (0.02s)
+PASSED  fprime-samd_Svc_Framer_ut_exe  (0.04s)
 ==============================================================================
-[STest::Random] Generated seed 817128 from system time
+[STest::Random] Generated seed 484603 from system time
 [==========] Running 12 tests from 2 test suites.
 [----------] Global test environment set-up.
 [----------] 8 tests from Nominal
@@ -12,7 +12,7 @@ PASSED  fprime-samd_Svc_Framer_ut_exe  (0.02s)
 ***************************************
 (RQ)       SAMD21-FRAMER-003: Framer shall accumulate the packets received between schedIn calls and send them together in one drvSendOut buffer
 ***************************************
-[       OK ] Nominal.SinglePacket (0 ms)
+[       OK ] Nominal.SinglePacket (1 ms)
 [ RUN      ] Nominal.MultiPacketAccumulation
 
 ***************************************
@@ -63,7 +63,7 @@ PASSED  fprime-samd_Svc_Framer_ut_exe  (0.02s)
 (RQ)       SAMD21-FRAMER-004: Framer shall send the accumulated packets on drvSendOut when schedIn is invoked
 ***************************************
 [       OK ] Nominal.EmptySchedIn (0 ms)
-[----------] 8 tests from Nominal (2 ms total)
+[----------] 8 tests from Nominal (6 ms total)
 
 [----------] 4 tests from OffNominal
 [ RUN      ] OffNominal.Backpressure
@@ -102,9 +102,9 @@ PASSED  fprime-samd_Svc_Framer_ut_exe  (0.02s)
 (RQ)       SAMD21-FRAMER-009: Framer shall count the frames of a buffer returned on drvReturnIn with a failure status as dropped in the DroppedPackets channel
 ***************************************
 [       OK ] OffNominal.ReturnWithError (0 ms)
-[----------] 4 tests from OffNominal (0 ms total)
+[----------] 4 tests from OffNominal (1 ms total)
 
 [----------] Global test environment tear-down
-[==========] 12 tests from 2 test suites ran. (2 ms total)
+[==========] 12 tests from 2 test suites ran. (8 ms total)
 [  PASSED  ] 12 tests.
 

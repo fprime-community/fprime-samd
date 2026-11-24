@@ -4,118 +4,118 @@
   "passed": 22,
   "failed": 0,
   "skipped": 0,
-  "duration": 4.55,
+  "duration": 8.557,
   "report": "tests/index.html",
   "cases": [
     {
       "name": "fprime-samd_Drv_AdcDriver_ut_exe",
       "status": "passed",
-      "duration": 0.942
+      "duration": 1.652
     },
     {
       "name": "fprime-samd_Drv_RtcDriver_ut_exe",
       "status": "passed",
-      "duration": 0.466
+      "duration": 0.945
     },
     {
       "name": "fprime-samd_Drv_UsartDriver_ut_exe",
       "status": "passed",
-      "duration": 0.268
+      "duration": 0.511
     },
     {
       "name": "fprime-samd_Drv_I2cDriver_ut_exe",
       "status": "passed",
-      "duration": 0.061
+      "duration": 0.086
     },
     {
       "name": "fprime-samd_Drv_SpiDriver_ut_exe",
       "status": "passed",
-      "duration": 1.339
+      "duration": 2.691
     },
     {
       "name": "fprime-samd_Drv_GpioDriver_ut_exe",
       "status": "passed",
-      "duration": 0.02
+      "duration": 0.035
     },
     {
       "name": "fprime-samd_Drv_SystemInfo_ut_exe",
       "status": "passed",
-      "duration": 0.021
+      "duration": 0.034
     },
     {
       "name": "fprime-samd_Svc_FatalHandler_ut_exe",
       "status": "passed",
-      "duration": 0.266
+      "duration": 0.498
     },
     {
       "name": "fprime-samd_Svc_ProcTime_ut_exe",
       "status": "passed",
-      "duration": 0.021
+      "duration": 0.036
     },
     {
       "name": "fprime-samd_Svc_ThinBufferManager_ut_exe",
       "status": "passed",
-      "duration": 0.022
+      "duration": 0.036
     },
     {
       "name": "fprime-samd_Svc_PassiveEventManager_ut_exe",
       "status": "passed",
-      "duration": 0.047
+      "duration": 0.141
     },
     {
       "name": "fprime-samd_Svc_Framer_ut_exe",
       "status": "passed",
-      "duration": 0.025
+      "duration": 0.039
     },
     {
       "name": "fprime-samd_Svc_TmFramer_ut_exe",
       "status": "passed",
-      "duration": 0.169
+      "duration": 0.258
     },
     {
       "name": "fprime-samd_Svc_FprimeRouter_ut_exe",
       "status": "passed",
-      "duration": 0.028
+      "duration": 0.066
     },
     {
       "name": "fprime-samd_Svc_PassiveRateGroupDriver_ut_exe",
       "status": "passed",
-      "duration": 0.645
+      "duration": 1.172
     },
     {
       "name": "fprime-samd_Svc_PassiveCycler_ut_exe",
       "status": "passed",
-      "duration": 0.035
+      "duration": 0.045
     },
     {
       "name": "fprime-samd_Svc_SyncFramer_ut_exe",
       "status": "passed",
-      "duration": 0.021
+      "duration": 0.034
     },
     {
       "name": "fprime-samd_Svc_Seq_ut_exe",
       "status": "passed",
-      "duration": 0.046
+      "duration": 0.077
     },
     {
       "name": "fprime-samd_Svc_StaticTlmPacketizer_ut_exe",
       "status": "passed",
-      "duration": 0.022
+      "duration": 0.043
     },
     {
       "name": "fprime-samd_Svc_StaticCmdDispatcher_ut_exe",
       "status": "passed",
-      "duration": 0.02
+      "duration": 0.042
     },
     {
       "name": "fprime-samd_Svc_StaticPrmDb_ut_exe",
       "status": "passed",
-      "duration": 0.038
+      "duration": 0.069
     },
     {
       "name": "fprime-samd_Svc_PrmStorage_ut_exe",
       "status": "passed",
-      "duration": 0.028
+      "duration": 0.048
     }
   ]
 }

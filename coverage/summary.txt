@@ -15,7 +15,7 @@ lib/fprime-samd/fprime-samd/Drv/RtcDriver/RtcDriver.cpp
 lib/fprime-samd/fprime-samd/Drv/SpiDriver/SpiDriver.cpp
                                              195     192    98%   89-90,270
 lib/fprime-samd/fprime-samd/Drv/SystemInfo/SystemInfo.cpp
-                                              10      10   100%
+                                              14      14   100%
 lib/fprime-samd/fprime-samd/Drv/Types/Sercom.cpp
                                               32      28    87%   26-27,46-47
 lib/fprime-samd/fprime-samd/Drv/Types/ThinBuffer.cpp
@@ -67,5 +67,5 @@ lib/fprime-samd/fprime-samd/Svc/Types/PrmRecord.cpp
 lib/fprime-samd/fprime-samd/Svc/Types/PrmRecord.hpp
                                                6       6   100%
 ------------------------------------------------------------------------------
-TOTAL                                       2190    2136    97%
+TOTAL                                       2194    2140    97%
 ------------------------------------------------------------------------------

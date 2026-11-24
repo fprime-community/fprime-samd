@@ -26,7 +26,7 @@
     </tr>
     <tr>
       <th scope="row">Date:</th>
-      <td>2026-11-24 17:52:14</td>
+      <td>2026-11-24 18:42:18</td>
     </tr>
   </table>
 </div>
@@ -73,7 +73,7 @@
     <tr><td><a href="#l15">Samd21::FprimeRouter::FprimeRouter(char const*) (line 15)</a></td><td>called 11 times</td><td>100.0%</td></tr>
     <tr><td><a href="#l77">Samd21::FprimeRouter::cmdResponseIn_handler(short, unsigned int, unsigned int, Fw::CmdResponse const&amp;) (line 77)</a></td><td>called 2 times</td><td>100.0%</td></tr>
     <tr><td><a href="#l23">Samd21::FprimeRouter::dataIn_handler(short, Fw::Buffer&amp;, ComCfg::FrameContext const&amp;) (line 23)</a></td><td>called 1027 times</td><td>91.0%</td></tr>
-    <tr><td><a href="#l84">Samd21::FprimeRouter::fileBufferReturnIn_handler(short, Fw::Buffer&amp;) (line 84)</a></td><td>called 753 times</td><td>75.0%</td></tr>
+    <tr><td><a href="#l84">Samd21::FprimeRouter::fileBufferReturnIn_handler(short, Fw::Buffer&amp;) (line 84)</a></td><td>called 759 times</td><td>75.0%</td></tr>
     <tr><td><a href="#l17">Samd21::FprimeRouter::~FprimeRouter() (line 17)</a></td><td>called 11 times</td><td>100.0%</td></tr>
   </table>
 </details>
@@ -276,9 +276,9 @@
         <details class="linebranchDetails">
           <summary class="linebranchSummary">3/3</summary>
           <div class="linebranchContents">
-            <div class="takenBranch">&check; Branch 0 taken 262 times.</div>
-            <div class="takenBranch">&check; Branch 1 taken 271 times.</div>
-            <div class="takenBranch">&check; Branch 2 taken 494 times.</div>
+            <div class="takenBranch">&check; Branch 0 taken 256 times.</div>
+            <div class="takenBranch">&check; Branch 1 taken 274 times.</div>
+            <div class="takenBranch">&check; Branch 2 taken 497 times.</div>
           </div>
         </details>
       </td>
@@ -296,7 +296,7 @@
       <td class="lineno"><a id="l29" href="#l29">29</a></td>
       <td class="linebranch">
       </td>
-      <td class="linecount coveredLine">262</td>
+      <td class="linecount coveredLine">256</td>
       <td class="src coveredLine"><span class="w">        </span><span class="k">case</span><span class="w"> </span><span class="no">Fw</span><span class="o">::</span><span class="no">ComPacketType</span><span class="o">::</span><span class="no">FW_PACKET_COMMAND</span><span class="p">:</span><span class="w"> </span><span class="p">{</span></td>
     </tr>
     <tr class="source-line">
@@ -312,11 +312,11 @@
         <details class="linebranchDetails">
           <summary class="linebranchSummary">1/1</summary>
           <div class="linebranchContents">
-            <div class="takenBranch">&check; Branch 2 taken 262 times.</div>
+            <div class="takenBranch">&check; Branch 2 taken 256 times.</div>
           </div>
         </details>
       </td>
-      <td class="linecount coveredLine">262</td>
+      <td class="linecount coveredLine">256</td>
       <td class="src coveredLine"><span class="w">            </span><span class="n">Fw</span><span class="o">::</span><span class="n">ComBuffer</span><span class="w"> </span><span class="n">com</span><span class="p">;</span></td>
     </tr>
     <tr class="source-line">
@@ -332,13 +332,13 @@
         <details class="linebranchDetails">
           <summary class="linebranchSummary">3/3</summary>
           <div class="linebranchContents">
-            <div class="takenBranch">&check; Branch 5 taken 262 times.</div>
-            <div class="takenBranch">&check; Branch 11 taken 262 times.</div>
-            <div class="takenBranch">&check; Branch 14 taken 262 times.</div>
+            <div class="takenBranch">&check; Branch 5 taken 256 times.</div>
+            <div class="takenBranch">&check; Branch 11 taken 256 times.</div>
+            <div class="takenBranch">&check; Branch 14 taken 256 times.</div>
           </div>
         </details>
       </td>
-      <td class="linecount coveredLine">262</td>
+      <td class="linecount coveredLine">256</td>
       <td class="src coveredLine"><span class="w">            </span><span class="n">status</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">com</span><span class="p">.</span><span class="n">setBuff</span><span class="p">(</span><span class="n">packetBuffer</span><span class="p">.</span><span class="n">getData</span><span class="p">(),</span><span class="w"> </span><span class="n">packetBuffer</span><span class="p">.</span><span class="n">getSize</span><span class="p">());</span></td>
     </tr>
     <tr class="source-line">
@@ -347,12 +347,12 @@
         <details class="linebranchDetails">
           <summary class="linebranchSummary">2/2</summary>
           <div class="linebranchContents">
-            <div class="takenBranch">&check; Branch 0 taken 251 times.</div>
+            <div class="takenBranch">&check; Branch 0 taken 245 times.</div>
             <div class="takenBranch">&check; Branch 1 taken 11 times.</div>
           </div>
         </details>
       </td>
-      <td class="linecount coveredLine">262</td>
+      <td class="linecount coveredLine">256</td>
       <td class="src coveredLine"><span class="w">            </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">status</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">Fw</span><span class="o">::</span><span class="n">FW_SERIALIZE_OK</span><span class="p">)</span><span class="w"> </span><span class="p">{</span></td>
     </tr>
     <tr class="source-line">
@@ -375,11 +375,11 @@
         <details class="linebranchDetails">
           <summary class="linebranchSummary">1/1</summary>
           <div class="linebranchContents">
-            <div class="takenBranch">&check; Branch 5 taken 251 times.</div>
+            <div class="takenBranch">&check; Branch 5 taken 245 times.</div>
           </div>
         </details>
       </td>
-      <td class="linecount coveredLine">251</td>
+      <td class="linecount coveredLine">245</td>
       <td class="src coveredLine"><span class="w">                </span><span class="k">this</span><span class="o">-&gt;</span><span class="n">commandOut_out</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="n">com</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">);</span></td>
     </tr>
     <tr class="source-line">
@@ -422,11 +422,11 @@
         <details class="linebranchDetails">
           <summary class="linebranchSummary">1/1</summary>
           <div class="linebranchContents">
-            <div class="takenBranch">&check; Branch 2 taken 262 times.</div>
+            <div class="takenBranch">&check; Branch 2 taken 256 times.</div>
           </div>
         </details>
       </td>
-      <td class="linecount coveredLine">262</td>
+      <td class="linecount coveredLine">256</td>
       <td class="src coveredLine"><span class="w">            </span><span class="n">ComCfg</span><span class="o">::</span><span class="n">FrameContext</span><span class="w"> </span><span class="n">emptyContext</span><span class="p">;</span></td>
     </tr>
     <tr class="source-line">
@@ -435,25 +435,25 @@
         <details class="linebranchDetails">
           <summary class="linebranchSummary">1/1</summary>
           <div class="linebranchContents">
-            <div class="takenBranch">&check; Branch 5 taken 262 times.</div>
+            <div class="takenBranch">&check; Branch 5 taken 256 times.</div>
           </div>
         </details>
       </td>
-      <td class="linecount coveredLine">262</td>
+      <td class="linecount coveredLine">256</td>
       <td class="src coveredLine"><span class="w">            </span><span class="k">this</span><span class="o">-&gt;</span><span class="n">dataReturnOut_out</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="n">packetBuffer</span><span class="p">,</span><span class="w"> </span><span class="n">emptyContext</span><span class="p">);</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l44" href="#l44">44</a></td>
       <td class="linebranch">
       </td>
-      <td class="linecount coveredLine">262</td>
+      <td class="linecount coveredLine">256</td>
       <td class="src coveredLine"><span class="w">            </span><span class="k">break</span><span class="p">;</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l45" href="#l45">45</a></td>
       <td class="linebranch">
       </td>
-      <td class="linecount coveredLine">262</td>
+      <td class="linecount coveredLine">256</td>
       <td class="src coveredLine"><span class="w">        </span><span class="p">}</span></td>
     </tr>
     <tr class="source-line">
@@ -467,7 +467,7 @@
       <td class="lineno"><a id="l47" href="#l47">47</a></td>
       <td class="linebranch">
       </td>
-      <td class="linecount coveredLine">271</td>
+      <td class="linecount coveredLine">274</td>
       <td class="src coveredLine"><span class="w">        </span><span class="k">case</span><span class="w"> </span><span class="no">Fw</span><span class="o">::</span><span class="no">ComPacketType</span><span class="o">::</span><span class="no">FW_PACKET_FILE</span><span class="p">:</span><span class="w"> </span><span class="p">{</span></td>
     </tr>
     <tr class="source-line">
@@ -504,19 +504,19 @@
         <details class="linebranchDetails">
           <summary class="linebranchSummary">2/2</summary>
           <div class="linebranchContents">
-            <div class="takenBranch">&check; Branch 5 taken 270 times.</div>
+            <div class="takenBranch">&check; Branch 5 taken 273 times.</div>
             <div class="takenBranch">&check; Branch 6 taken 1 times.</div>
           </div>
         </details>
       </td>
-      <td class="linecount coveredLine">271</td>
+      <td class="linecount coveredLine">274</td>
       <td class="src coveredLine"><span class="w">            </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="k">this</span><span class="o">-&gt;</span><span class="n">isConnected_fileOut_OutputPort</span><span class="p">(</span><span class="mi">0</span><span class="p">))</span><span class="w"> </span><span class="p">{</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l53" href="#l53">53</a></td>
       <td class="linebranch">
       </td>
-      <td class="linecount coveredLine">270</td>
+      <td class="linecount coveredLine">273</td>
       <td class="src coveredLine"><span class="w">                </span><span class="k">this</span><span class="o">-&gt;</span><span class="n">fileOut_out</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="n">packetBuffer</span><span class="p">);</span></td>
     </tr>
     <tr class="source-line">
@@ -551,7 +551,7 @@
       <td class="lineno"><a id="l58" href="#l58">58</a></td>
       <td class="linebranch">
       </td>
-      <td class="linecount coveredLine">271</td>
+      <td class="linecount coveredLine">274</td>
       <td class="src coveredLine"><span class="w">            </span><span class="k">break</span><span class="p">;</span></td>
     </tr>
     <tr class="source-line">
@@ -565,7 +565,7 @@
       <td class="lineno"><a id="l60" href="#l60">60</a></td>
       <td class="linebranch">
       </td>
-      <td class="linecount coveredLine">494</td>
+      <td class="linecount coveredLine">497</td>
       <td class="src coveredLine"><span class="w">        </span><span class="k">default</span><span class="o">:</span><span class="w"> </span><span class="p">{</span></td>
     </tr>
     <tr class="source-line">
@@ -609,19 +609,19 @@
         <details class="linebranchDetails">
           <summary class="linebranchSummary">2/2</summary>
           <div class="linebranchContents">
-            <div class="takenBranch">&check; Branch 5 taken 493 times.</div>
+            <div class="takenBranch">&check; Branch 5 taken 496 times.</div>
             <div class="takenBranch">&check; Branch 6 taken 1 times.</div>
           </div>
         </details>
       </td>
-      <td class="linecount coveredLine">494</td>
+      <td class="linecount coveredLine">497</td>
       <td class="src coveredLine"><span class="w">            </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="k">this</span><span class="o">-&gt;</span><span class="n">isConnected_unknownDataOut_OutputPort</span><span class="p">(</span><span class="mi">0</span><span class="p">))</span><span class="w"> </span><span class="p">{</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l67" href="#l67">67</a></td>
       <td class="linebranch">
       </td>
-      <td class="linecount coveredLine">493</td>
+      <td class="linecount coveredLine">496</td>
       <td class="src coveredLine"><span class="w">                </span><span class="k">this</span><span class="o">-&gt;</span><span class="n">unknownDataOut_out</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="n">packetBuffer</span><span class="p">,</span><span class="w"> </span><span class="n">context</span><span class="p">);</span></td>
     </tr>
     <tr class="source-line">
@@ -656,7 +656,7 @@
       <td class="lineno"><a id="l72" href="#l72">72</a></td>
       <td class="linebranch">
       </td>
-      <td class="linecount coveredLine">494</td>
+      <td class="linecount coveredLine">497</td>
       <td class="src coveredLine"><span class="w">            </span><span class="k">break</span><span class="p">;</span></td>
     </tr>
     <tr class="source-line">
@@ -740,7 +740,7 @@
       <td class="lineno"><a id="l84" href="#l84">84</a></td>
       <td class="linebranch">
       </td>
-      <td class="linecount coveredLine">753</td>
+      <td class="linecount coveredLine">759</td>
       <td class="src coveredLine"><span class="kt">void</span><span class="w"> </span><span class="n">FprimeRouter</span><span class="w"> </span><span class="o">::</span><span class="n">fileBufferReturnIn_handler</span><span class="p">(</span><span class="n">FwIndexType</span><span class="w"> </span><span class="n">portNum</span><span class="p">,</span><span class="w"> </span><span class="n">Fw</span><span class="o">::</span><span class="n">Buffer</span><span class="o">&amp;</span><span class="w"> </span><span class="n">fwBuffer</span><span class="p">)</span><span class="w"> </span><span class="p">{</span></td>
     </tr>
     <tr class="source-line">
@@ -756,11 +756,11 @@
         <details class="linebranchDetails">
           <summary class="linebranchSummary">1/1</summary>
           <div class="linebranchContents">
-            <div class="takenBranch">&check; Branch 2 taken 753 times.</div>
+            <div class="takenBranch">&check; Branch 2 taken 759 times.</div>
           </div>
         </details>
       </td>
-      <td class="linecount coveredLine">753</td>
+      <td class="linecount coveredLine">759</td>
       <td class="src coveredLine"><span class="w">    </span><span class="n">ComCfg</span><span class="o">::</span><span class="n">FrameContext</span><span class="w"> </span><span class="n">emptyContext</span><span class="p">;</span></td>
     </tr>
     <tr class="source-line">
@@ -769,18 +769,18 @@
         <details class="linebranchDetails">
           <summary class="linebranchSummary">1/1</summary>
           <div class="linebranchContents">
-            <div class="takenBranch">&check; Branch 5 taken 753 times.</div>
+            <div class="takenBranch">&check; Branch 5 taken 759 times.</div>
           </div>
         </details>
       </td>
-      <td class="linecount coveredLine">753</td>
+      <td class="linecount coveredLine">759</td>
       <td class="src coveredLine"><span class="w">    </span><span class="k">this</span><span class="o">-&gt;</span><span class="n">dataReturnOut_out</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="n">fwBuffer</span><span class="p">,</span><span class="w"> </span><span class="n">emptyContext</span><span class="p">);</span></td>
     </tr>
     <tr class="source-line">
       <td class="lineno"><a id="l88" href="#l88">88</a></td>
       <td class="linebranch">
       </td>
-      <td class="linecount coveredLine">1506</td>
+      <td class="linecount coveredLine">1518</td>
       <td class="src coveredLine"><span class="p">}</span></td>
     </tr>
     <tr class="source-line">

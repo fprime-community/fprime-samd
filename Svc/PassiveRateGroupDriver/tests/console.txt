@@ -1,9 +1,9 @@
 # unit-test console output: Svc/PassiveRateGroupDriver
 
 ==============================================================================
-PASSED  fprime-samd_Svc_PassiveRateGroupDriver_ut_exe  (0.65s)
+PASSED  fprime-samd_Svc_PassiveRateGroupDriver_ut_exe  (1.17s)
 ==============================================================================
-[STest::Random] Generated seed 41213 from system time
+[STest::Random] Generated seed 849463 from system time
 [==========] Running 12 tests from 2 test suites.
 [----------] Global test environment set-up.
 [----------] 9 tests from Nominal
@@ -12,19 +12,19 @@ PASSED  fprime-samd_Svc_PassiveRateGroupDriver_ut_exe  (0.65s)
 ***************************************
 (RQ)       SAMD21-RGDRIVER-001
 ***************************************
-[       OK ] Nominal.testDeploymentDividers (2 ms)
+[       OK ] Nominal.testDeploymentDividers (6 ms)
 [ RUN      ] Nominal.testOffsets
 
 ***************************************
 (RQ)       SAMD21-RGDRIVER-001
 ***************************************
-[       OK ] Nominal.testOffsets (1 ms)
+[       OK ] Nominal.testOffsets (2 ms)
 [ RUN      ] Nominal.testZeroDivisorDisabled
 
 ***************************************
 (RQ)       SAMD21-RGDRIVER-002
 ***************************************
-[       OK ] Nominal.testZeroDivisorDisabled (0 ms)
+[       OK ] Nominal.testZeroDivisorDisabled (1 ms)
 [ RUN      ] Nominal.testUnconnectedPortSkipped
 
 ***************************************
@@ -36,7 +36,7 @@ PASSED  fprime-samd_Svc_PassiveRateGroupDriver_ut_exe  (0.65s)
 ***************************************
 (RQ)       SAMD21-RGDRIVER-003
 ***************************************
-[       OK ] Nominal.testRollover (2 ms)
+[       OK ] Nominal.testRollover (4 ms)
 [ RUN      ] Nominal.testReconfigure
 
 ***************************************
@@ -65,7 +65,7 @@ PASSED  fprime-samd_Svc_PassiveRateGroupDriver_ut_exe  (0.65s)
 (RQ)       SAMD21-RGDRIVER-006
 ***************************************
 [       OK ] Nominal.testLargeCommonDivisors (0 ms)
-[----------] 9 tests from Nominal (28 ms total)
+[----------] 9 tests from Nominal (39 ms total)
 
 [----------] 3 tests from OffNominal
 [ RUN      ] OffNominal.testNotConfiguredAsserts
@@ -73,22 +73,22 @@ PASSED  fprime-samd_Svc_PassiveRateGroupDriver_ut_exe  (0.65s)
 ***************************************
 (RQ)       SAMD21-RGDRIVER-006
 ***************************************
-[       OK ] OffNominal.testNotConfiguredAsserts (133 ms)
+[       OK ] OffNominal.testNotConfiguredAsserts (214 ms)
 [ RUN      ] OffNominal.testOffsetNotBelowDivisorAsserts
 
 ***************************************
 (RQ)       SAMD21-RGDRIVER-006
 ***************************************
-[       OK ] OffNominal.testOffsetNotBelowDivisorAsserts (343 ms)
+[       OK ] OffNominal.testOffsetNotBelowDivisorAsserts (658 ms)
 [ RUN      ] OffNominal.testRolloverOverflowAsserts
 
 ***************************************
 (RQ)       SAMD21-RGDRIVER-006
 ***************************************
-[       OK ] OffNominal.testRolloverOverflowAsserts (119 ms)
-[----------] 3 tests from OffNominal (596 ms total)
+[       OK ] OffNominal.testRolloverOverflowAsserts (226 ms)
+[----------] 3 tests from OffNominal (1099 ms total)
 
 [----------] Global test environment tear-down
-[==========] 12 tests from 2 test suites ran. (624 ms total)
+[==========] 12 tests from 2 test suites ran. (1138 ms total)
 [  PASSED  ] 12 tests.
 

@@ -1,9 +1,9 @@
 # unit-test console output: Svc/FprimeRouter
 
 ==============================================================================
-PASSED  fprime-samd_Svc_FprimeRouter_ut_exe  (0.03s)
+PASSED  fprime-samd_Svc_FprimeRouter_ut_exe  (0.07s)
 ==============================================================================
-[STest::Random] Generated seed 11654 from system time
+[STest::Random] Generated seed 782602 from system time
 [==========] Running 11 tests from 3 test suites.
 [----------] Global test environment set-up.
 [----------] 6 tests from Nominal
@@ -20,7 +20,7 @@ A command packet is copied to commandOut and its buffer returned at once
 ***************************************
 (RQ)       SAMD21-ROUTER-004
 ***************************************
-[       OK ] Nominal.testRouteCommand (0 ms)
+[       OK ] Nominal.testRouteCommand (1 ms)
 [ RUN      ] Nominal.testRouteCommandMaxSize
 
 ***************************************
@@ -71,7 +71,7 @@ Command responses are accepted and ignored
 (RQ)       SAMD21-ROUTER-006
 ***************************************
 [       OK ] Nominal.testCommandResponse (0 ms)
-[----------] 6 tests from Nominal (1 ms total)
+[----------] 6 tests from Nominal (3 ms total)
 
 [----------] 4 tests from OffNominal
 [ RUN      ] OffNominal.testRouteCommandOversize
@@ -122,7 +122,7 @@ An unknown packet with unknownDataOut unconnected is returned with its context
 (RQ)       SAMD21-ROUTER-005
 ***************************************
 [       OK ] OffNominal.testRouteUnknownUnconnected (0 ms)
-[----------] 4 tests from OffNominal (0 ms total)
+[----------] 4 tests from OffNominal (1 ms total)
 
 [----------] 1 test from Random
 [ RUN      ] Random.testRandomRouting
@@ -134,10 +134,10 @@ Random packet types: every buffer is returned exactly once
 ***************************************
 (RQ)       SAMD21-ROUTER-004
 ***************************************
-[       OK ] Random.testRandomRouting (7 ms)
-[----------] 1 test from Random (7 ms total)
+[       OK ] Random.testRandomRouting (21 ms)
+[----------] 1 test from Random (21 ms total)
 
 [----------] Global test environment tear-down
-[==========] 11 tests from 3 test suites ran. (9 ms total)
+[==========] 11 tests from 3 test suites ran. (27 ms total)
 [  PASSED  ] 11 tests.
 

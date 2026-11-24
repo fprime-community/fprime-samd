@@ -32,7 +32,7 @@ pre {
   white-space: pre-wrap; word-break: break-word;
 }
 .empty { color: #57606a; padding: 0.75rem 1rem; border-top: 1px solid #d0d7de; margin: 0; }
-</style></head><body><h1>Unit-test console output &mdash; <code>Svc/PassiveCycler</code></h1><div class="meta"><span class="pill passed">passed</span> 1 passed &middot; 0.03s &middot; <a href="../../../index.html">← back to the module list</a> &middot; <a href="console.txt">plain text</a></div><details><summary><span class="pill passed">passed</span><span class="name">fprime-samd_Svc_PassiveCycler_ut_exe</span><span class="time">0.03s</span></summary><pre>[STest::Random] Generated seed 685252 from system time
+</style></head><body><h1>Unit-test console output &mdash; <code>Svc/PassiveCycler</code></h1><div class="meta"><span class="pill passed">passed</span> 1 passed &middot; 0.05s &middot; <a href="../../../index.html">← back to the module list</a> &middot; <a href="console.txt">plain text</a></div><details><summary><span class="pill passed">passed</span><span class="name">fprime-samd_Svc_PassiveCycler_ut_exe</span><span class="time">0.05s</span></summary><pre>[STest::Random] Generated seed 17956 from system time
 [==========] Running 6 tests from 2 test suites.
 [----------] Global test environment set-up.
 [----------] 5 tests from Nominal
@@ -75,7 +75,7 @@ pre {
 ***************************************
 (RQ)       SAMD21-PASSIVECYCLER-003: Every connected consumer shall be called on every pass, including after an earlier consumer in the same pass returned true
 ***************************************
-[       OK ] Nominal.testRandomWork (9 ms)
+[       OK ] Nominal.testRandomWork (11 ms)
 [ RUN      ] Nominal.testUnconnectedPorts
 
 ***************************************
@@ -86,7 +86,7 @@ pre {
 (RQ)       SAMD21-PASSIVECYCLER-004: cycle() shall skip unconnected cycleOut ports, and shall return without calling anything when no port is connected
 ***************************************
 [       OK ] Nominal.testUnconnectedPorts (4 ms)
-[----------] 5 tests from Nominal (15 ms total)
+[----------] 5 tests from Nominal (17 ms total)
 
 [----------] 1 test from OffNominal
 [ RUN      ] OffNominal.testNoPortsConnected
@@ -98,6 +98,6 @@ pre {
 [----------] 1 test from OffNominal (0 ms total)
 
 [----------] Global test environment tear-down
-[==========] 6 tests from 2 test suites ran. (15 ms total)
+[==========] 6 tests from 2 test suites ran. (17 ms total)
 [  PASSED  ] 6 tests.
 </pre></details></body></html>
