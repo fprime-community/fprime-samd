@@ -31,6 +31,8 @@ class SystemInfoTester : public SystemInfoGTestBase {
     void testCommitStampsAreReported();
     void testHardwareQueriedOncePerCommand();
     void testRepeatedEmit();
+    void testResetCommand();
+    void testResetCommandRepeated();
 
   private:
     //! Component under test

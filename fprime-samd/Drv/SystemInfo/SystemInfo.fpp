@@ -2,6 +2,9 @@ module Samd21 {
     @ A component for reporting system information about the SAMD21 MCU
     passive component SystemInfo {
 
+        @ Reset the MCU
+        sync command RESET opcode 0
+
         @ System information is reported one field per channel. A single struct-valued
         @ channel would serialize to 28 bytes and not fit FW_TLM_BUFFER_MAX_SIZE; each
         @ channel below fits an 8 byte buffer.
@@ -31,6 +34,9 @@ module Samd21 {
 
         @ Port for requesting the current time
         time get port timeCaller
+
+        @ Enables command handling
+        import Fw.Command
 
         @ Enables event handling
         import Fw.Event

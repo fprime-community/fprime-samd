@@ -45,5 +45,9 @@ ResetReason SystemInfoHal::getResetReason() {
     return ResetReason::UNKNOWN;
 }
 
+void SystemInfoHal::reset() {
+    NVIC_SystemReset();
+}
+
 }  // namespace SystemInfoHardware
 }  // namespace Samd21
