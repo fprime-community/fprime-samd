@@ -26,6 +26,18 @@ class SystemInfo final : public SystemInfoComponentBase {
 
     //! Emit the system information event
     void emit();
+
+  private:
+    // ----------------------------------------------------------------------
+    // Handler implementations for commands
+    // ----------------------------------------------------------------------
+
+    //! Handler implementation for command RESET
+    //!
+    //! Reset the MCU
+    void RESET_cmdHandler(FwOpcodeType opCode,  //!< The opcode
+                          U32 cmdSeq            //!< The command sequence number
+                          ) override;
 };
 
 }  // namespace Samd21

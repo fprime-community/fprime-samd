@@ -22,6 +22,11 @@ struct SystemInfoHal {
     //! SYSTEM. UNKNOWN is returned when no known flag is set.
     //! \return Reason for the most recent reset
     static ResetReason getResetReason();
+
+    //! Reset the MCU
+    //!
+    //! Does not return on hardware. The stub implementation records the call and returns.
+    static void reset();
 };
 
 //! Test helper functions (only available in stub implementation)
@@ -34,6 +39,9 @@ struct SystemInfoState {
 
     //! Value returned by the next getResetReason() call
     ResetReason reset_reason;
+
+    //! Number of times reset() was called
+    U32 reset_count;
 };
 
 //! Get the global stub health state
