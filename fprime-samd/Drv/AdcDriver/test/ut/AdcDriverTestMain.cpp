@@ -48,6 +48,12 @@ TEST(Configure, AveragingBadRes) {
     tester.testConfigureAveragingBadRes();
 }
 
+TEST(Configure, Twice) {
+    COMMENT("configure() asserts when called a second time (singleton)");
+    Samd21::AdcDriverTester tester;
+    tester.testConfigureTwice();
+}
+
 // ----------------------------------------------------------------------
 // configureChannel()
 // ----------------------------------------------------------------------
@@ -56,6 +62,30 @@ TEST(ConfigureChannel, Comprehensive) {
     COMMENT("configureChannel() handles external channels, internal channels (TEMP, BANDGAP), and SCALEDIOVCC");
     Samd21::AdcDriverTester tester;
     tester.testConfigureChannelNominal();
+}
+
+TEST(ConfigureChannel, LastPort) {
+    COMMENT("configureChannel() binds and converts on the last valid port index");
+    Samd21::AdcDriverTester tester;
+    tester.testConfigureChannelLastPort();
+}
+
+TEST(ConfigureChannel, BeforeConfigure) {
+    COMMENT("configureChannel() asserts before configure()");
+    Samd21::AdcDriverTester tester;
+    tester.testConfigureChannelBeforeConfigure();
+}
+
+TEST(ConfigureChannel, Rebind) {
+    COMMENT("configureChannel() asserts when re-binding an already bound port");
+    Samd21::AdcDriverTester tester;
+    tester.testConfigureChannelRebind();
+}
+
+TEST(ConfigureChannel, OutOfRange) {
+    COMMENT("configureChannel() asserts on port indices ADC_CHANNEL_COUNT and -1");
+    Samd21::AdcDriverTester tester;
+    tester.testConfigureChannelOutOfRange();
 }
 
 // ----------------------------------------------------------------------

@@ -20,7 +20,7 @@ module Samd21 {
         import Fw.Channel
         time get port timeGetOut
 
-        @ Number of dropped packets
+        @ Number of packets dropped for lack of buffer space or lost in a failed driver send
         telemetry DroppedPackets: U32
 
     }

@@ -1,6 +1,6 @@
 module Samd21 {
-    @ A component for packetizing downlink telemetry
-    passive component PassiveDownlink {
+    @ A component for packetizing downlink events
+    passive component PassiveEventManager {
 
         @ Port for receiving events
         sync input port LogRecv: Fw.Log

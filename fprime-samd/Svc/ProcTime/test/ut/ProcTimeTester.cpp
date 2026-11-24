@@ -48,7 +48,7 @@ Fw::Time ProcTimeTester::getTime() {
 // ----------------------------------------------------------------------
 
 void ProcTimeTester::testTimeBase() {
-    REQUIREMENT("SAMD21-PROCTIME-001: ProcTime shall report time in the TB_PROC_TIME time base");
+    REQUIREMENT("SAMD21-PROCTIME-001: ProcTime shall report time in the TB_PROC_TIME time base with time context 0");
 
     const Fw::Time time = this->getTime();
     ASSERT_EQ(time.getTimeBase(), TimeBase::TB_PROC_TIME);
@@ -57,6 +57,8 @@ void ProcTimeTester::testTimeBase() {
 
 void ProcTimeTester::testTimeTracksRawTime() {
     REQUIREMENT("SAMD21-PROCTIME-002: ProcTime shall report the time elapsed on the Os::RawTime clock");
+    REQUIREMENT(
+        "SAMD21-PROCTIME-003: ProcTime shall return the current time to the caller synchronously on each request");
 
     // The reported time must fall between raw time readings taken either side of the call
     const Fw::Time before = rawTimeNow();

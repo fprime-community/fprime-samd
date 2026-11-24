@@ -26,13 +26,15 @@ which runs in the main context off an active-component cycler (see §3.4).
 
 | Name           | Description                                                                                                                    | Validation    |
 | -------------- | -------------------------------------------------------------------------------------------------------------------------------- | ------------- |
-| SAMD21-ADC-001 | The AdcDriver shall configure the ADC peripheral with configurable voltage reference, resolution, hardware averaging, sampling time, and gain. | Hardware Test |
-| SAMD21-ADC-002 | The AdcDriver shall bind a `readAdc` port index to a physical ADC input channel (`AIN0`-`AIN19`, `TEMP`, `BANDGAP`, `SCALEDIOVCC`) via `configureChannel`. | Unit Test     |
+| SAMD21-ADC-001 | The AdcDriver shall configure the ADC peripheral once with configurable voltage reference, resolution, hardware averaging, sampling time, and gain, and shall reject a second configuration or hardware averaging with a resolution other than 12-bit. | Hardware Test, Unit Test |
+| SAMD21-ADC-002 | The AdcDriver shall bind a `readAdc` port index to a physical ADC input channel (`AIN0`-`AIN19`, `TEMP`, `BANDGAP`, `SCALEDIOVCC`) via `configureChannel`, and shall reject a binding made before configuration, a port index outside `0` to `ADC_CHANNEL_COUNT-1`, or a re-binding of an already bound port. | Unit Test     |
 | SAMD21-ADC-003 | The AdcDriver shall start an asynchronous conversion on `readAdc` and return `ADC_BUSY` if a conversion is already in progress on any port. | Unit Test     |
 | SAMD21-ADC-004 | The AdcDriver shall return `ADC_NOT_CONFIGURED` or `ADC_INVALID_CHANNEL` from `readAdc` without touching hardware if the peripheral or the requested port is not configured. | Unit Test     |
 | SAMD21-ADC-005 | The AdcDriver shall report an overrun (`ADC_OVERRUN`) if the result register was not read before the next conversion completed. | Unit Test     |
 | SAMD21-ADC-006 | The AdcDriver shall deliver every conversion result from the main context (via `activeIn`), not from interrupt context.        | Unit Test     |
 | SAMD21-ADC-007 | The AdcDriver shall ignore spurious interrupts (no conversion pending, or flags set with nothing requested) without corrupting driver state. | Unit Test     |
+| SAMD21-ADC-008 | The AdcDriver shall return from `readAdc` without waiting for the conversion to complete, and shall deliver a completed result on the first `activeIn` tick after the conversion finishes. | Unit Test     |
+| SAMD21-ADC-009 | The AdcDriver shall hold all state in statically sized members, with per-port storage sized by `ADC_CHANNEL_COUNT`, and shall perform no dynamic memory allocation. | Inspection    |
 
 ## 3. Design
 
@@ -89,20 +91,23 @@ of `readAdc` always replies on index *n* of `adcResult`), sized by the
 | Option           | Choices                                                                 |
 | ----------------- | ------------------------------------------------------------------------ |
 | Voltage reference | `INT1V`, `INTVCC0`, `INTVCC1`, `VREFA`, `VREFB`                          |
-| Resolution        | 8-bit, 10-bit, or 12-bit                                                 |
+| Resolution        | 8-bit, 10-bit, or 12-bit (12-bit only when averaging)                    |
 | Hardware averaging | 1 to 1024 samples (`SampleCount::SAMPLES_1` … `SAMPLES_1024`)            |
 | Sampling time     | `SAMPCTRL.SAMPLEN` value, 0-63                                           |
 | Gain              | 1x, or 0.5x (`GAIN_DIV2`, extends input range to 2x the reference)       |
 
-`configure()` asserts it has not already been called (`s_instance == nullptr`),
-delegates the full hardware init sequence (clock gating, calibration load,
+`configure()` asserts it has not already been called (`s_instance == nullptr`)
+and that averaging (`samples > SAMPLES_1`) is paired with `RES_12BIT`. Averaged
+results are always 12-bit: the HAL sets `CTRLB.RESSEL = 16BIT`, as the datasheet
+requires for accumulation, and `AVGCTRL.ADJRES` shifts the sum back to 12 bits.
+It then delegates the full hardware init sequence (clock gating, calibration load,
 reference/resolution/averaging setup, dummy conversion per the SAMD21 datasheet)
 to the HAL, registers the singleton for `ADC_Handler` to route to, and only then
 enables the ADC and NVIC interrupts.
 
 `configureChannel(portNum, channel)` binds one `readAdc` port index to a
 physical ADC input. It asserts the peripheral is configured, `portNum` is in
-range, and the port has not already been bound (no re-binding). For the two
+`0` to `ADC_CHANNEL_COUNT-1`, and the port has not already been bound (no re-binding). For the two
 channels that require enabling an internal SYSCTRL resource (`TEMP`,
 `BANDGAP`), it delegates that one-time setup to the HAL; `SCALEDIOVCC` and the
 external `AIN0`-`AIN19` channels need no such setup — external channels do need
@@ -247,6 +252,10 @@ against a calibrated reference).
 - Result delivery runs in the **main context** (via `activeIn`), so `activeIn`
   must be connected to a cycler; a result is not delivered until the next tick
   after the conversion completes.
+- Hardware averaging forces 12-bit results; `RES_8BIT`/`RES_10BIT` are only
+  accepted with `SAMPLES_1`.
+- No conversion timeout: if the ADC never raises `RESRDY`, the driver stays in
+  `CONVERTING` and every `readAdc` returns `ADC_BUSY`.
 - Configuration is one-time; no runtime reconfiguration of voltage reference,
   resolution, averaging, or gain, and no re-binding of a port's channel.
 - Singleton: only one `AdcDriver` instance may be configured per deployment

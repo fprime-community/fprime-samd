@@ -71,8 +71,8 @@ void AdcDriver::configure(VoltageReference ref, Resolution res, SampleCount samp
 
 void AdcDriver::configureChannel(FwIndexType portNum, AdcChannel channel) {
     FW_ASSERT(m_configured);
-    FW_ASSERT(portNum < ADC_CHANNEL_COUNT);
-    FW_ASSERT(!m_channelConfigured[portNum]);
+    FW_ASSERT((0 <= portNum) && (portNum < ADC_CHANNEL_COUNT), static_cast<FwAssertArgType>(portNum));
+    FW_ASSERT(!m_channelConfigured[portNum], static_cast<FwAssertArgType>(portNum));
 
     // Note: Pin muxing should be configured in topology BEFORE calling this for external channels (AIN0-AIN19)
     // Use Samd21::PinMux::configure(PINMUX_xxx) in instances.fpp

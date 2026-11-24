@@ -19,18 +19,19 @@ register_fprime_library(
         "${CMAKE_CURRENT_LIST_DIR}/PassiveRateGroupDriver.fpp"
     SOURCES
         "${CMAKE_CURRENT_LIST_DIR}/PassiveRateGroupDriver.cpp"
-#   DEPENDS
-#       MyPackage_MyOtherModule
+    DEPENDS
+        Utils
 )
 
 ### Unit Tests ###
-# register_fprime_ut(
-#     AUTOCODER_INPUTS
-#         "${CMAKE_CURRENT_LIST_DIR}/PassiveRateGroupDriver.fpp"
-#     SOURCES
-#         "${CMAKE_CURRENT_LIST_DIR}/test/ut/PassiveRateGroupDriverTestMain.cpp"
-#         "${CMAKE_CURRENT_LIST_DIR}/test/ut/PassiveRateGroupDriverTester.cpp"
-#     DEPENDS
-#         STest # For rules-based testing
-#     UT_AUTO_HELPERS
-# )
+register_fprime_ut(
+    AUTOCODER_INPUTS
+        "${CMAKE_CURRENT_LIST_DIR}/PassiveRateGroupDriver.fpp"
+    SOURCES
+        "${CMAKE_CURRENT_LIST_DIR}/test/ut/PassiveRateGroupDriverTestMain.cpp"
+        "${CMAKE_CURRENT_LIST_DIR}/test/ut/PassiveRateGroupDriverTester.cpp"
+    DEPENDS
+        STest
+        Utils
+    UT_AUTO_HELPERS
+)

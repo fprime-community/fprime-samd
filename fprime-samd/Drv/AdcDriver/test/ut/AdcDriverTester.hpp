@@ -36,9 +36,14 @@ class AdcDriverTester : public AdcDriverGTestBase {
     void testConfigureAllSampleCounts();
     void testConfigureAllGains();
     void testConfigureAveragingBadRes();
+    void testConfigureTwice();
 
     // configureChannel()
     void testConfigureChannelNominal();
+    void testConfigureChannelLastPort();
+    void testConfigureChannelBeforeConfigure();
+    void testConfigureChannelRebind();
+    void testConfigureChannelOutOfRange();
 
     // ADC conversion: error cases (readAdc validation)
     void testConversionNotConfigured();
@@ -64,8 +69,14 @@ class AdcDriverTester : public AdcDriverGTestBase {
     void testHandleInterruptSpuriousWithOverrun();
 
   private:
+    //! Record the adcResult port number, then push the value/status history entry
+    void from_adcResult_handler(FwIndexType portNum, U32 value, const Samd21::AdcStatus& status) override;
+
     //! Component under test
     AdcDriver component;
+
+    //! adcResult port index of the most recent delivery (-1 when none)
+    FwIndexType m_lastResultPort;
 
     // ----------------------------------------------------------------------
     // Helper functions

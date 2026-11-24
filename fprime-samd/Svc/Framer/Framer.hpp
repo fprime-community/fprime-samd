@@ -72,13 +72,17 @@ class Framer final : public FramerComponentBase {
     struct TxBuffer {
         U8 data[FramerConfig::FRAMER_TX_BUFFER_SIZE];  //!< Buffer storage
         FwSizeType size;                               //!< Current size of data in buffer
+        U32 frames;                                    //!< Number of frames in the buffer
         BufferState state;                             //!< Current state of buffer
     };
 
+    //! Number of transmit buffers: one filling while the driver sends the other
+    static constexpr FwIndexType NUM_TX_BUFFERS = 2;
+
     bool m_driverConnected;
-    TxBuffer m_buffers[2];          //!< Double buffer
-    FwIndexType m_activeBufferIdx;  //!< Index of currently active buffer
-    U32 m_droppedPackets;           //!< Teleemtry tracking number of dropped packets
+    TxBuffer m_buffers[NUM_TX_BUFFERS];  //!< Double buffer
+    FwIndexType m_activeBufferIdx;       //!< Index of currently active buffer
+    U32 m_droppedPackets;                //!< Telemetry tracking number of dropped packets
 };
 
 }  // namespace Samd21
