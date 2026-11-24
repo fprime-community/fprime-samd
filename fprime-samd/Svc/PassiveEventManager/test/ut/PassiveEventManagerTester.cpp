@@ -58,7 +58,7 @@ void PassiveEventManagerTester::fillArgs(Fw::LogBuffer& args, FwSizeType size) {
 }
 
 Fw::Time PassiveEventManagerTester::pickTime() {
-    return Fw::Time(static_cast<TimeBase::T>(STest::Pick::lowerUpper(TimeBase::TB_NONE, TimeBase::TB_J2000_TIME)),
+    return Fw::Time(static_cast<TimeBase::T>(STest::Pick::lowerUpper(TimeBase::TB_NONE, TimeBase::TB_SC_TIME)),
                     static_cast<FwTimeContextStoreType>(STest::Pick::lowerUpper(0, 0xFF)), STest::Pick::any(),
                     STest::Pick::lowerUpper(0, 999999));
 }
