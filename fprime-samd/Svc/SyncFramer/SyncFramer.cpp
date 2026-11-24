@@ -31,7 +31,7 @@ void SyncFramer::comPacketIn_handler(FwIndexType portNum, Fw::ComBuffer& data, U
     static_assert(static_cast<FwSizeType>(Svc::FprimeProtocol::FrameHeader::SERIALIZED_SIZE) >=
                       static_cast<FwSizeType>(Svc::FprimeProtocol::FrameTrailer::SERIALIZED_SIZE),
                   "sizeof(header) should be >= sizeof(trailer) so that we can reuse it's buffer");
-    static U8 frameScratch[Svc::FprimeProtocol::FrameHeader::SERIALIZED_SIZE];
+    U8 frameScratch[Svc::FprimeProtocol::FrameHeader::SERIALIZED_SIZE];
     Fw::Buffer headerBuf(frameScratch, Svc::FprimeProtocol::FrameHeader::SERIALIZED_SIZE);
     auto headerSer = headerBuf.getSerializer();
 
@@ -54,10 +54,11 @@ void SyncFramer::comPacketIn_handler(FwIndexType portNum, Fw::ComBuffer& data, U
 
     U32 crcValue;
     crcHash.finalize(crcValue);
+    trailer.set_crcField(crcValue);
 
     Fw::Buffer trailerBuf(frameScratch, HASH_DIGEST_LENGTH);
     auto trailerSer = trailerBuf.getSerializer();
-    (void)trailerSer.serializeFrom(crcValue);
+    (void)trailerSer.serializeFrom(trailer);
 
     // Transmit the CRC
     (void)this->drvSendOut_out(0, trailerBuf);
