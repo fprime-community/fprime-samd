@@ -1,9 +1,9 @@
 # unit-test console output: Svc/FatalHandler
 
 ==============================================================================
-PASSED  fprime-samd_Svc_FatalHandler_ut_exe  (0.23s)
+PASSED  fprime-samd_Svc_FatalHandler_ut_exe  (0.47s)
 ==============================================================================
-[STest::Random] Generated seed 705868 from system time
+[STest::Random] Generated seed 785254 from system time
 [==========] Running 12 tests from 3 test suites.
 [----------] Global test environment set-up.
 [----------] 7 tests from Nominal
@@ -30,7 +30,7 @@ PASSED  fprime-samd_Svc_FatalHandler_ut_exe  (0.23s)
 ***************************************
 Every argument count from 0 to 6 is carried in the packet
 ***************************************
-[       OK ] Nominal.testReportedArgumentCounts (0 ms)
+[       OK ] Nominal.testReportedArgumentCounts (1 ms)
 [ RUN      ] Nominal.testTimeReadOnce
 
 ***************************************
@@ -50,7 +50,7 @@ FatalHandlerHal::reset
 (RQ)       SAMD21-FATAL-008: FatalHandler shall reset the MCU after reporting an assertion
 ***************************************
 [       OK ] Nominal.testTerminateResets (0 ms)
-[----------] 7 tests from Nominal (1 ms total)
+[----------] 7 tests from Nominal (3 ms total)
 
 [----------] 3 tests from OffNominal
 [ RUN      ] OffNominal.testNoInstanceResetsSilently
@@ -81,16 +81,16 @@ FatalHandlerHal::reset
 ***************************************
 FW_ASSERT reaches FatalHandler through the link-time hook, which resets before the framework aborts
 ***************************************
-[       OK ] Death.testFwAssertRoutedToHandler (106 ms)
+[       OK ] Death.testFwAssertRoutedToHandler (231 ms)
 [ RUN      ] Death.testFatalReceiveAsserts
 
 ***************************************
 (RQ)       SAMD21-FATAL-009: FatalHandler shall assert when it receives a FATAL event
 ***************************************
-[       OK ] Death.testFatalReceiveAsserts (106 ms)
-[----------] 2 tests from Death (213 ms total)
+[       OK ] Death.testFatalReceiveAsserts (210 ms)
+[----------] 2 tests from Death (441 ms total)
 
 [----------] Global test environment tear-down
-[==========] 12 tests from 3 test suites ran. (215 ms total)
+[==========] 12 tests from 3 test suites ran. (446 ms total)
 [  PASSED  ] 12 tests.
 

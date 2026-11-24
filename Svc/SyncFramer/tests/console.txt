@@ -1,0 +1,64 @@
+# unit-test console output: Svc/SyncFramer
+
+==============================================================================
+PASSED  fprime-samd_Svc_SyncFramer_ut_exe  (0.05s)
+==============================================================================
+[STest::Random] Generated seed 644544 from system time
+[==========] Running 7 tests from 2 test suites.
+[----------] Global test environment set-up.
+[----------] 6 tests from Nominal
+[ RUN      ] Nominal.testFrameLayout
+
+***************************************
+(RQ)       SAMD21-SYNCFRAMER-001: SyncFramer shall send each packet received on comPacketIn as one F Prime protocol frame: a header carrying the 0xDEADBEEF start word and the packet length, the packet, and a trailer carrying the CRC32 of the header and packet
+***************************************
+[       OK ] Nominal.testFrameLayout (1 ms)
+[ RUN      ] Nominal.testKnownCrc
+
+***************************************
+(RQ)       SAMD21-SYNCFRAMER-001: SyncFramer shall send each packet received on comPacketIn as one F Prime protocol frame: a header carrying the 0xDEADBEEF start word and the packet length, the packet, and a trailer carrying the CRC32 of the header and packet
+***************************************
+
+***************************************
+Frame bytes match an independently computed frame (CRC-32/IEEE 802.3, as zlib.crc32)
+***************************************
+[       OK ] Nominal.testKnownCrc (0 ms)
+[ RUN      ] Nominal.testGroundDeframes
+
+***************************************
+(RQ)       SAMD21-SYNCFRAMER-002: Frames sent by SyncFramer shall be accepted by the F Prime frame detector used to deframe the stream on the ground
+***************************************
+[       OK ] Nominal.testGroundDeframes (6 ms)
+[ RUN      ] Nominal.testPacketSizes
+
+***************************************
+(RQ)       SAMD21-SYNCFRAMER-003: SyncFramer shall frame packets of every size from 0 to FW_COM_BUFFER_MAX_SIZE bytes
+***************************************
+[       OK ] Nominal.testPacketSizes (3 ms)
+[ RUN      ] Nominal.testBackToBackFrames
+
+***************************************
+(RQ)       SAMD21-SYNCFRAMER-004: SyncFramer shall send the whole frame on drvSendOut before comPacketIn returns
+***************************************
+[       OK ] Nominal.testBackToBackFrames (0 ms)
+[ RUN      ] Nominal.testDrvConnectedNoOp
+
+***************************************
+(RQ)       SAMD21-SYNCFRAMER-006: SyncFramer shall frame packets without waiting for drvConnected, and drvConnected shall have no effect
+***************************************
+[       OK ] Nominal.testDrvConnectedNoOp (0 ms)
+[----------] 6 tests from Nominal (11 ms total)
+
+[----------] 1 test from OffNominal
+[ RUN      ] OffNominal.testDriverErrorIgnored
+
+***************************************
+(RQ)       SAMD21-SYNCFRAMER-005: SyncFramer shall send the whole frame regardless of the status drvSendOut returns, without asserting
+***************************************
+[       OK ] OffNominal.testDriverErrorIgnored (0 ms)
+[----------] 1 test from OffNominal (0 ms total)
+
+[----------] Global test environment tear-down
+[==========] 7 tests from 2 test suites ran. (12 ms total)
+[  PASSED  ] 7 tests.
+
