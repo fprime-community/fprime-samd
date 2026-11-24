@@ -35,7 +35,7 @@ U8 SpiDriver ::calculateBaud(U32 f_ref_hz, U32 baud_rate_khz) {
     const U32 rounded_up = (f_ref_hz + divisor - 1) / divisor;
     FW_ASSERT(rounded_up >= 1, rounded_up);
     const U32 baud = rounded_up - 1;
-    FW_ASSERT(baud <= 255, baud);
+    FW_ASSERT(baud <= MAX_BAUD_REGISTER, baud);
     return static_cast<U8>(baud);
 }
 
@@ -88,6 +88,7 @@ void SpiDriver ::configure(SercomKind sercom,
             break;
         default:
             FW_ASSERT(false, static_cast<FwAssertArgType>(hardware_chipselect));
+            break;
     }
     if (!this->m_hardware_chip_select) {
         for (FwIndexType i = 0; i < this->getNum_chipSelectGpioOut_OutputPorts(); i++) {
@@ -134,7 +135,9 @@ Drv::SpiStatus SpiDriver ::setBaudRate_handler(FwIndexType portNum, U32 baud_rat
 void SpiDriver ::SpiWriteRead_handler(FwIndexType portNum, Fw::Buffer& writeBuffer, Fw::Buffer& readBuffer) {
     // Caller contract (not a hardware condition): both streams clock the same number of bytes
     FW_ASSERT(writeBuffer.getSize() == readBuffer.getSize(), writeBuffer.getSize(), readBuffer.getSize());
-    FW_ASSERT(writeBuffer.getSize() <= 0xFFFF);  // DMA block transfer count is 16 bits
+    // A zero-length frame would program BTCNT = 0, which the DMAC does not define as a block size
+    FW_ASSERT(writeBuffer.getSize() > 0);
+    FW_ASSERT(writeBuffer.getSize() <= MAX_TRANSFER_BYTES, writeBuffer.getSize());
     FW_ASSERT(portNum >= 0 && portNum < NUM_SPIWRITEREAD_INPUT_PORTS, portNum);
     {
         // m_busy and the pending records are written by the ISR paths; decide and claim
@@ -226,7 +229,7 @@ bool SpiDriver ::activeIn_handler(FwIndexType portNum, U32 context) {
 }
 
 bool SpiDriver ::deliver(PendingReply& record, FwIndexType slot) {
-    PendingReply reply = {};
+    PendingReply reply;
     {
         // The ISR paths write the record; copy and clear it with interrupts masked, then
         // call the client with them enabled (the callback may start the next transfer).

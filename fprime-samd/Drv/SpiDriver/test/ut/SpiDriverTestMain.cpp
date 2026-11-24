@@ -86,6 +86,11 @@ TEST(OffNominal, SizeMismatch) {
     tester.testSizeMismatch();
 }
 
+TEST(OffNominal, TransferSizeBounds) {
+    Samd21::SpiDriverTester tester;
+    tester.testTransferSizeBounds();
+}
+
 TEST(OffNominal, ReceiveOverrun) {
     Samd21::SpiDriverTester tester;
     tester.testReceiveOverrun();
