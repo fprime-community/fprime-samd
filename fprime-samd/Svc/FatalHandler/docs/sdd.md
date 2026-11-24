@@ -74,7 +74,9 @@ tests, it is reported as `0`.
 
 The packet must fit both `Fw::ComBuffer` (`FW_COM_BUFFER_MAX_SIZE`) and the assert message buffer
 (`FW_ASSERT_TEXT_SIZE`); both are checked with `static_assert`. A project can size
-`FwAssertTextSize` in its `AcConstants.fpp` to the packet exactly (50 bytes with this project's
+`FwAssertTextSize` in its `AcConstants.fpp` to the packet exactly. With a `U8` `FwPacketDescriptorType`,
+`U32` `FwEventIdType`, `U16` `FwTimeBaseStoreType`, `U8` `FwTimeContextStoreType` and `U16`
+`FwSizeStoreType`, the packet is 50 bytes.
 
 ## 4. Ports
 
@@ -141,7 +143,7 @@ connections FaultProtection {
 | ------------------------------------------ | ----------------------------- | ---------------------------------------- |
 | `native-ut` (Linux)                        | `FatalHandlerHardwareStub.cpp` | Unit tests use `Samd21_AssertHook_FatalHandler`, the same as flight |
 | `samd21g17` Breadboard (SAMD21G17A)        | `FatalHandlerHardware.cpp`     | Builds and links                         |
-| `samd21j17` FFB (SAMD21J17D)               | `FatalHandlerHardware.cpp`     | Builds and links                         |
+| `samd21j17` FFB (SAMD21J17D)               | `FatalHandlerHardware.cpp`     | Run on hardware: FATAL event and `FW_ASSERT` paths verified |
 
 ## 8. Limitations
 
