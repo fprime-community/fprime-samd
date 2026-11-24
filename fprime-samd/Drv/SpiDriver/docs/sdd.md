@@ -36,6 +36,7 @@ selects on `FPRIME_PLATFORM`.
 | SPI-CFG-009 | A baud change shall leave the SERCOM enabled: it disables the peripheral, rewrites the enable-protected `BAUD` register and re-enables it, waiting for `SYNCBUSY.ENABLE` each way, so that the next transfer completes normally. | Unit Test |
 | SPI-REQ-001 | A request issued before `configure()` shall be refused with `SPI_CONFIG_ERR`, delivered from `activeIn`, and generate no DMA or chip-select traffic. | Unit Test |
 | SPI-REQ-002 | A request whose write and read buffers differ in size shall assert (full duplex). | Unit Test |
+| SPI-REQ-003 | A request of zero bytes, or of more than 65535 bytes (the 16-bit DMA block transfer count), shall assert in the caller's context; 1 to 65535 bytes shall be accepted. | Unit Test |
 | SPI-XFER-001 | A request shall assert the port's chip select (software mode) and queue the MISO then the MOSI DMA transaction against the SERCOM DATA register. | Unit Test, Hardware Test |
 | SPI-XFER-002 | The reply shall be emitted on the requesting port once both DMA channels complete, in either order, after the chip select is deasserted. | Unit Test, Hardware Test |
 | SPI-XFER-003 | One transaction at a time: an overlapping request on another slot shall be refused with `SPI_BUSY_ERR`, delivered from `activeIn`, and generate no DMA or chip-select traffic. A request on a slot that already holds an undelivered outcome (its transfer in flight, or its last completion not yet delivered) shall be refused with `SPI_BUSY_ERR` from `activeIn`, delivered before that outcome, without asserting; a third request on the same slot before `activeIn` runs is a client protocol error and asserts in the caller's context. | Unit Test |
@@ -50,6 +51,7 @@ selects on `FPRIME_PLATFORM`.
 | SPI-SCHED-001 | `activeIn` shall return `true` if it delivers any reply (outcome or refusal, on any slot), or if any reply record is latched between the start of the call and its return, whether or not that record is delivered in the same call. | Unit Test |
 | SPI-SCHED-002 | When `Samd21::SpiDriverConfig::SPI_REPOLL_DURING_OUTSTANDING_TRANSACTION` is non-zero, `activeIn` shall also return `true` if a transfer is in flight at the moment the call returns. | Unit Test (one build per option value) |
 | SPI-SCHED-003 | `activeIn` shall return `false` whenever neither SPI-SCHED-001 nor SPI-SCHED-002 applies. | Unit Test (one build per option value) |
+| SPI-MEM-001 | The driver shall allocate no memory at runtime and copy no transfer data: its state is static and sized at build time by `Drv.AsyncSpiCfg.SpiDriverPorts` (two pending-reply records per slot), and the DMA moves bytes directly between the caller's buffers and the SERCOM `DATA` register. | Inspection |
 
 ## 3. Design
 
@@ -165,7 +167,7 @@ gated); that failure mode has not been observed and a tick-based timeout is left
 buffer) aborts the other stream if it is still outstanding, drains and acknowledges the
 SERCOM receiver exactly as after an overrun, deasserts the chip select and latches
 `SPI_OTHER_ERR` for the requesting slot; the next request is accepted immediately. Caller
-programming errors (size mismatch, > 65535 bytes, reconfigure, a third request on one slot
+programming errors (size mismatch, zero or > 65535 bytes, reconfigure, a third request on one slot
 within a single `activeIn` turn) assert in the caller's context; `setBaudRate` while busy or
 before `configure()` is reported through its return status instead (§3.2).
 
@@ -186,15 +188,11 @@ transfer at a time per driver (no queueing across slots); ≤ 65535 bytes per tr
 A deployment supplies two DMA channels (`dmaTransactionOut`/`dmaReplyIn`/`dmaTransactionAbortOut`
 per channel), optionally a `Samd21.GpioDriver` chip select, `cycler.cycleOut -> spiDriver.activeIn`
 before the consumers of its completions, and calls `configure()` in the `configComponents` phase.
-`Svc.PassiveCycler::cycle()` short-circuits on `didWork = didWork || cycleOut_out(i, i)` (fixed by
-fprime-community/fprime-samd#60): until that fix is in, every consumer wired at a higher `cycleOut`
-index than `spiDriver` is skipped for the rest of a pass whenever `activeIn` returns `true` — with
-the re-poll option on, that is every pass of every frame — so wire the non-SPI consumers below it.
-The CY15B102QN F-RAM driver (separate PR) is the reference consumer.
+The CY15B102QN F-RAM driver (`Fram.FramDriver`, fprime-devices) is the reference consumer.
 
 ## 5. Unit tests
 
-`test/ut/` runs natively against the stub HAL (22 tests): configuration in both chip-select
+`test/ut/` runs natively against the stub HAL (23 tests): configuration in both chip-select
 modes, reconfigure assert, request before configure (`SPI_CONFIG_ERR` via `activeIn`), nominal
 transactions in both DMA completion orders on every slot, busy refusal on another slot
 (`SPI_BUSY_ERR`, delivered by `activeIn`), re-request on the in-flight slot and on a slot with
@@ -202,7 +200,7 @@ an undelivered completion (`SPI_BUSY_ERR` latched and delivered ahead of the out
 request asserts), DMA `BUS_ERROR` on either stream and on the second completion (other stream
 aborted, chip select released, `SPI_OTHER_ERR`, bus reusable), hardware chip
 select, chip select refused by the GPIO driver (`SPI_OTHER_ERR`, no DMA traffic; assert in
-`configure()`), size mismatch, stray/duplicate/late DMA replies ignored, `activeIn` with nothing
+`configure()`), size mismatch, transfer-size bounds (0 and 65536 assert, 65535 runs), stray/duplicate/late DMA replies ignored, `activeIn` with nothing
 pending, `setBaudRate` method and port (idle, before configure, while busy, with a latched
 undelivered reply; the stub HAL models the SERCOM enable state and the test proves a full
 transfer completes with `SPI_OK` after the change), BAUD boundaries and overflow,

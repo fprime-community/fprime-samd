@@ -1,36 +1,13 @@
 // ======================================================================
 // \title  reset_assert_hooks.cpp
 // \author Andrei Tumbar
-// \brief  cpp file for assert hook functions using send/reset implementation
+// \brief  cpp file for assert hook functions using reset implementation
+//
+// For deployments without a Samd21::FatalHandler (which choose this over the
+// platform's Samd21_AssertHook_FatalHandler). Nothing is reported; the MCU is reset.
 // ======================================================================
-#include <Fw/Types/assert_hook.hpp>
-#include <Fw/Types/format.hpp>
-
 #include <sam.h>
-#include "../Mcu/Delay.hpp"
-#include "Fw/Com/ComBuffer.hpp"
-#include "Fw/Types/Assert.hpp"
-#include "Fw/Types/Serializable.hpp"
-#include "Platform/PlatformTypes.h"
-#include "config/FatalPacketSerializableAc.hpp"
-#include "config/FatalTimeSerializableAc.hpp"
-#include "config/FwSizeTypeAliasAc.h"
-
-#if FW_ASSERT_LEVEL == FW_FILEID_ASSERT
-#define fileIdFs "Assert: 0x%08" PRIx32 ":%" PRI_FwSizeType ""
-#else
-#define fileIdFs "Assert: \"%s:%" PRI_FwSizeType "\""
-#endif
-
-extern "C" __attribute__((used)) void HardFault_Handler(void) {
-    // __BKPT(3);
-    NVIC_SystemReset();
-}
-
-namespace Samd21 {
-extern void sendFatalPacket(Fw::ComBuffer& data);
-extern void sendBailFrame(FILE_NAME_ARG file, FwSizeType lineNo);
-}  // namespace Samd21
+#include <Fw/Types/assert_hook.hpp>
 
 void Fw::terminateOnAssert() {
     NVIC_SystemReset();
@@ -39,24 +16,7 @@ void Fw::terminateOnAssert() {
     }
 }
 
-void Fw::printAssertMessage(const CHAR* msg) {
-    __disable_irq();
-
-    static volatile bool assertReached = false;
-    if (assertReached) {
-        terminateOnAssert();
-    }
-
-    assertReached = true;
-
-    auto ptr = reinterpret_cast<const U8*>(reinterpret_cast<PlatformPointerCastType>(msg));
-    Fw::ComBuffer frame(const_cast<U8*>(ptr), static_cast<FwSizeType>(Samd21::FatalPacket::SERIALIZED_SIZE));
-
-    for (int i = 0; i < 10; i++) {
-        Samd21::sendFatalPacket(frame);
-        delay(1000);
-    }
-}
+void Fw::printAssertMessage(const CHAR* msg) {}
 
 void Fw::formatAssertMessage(FILE_NAME_ARG file,
                              FwSizeType lineNo,
@@ -69,14 +29,7 @@ void Fw::formatAssertMessage(FILE_NAME_ARG file,
                              FwAssertArgType arg6,
                              CHAR* destBuffer,
                              FwSizeType buffSize) {
-    Fw::ExternalSerializeBuffer writer(reinterpret_cast<U8*>(destBuffer), buffSize);
-
-    // Serialize the file location
-    Samd21::FatalPacket p(
-        ComCfg::Apid::FW_PACKET_LOG, 0x0, Samd21::FatalTime(),
-        Samd21::FatalData(static_cast<U32>(file), static_cast<U32>(lineNo), static_cast<FwSizeStoreType>(numArgs),
-                          static_cast<I32>(arg1), static_cast<I32>(arg2), static_cast<I32>(arg3),
-                          static_cast<I32>(arg4), static_cast<I32>(arg5), static_cast<I32>(arg6)));
-    auto status = p.serializeTo(writer);
-    FW_ASSERT(status == FW_SERIALIZE_OK, status);
+    if ((destBuffer != nullptr) && (buffSize > 0)) {
+        destBuffer[0] = '\0';
+    }
 }

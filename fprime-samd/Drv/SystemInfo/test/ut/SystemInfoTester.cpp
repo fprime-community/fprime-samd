@@ -125,4 +125,40 @@ void SystemInfoTester::testRepeatedEmit() {
     }
 }
 
+void SystemInfoTester::testResetCommand() {
+    REQUIREMENT("SAMD21-HEALTH-003: SystemInfo shall reset the MCU on receipt of the RESET command");
+
+    this->resetTest();
+
+    const U32 cmdSeq = 42;
+    this->sendCmd_RESET(0, cmdSeq);
+
+    // The command is acknowledged before the reset since the reset does not return
+    ASSERT_CMD_RESPONSE_SIZE(1);
+    ASSERT_CMD_RESPONSE(0, SystemInfoComponentBase::OPCODE_RESET, cmdSeq, Fw::CmdResponse::OK);
+    ASSERT_EQ(SystemInfoHardware::getSystemInfoState().reset_count, 1u);
+
+    // A reset only touches the hardware: nothing is reported or read
+    ASSERT_EVENTS_SIZE(0);
+    ASSERT_TLM_SIZE(0);
+    ASSERT_EQ(SystemInfoHardware::getSystemInfoState().get_reset_reason_count, 0u);
+}
+
+void SystemInfoTester::testResetCommandRepeated() {
+    this->resetTest();
+
+    // The stub reset returns, so each command must trigger its own reset rather than
+    // being latched after the first
+    for (U32 i = 0; i < 3; i++) {
+        this->sendCmd_RESET(0, i);
+        ASSERT_CMD_RESPONSE_SIZE(i + 1);
+        ASSERT_CMD_RESPONSE(i, SystemInfoComponentBase::OPCODE_RESET, i, Fw::CmdResponse::OK);
+        ASSERT_EQ(SystemInfoHardware::getSystemInfoState().reset_count, i + 1);
+    }
+
+    // emit() is independent of the reset command and must not trigger a reset
+    this->component.emit();
+    ASSERT_EQ(SystemInfoHardware::getSystemInfoState().reset_count, 3u);
+}
+
 }  // namespace Samd21

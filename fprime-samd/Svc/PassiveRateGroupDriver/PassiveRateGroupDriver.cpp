@@ -5,6 +5,7 @@
 // ======================================================================
 
 #include "fprime-samd/Svc/PassiveRateGroupDriver/PassiveRateGroupDriver.hpp"
+#include "Utils/Algorithms.hpp"
 
 namespace Samd21 {
 
@@ -13,7 +14,7 @@ namespace Samd21 {
 // ----------------------------------------------------------------------
 
 PassiveRateGroupDriver ::PassiveRateGroupDriver(const char* const compName)
-    : PassiveRateGroupDriverComponentBase(compName) {}
+    : PassiveRateGroupDriverComponentBase(compName), m_ticks(0), m_rollover(1), m_maxTime(0), m_configured(false) {}
 
 PassiveRateGroupDriver ::~PassiveRateGroupDriver() {}
 
@@ -28,6 +29,9 @@ void PassiveRateGroupDriver::configure(const DividerSet& dividerSet) {
     FW_ASSERT(FW_NUM_ARRAY_ELEMENTS(this->m_dividers) == this->getNum_CycleOut_OutputPorts(),
               static_cast<FwAssertArgType>(FW_NUM_ARRAY_ELEMENTS(this->m_dividers)),
               static_cast<FwAssertArgType>(this->getNum_CycleOut_OutputPorts()));
+    // restart the tick count so a re-configure does not accumulate into the rollover
+    this->m_ticks = 0;
+    this->m_rollover = 1;
     // copy provided array of dividers
     for (FwIndexType entry = 0; entry < PassiveRateGroupDriver::DIVIDER_SIZE; entry++) {
         // A port with an offset equal or bigger than the divisor is not accepted because it would never be called
@@ -36,14 +40,10 @@ void PassiveRateGroupDriver::configure(const DividerSet& dividerSet) {
                   static_cast<FwAssertArgType>(dividerSet.dividers[entry].offset),
                   static_cast<FwAssertArgType>(dividerSet.dividers[entry].divisor));
         this->m_dividers[entry] = dividerSet.dividers[entry];
-        // rollover value should be product of all dividers to make sure integer rollover doesn't jump cycles
-        // only use non-zero dividers
+        // Rollover value should be the least common multiple of all dividers to make sure integer rollover doesn't
+        // jump cycles. Only use non-zero dividers. Utils::lcm asserts if the result would overflow.
         if (dividerSet.dividers[entry].divisor != 0) {
-            // Ensure that rollover will not overflow
-            FW_ASSERT((std::numeric_limits<FwSizeType>::max() / dividerSet.dividers[entry].divisor) >= this->m_rollover,
-                      static_cast<FwAssertArgType>(this->m_rollover),
-                      static_cast<FwAssertArgType>(dividerSet.dividers[entry].divisor));
-            this->m_rollover *= dividerSet.dividers[entry].divisor;
+            this->m_rollover = Utils::lcm(this->m_rollover, dividerSet.dividers[entry].divisor);
         }
     }
     this->m_configured = true;
@@ -74,7 +74,8 @@ void PassiveRateGroupDriver ::CycleIn_handler(FwIndexType portNum, Os::RawTime& 
     }
 
     // rollover the tick value when the tick count reaches the rollover value
-    // the rollover value is the product of all the dividers. See comment in constructor.
+    // the rollover value is the least common multiple of all the dividers, see configure()
+    FW_ASSERT(this->m_rollover > 0);
     this->m_ticks = (this->m_ticks + 1) % this->m_rollover;
 
     // grab timer for endTime of cycle

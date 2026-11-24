@@ -104,7 +104,7 @@ class StaticCmdDispatcher final : public StaticCmdDispatcherComponentBase {
 
     //! Handler implementation for command SET_EVENT_EMISSION
     //!
-    //! Enable or dispatch OpCodeDispatched/OpCodeCompleted events for commands that come in on a certain port index
+    //! Enable or disable OpCodeDispatched/OpCodeCompleted events for commands that come in on a certain port index
     void SET_EVENT_EMISSION_cmdHandler(FwOpcodeType opCode,  //!< The opcode
                                        U32 cmdSeq,           //!< The command sequence number
                                        U8 portIdx,

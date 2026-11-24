@@ -19,18 +19,22 @@ register_fprime_library(
         "${CMAKE_CURRENT_LIST_DIR}/SyncFramer.fpp"
     SOURCES
         "${CMAKE_CURRENT_LIST_DIR}/SyncFramer.cpp"
-#   DEPENDS
-#       MyPackage_MyOtherModule
+    DEPENDS
+        Svc_FprimeProtocol
+        Utils_Hash
 )
 
 ### Unit Tests ###
-# register_fprime_ut(
-#     AUTOCODER_INPUTS
-#         "${CMAKE_CURRENT_LIST_DIR}/SyncFramer.fpp"
-#     SOURCES
-#         "${CMAKE_CURRENT_LIST_DIR}/test/ut/SyncFramerTestMain.cpp"
-#         "${CMAKE_CURRENT_LIST_DIR}/test/ut/SyncFramerTester.cpp"
-#     DEPENDS
-#         STest # For rules-based testing
-#     UT_AUTO_HELPERS
-# )
+register_fprime_ut(
+    AUTOCODER_INPUTS
+        "${CMAKE_CURRENT_LIST_DIR}/SyncFramer.fpp"
+    SOURCES
+        "${CMAKE_CURRENT_LIST_DIR}/test/ut/SyncFramerTestMain.cpp"
+        "${CMAKE_CURRENT_LIST_DIR}/test/ut/SyncFramerTester.cpp"
+    DEPENDS
+        STest
+        Svc_FprimeProtocol
+        Svc_FrameAccumulator # FprimeFrameDetector, to check frames the way the ground deframes them
+        Utils_Hash
+    UT_AUTO_HELPERS
+)

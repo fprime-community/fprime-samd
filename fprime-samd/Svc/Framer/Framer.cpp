@@ -16,6 +16,14 @@
 
 namespace Samd21 {
 
+// A maximum-size packet must fit in one transmit buffer once framed
+static_assert(FramerConfig::FRAMER_TX_BUFFER_SIZE >= Svc::FprimeProtocol::FrameHeader::SERIALIZED_SIZE +
+                                                         FW_COM_BUFFER_MAX_SIZE +
+                                                         Svc::FprimeProtocol::FrameTrailer::SERIALIZED_SIZE,
+              "FRAMER_TX_BUFFER_SIZE cannot hold a framed FW_COM_BUFFER_MAX_SIZE packet");
+
+constexpr FwIndexType Framer::NUM_TX_BUFFERS;
+
 // ----------------------------------------------------------------------
 // Component construction and destruction
 // ----------------------------------------------------------------------
@@ -23,8 +31,9 @@ namespace Samd21 {
 Framer ::Framer(const char* const compName)
     : FramerComponentBase(compName), m_driverConnected(false), m_activeBufferIdx(0), m_droppedPackets(0) {
     // Initialize both buffers to IDLE state with space reserved for header
-    for (FwIndexType i = 0; i < 2; i++) {
+    for (FwIndexType i = 0; i < NUM_TX_BUFFERS; i++) {
         m_buffers[i].size = 0;
+        m_buffers[i].frames = 0;
         m_buffers[i].state = IDLE;
     }
 }
@@ -55,6 +64,12 @@ void Framer ::comPacketQueueIn_handler(FwIndexType portNum, Fw::ComBuffer& data,
 
     // If adding this ComBuffer would overflow, flush first
     if (activeBuf->size + spaceNeeded > FramerConfig::FRAMER_TX_BUFFER_SIZE) {
+        // Nowhere to flush to until the driver is ready, drop this packet
+        if (!this->m_driverConnected) {
+            this->m_droppedPackets++;
+            return;
+        }
+
         flushActiveBuffer();
 
         // flushActiveBuffer() swapped the active buffer -- re-acquire it
@@ -108,6 +123,7 @@ void Framer ::comPacketQueueIn_handler(FwIndexType portNum, Fw::ComBuffer& data,
 
     // Update buffer size to include the packet frame
     activeBuf->size += serializer.getSize();
+    activeBuf->frames++;
     FW_ASSERT(activeBuf->size <= FramerConfig::FRAMER_TX_BUFFER_SIZE);
 }
 
@@ -118,11 +134,17 @@ void Framer ::drvConnected_handler(FwIndexType portNum) {
 void Framer ::drvReturnIn_handler(FwIndexType portNum, Fw::Buffer& fwBuffer, const Drv::ByteStreamStatus& status) {
     Samd21::CriticalSection cs;
     // Find which buffer was returned
-    for (FwIndexType i = 0; i < 2; i++) {
+    for (FwIndexType i = 0; i < NUM_TX_BUFFERS; i++) {
         if (m_buffers[i].state == TRANSMITTING && fwBuffer.getData() == m_buffers[i].data) {
+            // The frames of a buffer the driver failed to send are lost, count them as dropped
+            if (status != Drv::ByteStreamStatus::OP_OK) {
+                this->m_droppedPackets += m_buffers[i].frames;
+            }
+
             // Mark buffer as idle and ready for reuse, reset the size
             m_buffers[i].state = IDLE;
             m_buffers[i].size = 0;
+            m_buffers[i].frames = 0;
             return;
         }
     }
@@ -146,7 +168,7 @@ void Framer ::flushActiveBuffer() {
     activeBuf.state = TRANSMITTING;
 
     // Switch to the next buffer
-    m_activeBufferIdx = (m_activeBufferIdx + 1) % 2;
+    m_activeBufferIdx = (m_activeBufferIdx + 1) % NUM_TX_BUFFERS;
 
     // Send the complete frame to the driver
     Fw::Buffer txBuffer(activeBuf.data, activeBuf.size);
@@ -155,20 +177,23 @@ void Framer ::flushActiveBuffer() {
 
 void Framer ::schedIn_handler(FwIndexType portNum, U32 context) {
     if (this->m_driverConnected) {
-        Samd21::CriticalSection cs;
-        // Only flush if the other buffer is not transmitting
-        FwIndexType nextBufferIdx = (m_activeBufferIdx + 1) % 2;
-        TxBuffer& nextBuf = m_buffers[nextBufferIdx];
+        U32 droppedPackets = 0;
+        {
+            Samd21::CriticalSection cs;
+            droppedPackets = this->m_droppedPackets;
 
-        this->tlmWrite_DroppedPackets(this->m_droppedPackets);
+            // Only flush if the other buffer is not transmitting
+            FwIndexType nextBufferIdx = (m_activeBufferIdx + 1) % NUM_TX_BUFFERS;
+            const TxBuffer& nextBuf = m_buffers[nextBufferIdx];
 
-        if (nextBuf.state == TRANSMITTING) {
-            // Can't flush because both buffers would be in flight
-            // Wait for next schedule cycle
-            return;
+            // Otherwise both buffers would be in flight, wait for the next schedule cycle
+            if (nextBuf.state != TRANSMITTING) {
+                flushActiveBuffer();
+            }
         }
 
-        flushActiveBuffer();
+        // Written outside the critical section to keep interrupts masked only for the buffers
+        this->tlmWrite_DroppedPackets(droppedPackets);
     }
 }
 

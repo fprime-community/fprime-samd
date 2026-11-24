@@ -30,7 +30,8 @@ class FramerTester final : public FramerGTestBase {
     // ----------------------------------------------------------------------
 
     //! Construct object FramerTester
-    FramerTester();
+    explicit FramerTester(bool connectDriver = true  //!< Signal drvConnected after construction
+    );
 
     //! Destroy object FramerTester
     ~FramerTester();
@@ -58,6 +59,24 @@ class FramerTester final : public FramerGTestBase {
     //! Test schedIn periodic flush
     void testSchedInFlush();
 
+    //! Test the sent bytes decode as F Prime frames carrying the packets in order
+    void testFrameFormat();
+
+    //! Test the ground frame detector accepts the sent frames
+    void testGroundDeframes();
+
+    //! Test schedIn sends nothing when no packet is accumulated
+    void testEmptySchedIn();
+
+    //! Test dropped packets are counted and reported on DroppedPackets
+    void testDroppedPacketTelemetry();
+
+    //! Test nothing is sent before drvConnected, and overflow before it drops packets
+    void testBeforeConnected();
+
+    //! Test a buffer returned with an error status is reused and its frames counted as dropped
+    void testReturnWithError();
+
   private:
     // ----------------------------------------------------------------------
     // Helper functions
@@ -80,6 +99,9 @@ class FramerTester final : public FramerGTestBase {
 
     //! Create a test ComBuffer with specified size
     Fw::ComBuffer makeComBuffer(FwSizeType size, U8 fillValue = 0xAA);
+
+    //! Decode the frames in sent buffer `index` and assert they carry `packets` in order
+    void assertFrames(FwIndexType index, const Fw::ComBuffer* packets, FwSizeType count);
 
   private:
     // ----------------------------------------------------------------------

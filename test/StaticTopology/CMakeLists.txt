@@ -12,6 +12,7 @@
 ####
 restrict_platforms(native)
 
+add_fprime_subdirectory("${CMAKE_CURRENT_LIST_DIR}/config/")
 add_fprime_subdirectory("${CMAKE_CURRENT_LIST_DIR}/Target/")
 add_fprime_subdirectory("${CMAKE_CURRENT_LIST_DIR}/Ground/")
 add_fprime_subdirectory("${CMAKE_CURRENT_LIST_DIR}/EventLog/")

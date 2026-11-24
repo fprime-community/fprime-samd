@@ -20,6 +20,6 @@ register_fprime_config(
         Os_Console_Samd21
         Samd21_StringFormat_snprintf
         Samd21_StringScan_sscanf
-        Samd21_AssertHook_reset
+        Samd21_AssertHook_FatalHandler
     INTERFACE # No buildable files generated
 )

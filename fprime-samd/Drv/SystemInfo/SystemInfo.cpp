@@ -20,7 +20,7 @@ SystemInfo::SystemInfo(const char* const compName) : SystemInfoComponentBase(com
 SystemInfo::~SystemInfo() {}
 
 // ----------------------------------------------------------------------
-// Handler implementations for commands
+// Public interface
 // ----------------------------------------------------------------------
 
 void SystemInfo::emit() {
@@ -33,6 +33,17 @@ void SystemInfo::emit() {
     this->tlmWrite_ProjectCommit(SystemInfoVersion::PROJECT_COMMIT);
     this->tlmWrite_FprimeCommit(SystemInfoVersion::FPRIME_COMMIT);
     this->tlmWrite_SamdCommit(SystemInfoVersion::SAMD_COMMIT);
+}
+
+// ----------------------------------------------------------------------
+// Handler implementations for commands
+// ----------------------------------------------------------------------
+
+void SystemInfo::RESET_cmdHandler(FwOpcodeType opCode, U32 cmdSeq) {
+    // Respond before resetting: the reset does not return, so this is the only chance
+    // for the dispatcher to see the command complete
+    this->cmdResponse_out(opCode, cmdSeq, Fw::CmdResponse::OK);
+    SystemInfoHardware::SystemInfoHal::reset();
 }
 
 }  // namespace Samd21

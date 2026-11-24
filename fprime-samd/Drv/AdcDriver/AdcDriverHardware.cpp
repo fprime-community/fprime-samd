@@ -17,6 +17,13 @@
 namespace Samd21 {
 namespace AdcHardware {
 
+//! Bit position of the LINEARITY_1 fuse bits within CALIB.LINEARITY_CAL (LINEARITY_0 holds bits 0-4)
+static constexpr U32 LINEARITY_1_SHIFT = 5;
+//! Largest AVGCTRL.ADJRES value used for averaging (datasheet Table 33-3: 16 samples and above)
+static constexpr U8 MAX_ADJRES = 4;
+//! Largest SAMPCTRL.SAMPLEN value (6-bit field)
+static constexpr U8 MAX_SAMPLEN = ADC_SAMPCTRL_SAMPLEN_Msk >> ADC_SAMPCTRL_SAMPLEN_Pos;
+
 void AdcHal::waitForGclkSync() {
     volatile U32 limit = F_CPU;
     while (limit > 0 && GCLK->STATUS.bit.SYNCBUSY) {
@@ -57,9 +64,13 @@ void AdcHal::configure(AdcDriver::VoltageReference ref,
     AdcHal::waitForGclkSync();
 
     // Load calibration data from NVM
-    U32 bias = (*((U32*)ADC_FUSES_BIASCAL_ADDR) & ADC_FUSES_BIASCAL_Msk) >> ADC_FUSES_BIASCAL_Pos;
-    U32 linearity = (*((U32*)ADC_FUSES_LINEARITY_0_ADDR) & ADC_FUSES_LINEARITY_0_Msk) >> ADC_FUSES_LINEARITY_0_Pos;
-    linearity |= ((*((U32*)ADC_FUSES_LINEARITY_1_ADDR) & ADC_FUSES_LINEARITY_1_Msk) >> ADC_FUSES_LINEARITY_1_Pos) << 5;
+    const U32 bias = (*reinterpret_cast<const volatile U32*>(ADC_FUSES_BIASCAL_ADDR) & ADC_FUSES_BIASCAL_Msk) >>
+                     ADC_FUSES_BIASCAL_Pos;
+    U32 linearity = (*reinterpret_cast<const volatile U32*>(ADC_FUSES_LINEARITY_0_ADDR) & ADC_FUSES_LINEARITY_0_Msk) >>
+                    ADC_FUSES_LINEARITY_0_Pos;
+    linearity |= ((*reinterpret_cast<const volatile U32*>(ADC_FUSES_LINEARITY_1_ADDR) & ADC_FUSES_LINEARITY_1_Msk) >>
+                  ADC_FUSES_LINEARITY_1_Pos)
+                 << LINEARITY_1_SHIFT;
 
     // Software reset to ensure clean state
     ADC->CTRLA.bit.SWRST = 1;
@@ -86,6 +97,9 @@ void AdcHal::configure(AdcDriver::VoltageReference ref,
         case AdcDriver::VoltageReference::VREFB:
             refsel = ADC_REFCTRL_REFSEL_AREFB_Val;
             break;
+        default:
+            FW_ASSERT(0, static_cast<FwAssertArgType>(ref));
+            break;
     }
     ADC->REFCTRL.reg = ADC_REFCTRL_REFSEL(refsel) | ADC_REFCTRL_REFCOMP;
     AdcHal::waitForAdcSync();
@@ -108,6 +122,9 @@ void AdcHal::configure(AdcDriver::VoltageReference ref,
             case AdcDriver::Resolution::RES_12BIT:
                 ressel = ADC_CTRLB_RESSEL_12BIT_Val;
                 break;
+            default:
+                FW_ASSERT(0, static_cast<FwAssertArgType>(res));
+                break;
         }
     }
     ADC->CTRLB.reg = ADC_CTRLB_RESSEL(ressel) | ADC_CTRLB_PRESCALER_DIV32;
@@ -117,11 +134,11 @@ void AdcHal::configure(AdcDriver::VoltageReference ref,
     // Per datasheet Table 33-3: ADJRES tracks SAMPLENUM up to SAMPLES_16 (0x4), then
     // stays pinned at 0x4 for SAMPLES_32 and above.
     U8 samplenum = static_cast<U8>(samples);
-    U8 adjres = (samplenum <= 4) ? samplenum : 4;
+    U8 adjres = (samplenum <= MAX_ADJRES) ? samplenum : MAX_ADJRES;
     ADC->AVGCTRL.reg = ADC_AVGCTRL_SAMPLENUM(samplenum) | ADC_AVGCTRL_ADJRES(adjres);
 
     // Configure sampling time
-    FW_ASSERT(samplingTime <= 63, samplingTime);
+    FW_ASSERT(samplingTime <= MAX_SAMPLEN, samplingTime);
     ADC->SAMPCTRL.reg = ADC_SAMPCTRL_SAMPLEN(samplingTime);
 
     // Enable ADC first (must be enabled before configuring interrupts)

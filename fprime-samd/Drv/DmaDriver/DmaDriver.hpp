@@ -91,9 +91,6 @@ class DmaDriver final : public DmaDriverComponentBase {
     //! Free a descriptor back to the pool
     void freeDescriptor(DmacDescriptor* desc);
 
-    //! Free all descriptors in the chain starting from the given descriptor
-    void freeChain(DmacDescriptor* chainStart);
-
     //! Storage of DMA descriptors for queuing jobs on the DMAC
     __attribute__((__aligned__(16))) DmacDescriptor m_descriptors[DmaDriverConfig::DMA_DESCRIPTOR_N];
 

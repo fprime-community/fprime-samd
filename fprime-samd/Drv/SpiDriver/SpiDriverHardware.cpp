@@ -13,6 +13,14 @@
 namespace Samd21 {
 namespace SpiHardware {
 
+//! Bound of the TXC wait in acknowledgeError(): ~10 ms of CPU cycles, well above one
+//! character time at the slowest BAUD
+static constexpr U32 TXC_WAIT_LIMIT = F_CPU / 100;
+
+//! Bound of the receive drain in acknowledgeError(): the receive buffer is two characters
+//! deep, so twice that is ample
+static constexpr U32 RX_DRAIN_LIMIT = 4;
+
 // Bound hardware synchronization waits to ~1s (F_CPU cycles), matching the
 // pattern used in RtcDriver/DmaDriver/UsartDriver/I2cDriver. A stuck sync flag
 // asserts rather than hanging the CPU forever.
@@ -106,6 +114,7 @@ void SpiHal::configure(SercomKind sercom,
 #endif
         default:
             FW_ASSERT(false, static_cast<FwAssertArgType>(sercom));
+            break;
     }
 
     waitForGclkSync();
@@ -138,6 +147,7 @@ void SpiHal::configure(SercomKind sercom,
             break;
         default:
             FW_ASSERT(false, static_cast<FwAssertArgType>(clock_polarity));
+            break;
     }
 
     switch (clock_phase) {
@@ -149,6 +159,7 @@ void SpiHal::configure(SercomKind sercom,
             break;
         default:
             FW_ASSERT(false, static_cast<FwAssertArgType>(clock_phase));
+            break;
     }
 
     // Frame format: plain SPI frame (CTRLA.FORM = 0x0). Address-recognition
@@ -171,6 +182,7 @@ void SpiHal::configure(SercomKind sercom,
             break;
         default:
             FW_ASSERT(false, static_cast<FwAssertArgType>(data_in_pinout));
+            break;
     }
 
     // Data Out Pinout: pad layout for MOSI/SCK/SS (CTRLA.DOPO)
@@ -189,6 +201,7 @@ void SpiHal::configure(SercomKind sercom,
             break;
         default:
             FW_ASSERT(false, static_cast<FwAssertArgType>(data_out_pinout));
+            break;
     }
 
     // Data order (CTRLA.DORD)
@@ -201,6 +214,7 @@ void SpiHal::configure(SercomKind sercom,
             break;
         default:
             FW_ASSERT(false, static_cast<FwAssertArgType>(data_order));
+            break;
     }
 
     // Run in standby (CTRLA.RUNSTDBY)
@@ -213,6 +227,7 @@ void SpiHal::configure(SercomKind sercom,
             break;
         default:
             FW_ASSERT(false, static_cast<FwAssertArgType>(run_in_standby));
+            break;
     }
 
     // Character size: 8-bit characters (CTRLB.CHSIZE = 0x0)
@@ -233,6 +248,7 @@ void SpiHal::configure(SercomKind sercom,
             break;
         default:
             FW_ASSERT(false, static_cast<FwAssertArgType>(hardware_chipselect));
+            break;
     }
 
     // §27.6.2.1 Initialization: enable-protected registers require ENABLE=0.
@@ -311,7 +327,7 @@ void SpiHal::acknowledgeError(SercomKind sercom) {
     // characters; wait (bounded, well above one character time at the slowest BAUD)
     // for the one still in the shifter to finish so it cannot land in the receive
     // buffer after the drain below.
-    volatile U32 limit = F_CPU / 100;
+    volatile U32 limit = TXC_WAIT_LIMIT;
     while (limit > 0 && !(sercom_hw->SPI.INTFLAG.reg & SERCOM_SPI_INTFLAG_TXC)) {
         limit--;
     }
@@ -323,7 +339,7 @@ void SpiHal::acknowledgeError(SercomKind sercom) {
 
     // Drain whatever the receiver still holds so the next transfer's MISO DMA does
     // not start on stale characters. The buffer is two deep; bound the loop anyway.
-    for (U32 i = 0; i < 4 && (sercom_hw->SPI.INTFLAG.reg & SERCOM_SPI_INTFLAG_RXC); i++) {
+    for (U32 i = 0; i < RX_DRAIN_LIMIT && (sercom_hw->SPI.INTFLAG.reg & SERCOM_SPI_INTFLAG_RXC); i++) {
         (void)sercom_hw->SPI.DATA.reg;
     }
 

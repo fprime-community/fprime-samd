@@ -17,6 +17,7 @@ static constexpr ResetReason::T DEFAULT_RESET_REASON = ResetReason::POWER_ON;
 static SystemInfoState g_health_state = {
     .get_reset_reason_count = 0,
     .reset_reason = DEFAULT_RESET_REASON,
+    .reset_count = 0,
 };
 
 SystemInfoState& getSystemInfoState() {
@@ -28,10 +29,16 @@ ResetReason SystemInfoHal::getResetReason() {
     return g_health_state.reset_reason;
 }
 
+void SystemInfoHal::reset() {
+    // There is no MCU to reset; record the request and return to the caller
+    g_health_state.reset_count++;
+}
+
 //! Test helper: reset stub state for clean test runs
 void resetSystemInfoState() {
     g_health_state.get_reset_reason_count = 0;
     g_health_state.reset_reason = DEFAULT_RESET_REASON;
+    g_health_state.reset_count = 0;
 }
 
 //! Test helper: set the reason reported by the next getResetReason()

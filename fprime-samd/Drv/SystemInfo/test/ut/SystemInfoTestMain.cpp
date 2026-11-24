@@ -27,6 +27,16 @@ TEST(Nominal, testRepeatedEmit) {
     tester.testRepeatedEmit();
 }
 
+TEST(Nominal, testResetCommand) {
+    Samd21::SystemInfoTester tester;
+    tester.testResetCommand();
+}
+
+TEST(Nominal, testResetCommandRepeated) {
+    Samd21::SystemInfoTester tester;
+    tester.testResetCommandRepeated();
+}
+
 int main(int argc, char** argv) {
     // Seed random number generator for STest
     STest::Random::seed();

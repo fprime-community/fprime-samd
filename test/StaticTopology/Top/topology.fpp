@@ -66,7 +66,10 @@ module StaticTopology {
             cmdDisp.seqCmdStatus[1] -> sequencer.cmdStatusIn
 
             ground.pktSendOut[0] -> tlm.pktSendIn[0]
+
+            # Packet fan-out: two downlinks, with pktSendOut[1] left unconnected
             tlm.pktSendOut[0] -> ground.pktRecvIn[0]
+            tlm.pktSendOut[2] -> sequencer.pktRecvIn[0]
         }
 
     }

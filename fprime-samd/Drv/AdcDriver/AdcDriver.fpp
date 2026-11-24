@@ -8,7 +8,7 @@ module Samd21 {
         @ ADC result delivery ports (completed values) - matches readAdc array size
         output port adcResult: [Samd21.ADC_CHANNEL_COUNT] AdcResult
 
-        @ Schedule input from rate group (checks for completed conversions)
+        @ Active-cycler tick (delivers completed conversions from the main context)
         sync input port activeIn: Svc.ActiveSched
 
     }

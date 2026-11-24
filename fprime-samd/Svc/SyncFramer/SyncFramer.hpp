@@ -41,9 +41,6 @@ class SyncFramer final : public SyncFramerComponentBase {
     //! Signal from the driver that it is ready
     void drvConnected_handler(FwIndexType portNum  //!< The port number
                               ) override;
-
-  public:
-    void sendFatalPacket(Fw::ComBuffer& data);
 };
 
 }  // namespace Samd21

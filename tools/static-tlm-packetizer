@@ -111,6 +111,7 @@ def generate(
     doc.include(
         "Fw/Tlm/TlmBuffer.hpp",
         "Fw/Com/ComBuffer.hpp",
+        "Fw/Types/Assert.hpp",
         f"{topology.name}TopologyAc.hpp",
         output=Output.CPP,
     )
@@ -145,7 +146,7 @@ def generate_ac_functions(
     *namespaces, packetizer_name = component.symbol.qualified_name.split(".")
 
     def tlm_packet_buf(pkt: fpp.TlmPacket) -> str:
-        return f"__TLM_PACKET_{component.node.name}_{pkt.name}"
+        return f"TLM_PACKET_{component.node.name}_{pkt.name}"
 
     # A topology need not sit inside a module, and namespace() rejects an empty name list
     scope = doc.namespace(*namespaces) if namespaces else nullcontext(doc)
@@ -157,7 +158,7 @@ def generate_ac_functions(
             ns.lines(
                 f"""
                 |//! Buffer for {pkt.name} packet
-                |U8 {tlm_packet_buf(pkt)}[{size}] = {"{}"};
+                |static U8 {tlm_packet_buf(pkt)}[{size}] = {"{}"};
                 |""",
                 output=cg.Output.CPP,
             )
@@ -167,24 +168,33 @@ def generate_ac_functions(
             write_point.param("FwChanIdType", "id")
             write_point.param("const Fw::TlmBuffer&", "val")
             with write_point.body as b:
+                # Size each packetized case expects of val. Checked once after the switch
+                # rather than per case to keep flash down; the copies stay within val's
+                # FW_TLM_BUFFER_MAX_SIZE storage either way, and a mismatch is FATAL before
+                # any packet holding the stale bytes can be sent.
+                b.line("FwSizeType expectedSize = val.getSize();")
                 with b.switch("id") as sw:
                     for tlm_id, tlm_chan in dictionary.tlm_channel_entry_map.items():
                         with sw.case(f"0x{tlm_id:x}", braces=False) as c:
                             # Emit memcpy()s for each offset in all packets where this channel exists
                             c.comment(tlm_chan.qualified_name)
-                            in_packet = False
-                            for pkt, offset in tlm_packet_offsets(dictionary, tlm_id):
-                                in_packet = True
+                            size = tlm_chan.tlm_channel.channel_type.serialized_size
+                            offsets = list(tlm_packet_offsets(dictionary, tlm_id))
+                            if offsets:
+                                c.line(f"expectedSize = {size};")
+                            for pkt, offset in offsets:
                                 c.comment(f"{pkt.name} + {offset}")
                                 c.line(
-                                    f"(void)memcpy(&{tlm_packet_buf(pkt)}[{offset}], val.getBuffAddr(), {tlm_chan.tlm_channel.channel_type.serialized_size});"
+                                    f"(void)memcpy(&{tlm_packet_buf(pkt)}[{offset}], val.getBuffAddr(), {size});"
                                 )
 
-                            if not in_packet:
+                            if not offsets:
                                 c.comment("(omitted)")
                     with sw.default(braces=False) as d:
                         d.lines("""// Invalid telemetry ID
                         |FW_ASSERT(false, id);""")
+                # The channel's own serializer filled val, so a size mismatch is a software bug
+                b.line("FW_ASSERT(val.getSize() == expectedSize, static_cast<FwAssertArgType>(id));")
 
         # Generate the function that reads the RAM buffer given packet id
         with ns.function(
@@ -201,8 +211,7 @@ def generate_ac_functions(
                         ) as fits:
                             fits.lines(
                                 f"""(void)memcpy(dest.getBuffAddrSer(), {buf}, sizeof({buf}));
-                                |dest.serializeSkip(sizeof({buf}));
-                                |return Fw::FW_SERIALIZE_OK;"""
+                                |return dest.serializeSkip(sizeof({buf}));"""
                             )
                         with c.else_() as too_small:
                             too_small.line("return Fw::FW_SERIALIZE_NO_ROOM_LEFT;")

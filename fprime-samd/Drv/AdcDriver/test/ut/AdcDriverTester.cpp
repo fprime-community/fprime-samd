@@ -14,7 +14,9 @@ namespace Samd21 {
 // ----------------------------------------------------------------------
 
 AdcDriverTester::AdcDriverTester()
-    : AdcDriverGTestBase("AdcDriverTester", AdcDriverTester::MAX_HISTORY_SIZE), component("AdcDriver") {
+    : AdcDriverGTestBase("AdcDriverTester", AdcDriverTester::MAX_HISTORY_SIZE),
+      component("AdcDriver"),
+      m_lastResultPort(-1) {
     this->initComponents();
     this->connectPorts();
     AdcHardware::resetStubState();
@@ -25,6 +27,11 @@ AdcDriverTester::~AdcDriverTester() {}
 // ----------------------------------------------------------------------
 // Helper functions
 // ----------------------------------------------------------------------
+
+void AdcDriverTester::from_adcResult_handler(FwIndexType portNum, U32 value, const Samd21::AdcStatus& status) {
+    this->m_lastResultPort = portNum;
+    this->pushFromPortEntry_adcResult(value, status);
+}
 
 AdcHardware::StubState& AdcDriverTester::stub() {
     return AdcHardware::getStubState();
@@ -133,6 +140,51 @@ void AdcDriverTester::testConfigureChannelNominal() {
     // Configure internal channel that doesn't require HAL setup (SCALEDIOVCC)
     this->component.configureChannel(7, AdcDriver::AdcChannel::SCALEDIOVCC);
     ASSERT_EQ(this->stub().configureChannel_count, 2U);  // Should still be 2 (no new HAL call)
+}
+
+void AdcDriverTester::testConfigureChannelLastPort() {
+    REQUIREMENT(
+        "SAMD21-ADC-002: The AdcDriver shall bind a readAdc port index to a physical ADC input channel "
+        "via configureChannel");
+    this->resetTest();
+    this->configureStandard();
+    this->clearHistory();
+
+    // The last valid port index binds and converts like any other
+    const FwIndexType lastPort = ADC_CHANNEL_COUNT - 1;
+    this->component.configureChannel(lastPort, AdcDriver::AdcChannel::AIN19);
+
+    Samd21::AdcStatus status = this->invoke_to_readAdc(lastPort);
+    ASSERT_EQ(status, Samd21::AdcStatus::ADC_OK);
+    ASSERT_EQ(static_cast<U8>(this->stub().selected_channel), static_cast<U8>(AdcDriver::AdcChannel::AIN19));
+
+    this->simulateConversionComplete(4095);
+    this->invoke_to_activeIn(0, 0);
+    this->assertAdcResult(1, 0, 4095U, Samd21::AdcStatus::ADC_OK);
+    ASSERT_EQ(this->m_lastResultPort, lastPort);
+}
+
+void AdcDriverTester::testConfigureChannelBeforeConfigure() {
+    REQUIREMENT("SAMD21-ADC-002: The AdcDriver shall reject binding a channel before the peripheral is configured");
+    this->resetTest();
+    ASSERT_DEATH_IF_SUPPORTED(this->component.configureChannel(0, AdcDriver::AdcChannel::AIN0), "Assert:");
+}
+
+void AdcDriverTester::testConfigureChannelRebind() {
+    REQUIREMENT("SAMD21-ADC-002: The AdcDriver shall reject re-binding a port that is already bound");
+    this->resetTest();
+    this->configureStandard();
+    this->component.configureChannel(0, AdcDriver::AdcChannel::AIN0);
+    ASSERT_DEATH_IF_SUPPORTED(this->component.configureChannel(0, AdcDriver::AdcChannel::AIN1), "Assert:");
+}
+
+void AdcDriverTester::testConfigureChannelOutOfRange() {
+    REQUIREMENT("SAMD21-ADC-002: The AdcDriver shall reject binding a port index outside 0 to ADC_CHANNEL_COUNT-1");
+    this->resetTest();
+    this->configureStandard();
+    ASSERT_DEATH_IF_SUPPORTED(this->component.configureChannel(ADC_CHANNEL_COUNT, AdcDriver::AdcChannel::AIN0),
+                              "Assert:");
+    ASSERT_DEATH_IF_SUPPORTED(this->component.configureChannel(-1, AdcDriver::AdcChannel::AIN0), "Assert:");
 }
 
 // ----------------------------------------------------------------------
@@ -276,8 +328,9 @@ void AdcDriverTester::testConversionMultipleChannels() {
     // Process the result
     this->invoke_to_activeIn(0, 0);
 
-    // Second result should be delivered
+    // Second result should be delivered on port 1's adcResult
     this->assertAdcResult(2, 1, 2048U, Samd21::AdcStatus::ADC_OK);
+    ASSERT_EQ(this->m_lastResultPort, 1);
 }
 
 // ----------------------------------------------------------------------
@@ -445,6 +498,13 @@ void AdcDriverTester::testConfigureAveragingBadRes() {
                                       AdcDriver::Gain::GAIN_1X),
             "Assert:");
     }
+}
+
+void AdcDriverTester::testConfigureTwice() {
+    REQUIREMENT("SAMD21-ADC-001: The AdcDriver shall reject a second configure() of the ADC peripheral");
+    this->resetTest();
+    this->configureStandard();
+    ASSERT_DEATH_IF_SUPPORTED(this->configureStandard(), "Assert:");
 }
 
 void AdcDriverTester::testConfigureAllGains() {

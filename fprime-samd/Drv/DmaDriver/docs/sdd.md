@@ -1,423 +1,217 @@
 # Samd21::DmaDriver
 
+Queues DMA transfers on the SAMD21 DMAC and reports each completed transfer from the DMAC
+interrupt.
+
 ## 1. Introduction
 
-The `Samd21::DmaDriver` component provides a hardware driver for the SAMD21 Direct Memory Access Controller (DMAC) peripheral. This passive component manages all 12 hardware DMA channels, supporting memory-to-memory, peripheral-to-memory, and memory-to-peripheral transfers with configurable priorities, beat sizes, and trigger sources.
-
-The driver implements a descriptor-based architecture with support for linked descriptor chains (up to 16 descriptors shared across all channels), enabling automatic sequential transaction processing without CPU intervention. Channels operate independently with interrupt-driven completion notifications and support both one-shot and circular buffer modes.
+`DmaDriver` owns the SAMD21 Direct Memory Access Controller. Peripheral drivers (`UsartDriver`,
+`SpiDriver`, `I2cDriver`) hand it transfers on one of the 12 hardware channels. The port index
+is the channel number. Transfers queued on a busy channel are linked behind the active one and
+run back to back without CPU involvement. Each completed transfer is reported back on the same
+channel index from the DMAC interrupt. A channel can also be turned into a circular chain (used
+for USART RX), have its in-flight progress read, or be aborted.
 
 ## 2. Requirements
 
-| Name           | Description                                                                                                                                   | Validation    |
-| -------------- | --------------------------------------------------------------------------------------------------------------------------------------------- | ------------- |
-| SAMD21-DMA-001 | The DmaDriver shall manage all 12 DMAC hardware channels independently                                                                        | Hardware Test |
-| SAMD21-DMA-002 | The DmaDriver shall support descriptor-based DMA transactions                                                                                 | Hardware Test |
-| SAMD21-DMA-003 | The DmaDriver shall support linked descriptor chains for sequential transfers                                                                 | Hardware Test |
-| SAMD21-DMA-004 | The DmaDriver shall support configurable DMA parameters (trigger sources, transaction types, priorities, beat sizes, address increment modes) | Hardware Test |
-| SAMD21-DMA-005 | The DmaDriver shall detect and report bus errors via ISR output ports                                                                         | Hardware Test |
-| SAMD21-DMA-006 | The DmaDriver shall support circular buffer mode for continuous transfers                                                                     | Hardware Test |
-| SAMD21-DMA-007 | The DmaDriver shall provide writeback register access for in-flight transfer monitoring                                                       | Hardware Test |
-| SAMD21-DMA-008 | The DmaDriver shall report the number of free descriptors as telemetry                                                                        | Hardware Test |
-| SAMD21-DMA-009 | The DmaDriver shall abort the active transaction and drop the queued chain on a channel without emitting completion replies                    | Hardware Test |
+| Name           | Description                                                                                                                                                          | Validation    |
+| -------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------- |
+| SAMD21-DMA-001 | DmaDriver shall run transfers on each of the 12 DMAC channels independently, with the port index selecting the channel.                                              | Hardware Test |
+| SAMD21-DMA-002 | DmaDriver shall execute each requested transfer with the requested trigger source, trigger action, priority, beat size, beat count, address increments and step size. | Hardware Test |
+| SAMD21-DMA-003 | DmaDriver shall start a transfer requested on an idle channel immediately, and shall run a transfer requested on a busy channel after the transfers already queued there, in request order. | Hardware Test |
+| SAMD21-DMA-004 | DmaDriver shall report each completed transfer exactly once, as OK, on the reply port of the channel it ran on, in completion order.                                 | Hardware Test |
+| SAMD21-DMA-005 | DmaDriver shall report a bus error on a channel as a single BUS_ERROR reply carrying the bytes not transferred, and shall drop every transfer still queued on that channel. | Hardware Test |
+| SAMD21-DMA-006 | On request, DmaDriver shall link a channel's last queued transfer back to its first, so the chain repeats until the channel is reset, reporting each completed transfer as OK. | Hardware Test |
+| SAMD21-DMA-007 | On request, DmaDriver shall return a snapshot of a busy channel's in-flight transfer state without stopping or altering the transfer.                               | Hardware Test |
+| SAMD21-DMA-008 | On request, DmaDriver shall stop a channel's active transfer, drop its queued transfers and report nothing for them. A request on an idle channel shall have no effect. | Hardware Test |
+| SAMD21-DMA-009 | DmaDriver shall hold at most `DMA_DESCRIPTOR_N` (16) queued transfers across all channels, in statically allocated memory.                                          | Inspection    |
+| SAMD21-DMA-010 | DmaDriver shall deliver completion replies from the DMAC interrupt at the lowest NVIC priority, and a reply handler may queue a new transfer from inside the reply.   | Hardware Test |
+
+DmaDriver has no unit tests. Almost all of its logic reads or writes DMAC registers and the
+DMAC-owned descriptor memory, and splitting that behind a HAL for host testing was judged not
+worth the cost. All requirements are verified on hardware through the drivers that use DMA
+(see Tested Configurations).
 
 ## 3. Design
 
-### 3.1 Component Diagram
+### Descriptors
 
-`Samd21::DmaDriver` is a passive component that manages the SAMD21 DMAC peripheral. It implements a per-channel port interface pattern where each port is an array of 12 elements, with port index selecting the hardware DMA channel (0-11).
+The DMAC runs a channel from its base descriptor in `dmac_base[channel]` and writes progress to
+`dmac_writeback[channel]`. Both arrays are 16-byte aligned and placed in `SECTION_DMAC_DESCRIPTOR`.
+Further transfers on a busy channel are linked through `DESCADDR` into a pool of
+`DMA_DESCRIPTOR_N` descriptors shared by all channels (`DmaDriverConfig.hpp`). A `U32` bitfield
+tracks the pool, so `DMA_DESCRIPTOR_N` is limited to 32 (`static_assert`).
 
-### 3.2 Ports
+A transfer requested on an idle channel is built in a pool descriptor, copied into the base
+descriptor, and the pool descriptor is freed straight away. The channel is then reset,
+configured (priority, trigger source, trigger action) and enabled. A transfer requested on a
+busy channel takes a pool descriptor, which stays allocated until that transfer completes.
 
-| Kind         | Name                | Port Type              | Usage                                                               |
-| ------------ | ------------------- | ---------------------- | ------------------------------------------------------------------- |
-| `sync input` | `sendTransactionIn` | `Dma.Transaction`      | Queue DMA transaction on channel (array of 12 ports)                |
-| `sync input` | `linkToFrontIn`     | `Fw.Signal`            | Link last descriptor to first for circular mode (array of 12 ports) |
-| `sync input` | `abortTransactionIn`| `Fw.Signal`            | Abort active transaction and drop queued chain (array of 12 ports)  |
-| `sync input` | `readWritebackIn`   | `Dma.ReadWriteback`    | Suspend, read the writeback descriptor, resume (array of 12 ports)  |
-| `sync input` | `schedIn`           | `Svc.Sched`            | Rate group tick; publishes the `freeDescriptors` telemetry channel  |
-| `output`     | `transactionIsrOut` | `Dma.TransactionReply` | Transaction completion signal from ISR (array of 12 ports)          |
+The descriptor end addresses follow datasheet 21.10.3 / 21.10.4:
+`ADDR = START + BTCNT * bytesPerBeat * 2^STEPSIZE` on the side `stepSelection` names, and
+`ADDR = START + BTCNT * bytesPerBeat` otherwise.
 
-Port indices 0-11 map directly to DMAC hardware channels 0-11. Each channel operates independently — transactions queued on different channels execute in parallel according to hardware priority arbitration.
+### Appending to a busy channel
 
-The component also imports `Fw.Channel` (with a `timeCaller` time-get port) to emit telemetry.
+`sendTransactionIn` suspends the channel, links the new descriptor onto the tail of the chain,
+and resumes it. The DMAC caches the next-descriptor pointer in the write-back when it starts a
+block (21.6.2.5). If the write-back shows the tail is executing (`DESCADDR == 0`), the link is
+written there as well, so the hardware fetches the new descriptor instead of ending the chain.
 
-**Telemetry:**
+The channel can still finish and auto-disable before the link lands. The interrupt handler
+covers that case. If the node it keeps after freeing completed nodes has not run and the
+channel reads disabled, it reloads that node as the base descriptor and re-enables the channel
+(`DmaChannel::restart`), the same way a fresh transfer starts.
 
-| Channel           | Type | Description                                                             |
-| ----------------- | ---- | ----------------------------------------------------------------------- |
-| `freeDescriptors` | `U8` | Number of unused descriptors in the shared pool, published on `schedIn` |
+### Interrupt handling
 
-#### 3.2.1 Why Sync Ports?
+`DMAC_Handler` (`DmaDriverIsr.cpp`, built without LTO so it is not discarded) calls
+`handleInterrupt()` through the singleton `s_instance`. The handler runs inside a
+`Samd21::CriticalSection`, handles one channel per entry (`INTPEND.ID`), and services flags in
+this order:
 
-The `sendTransactionIn` and related ports are `sync` (not `guarded`) because this is a baremetal deployment with no RTOS — there are no concurrent threads, only ISR context and main context. Mutex protection (`guarded`) would add unnecessary overhead with no concurrency benefit. The driver uses a global mutex internally to protect hardware register access when required.
+1. **TERR (bus error).** FERR set means an invalid descriptor, which is a programming error and
+   asserts. Otherwise it frees the whole queued chain (unless circular), marks the channel idle
+   and records `BTCNT << BEATSIZE` as the bytes not transferred.
+2. **TCMPL (transfer complete).** One interrupt can cover several completed blocks. The handler
+   finds the node the DMAC is on now from the write-back (`VALID` and `DESCADDR`). It frees
+   every node before that one and queues one OK reply for each freed node. A circular channel
+   frees nothing and queues one reply.
+3. **SUSP.** With FERR and `DESCADDR == 0` it is the normal end of the chain, and the channel
+   is marked idle. With FERR and a non-zero `DESCADDR` it asserts.
 
-### 3.3 Hardware Configuration
+Replies are sent only after every flag is cleared and the bookkeeping is settled. A reply
+handler can therefore queue the next transfer on the same channel from inside the reply.
 
-The `configure()` method initializes the DMAC peripheral:
+A typical TX sequence, with a second transfer queued while the first is running:
 
-| Feature               | Configuration                                                     |
-| --------------------- | ----------------------------------------------------------------- |
-| Clock Enable          | AHBMASK and APBBMASK via PM registers                             |
-| Reset                 | Software reset with timeout protection (waits up to F_CPU cycles) |
-| Base Descriptors      | 16-byte aligned `dmac_base[12]` array (one per channel)           |
-| Writeback Descriptors | 16-byte aligned `dmac_writeback[12]` array (hardware-updated)     |
-| Priority Levels       | All 4 levels enabled (DMAC_CTRL_LVLEN(0xF))                       |
-| Debug Operation       | DMAC continues running during debug pause (DBGCTRL.DBGRUN=1)      |
-| Interrupt             | NVIC enabled at lowest priority ((1 << __NVIC_PRIO_BITS) - 1)     |
+```mermaid
+sequenceDiagram
+    participant U as DMA user
+    participant D as DmaDriver
+    participant H as DMAC
+    U->>D: sendTransactionIn[i] (A)
+    D->>H: copy A to dmac_base[i], enable channel
+    U->>D: sendTransactionIn[i] (B)
+    D->>H: suspend, link B after A, resume
+    H-->>D: DMAC_Handler (TCMPL for A)
+    D->>D: free A, keep B
+    D->>U: transactionIsrOut[i] (OK)
+    H-->>D: DMAC_Handler (TCMPL for B, end of chain)
+    D->>D: free B, channel idle
+    D->>U: transactionIsrOut[i] (OK)
+```
 
-The method must be called exactly once during topology initialization (in `configComponents` phase). Calling `configure()` when already initialized triggers an assertion failure.
+Each channel moves between three states:
 
-### 3.4 Public Interface
+```mermaid
+stateDiagram-v2
+    [*] --> Idle
+    Idle --> Busy: sendTransactionIn
+    Busy --> Busy: sendTransactionIn (append) / TCMPL with more queued
+    Busy --> Idle: chain drained / TERR / abortTransactionIn
+    Busy --> Circular: linkToFrontIn
+    Circular --> Circular: TCMPL (reply, nothing freed)
+```
 
-#### 3.4.1 Transaction Parameters
+### Writeback snapshot and abort
 
-The `sendTransactionIn` port accepts a `Dma.Transaction` struct with the following parameters:
+`readWritebackIn` suspends the channel, waits for `CHINTFLAG.SUSP`, copies the write-back and
+resumes. The transfer continues into the same buffer. `UsartDriver` uses this to drain a
+partly filled RX buffer.
+
+`abortTransactionIn` disables the channel's interrupts, then the channel itself. The current
+beat finishes and the write-back is updated (20.6.3.6). It then clears the write-back so the
+next enable fetches the new base descriptor, clears any latched flags, frees the chain and
+marks the channel idle. Disabling raises no interrupt, so no reply is sent. The owner of the
+channel reports the aborted transfer itself.
+
+### Concurrency
+
+All ports are `sync`. On this baremetal target the only concurrency is the DMAC interrupt, so
+every handler that touches channel state or the descriptor pool runs inside a
+`Samd21::CriticalSection`. The only work done outside one is building the pool descriptor,
+which the interrupt never reads. Every hardware wait (DMAC reset, channel disable, channel
+suspend) is bounded by `F_CPU` iterations and asserts on timeout.
+
+## 4. Ports
+
+| Kind         | Name                 | Port Type              | Usage                                                     |
+| ------------ | -------------------- | ---------------------- | --------------------------------------------------------- |
+| `sync input` | `sendTransactionIn`  | `Dma.Transaction`      | Queue a transfer on channel `[i]`                         |
+| `sync input` | `linkToFrontIn`      | `Fw.Signal`            | Make channel `[i]`'s queued chain circular                |
+| `sync input` | `abortTransactionIn` | `Fw.Signal`            | Abort channel `[i]` and drop its queue (no reply)         |
+| `sync input` | `readWritebackIn`    | `Dma.ReadWriteback`    | Return channel `[i]`'s in-flight write-back               |
+| `output`     | `transactionIsrOut`  | `Dma.TransactionReply` | Completion reply for channel `[i]`, sent from the DMAC ISR |
+
+Each port is an array of `Dma.CHANNEL_NUM` (12). Index `i` is DMAC channel `i`.
+
+The component has no commands, events, telemetry or parameters.
+
+## 5. Integration
+
+Assign each DMA user a channel and wire the request and reply ports on the same index:
 
 ```fpp
-struct Transaction {
-    trigger: Dma.TriggerSource          # Peripheral trigger (SERCOM, timer, ADC) or DISABLE
-    action: Dma.TransactionType         # BEAT, BLOCK, or TRANSACTION
-    priority: Dma.Priority              # Channel priority (0-3) for arbitration
-    sourceAddr: U32                     # Source address (must be aligned to beat size)
-    destAddr: U32                       # Destination address (must be aligned to beat size)
-    len: U32                            # Transfer length in bytes (multiple of beat size)
-    beatSize: Dma.BeatSize              # BYTE (8-bit), HWORD (16-bit), WORD (32-bit)
-    incrementSource: bool               # Auto-increment source address
-    incrementDestination: bool          # Auto-increment destination address
-    stepSize: Dma.AddressIncrementStepSize  # Step increment (1, 2, 4, 8, 16, 32, 64, 128 bytes)
-    stepSelection: Dma.StepSelection    # Apply step to SOURCE or DESTINATION
+enum DmaChannel : U8 {
+    SERCOM4_USART_GSE_TX
+    SERCOM4_USART_GSE_RX
+    SERCOM5_I2C_WRITE
+    SERCOM5_I2C_READ
+}
+
+instance dmaDriver: Samd21.DmaDriver base id 0x3000
+
+connections Dma {
+    uart.dmaQueueOut[Samd21.UsartDriver.DmaChannel.TX] -> dmaDriver.sendTransactionIn[DmaChannel.SERCOM4_USART_GSE_TX]
+    dmaDriver.transactionIsrOut[DmaChannel.SERCOM4_USART_GSE_TX] -> uart.dmaReplyIn[Samd21.UsartDriver.DmaChannel.TX]
+
+    uart.dmaQueueOut[Samd21.UsartDriver.DmaChannel.RX] -> dmaDriver.sendTransactionIn[DmaChannel.SERCOM4_USART_GSE_RX]
+    dmaDriver.transactionIsrOut[DmaChannel.SERCOM4_USART_GSE_RX] -> uart.dmaReplyIn[Samd21.UsartDriver.DmaChannel.RX]
+    uart.dmaRxCircular -> dmaDriver.linkToFrontIn[DmaChannel.SERCOM4_USART_GSE_RX]
+    uart.dmaRxRead -> dmaDriver.readWritebackIn[DmaChannel.SERCOM4_USART_GSE_RX]
+
+    i2cDriver.dmaTransactionAbortOut[Samd21.I2cDriver.DmaChannel.WRITE] -> dmaDriver.abortTransactionIn[DmaChannel.SERCOM5_I2C_WRITE]
 }
 ```
 
-**Validation:** All parameters are validated with assertions:
-- Source/destination addresses must be non-zero and aligned to beat size
-- Transfer length must be non-zero and a multiple of beat size
-- Beat count must be in range [1, 65535]
-- All enum parameters are validated via their `.isValid()` methods
-
-**Software Trigger Behavior:** When a channel is enabled, the driver issues a software trigger (`SWTRIGCTRL.reg |= (1 << channel_id)`) to start the transfer immediately, even if the configured peripheral trigger has already fired (per SAMD21 datasheet §21.8.8).
-
-#### 3.4.2 Transaction Reply
-
-The `transactionIsrOut` port returns a `Dma.Reply` struct on completion:
-
-```fpp
-struct Reply {
-    status: Dma.Status        # OK or BUS_ERROR
-    remainingBytes: U32       # Bytes not transferred (0 if successful)
-}
-```
-
-This port is invoked **from ISR context** and must connect to a `sync input` handler that immediately returns (no blocking operations, no complex logic).
-
-**Ordering guarantee:** `handleInterrupt` finishes all channel bookkeeping before any reply is emitted: the completed descriptor is released, the channel's in-flight state is updated, and the TCMPL/TERR/SUSP flags are cleared. Only then are the (OK or BUS_ERROR) replies delivered. A reply handler may therefore queue a new transaction — on the completing channel or on any other — and will observe the channel idle (or anchored on the chain boundary). Replying before the bookkeeping settled allowed a callback to append to a chain that the remainder of the ISR then detached, which asserted on the next TCMPL.
-
-**Append at the chain end:** `appendToChain` links a new node onto the SRAM tail and, when the write-back shows the hardware is executing the tail, also patches the write-back's `DESCADDR`. If the channel finished its last block (and auto-disabled) between that check and the patch — or before the append ran at all while the TCMPL interrupt was still pending — the hardware never sees the link. `handleInterrupt` closes this window: when the boundary node it keeps after releasing the completed descriptors is still unexecuted and the channel reads disabled, it reloads that node as the base descriptor and re-enables the channel (`DmaChannel::restart`), exactly as a fresh transaction starts. Without this the transaction stayed queued forever: on the reference deployment the UART TX chain stopped after one block and the downlink went silent.
-
-#### 3.4.3 Writeback State
-
-The `readWritebackIn` port returns a `Dma.Writeback` struct providing in-flight transfer state:
-
-```fpp
-struct Writeback {
-    btctrl: U32      # Block Transfer Control register (configuration snapshot)
-    btcnt: U16       # Remaining beat count (decrements during transfer)
-    srcaddr: U32     # Current source address (or end address if incrementing)
-    dstaddr: U32     # Current destination address (or end address if incrementing)
-    descaddr: U32    # Next descriptor address in chain (0 if last)
-}
-```
-
-The writeback descriptor is updated live by hardware during DMA transfers. To read a coherent snapshot, `readWritebackIn` momentarily suspends the channel, reads the writeback registers, and then resumes the channel — the transfer continues from where it left off. This lets a consumer (e.g. the `UsartDriver` idle watchdog) read how many bytes have arrived in the buffer the DMA is actively filling without disturbing the descriptor chain.
-
-#### 3.4.4 Aborting a Channel
-
-The `abortTransactionIn` port cancels the active transaction and discards every queued descriptor on the channel:
-
-1. **Idle channel** — If the channel is not busy there is nothing to abort; the handler returns immediately.
-2. **Disable interrupts** — The channel's `TCMPL`/`TERR`/`SUSP` interrupt enables are cleared first. A software disable does not raise any of these interrupts, but a flag already pending would otherwise fire against a chain that is being torn down.
-3. **Disable the channel** — Clearing `CHCTRLA.ENABLE` lets the in-progress beat finish and updates the writeback before the channel is cleared (datasheet §20.6.3.6); queued/pending descriptors are dropped and `PENDCH` cleared. The writeback therefore reflects the final progress of the transaction that was executing, reported back to the channel as `remainingBeats`.
-4. **Clear latched flags** — Any flags latched during the final beat are cleared and the channel is marked idle.
-5. **Free the chain** — The driver walks the descriptor chain from the anchor (active descriptor plus all dropped descriptors) and frees each back into the shared pool, bounded by `DMA_DESCRIPTOR_N`, then detaches the freed chain from `dmac_base` and clears the tracking pointer.
-
-Because disabling raises no DMAC interrupt, **no `transactionIsrOut` reply is emitted** for the aborted transaction or any dropped queued transactions — the caller is responsible for synthesizing any completion notification it needs.
-
-**Requirements:**
-- Channel must be busy (asserts otherwise via the `abort()` helper; the port handler short-circuits on idle before reaching it)
-- Channel must **not** be in circular mode — a circular channel has no end and its descriptors are shared/never freed, so aborting one is a programming error (assertion failure)
-
-The port handler runs inside a `Samd21::CriticalSection` to guard the register access and descriptor bookkeeping against the DMAC ISR.
-
-### 3.5 Descriptor Architecture
-
-Each channel uses a descriptor-based transfer model:
-
-- **Base descriptor** — Primary descriptor per channel (`dmac_base[channel_id]`), copied from queued transactions
-- **Writeback descriptor** — Hardware-updated status (`dmac_writeback[channel_id]`), reflects current transfer state
-- **Linked descriptors** — Shared pool of 16 descriptors for chaining across all channels (`m_descriptors[]`)
-
-The descriptor pool is shared across all 12 channels. A 32-bit bitfield (`m_descriptors_used`) tracks which descriptors are in use. Descriptors are allocated when transactions are queued and freed when they complete (unless the channel is in circular mode).
-
-**Automatic Chain Linking:** Transactions can be queued while a channel is active. The driver suspends the channel momentarily, links the new descriptor to the end of the chain, and resumes automatically. If the channel completes before the link is seen, `handleInterrupt` reloads the unexecuted boundary node as the base descriptor and re-enables the channel (see §3.4.2).
-
-#### 3.5.1 Descriptor Lifecycle
-
-1. **Allocation** — Driver searches `m_descriptors_used` bitfield for a free descriptor
-2. **Configuration** — Descriptor populated with source/dest addresses, length, beat size, control flags
-3. **Linking:**
-   - If channel is idle: descriptor is copied to `dmac_base[channel_id]`, original descriptor is freed on completion
-   - If channel is busy: descriptor linked to chain via DESCADDR pointers, freed on completion
-4. **Execution** — Hardware processes descriptors sequentially, updating writeback after each
-5. **Completion** — On TCMPL interrupt, completed descriptor freed (unless circular mode)
-6. **Error** — On TERR, current descriptor and all remaining chain descriptors freed (unless circular mode)
-
-### 3.6 Interrupt Handling
-
-The driver handles three interrupt types:
-
-**Transfer Complete (TCMPL)** — Descriptor completed successfully. Frees the completed descriptor (unless circular mode), updates tracking to the next descriptor, and emits `transactionIsrOut` with status `OK` and `remainingBytes=0`. This fires for both intermediate descriptors in a chain and the final descriptor.
-
-**Transfer Error (TERR)** — AHB bus error (invalid address, MPU violation, alignment fault). Emits `transactionIsrOut` with status `BUS_ERROR` and the remaining byte count (calculated from writeback BTCNT). The channel is disabled by hardware on error. All remaining descriptors in the chain are freed (unless circular mode).
-
-**Suspend (SUSP)** — Channel reached end of descriptor chain (DESCADDR=0) or was manually suspended. When SUSP fires with FERR and DESCADDR=0, this indicates normal end-of-chain completion and the channel is marked idle. Invalid descriptors (FERR with DESCADDR≠0) trigger an assertion failure.
-
-### 3.7 ISR Integration
-
-The driver requires the `DMAC_Handler` ISR to be linked at compile time. This ISR is provided in `DmaDriverIsr.cpp` and calls `DmaDriver::handleInterrupt()` via the singleton instance pointer (`s_instance`). The ISR is registered in the NVIC during `configure()` with the lowest priority level.
-
-**Singleton Pattern:** Only one `DmaDriver` instance is supported per application. The constructor asserts if `s_instance` is already set. This constraint is inherent to the singleton ISR integration pattern required for baremetal SAMD21 deployments.
-
-## 4. Usage
-
-### 4.1 Initialization
-
-Initialize the driver during topology setup:
-
-```fpp
-instance dmaDriver: Samd21.DmaDriver base id 0xD00
-
-phase Fpp.ToCpp.Phases.configComponents """
-dmaDriver.configure();
-"""
-```
-
-### 4.2 Memory-to-Memory Copy
-
-```cpp
-// Copy 256 bytes from srcBuffer to dstBuffer using 32-bit transfers
-dmaDriver.sendTransactionIn_out(
-    0,                                          // Channel 0
-    Dma::TriggerSource::DISABLE,                // Software trigger only
-    Dma::TransactionType::TRANSACTION,          // Full transfer on one trigger
-    Dma::Priority::PRIORITY_0,                  // Lowest priority
-    reinterpret_cast<U32>(srcBuffer),
-    reinterpret_cast<U32>(dstBuffer),
-    256,                                        // Length in bytes
-    Dma::BeatSize::WORD,                        // 32-bit transfers (4 bytes/beat)
-    true, true,                                 // Increment both addresses
-    Dma::AddressIncrementStepSize::SIZE_1,      // Step by 1 beat (4 bytes)
-    Dma::StepSelection::DESTINATION             // Step applied to destination (unused when both increment)
-);
-```
-
-### 4.3 Peripheral Transfers (UART RX)
-
-```cpp
-// USART RX: Peripheral-to-memory, triggered by SERCOM hardware
-dmaDriver.sendTransactionIn_out(
-    1,                                          // Channel 1
-    Dma::TriggerSource::SERCOM0_RX,             // Hardware trigger from SERCOM0 RX
-    Dma::TransactionType::BEAT,                 // One beat (byte) per trigger
-    Dma::Priority::PRIORITY_2,                  // Higher priority than mem-to-mem
-    reinterpret_cast<U32>(&SERCOM0->USART.DATA.reg),  // Fixed peripheral register
-    reinterpret_cast<U32>(rxBuffer),            // RAM destination
-    64,                                         // Buffer size in bytes
-    Dma::BeatSize::BYTE,                        // 8-bit transfers
-    false, true,                                // Fixed source, increment dest
-    Dma::AddressIncrementStepSize::SIZE_1,      // Step by 1 byte
-    Dma::StepSelection::DESTINATION             // Step applied to destination
-);
-```
-
-### 4.4 Linked Transactions
-
-Submit multiple transactions to the same channel. The driver automatically chains them:
-
-```cpp
-// First transaction starts immediately
-dmaDriver.sendTransactionIn_out(3, ..., buf1, dest, 128, ...);
-// Second transaction appends to chain, starts when first completes
-dmaDriver.sendTransactionIn_out(3, ..., buf2, dest+128, 256, ...);
-// Third transaction appends to chain, starts when second completes
-dmaDriver.sendTransactionIn_out(3, ..., buf3, dest+384, 64, ...);
-
-// All three execute sequentially without CPU intervention
-// Each emits transactionIsrOut when its descriptor completes
-```
-
-### 4.5 Circular Buffer with linkToFront
-
-Configure a channel to loop continuously through a linked descriptor chain:
-
-```cpp
-// Queue multiple descriptors (minimum 2 required for circular mode)
-dmaDriver.sendTransactionIn_out(2, ..., buf1, dest, 256, ...);
-dmaDriver.sendTransactionIn_out(2, ..., buf2, dest, 256, ...);
-dmaDriver.sendTransactionIn_out(2, ..., buf3, dest, 256, ...);
-
-// Link last descriptor back to first for continuous looping
-dmaDriver.linkToFrontIn_out(2);
-
-// Channel now runs indefinitely: buf1 → buf2 → buf3 → buf1 → ...
-// transactionIsrOut fires after each buffer completes
-// Descriptors are never freed (reused continuously)
-```
-
-**Requirements:**
-- Channel must be busy (have at least one transaction queued)
-- Base descriptor must have at least one linked descriptor (DESCADDR ≠ 0)
-- Once circular mode is enabled, no further transactions can be queued (assertion failure)
-- Circular mode cannot be disabled (remains until channel reset)
-
-### 4.6 In-Flight Transfer Monitoring with readWriteback
-
-Reads how far the active transfer has progressed. This is used, for example, by the `UsartDriver` idle watchdog to drain the buffer the RX DMA is currently filling without disturbing the descriptor chain:
-
-```cpp
-// On UART IDLE detection:
-Dma::Writeback wb = dmaDriver.readWritebackIn_out(1);  // Channel 1
-
-// Calculate bytes received so far in the current buffer
-U32 beatsRemaining = wb.get_btcnt();
-U32 bytesReceived  = originalBtcnt - beatsRemaining;
-
-// Process the partial buffer in place; the DMA keeps filling the SAME buffer
-if (bytesReceived > 0) {
-    processUartData(currentBuffer, bytesReceived);
-}
-
-// Note: Addresses in writeback are END addresses if incrementing.
-// To get the current address: subtract (beatsRemaining * beatSize).
-```
-
-**readWriteback Algorithm:**
-1. Suspend the channel
-2. Wait for CHINTFLAG.SUSP to confirm suspension
-3. Read the writeback descriptor to capture a coherent snapshot
-4. Resume the channel (the transfer continues into the same buffer)
-
-**Requirements:**
-- Channel must be busy (have an active transaction)
-
-### 4.7 Aborting a Channel with abortTransaction
-
-Cancel the in-flight transaction and drop everything queued behind it. No completion reply is emitted, so the owner of the channel must handle any cleanup itself:
-
-```cpp
-// Tear down whatever channel 1 is doing (e.g. on UART teardown or error recovery)
-dmaDriver.abortTransactionIn_out(1);
-
-// The active beat finishes, the writeback captures final progress, all queued
-// descriptors are freed back into the shared pool, and the channel is idle again.
-// No transactionIsrOut fires for the aborted or dropped transactions.
-```
-
-**Requirements:**
-- Channel must not be in circular mode (assertion failure — use a channel reset instead)
-- Aborting an idle channel is a no-op (safe to call)
-
-### 4.8 Free Descriptor Telemetry
-
-Connect `schedIn` to a rate group to periodically publish the number of unused descriptors in the shared pool via the `freeDescriptors` telemetry channel. This is useful for monitoring descriptor-pool exhaustion in flight:
-
-```fpp
-rateGroup1Hz.RateGroupMemberOut[1] -> dmaDriver.schedIn
-```
-
-On each tick, the handler counts the clear bits in the `m_descriptors_used` bitfield and writes the count to `freeDescriptors`.
-
-### 4.9 Topology Connections
-
-```fpp
-instance dmaDriver: Samd21.DmaDriver base id 0xD00
-instance usartDriver: Samd21.UsartDriver base id 0xD10
-
-connections DmaConnections {
-  # USART TX uses DMA channel 0
-  usartDriver.dmaQueueOut[Samd21.UsartDriver.DmaChannel.TX] -> dmaDriver.sendTransactionIn[0]
-  dmaDriver.transactionIsrOut[0] -> usartDriver.dmaReplyIn[Samd21.UsartDriver.DmaChannel.TX]
-  
-  # USART RX uses DMA channel 1 (circular mode)
-  usartDriver.dmaQueueOut[Samd21.UsartDriver.DmaChannel.RX] -> dmaDriver.sendTransactionIn[1]
-  dmaDriver.transactionIsrOut[1] -> usartDriver.dmaReplyIn[Samd21.UsartDriver.DmaChannel.RX]
-  usartDriver.dmaRxCircular -> dmaDriver.linkToFrontIn[1]
-  usartDriver.dmaRxRead -> dmaDriver.readWritebackIn[1]
-
-  # Rate group publishes the free-descriptor telemetry channel
-  rateGroup1Hz.RateGroupMemberOut[1] -> dmaDriver.schedIn
-}
-```
-
-Configuration phase setup (in `instances.fpp`):
-
-```fpp
-phase Fpp.ToCpp.Phases.configComponents """
-dmaDriver.configure();
-"""
-```
-
-### 4.10 Tested Configurations
-
-This component has been tested on the following hardware venues:
-
-| Board Name               | Chip       | Channels Tested | Use Case                                 |
-| ------------------------ | ---------- | --------------- | ---------------------------------------- |
-| Microchip Curiosity Nano | SAMD21G17A | 0, 1, 2, 3      | SERCOM0 USART TX/RX, SERCOM3 USART Tx/Rx |
-
-## 5. Constraints and Limitations
-
-### 5.1 Resource Limits
-
-- **12 hardware channels** — Fixed by SAMD21 DMAC peripheral
-- **16 descriptor pool** — Shared across all channels (configurable in `DmaDriverConfig::DMA_DESCRIPTOR_N`)
-- **Maximum 32 descriptors** — Enforced by 32-bit bitfield used for tracking descriptor allocation
-- **Beat count range** — [1, 65535] beats per descriptor (BTCNT is 16-bit)
-
-When the descriptor pool is exhausted, `sendTransactionIn` asserts (no graceful degradation). Size the pool appropriately for the maximum number of concurrent queued transactions across all channels.
-
-### 5.2 Circular Buffer Constraints
-
-- **Irreversible** — Once `linkToFront` is called, the channel remains circular until reset
-- **No further queueing** — Attempting to queue transactions after `linkToFront` triggers assertion
-- **No descriptor freeing** — Descriptors in circular chains are never freed (remain allocated indefinitely)
-
-### 5.3 Alignment Requirements
-
-- **Descriptor memory** — Must be 16-byte aligned (enforced by `__attribute__((__aligned__(16)))`)
-- **Source/destination addresses** — Must be aligned to beat size:
-  - BYTE (8-bit): 1-byte alignment
-  - HWORD (16-bit): 2-byte alignment (address must be even)
-  - WORD (32-bit): 4-byte alignment (address must be multiple of 4)
-- **Transfer length** — Must be a multiple of beat size
-
-### 5.4 Thread Safety
-
-- **No RTOS** — This driver is designed for baremetal deployments with no concurrent threads
-- **Mutex protection** — Internal global mutex protects DMAC register access during transaction submission
-- **ISR context** — `handleInterrupt()` runs without mutex protection (assumes no conflicting access from ISR)
-- **Single instance** — Only one `DmaDriver` instance is supported per application (singleton ISR pattern)
-
-### 5.5 Error Handling
-
-- **Assertion-based validation** — Invalid parameters trigger assertions (FW_ASSERT) rather than error codes
-- **No recovery from bus errors** — On TERR interrupt, the channel is disabled by hardware and all queued transactions are cancelled (returned with `BUS_ERROR` status)
-- **Timeout protection** — Software reset and channel suspend operations have CPU cycle-based timeouts (F_CPU iterations) to prevent infinite loops
-
-## 6. Performance Characteristics
-
-### 6.1 Memory Usage
-
-- **Component state** — 368 bytes (bitfield, channel state, descriptor pool)
-- **Hardware descriptors** — `2 * 12 * 16 bytes = 384 bytes` (base + writeback)
-  - Must be allocated inside SRAM
-- **Total** — 752 bytes for DmaDriver. Only one instance is supported
+Call `dmaDriver.configure()` in the `configComponents` phase, before any DMA user is
+configured. It enables the DMAC clocks, resets the controller, sets the descriptor and
+write-back base addresses, enables all four priority levels, keeps the DMAC running in debug
+halt, and enables `DMAC_IRQn` at the lowest NVIC priority.
+
+### Tested Configurations
+
+| Board                    | Chip       | Use                                                                  |
+| ------------------------ | ---------- | -------------------------------------------------------------------- |
+| Microchip Curiosity Nano | SAMD21G17A | SERCOM0 / SERCOM3 USART TX and circular RX                           |
+| FFB                      | SAMD21J17D | SERCOM4 / SERCOM2 USART TX and circular RX, SERCOM5 I2C, SERCOM0 SPI |
+
+## 6. Limitations
+
+- **One instance.** `DMAC_Handler` reaches the driver through `s_instance`, and the constructor
+  asserts if one already exists.
+- **Asserts on misuse.** These all assert rather than return an error: an exhausted descriptor
+  pool, a zero source or destination address, an address not aligned to the beat size, an
+  invalid enum, an append, abort or second `linkToFront` on a circular channel, `linkToFront`
+  with only one queued transfer, and `readWritebackIn` on an idle channel. Size
+  `DMA_DESCRIPTOR_N` for the largest number of transfers that can be queued at once across all
+  channels (FFB uses 16).
+- **Zero-length transfers are not rejected.** The DMAC does not define `BTCNT == 0`, so callers
+  must not request one. `SpiDriver` and `I2cDriver` assert a non-zero size before queuing.
+- **Circular is permanent.** A circular channel cannot accept more transfers, be aborted, or go
+  back to one-shot mode. Its descriptors are never freed.
+- **Bus errors are not retried.** The hardware disables the channel on TERR. Every transfer
+  still queued on that channel is dropped without its own reply. The single BUS_ERROR reply
+  stands for all of them.
+- **No software trigger.** A transfer with `TriggerSource::DISABLE` waits for a software or
+  event trigger that this driver never issues.
+- **Interrupt latency.** The reply handlers run inside the DMAC ISR with interrupts disabled.
+  They must return promptly and must not block.
+
+### Memory
+
+| Item                                   | Size      |
+| -------------------------------------- | --------- |
+| Component object (FFB, `dmaDriver`)    | 368 bytes |
+| `dmac_base` + `dmac_writeback` (2 × 12 × 16 bytes) | 384 bytes |

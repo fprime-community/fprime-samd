@@ -34,14 +34,22 @@ concurrency:
 
 env:
   HARNESS_REPO: fprime-community/fprime-samd-reference
-  HARNESS_REF: main
   # The branch GitHub Pages is configured to serve. Fixed, not derived from the ref:
   # a tag build has to publish here too or its report would not be served.
   PAGES_BRANCH: coverage/main
 
 jobs:
+  harness-ref:
+    # A harness branch named pr-<number>, or after this branch, is used when one
+    # exists, so a change spanning both repositories can be tested before it lands.
+    uses: ./.github/workflows/reusable-get-harness-ref.yml
+    with:
+      repository: fprime-community/fprime-samd-reference
+      default-ref: main
+
   coverage-update:
     name: "Coverage [${{ github.ref_type == 'tag' && github.ref_name || 'main' }}]"
+    needs: harness-ref
     # ubuntu-24.04 for gcov-13; see coverage-check.yml for why gcov-11 must be avoided.
     runs-on: ubuntu-24.04
     timeout-minutes: 90
@@ -50,7 +58,7 @@ jobs:
         uses: actions/checkout@v5
         with:
           repository: ${{ env.HARNESS_REPO }}
-          ref: ${{ env.HARNESS_REF }}
+          ref: ${{ needs.harness-ref.outputs.ref }}
           filter: blob:none
 
       - name: "Initialise the harness's other submodules"

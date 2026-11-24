@@ -8,14 +8,15 @@ A component for reporting system information about the SAMD21 MCU.
 of the MCU's most recent reset, and the git commit of each of the three
 repositories baked into the flashed image (project, fprime, fprime-samd).
 Both are needed to answer "what is actually running, and why did it restart"
-from the ground without a debug session.
+from the ground without a debug session. It also provides a `RESET` command
+to reset the MCU from the ground.
 
 Reporting is triggered by calling the public `emit()` method directly —
-there is no command port. The reset cause is read fresh from hardware on
+it is not exposed as a command. The reset cause is read fresh from hardware on
 every call rather than cached at construction, so it reflects whatever most
 recently reset the MCU even if `emit()` is called repeatedly. The commit
 stamps are build-time constants burned into a generated header
-(`SystemInfoVersion.hpp`, see §4).
+(`SystemInfoVersion.hpp`, see §8).
 
 ## 2. Requirements
 
@@ -23,11 +24,20 @@ stamps are build-time constants burned into a generated header
 | -------------- | ----------------------------------------------------------------------------------------- | ---------- |
 | SAMD21-HEALTH-001 | SystemInfo shall report the cause of the most recent reset when emit() is called.    | Unit Test  |
 | SAMD21-HEALTH-002 | SystemInfo shall report the build commits of the project, fprime and fprime-samd.     | Unit Test  |
+| SAMD21-HEALTH-003 | SystemInfo shall reset the MCU on receipt of the RESET command.                        | Unit Test  |
 
 ## 3. Design
 
-`emit()` is the only entry point. On call it reads the current reset cause
-and the build commit stamps, and reports both as an event and as telemetry.
+`emit()` reads the current reset cause and the build commit stamps, and
+reports both as an event and as telemetry.
+
+The `RESET` command responds `OK` and then resets the MCU through the HAL
+(`NVIC_SystemReset()`, a system reset request via the Cortex-M0+ `AIRCR`
+register). The response is sent before the reset because the reset does not
+return; the response is therefore only a best-effort acknowledgement, and it
+may not reach the ground if the downlink has not drained before the core
+resets. The reset is confirmed instead by the `SystemInfo` event emitted on
+the next boot, which reports a `SYSTEM` reset cause (PM `RCAUSE.SYST`).
 
 The reset cause comes from the SAMD21's PM `RCAUSE` register (datasheet
 §17.8.14), which latches the reason for the most recent reset (power-on,
@@ -43,16 +53,21 @@ exercised on real hardware.
 | ------------ | ----------- | --------- | ------------------------------------- |
 | `time get`   | `timeCaller`| —         | Timestamp source for events/telemetry |
 
-Plus the standard `Fw.Event` and `Fw.Channel` autocoded ports. There is no
-command port — `SystemInfo` is driven by calling `emit()` directly (§8).
+Plus the standard `Fw.Command`, `Fw.Event` and `Fw.Channel` autocoded ports.
 
-## 5. Events
+## 5. Commands
+
+| Command | Kind | Arguments | Description                                         |
+| ------- | ---- | --------- | --------------------------------------------------- |
+| `RESET` | sync | —         | Respond `OK`, then reset the MCU. Does not return.  |
+
+## 6. Events
 
 | Event        | Severity      | Arguments                                                     | Description                      |
 | ------------ | ------------- | ------------------------------------------------------------- | --------------------------------- |
 | `SystemInfo` | activity high | `resetReason`, `projectCommit`, `fprimeCommit`, `samdCommit`  | Reset cause + the three build commits, on `emit()` |
 
-## 6. Telemetry
+## 7. Telemetry
 
 | Name            | Type                 | Update       | Description                         |
 | --------------- | -------------------- | ------------ | ------------------------------------ |
@@ -70,7 +85,7 @@ it would fail serialization and trip `FW_ASSERT` inside the autocoded
 project-wide buffer growth is needed. The event is unaffected because
 `FW_LOG_BUFFER_MAX_SIZE` is 120.
 
-## 7. Configuration
+## 8. Configuration
 
 No runtime `configure()` — the component is ready to use as soon as it is
 constructed. All configuration is build-time:
@@ -87,11 +102,10 @@ constructed. All configuration is build-time:
   source tree, reports commit `0` with a configure-time warning rather than
   failing the build.
 
-## 8. Integration
+## 9. Integration
 
 `emit()` is called directly on the instance, typically once at startup from
-an `instances.fpp` init-code phase (there is no command or port to wire for
-triggering it):
+an `instances.fpp` init-code phase:
 
 ```fpp
 instance systemInfo: Samd21.SystemInfo base id 0x3050 {
@@ -102,18 +116,18 @@ instance systemInfo: Samd21.SystemInfo base id 0x3050 {
 ```
 
 No port connections are required beyond `timeCaller` (wired to the
-deployment's time component) and the autocoded event/telemetry ports to the
-usual logger/channel components — `SystemInfo` has no other inputs or
-outputs to wire.
+deployment's time component), the autocoded command ports to the command
+dispatcher (covered by a `command connections instance cmdDisp` pattern), and
+the autocoded event/telemetry ports to the usual logger/channel components.
 
-## 9. Tested Configurations
+## 10. Tested Configurations
 
 | Build                      | Hardware source used          | Reset reasons exercised                                                   |
 | --------------------------- | ------------------------------ | --------------------------------------------------------------------------- |
 | `native-ut` (Linux)         | `SystemInfoHardwareStub.cpp`  | All of `ResetReason`: `POWER_ON`, `BROWN_OUT_12`, `BROWN_OUT_33`, `EXTERNAL`, `SYSTEM`, `WATCHDOG_TIMER`, `UNKNOWN` |
 | `microchip_curiosity` (SAMD21G17A), `ncc` (SAMD21J17D) | `SystemInfoHardware.cpp` | Exercised on both J17 and G17 variants |
 
-## 10. Limitations
+## 11. Limitations
 
 - Only reports a single reset cause even though multiple `RCAUSE` flags can
   be set simultaneously; the priority order in §3 determines which one is
