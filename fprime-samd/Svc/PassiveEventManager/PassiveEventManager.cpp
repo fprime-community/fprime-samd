@@ -23,10 +23,10 @@ PassiveEventManager ::~PassiveEventManager() {}
 // ----------------------------------------------------------------------
 
 void PassiveEventManager ::LogRecv_handler(FwIndexType portNum,
-                                       FwEventIdType id,
-                                       Fw::Time& timeTag,
-                                       const Fw::LogSeverity& severity,
-                                       Fw::LogBuffer& args) {
+                                           FwEventIdType id,
+                                           Fw::Time& timeTag,
+                                           const Fw::LogSeverity& severity,
+                                           Fw::LogBuffer& args) {
     Fw::LogPacket logPacket;
     Fw::ComBuffer buf;
     logPacket.setId(id);

@@ -69,18 +69,18 @@ Fw::LogSeverity PassiveEventManagerTester::pickNonFatal() {
 }
 
 void PassiveEventManagerTester::sendEvent(FwEventIdType id,
-                                      const Fw::Time& time,
-                                      Fw::LogSeverity severity,
-                                      const Fw::LogBuffer& args) {
+                                          const Fw::Time& time,
+                                          Fw::LogSeverity severity,
+                                          const Fw::LogBuffer& args) {
     Fw::Time timeTag(time);
     Fw::LogBuffer argsCopy(args);
     this->invoke_to_LogRecv(0, id, timeTag, severity, argsCopy);
 }
 
 void PassiveEventManagerTester::assertPacket(FwSizeType index,
-                                         FwEventIdType id,
-                                         const Fw::Time& time,
-                                         const Fw::LogBuffer& args) {
+                                             FwEventIdType id,
+                                             const Fw::Time& time,
+                                             const Fw::LogBuffer& args) {
     ASSERT_LT(index, this->fromPortHistory_PktSend->size());
     const FromPortEntry_PktSend& entry = this->fromPortHistory_PktSend->at(index);
     ASSERT_EQ(entry.context, 0U);
@@ -247,7 +247,8 @@ void PassiveEventManagerTester::testOversizedEventDropped() {
 
 void PassiveEventManagerTester::testOversizedFatalAnnounced() {
     REQUIREMENT(
-        "SAMD21-PASSIVEEVENTMANAGER-007: PassiveEventManager shall announce a FATAL event whose log packet does not fit "
+        "SAMD21-PASSIVEEVENTMANAGER-007: PassiveEventManager shall announce a FATAL event whose log packet does not "
+        "fit "
         "in a com buffer, even though the packet is dropped");
 
     const FwEventIdType id = STest::Pick::any();
