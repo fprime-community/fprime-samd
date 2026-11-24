@@ -15,9 +15,8 @@
 //    paired with in the real deployment (CastleTester's topology wires
 //    ThinBufferManager to a StaticMallocator, never a heap allocator). The
 //    bucket (TEST_ALLOCATOR_BUCKET_SIZE) is sized to comfortably cover every
-//    test method's total request on this native build's ABI; StaticMallocator
-//    only asserts size <= BUCKET_SIZE, not equality, so a single shared,
-//    generously-sized bucket is safe to reuse across all three tests.
+//    test method's total request on this native build's ABI; each test
+//    constructs its own TestAllocator, so the arena starts empty every time.
 //
 // This UT relies on config-castle/CMakeLists.txt skipping
 // ThinBufferManagerConfig.hpp's override when BUILD_TESTING is set (same
@@ -51,15 +50,8 @@ static const U16 MGR_ID = 32;
 // on the native (Linux/Darwin, x86_64 or arm64) toolchain, not the SAMD21 cross-compiler, so
 // sizeof(AllocatedBuffer) here (measured: 48 bytes/slot, due to wider pointers/FwSizeType on this
 // ABI) is larger than the SAMD21-target figure (24 bytes/slot) used elsewhere in this project.
-// Rounded up generously above the measured 800-byte requirement, to a multiple of 8
-// (StaticMallocator's BUCKET_SIZE static_assert).
-//
-// This figure is NOT platform-sensitive in practice and is not what used to make this test
-// abort on Linux x86-64. That was StaticMallocator::allocate asserting `alignment <= 8`
-// while its own default argument passes alignof(std::max_align_t), which is 16 there and 8
-// on Darwin arm64; the allocator now aligns its storage to match. Keep the two causes
-// distinct if this ever needs revisiting -- a bucket overflow asserts on line 49 with the
-// requested size, an alignment mismatch on line 50 with the alignment.
+// Rounded up generously above the measured 800-byte requirement. An arena too small for the
+// request makes StaticMallocator return nullptr, which ThinBufferManager::setup asserts on.
 static const size_t TEST_ALLOCATOR_BUCKET_SIZE = 840;
 
 // Define our own instrumented allocator for testing
@@ -69,8 +61,7 @@ class TestAllocator : public Fw::MemAllocator {
     virtual ~TestAllocator() {};
     //! Allocate memory
     /*!
-     * \param identifier the memory segment identifier (must equal MEM_ID -- StaticMallocator asserts
-     *        this, unlike the original F´ test's MallocAllocator-backed version, which ignored it)
+     * \param identifier the memory segment identifier
      * \param size the requested size (not changed)
      * \param recoverable - flag to indicate the memory could be recoverable (always set to false)
      * \return the pointer to memory. Zero if unable to allocate.
@@ -83,7 +74,7 @@ class TestAllocator : public Fw::MemAllocator {
     }
     //! Deallocate memory
     /*!
-     * \param identifier the memory segment identifier (must equal MEM_ID, see allocate())
+     * \param identifier the memory segment identifier
      * \ptr the pointer to memory returned by allocate()
      */
     void deallocate(const FwEnumStoreType identifier, void* ptr) { this->m_alloc.deallocate(identifier, ptr); }
@@ -95,7 +86,7 @@ class TestAllocator : public Fw::MemAllocator {
     void* getMem() { return this->m_mem; }
 
   private:
-    Samd21::StaticMallocator<TEST_ALLOCATOR_BUCKET_SIZE, MEM_ID> m_alloc;
+    Samd21::StaticMallocator<TEST_ALLOCATOR_BUCKET_SIZE> m_alloc;
     FwEnumStoreType m_reqId;
     FwSizeType m_reqSize;
     void* m_mem;

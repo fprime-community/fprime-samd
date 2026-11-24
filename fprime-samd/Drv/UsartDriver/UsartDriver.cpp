@@ -63,7 +63,9 @@ void UsartDriver::configure(SercomKind sercom,
     this->m_active_processed = 0;
 
     this->m_configured = true;
+}
 
+void UsartDriver::lateConfigure() {
     if (this->isConnected_ready_OutputPort(0)) {
         this->ready_out(0);
     }

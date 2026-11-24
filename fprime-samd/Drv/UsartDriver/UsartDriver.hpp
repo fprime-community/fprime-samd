@@ -102,6 +102,8 @@ class UsartDriver final : public UsartDriverComponentBase {
                    StopBits stop_bits,
                    Parity parity);
 
+    void lateConfigure();
+
   private:
     // ----------------------------------------------------------------------
     // Handler implementations for typed input ports

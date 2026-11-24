@@ -115,10 +115,6 @@ void FatalHandler::sendAssert(const CHAR* msg) {
     const FwSizeType packetSize = handler->m_packetSize;
     handler->m_packetSize = 0;
 
-    if (!handler->isConnected_fatalOut_OutputPort(0)) {
-        return;
-    }
-
     Fw::ComBuffer frame(reinterpret_cast<const U8*>(msg), packetSize);
     for (FwIndexType i = 0; i < FatalHandlerConfig::PACKET_REPEAT; i++) {
         handler->fatalOut_out(0, frame, 0);

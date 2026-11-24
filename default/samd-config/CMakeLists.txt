@@ -24,6 +24,7 @@ register_fprime_config(
         "${CMAKE_CURRENT_LIST_DIR}/ThinBufferManagerConfig.hpp"
         "${CMAKE_CURRENT_LIST_DIR}/StaticPrmDbConfig.hpp"
         "${CMAKE_CURRENT_LIST_DIR}/PrmStorageConfig.hpp"
+        "${CMAKE_CURRENT_LIST_DIR}/QueueConfig.hpp"
         "${CMAKE_CURRENT_LIST_DIR}/FatalHandlerConfig.hpp"
     ${SAMD21_ONLY_CFG_OVERRIDES}
     DEPENDS
