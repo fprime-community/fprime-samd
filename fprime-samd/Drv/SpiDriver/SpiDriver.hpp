@@ -120,6 +120,12 @@ class SpiDriver final : public SpiDriverComponentBase {
                    HardwareChipSelect hardware_chipselect);
 
   private:
+    //! Largest transfer: the DMA block transfer count (BTCNT) is 16 bits
+    static constexpr FwSizeType MAX_TRANSFER_BYTES = 0xFFFF;
+
+    //! Largest BAUD register value (8-bit register in SPI host mode)
+    static constexpr U32 MAX_BAUD_REGISTER = 0xFF;
+
     //! A latched reply: the caller's buffers and the status to deliver on activeIn.
     struct PendingReply {
         Samd21::ThinBuffer write;

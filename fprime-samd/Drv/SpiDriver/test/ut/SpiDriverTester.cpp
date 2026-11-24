@@ -42,6 +42,9 @@ SpiDriverTester ::SpiDriverTester()
             this->m_writeData[port][i] = static_cast<U8>(0xA0 + port + i);
             this->m_readData[port][i] = 0;
         }
+        // Default to a full test-size frame: a zero-length request asserts (SPI-REQ-003)
+        this->m_writeBuffer[port].set(this->m_writeData[port], MAX_TEST_SIZE);
+        this->m_readBuffer[port].set(this->m_readData[port], MAX_TEST_SIZE);
     }
     this->clearAll();
 }
@@ -299,6 +302,32 @@ void SpiDriverTester ::testSizeMismatch() {
     this->m_writeBuffer[0].set(this->m_writeData[0], 4);
     this->m_readBuffer[0].set(this->m_readData[0], 5);
     ASSERT_DEATH_IF_SUPPORTED(this->invoke_to_SpiWriteRead(0, this->m_writeBuffer[0], this->m_readBuffer[0]), "");
+}
+
+void SpiDriverTester ::testTransferSizeBounds() {
+    // REQUIREMENT(SPI-REQ-003): 0 and > 65535 bytes assert; 65535 bytes (16-bit BTCNT) is accepted
+    static constexpr FwSizeType MAX_BYTES = 0xFFFF;
+    static U8 writeData[MAX_BYTES + 1];
+    static U8 readData[MAX_BYTES + 1];
+    this->configure(SpiDriver::HardwareChipSelect::DISABLED);
+
+    this->m_writeBuffer[0].set(writeData, 0);
+    this->m_readBuffer[0].set(readData, 0);
+    ASSERT_DEATH_IF_SUPPORTED(this->invoke_to_SpiWriteRead(0, this->m_writeBuffer[0], this->m_readBuffer[0]), "");
+
+    this->m_writeBuffer[0].set(writeData, MAX_BYTES + 1);
+    this->m_readBuffer[0].set(readData, MAX_BYTES + 1);
+    ASSERT_DEATH_IF_SUPPORTED(this->invoke_to_SpiWriteRead(0, this->m_writeBuffer[0], this->m_readBuffer[0]), "");
+
+    // Largest accepted transfer: both streams carry the full 16-bit count
+    this->clearAll();
+    this->m_writeBuffer[0].set(writeData, MAX_BYTES);
+    this->m_readBuffer[0].set(readData, MAX_BYTES);
+    this->invoke_to_SpiWriteRead(0, this->m_writeBuffer[0], this->m_readBuffer[0]);
+    ASSERT_from_dmaTransactionOut_SIZE(2);
+    ASSERT_EQ(this->fromPortHistory_dmaTransactionOut->at(0).beat_count, MAX_BYTES);
+    ASSERT_EQ(this->fromPortHistory_dmaTransactionOut->at(1).beat_count, MAX_BYTES);
+    this->finishTransaction(0, true);
 }
 
 void SpiDriverTester ::testUnexpectedDmaReply() {

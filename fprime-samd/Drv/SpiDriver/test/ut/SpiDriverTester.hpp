@@ -87,6 +87,9 @@ class SpiDriverTester final : public SpiDriverGTestBase {
     //! Mismatched write/read sizes assert
     void testSizeMismatch();
 
+    //! Transfer-size bounds: 0 and 65536 bytes assert, 65535 bytes runs to SPI_OK
+    void testTransferSizeBounds();
+
     //! A DMA reply with no transaction in flight, or a duplicate completion, is ignored
     void testUnexpectedDmaReply();
 

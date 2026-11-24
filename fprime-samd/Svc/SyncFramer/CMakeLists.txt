@@ -19,8 +19,9 @@ register_fprime_library(
         "${CMAKE_CURRENT_LIST_DIR}/SyncFramer.fpp"
     SOURCES
         "${CMAKE_CURRENT_LIST_DIR}/SyncFramer.cpp"
-#   DEPENDS
-#       MyPackage_MyOtherModule
+    DEPENDS
+        Svc_FprimeProtocol
+        Utils_Hash
 )
 
 ### Unit Tests ###
