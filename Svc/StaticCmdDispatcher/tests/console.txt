@@ -1,7 +1,7 @@
 # unit-test console output: Svc/StaticCmdDispatcher
 
 ==============================================================================
-PASSED  fprime-samd_Svc_StaticCmdDispatcher_ut_exe  (0.04s)
+PASSED  fprime-samd_Svc_StaticCmdDispatcher_ut_exe  (0.03s)
 ==============================================================================
 [==========] Running 14 tests from 1 test suite.
 [----------] Global test environment set-up.
@@ -146,9 +146,9 @@ SET_EVENT_EMISSION silences dispatch/completion events for one sequence port
 SET_EVENT_EMISSION on a port past the sequence ports fails EXECUTION_ERROR
 ***************************************
 [       OK ] StaticCmdDispatcherTest.EventEmissionPortOutOfRange (0 ms)
-[----------] 14 tests from StaticCmdDispatcherTest (3 ms total)
+[----------] 14 tests from StaticCmdDispatcherTest (1 ms total)
 
 [----------] Global test environment tear-down
-[==========] 14 tests from 1 test suite ran. (4 ms total)
+[==========] 14 tests from 1 test suite ran. (2 ms total)
 [  PASSED  ] 14 tests.
 

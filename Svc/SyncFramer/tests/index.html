@@ -32,7 +32,7 @@ pre {
   white-space: pre-wrap; word-break: break-word;
 }
 .empty { color: #57606a; padding: 0.75rem 1rem; border-top: 1px solid #d0d7de; margin: 0; }
-</style></head><body><h1>Unit-test console output &mdash; <code>Svc/SyncFramer</code></h1><div class="meta"><span class="pill passed">passed</span> 1 passed &middot; 0.05s &middot; <a href="../../../index.html">← back to the module list</a> &middot; <a href="console.txt">plain text</a></div><details><summary><span class="pill passed">passed</span><span class="name">fprime-samd_Svc_SyncFramer_ut_exe</span><span class="time">0.05s</span></summary><pre>[STest::Random] Generated seed 644544 from system time
+</style></head><body><h1>Unit-test console output &mdash; <code>Svc/SyncFramer</code></h1><div class="meta"><span class="pill passed">passed</span> 1 passed &middot; 0.02s &middot; <a href="../../../index.html">← back to the module list</a> &middot; <a href="console.txt">plain text</a></div><details><summary><span class="pill passed">passed</span><span class="name">fprime-samd_Svc_SyncFramer_ut_exe</span><span class="time">0.02s</span></summary><pre>[STest::Random] Generated seed 839291 from system time
 [==========] Running 7 tests from 2 test suites.
 [----------] Global test environment set-up.
 [----------] 6 tests from Nominal
@@ -41,7 +41,7 @@ pre {
 ***************************************
 (RQ)       SAMD21-SYNCFRAMER-001: SyncFramer shall send each packet received on comPacketIn as one F Prime protocol frame: a header carrying the 0xDEADBEEF start word and the packet length, the packet, and a trailer carrying the CRC32 of the header and packet
 ***************************************
-[       OK ] Nominal.testFrameLayout (1 ms)
+[       OK ] Nominal.testFrameLayout (0 ms)
 [ RUN      ] Nominal.testKnownCrc
 
 ***************************************
@@ -57,13 +57,13 @@ Frame bytes match an independently computed frame (CRC-32/IEEE 802.3, as zlib.cr
 ***************************************
 (RQ)       SAMD21-SYNCFRAMER-002: Frames sent by SyncFramer shall be accepted by the F Prime frame detector used to deframe the stream on the ground
 ***************************************
-[       OK ] Nominal.testGroundDeframes (6 ms)
+[       OK ] Nominal.testGroundDeframes (1 ms)
 [ RUN      ] Nominal.testPacketSizes
 
 ***************************************
 (RQ)       SAMD21-SYNCFRAMER-003: SyncFramer shall frame packets of every size from 0 to FW_COM_BUFFER_MAX_SIZE bytes
 ***************************************
-[       OK ] Nominal.testPacketSizes (3 ms)
+[       OK ] Nominal.testPacketSizes (1 ms)
 [ RUN      ] Nominal.testBackToBackFrames
 
 ***************************************
@@ -76,7 +76,7 @@ Frame bytes match an independently computed frame (CRC-32/IEEE 802.3, as zlib.cr
 (RQ)       SAMD21-SYNCFRAMER-006: SyncFramer shall frame packets without waiting for drvConnected, and drvConnected shall have no effect
 ***************************************
 [       OK ] Nominal.testDrvConnectedNoOp (0 ms)
-[----------] 6 tests from Nominal (11 ms total)
+[----------] 6 tests from Nominal (4 ms total)
 
 [----------] 1 test from OffNominal
 [ RUN      ] OffNominal.testDriverErrorIgnored
@@ -88,6 +88,6 @@ Frame bytes match an independently computed frame (CRC-32/IEEE 802.3, as zlib.cr
 [----------] 1 test from OffNominal (0 ms total)
 
 [----------] Global test environment tear-down
-[==========] 7 tests from 2 test suites ran. (12 ms total)
+[==========] 7 tests from 2 test suites ran. (4 ms total)
 [  PASSED  ] 7 tests.
 </pre></details></body></html>

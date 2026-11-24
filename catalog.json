@@ -3,8 +3,8 @@
   "generator": "fprime-samd/.github/scripts/coverage_site.py",
   "ref": "main",
   "ref_type": "branch",
-  "commit": "070828317b15b40c1721ebbcf3e7193f181cece1",
-  "generated_at": "2026-11-24T01:07:15Z",
+  "commit": "b1a5c4d24813c2b5b1cce6cdd1c75624211e9b58",
+  "generated_at": "2026-11-24T01:34:31Z",
   "thresholds": {
     "platinum": 95.0,
     "gold": 90.0,
@@ -12,8 +12,8 @@
   },
   "overall": {
     "line_pct": 97.17,
-    "line_covered": 2027,
-    "line_total": 2086,
+    "line_covered": 2028,
+    "line_total": 2087,
     "function_pct": 99.05,
     "function_covered": 208,
     "function_total": 210,
@@ -30,7 +30,7 @@
     "passed": 18,
     "failed": 0,
     "skipped": 0,
-    "duration": 5.514,
+    "duration": 3.35,
     "report": "tests/index.html"
   },
   "modules": [
@@ -56,7 +56,7 @@
         "passed": 1,
         "failed": 0,
         "skipped": 0,
-        "duration": 0.625,
+        "duration": 0.366,
         "report": "Drv/AdcDriver/tests/index.html"
       },
       "tier": "platinum"
@@ -91,7 +91,7 @@
         "passed": 1,
         "failed": 0,
         "skipped": 0,
-        "duration": 0.036,
+        "duration": 0.02,
         "report": "Drv/GpioDriver/tests/index.html"
       },
       "tier": "platinum"
@@ -118,7 +118,7 @@
         "passed": 1,
         "failed": 0,
         "skipped": 0,
-        "duration": 0.087,
+        "duration": 0.053,
         "report": "Drv/I2cDriver/tests/index.html"
       },
       "tier": "gold"
@@ -145,7 +145,7 @@
         "passed": 1,
         "failed": 0,
         "skipped": 0,
-        "duration": 0.975,
+        "duration": 0.498,
         "report": "Drv/RtcDriver/tests/index.html"
       },
       "tier": "gold"
@@ -155,15 +155,15 @@
       "has_ut": true,
       "has_coverage": true,
       "coverage": {
-        "line_pct": 98.45,
-        "line_covered": 191,
-        "line_total": 194,
+        "line_pct": 98.46,
+        "line_covered": 192,
+        "line_total": 195,
         "function_pct": 100.0,
         "function_covered": 14,
         "function_total": 14,
-        "branch_pct": 90.32,
-        "branch_covered": 168,
-        "branch_total": 186,
+        "branch_pct": 90.27,
+        "branch_covered": 167,
+        "branch_total": 185,
         "report": "Drv/SpiDriver/coverage/index.html"
       },
       "tests": {
@@ -172,7 +172,7 @@
         "passed": 1,
         "failed": 0,
         "skipped": 0,
-        "duration": 2.113,
+        "duration": 1.415,
         "report": "Drv/SpiDriver/tests/index.html"
       },
       "tier": "platinum"
@@ -199,7 +199,7 @@
         "passed": 1,
         "failed": 0,
         "skipped": 0,
-        "duration": 0.03,
+        "duration": 0.022,
         "report": "Drv/SystemInfo/tests/index.html"
       },
       "tier": "platinum"
@@ -234,7 +234,7 @@
         "passed": 1,
         "failed": 0,
         "skipped": 0,
-        "duration": 0.492,
+        "duration": 0.294,
         "report": "Drv/UsartDriver/tests/index.html"
       },
       "tier": "gold"
@@ -269,7 +269,7 @@
         "passed": 1,
         "failed": 0,
         "skipped": 0,
-        "duration": 0.473,
+        "duration": 0.247,
         "report": "Svc/FatalHandler/tests/index.html"
       },
       "tier": "platinum"
@@ -304,7 +304,7 @@
         "passed": 1,
         "failed": 0,
         "skipped": 0,
-        "duration": 0.041,
+        "duration": 0.023,
         "report": "Svc/Framer/tests/index.html"
       },
       "tier": "gold"
@@ -355,7 +355,7 @@
         "passed": 1,
         "failed": 0,
         "skipped": 0,
-        "duration": 0.037,
+        "duration": 0.033,
         "report": "Svc/PrmStorage/tests/index.html"
       },
       "tier": "platinum"
@@ -382,7 +382,7 @@
         "passed": 1,
         "failed": 0,
         "skipped": 0,
-        "duration": 0.033,
+        "duration": 0.019,
         "report": "Svc/ProcTime/tests/index.html"
       },
       "tier": "platinum"
@@ -409,7 +409,7 @@
         "passed": 1,
         "failed": 0,
         "skipped": 0,
-        "duration": 0.059,
+        "duration": 0.05,
         "report": "Svc/Seq/tests/index.html"
       },
       "tier": "platinum"
@@ -436,7 +436,7 @@
         "passed": 1,
         "failed": 0,
         "skipped": 0,
-        "duration": 0.042,
+        "duration": 0.029,
         "report": "Svc/StaticCmdDispatcher/tests/index.html"
       },
       "tier": "platinum"
@@ -471,7 +471,7 @@
         "passed": 1,
         "failed": 0,
         "skipped": 0,
-        "duration": 0.069,
+        "duration": 0.048,
         "report": "Svc/StaticPrmDb/tests/index.html"
       },
       "tier": "platinum"
@@ -498,7 +498,7 @@
         "passed": 1,
         "failed": 0,
         "skipped": 0,
-        "duration": 0.047,
+        "duration": 0.026,
         "report": "Svc/StaticTlmPacketizer/tests/index.html"
       },
       "tier": "platinum"
@@ -525,7 +525,7 @@
         "passed": 1,
         "failed": 0,
         "skipped": 0,
-        "duration": 0.046,
+        "duration": 0.021,
         "report": "Svc/SyncFramer/tests/index.html"
       },
       "tier": "platinum"
@@ -552,7 +552,7 @@
         "passed": 1,
         "failed": 0,
         "skipped": 0,
-        "duration": 0.038,
+        "duration": 0.024,
         "report": "Svc/ThinBufferManager/tests/index.html"
       },
       "tier": "platinum"
@@ -579,7 +579,7 @@
         "passed": 1,
         "failed": 0,
         "skipped": 0,
-        "duration": 0.271,
+        "duration": 0.164,
         "report": "Svc/TmFramer/tests/index.html"
       },
       "tier": "platinum"

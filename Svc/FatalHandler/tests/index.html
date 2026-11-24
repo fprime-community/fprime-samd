@@ -32,7 +32,7 @@ pre {
   white-space: pre-wrap; word-break: break-word;
 }
 .empty { color: #57606a; padding: 0.75rem 1rem; border-top: 1px solid #d0d7de; margin: 0; }
-</style></head><body><h1>Unit-test console output &mdash; <code>Svc/FatalHandler</code></h1><div class="meta"><span class="pill passed">passed</span> 1 passed &middot; 0.47s &middot; <a href="../../../index.html">← back to the module list</a> &middot; <a href="console.txt">plain text</a></div><details><summary><span class="pill passed">passed</span><span class="name">fprime-samd_Svc_FatalHandler_ut_exe</span><span class="time">0.47s</span></summary><pre>[STest::Random] Generated seed 785254 from system time
+</style></head><body><h1>Unit-test console output &mdash; <code>Svc/FatalHandler</code></h1><div class="meta"><span class="pill passed">passed</span> 1 passed &middot; 0.25s &middot; <a href="../../../index.html">← back to the module list</a> &middot; <a href="console.txt">plain text</a></div><details><summary><span class="pill passed">passed</span><span class="name">fprime-samd_Svc_FatalHandler_ut_exe</span><span class="time">0.25s</span></summary><pre>[STest::Random] Generated seed 363907 from system time
 [==========] Running 12 tests from 3 test suites.
 [----------] Global test environment set-up.
 [----------] 7 tests from Nominal
@@ -79,7 +79,7 @@ FatalHandlerHal::reset
 (RQ)       SAMD21-FATAL-008: FatalHandler shall reset the MCU after reporting an assertion
 ***************************************
 [       OK ] Nominal.testTerminateResets (0 ms)
-[----------] 7 tests from Nominal (3 ms total)
+[----------] 7 tests from Nominal (2 ms total)
 
 [----------] 3 tests from OffNominal
 [ RUN      ] OffNominal.testNoInstanceResetsSilently
@@ -110,16 +110,16 @@ FatalHandlerHal::reset
 ***************************************
 FW_ASSERT reaches FatalHandler through the link-time hook, which resets before the framework aborts
 ***************************************
-[       OK ] Death.testFwAssertRoutedToHandler (231 ms)
+[       OK ] Death.testFwAssertRoutedToHandler (117 ms)
 [ RUN      ] Death.testFatalReceiveAsserts
 
 ***************************************
 (RQ)       SAMD21-FATAL-009: FatalHandler shall assert when it receives a FATAL event
 ***************************************
-[       OK ] Death.testFatalReceiveAsserts (210 ms)
-[----------] 2 tests from Death (441 ms total)
+[       OK ] Death.testFatalReceiveAsserts (106 ms)
+[----------] 2 tests from Death (223 ms total)
 
 [----------] Global test environment tear-down
-[==========] 12 tests from 3 test suites ran. (446 ms total)
+[==========] 12 tests from 3 test suites ran. (226 ms total)
 [  PASSED  ] 12 tests.
 </pre></details></body></html>
