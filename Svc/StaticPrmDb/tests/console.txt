@@ -1,9 +1,9 @@
 # unit-test console output: Svc/StaticPrmDb
 
 ==============================================================================
-PASSED  fprime-samd_Svc_StaticPrmDb_ut_exe  (0.05s)
+PASSED  fprime-samd_Svc_StaticPrmDb_ut_exe  (0.04s)
 ==============================================================================
-[STest::Random] Generated seed 969924 from system time
+[STest::Random] Generated seed 830071 from system time
 [==========] Running 19 tests from 3 test suites.
 [----------] Global test environment set-up.
 [----------] 1 test from Params
@@ -16,8 +16,8 @@ PASSED  fprime-samd_Svc_StaticPrmDb_ut_exe  (0.05s)
 ***************************************
 parameters set through setPrm read back VALID, others INVALID
 ***************************************
-[       OK ] Params.SetGet (1 ms)
-[----------] 1 test from Params (1 ms total)
+[       OK ] Params.SetGet (0 ms)
+[----------] 1 test from Params (0 ms total)
 
 [----------] 10 tests from Store
 [ RUN      ] Store.SaveLoad
@@ -85,7 +85,7 @@ a MERGE load fills in invalid parameters without overwriting valid ones
 ***************************************
 a save interrupted at any record loads each parameter whole from one save, or invalid
 ***************************************
-[       OK ] Store.InterruptedSave (6 ms)
+[       OK ] Store.InterruptedSave (4 ms)
 [ RUN      ] Store.MergeMixedSaves
 
 ***************************************
@@ -99,7 +99,7 @@ a save interrupted at any record loads each parameter whole from one save, or in
 ***************************************
 a MERGE never completes a parameter with segments of another save
 ***************************************
-[       OK ] Store.MergeMixedSaves (1 ms)
+[       OK ] Store.MergeMixedSaves (0 ms)
 [ RUN      ] Store.StaleDuplicate
 
 ***************************************
@@ -151,8 +151,8 @@ an erased store loads with every parameter invalid
 ***************************************
 split and check-only segments, the largest parameter and a full store round-trip
 ***************************************
-[       OK ] Store.BoundaryLayout (6 ms)
-[----------] 10 tests from Store (19 ms total)
+[       OK ] Store.BoundaryLayout (5 ms)
+[----------] 10 tests from Store (14 ms total)
 
 [----------] 8 tests from Storage
 [ RUN      ] Storage.ReadFailure
@@ -246,6 +246,6 @@ without storage connected, SAVE and LOAD fail with an event
 [----------] 8 tests from Storage (3 ms total)
 
 [----------] Global test environment tear-down
-[==========] 19 tests from 3 test suites ran. (24 ms total)
+[==========] 19 tests from 3 test suites ran. (18 ms total)
 [  PASSED  ] 19 tests.
 

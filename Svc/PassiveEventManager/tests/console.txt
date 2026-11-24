@@ -1,0 +1,75 @@
+# unit-test console output: Svc/PassiveEventManager
+
+==============================================================================
+PASSED  fprime-samd_Svc_PassiveEventManager_ut_exe  (0.05s)
+==============================================================================
+[STest::Random] Generated seed 769260 from system time
+[==========] Running 9 tests from 3 test suites.
+[----------] Global test environment set-up.
+[----------] 5 tests from Nominal
+[ RUN      ] Nominal.testPacketLayout
+
+***************************************
+(RQ)       SAMD21-PASSIVEEVENTMANAGER-001: PassiveEventManager shall send each event received on LogRecv out of PktSend as one F Prime log packet carrying the event ID, time tag and arguments
+***************************************
+[       OK ] Nominal.testPacketLayout (0 ms)
+[ RUN      ] Nominal.testEverySeverity
+
+***************************************
+(RQ)       SAMD21-PASSIVEEVENTMANAGER-002: PassiveEventManager shall send events of every severity, without filtering
+***************************************
+[       OK ] Nominal.testEverySeverity (0 ms)
+[ RUN      ] Nominal.testArgumentSizes
+
+***************************************
+(RQ)       SAMD21-PASSIVEEVENTMANAGER-003: PassiveEventManager shall send events whose arguments fit in a com buffer after the log packet header, from no arguments up to FW_COM_BUFFER_MAX_SIZE in total
+***************************************
+[       OK ] Nominal.testArgumentSizes (3 ms)
+[ RUN      ] Nominal.testFatalAnnounced
+
+***************************************
+(RQ)       SAMD21-PASSIVEEVENTMANAGER-004: PassiveEventManager shall announce each FATAL event's ID on FatalAnnounce, and shall not announce events of any other severity
+***************************************
+[       OK ] Nominal.testFatalAnnounced (0 ms)
+[ RUN      ] Nominal.testFatalPacketBeforeAnnounce
+
+***************************************
+(RQ)       SAMD21-PASSIVEEVENTMANAGER-005: PassiveEventManager shall send a FATAL event's packet before announcing it, so the packet is out before the fatal handler takes over
+***************************************
+[       OK ] Nominal.testFatalPacketBeforeAnnounce (0 ms)
+[----------] 5 tests from Nominal (4 ms total)
+
+[----------] 1 test from Random
+[ RUN      ] Random.testRandomEvents
+
+***************************************
+Random events of random severity and size; every one is sent, only FATALs are announced
+***************************************
+[       OK ] Random.testRandomEvents (25 ms)
+[----------] 1 test from Random (25 ms total)
+
+[----------] 3 tests from OffNominal
+[ RUN      ] OffNominal.testOversizedEventDropped
+
+***************************************
+(RQ)       SAMD21-PASSIVEEVENTMANAGER-006: PassiveEventManager shall drop, without asserting, an event whose log packet does not fit in a com buffer
+***************************************
+[       OK ] OffNominal.testOversizedEventDropped (0 ms)
+[ RUN      ] OffNominal.testOversizedFatalAnnounced
+
+***************************************
+(RQ)       SAMD21-PASSIVEEVENTMANAGER-007: PassiveEventManager shall announce a FATAL event whose log packet does not fit in a com buffer, even though the packet is dropped
+***************************************
+[       OK ] OffNominal.testOversizedFatalAnnounced (0 ms)
+[ RUN      ] OffNominal.testUnconnectedOutputs
+
+***************************************
+(RQ)       SAMD21-PASSIVEEVENTMANAGER-008: PassiveEventManager shall accept events, including FATAL events, with PktSend or FatalAnnounce unconnected
+***************************************
+[       OK ] OffNominal.testUnconnectedOutputs (0 ms)
+[----------] 3 tests from OffNominal (0 ms total)
+
+[----------] Global test environment tear-down
+[==========] 9 tests from 3 test suites ran. (30 ms total)
+[  PASSED  ] 9 tests.
+

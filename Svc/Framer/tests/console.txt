@@ -3,28 +3,108 @@
 ==============================================================================
 PASSED  fprime-samd_Svc_Framer_ut_exe  (0.02s)
 ==============================================================================
-[STest::Random] Generated seed 653363 from system time
-[==========] Running 6 tests from 2 test suites.
+[STest::Random] Generated seed 817128 from system time
+[==========] Running 12 tests from 2 test suites.
 [----------] Global test environment set-up.
-[----------] 5 tests from Nominal
+[----------] 8 tests from Nominal
 [ RUN      ] Nominal.SinglePacket
+
+***************************************
+(RQ)       SAMD21-FRAMER-003: Framer shall accumulate the packets received between schedIn calls and send them together in one drvSendOut buffer
+***************************************
 [       OK ] Nominal.SinglePacket (0 ms)
 [ RUN      ] Nominal.MultiPacketAccumulation
+
+***************************************
+(RQ)       SAMD21-FRAMER-003: Framer shall accumulate the packets received between schedIn calls and send them together in one drvSendOut buffer
+***************************************
+
+***************************************
+(RQ)       SAMD21-FRAMER-004: Framer shall send the accumulated packets on drvSendOut when schedIn is invoked
+***************************************
 [       OK ] Nominal.MultiPacketAccumulation (0 ms)
 [ RUN      ] Nominal.BufferOverflow
+
+***************************************
+(RQ)       SAMD21-FRAMER-005: Framer shall send the accumulated packets on drvSendOut before accepting a packet that would not fit in FRAMER_TX_BUFFER_SIZE bytes
+***************************************
 [       OK ] Nominal.BufferOverflow (0 ms)
 [ RUN      ] Nominal.DoubleBufferLifecycle
+
+***************************************
+(RQ)       SAMD21-FRAMER-006: Framer shall not write to a buffer sent on drvSendOut until that buffer is returned on drvReturnIn
+***************************************
 [       OK ] Nominal.DoubleBufferLifecycle (0 ms)
 [ RUN      ] Nominal.SchedInFlush
-[       OK ] Nominal.SchedInFlush (0 ms)
-[----------] 5 tests from Nominal (1 ms total)
 
-[----------] 1 test from OffNominal
+***************************************
+(RQ)       SAMD21-FRAMER-004: Framer shall send the accumulated packets on drvSendOut when schedIn is invoked
+***************************************
+[       OK ] Nominal.SchedInFlush (0 ms)
+[ RUN      ] Nominal.FrameFormat
+
+***************************************
+(RQ)       SAMD21-FRAMER-001: Framer shall wrap each packet in an F Prime protocol frame: a header carrying the 0xDEADBEEF start word and the packet length, the packet, and a trailer carrying the CRC32 of the header and packet
+***************************************
+
+***************************************
+(RQ)       SAMD21-FRAMER-003: Framer shall accumulate the packets received between schedIn calls and send them together in one drvSendOut buffer
+***************************************
+[       OK ] Nominal.FrameFormat (0 ms)
+[ RUN      ] Nominal.GroundDeframes
+
+***************************************
+(RQ)       SAMD21-FRAMER-002: Frames sent by Framer shall be accepted by the F Prime frame detector used to deframe the stream on the ground
+***************************************
+[       OK ] Nominal.GroundDeframes (0 ms)
+[ RUN      ] Nominal.EmptySchedIn
+
+***************************************
+(RQ)       SAMD21-FRAMER-004: Framer shall send the accumulated packets on drvSendOut when schedIn is invoked
+***************************************
+[       OK ] Nominal.EmptySchedIn (0 ms)
+[----------] 8 tests from Nominal (2 ms total)
+
+[----------] 4 tests from OffNominal
 [ RUN      ] OffNominal.Backpressure
+
+***************************************
+(RQ)       SAMD21-FRAMER-006: Framer shall not write to a buffer sent on drvSendOut until that buffer is returned on drvReturnIn
+***************************************
+
+***************************************
+(RQ)       SAMD21-FRAMER-004: Framer shall send the accumulated packets on drvSendOut when schedIn is invoked
+***************************************
 [       OK ] OffNominal.Backpressure (0 ms)
-[----------] 1 test from OffNominal (0 ms total)
+[ RUN      ] OffNominal.DroppedPacketTelemetry
+
+***************************************
+(RQ)       SAMD21-FRAMER-007: Framer shall drop a packet when no buffer has room for it and count it in the DroppedPackets channel, reported on each schedIn
+***************************************
+[       OK ] OffNominal.DroppedPacketTelemetry (0 ms)
+[ RUN      ] OffNominal.BeforeConnected
+
+***************************************
+(RQ)       SAMD21-FRAMER-008: Framer shall not send on drvSendOut before drvConnected is invoked
+***************************************
+
+***************************************
+(RQ)       SAMD21-FRAMER-007: Framer shall drop a packet when no buffer has room for it and count it in the DroppedPackets channel, reported on each schedIn
+***************************************
+[       OK ] OffNominal.BeforeConnected (0 ms)
+[ RUN      ] OffNominal.ReturnWithError
+
+***************************************
+(RQ)       SAMD21-FRAMER-006: Framer shall not write to a buffer sent on drvSendOut until that buffer is returned on drvReturnIn
+***************************************
+
+***************************************
+(RQ)       SAMD21-FRAMER-009: Framer shall count the frames of a buffer returned on drvReturnIn with a failure status as dropped in the DroppedPackets channel
+***************************************
+[       OK ] OffNominal.ReturnWithError (0 ms)
+[----------] 4 tests from OffNominal (0 ms total)
 
 [----------] Global test environment tear-down
-[==========] 6 tests from 2 test suites ran. (1 ms total)
-[  PASSED  ] 6 tests.
+[==========] 12 tests from 2 test suites ran. (2 ms total)
+[  PASSED  ] 12 tests.
 

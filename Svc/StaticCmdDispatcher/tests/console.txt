@@ -1,7 +1,7 @@
 # unit-test console output: Svc/StaticCmdDispatcher
 
 ==============================================================================
-PASSED  fprime-samd_Svc_StaticCmdDispatcher_ut_exe  (0.03s)
+PASSED  fprime-samd_Svc_StaticCmdDispatcher_ut_exe  (0.02s)
 ==============================================================================
 [==========] Running 14 tests from 1 test suite.
 [----------] Global test environment set-up.
@@ -149,6 +149,6 @@ SET_EVENT_EMISSION on a port past the sequence ports fails EXECUTION_ERROR
 [----------] 14 tests from StaticCmdDispatcherTest (1 ms total)
 
 [----------] Global test environment tear-down
-[==========] 14 tests from 1 test suite ran. (2 ms total)
+[==========] 14 tests from 1 test suite ran. (1 ms total)
 [  PASSED  ] 14 tests.
 

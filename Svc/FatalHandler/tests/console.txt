@@ -1,9 +1,9 @@
 # unit-test console output: Svc/FatalHandler
 
 ==============================================================================
-PASSED  fprime-samd_Svc_FatalHandler_ut_exe  (0.25s)
+PASSED  fprime-samd_Svc_FatalHandler_ut_exe  (0.27s)
 ==============================================================================
-[STest::Random] Generated seed 363907 from system time
+[STest::Random] Generated seed 461756 from system time
 [==========] Running 12 tests from 3 test suites.
 [----------] Global test environment set-up.
 [----------] 7 tests from Nominal
@@ -81,16 +81,16 @@ FatalHandlerHal::reset
 ***************************************
 FW_ASSERT reaches FatalHandler through the link-time hook, which resets before the framework aborts
 ***************************************
-[       OK ] Death.testFwAssertRoutedToHandler (117 ms)
+[       OK ] Death.testFwAssertRoutedToHandler (127 ms)
 [ RUN      ] Death.testFatalReceiveAsserts
 
 ***************************************
 (RQ)       SAMD21-FATAL-009: FatalHandler shall assert when it receives a FATAL event
 ***************************************
-[       OK ] Death.testFatalReceiveAsserts (106 ms)
-[----------] 2 tests from Death (223 ms total)
+[       OK ] Death.testFatalReceiveAsserts (116 ms)
+[----------] 2 tests from Death (243 ms total)
 
 [----------] Global test environment tear-down
-[==========] 12 tests from 3 test suites ran. (226 ms total)
+[==========] 12 tests from 3 test suites ran. (246 ms total)
 [  PASSED  ] 12 tests.
 

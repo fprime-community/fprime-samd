@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Unit tests &mdash; Svc/FprimeRouter</title><style>* { box-sizing: border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  margin: 0; padding: 1.5rem; color: #1f2328; background: #fff;
+}
+h1 { margin: 0 0 0.25rem 0; font-size: 1.25rem; }
+h1 code { font-size: 1rem; }
+.meta { color: #57606a; font-size: 0.9rem; margin-bottom: 1rem; }
+a { color: #0969da; text-decoration: none; }
+a:hover { text-decoration: underline; }
+.pill {
+  display: inline-block; padding: 0.05rem 0.55rem; border-radius: 2em;
+  font-size: 0.78rem; font-weight: 600; border: 1px solid transparent;
+}
+.passed { background: #dafbe1; color: #0a5122; border-color: #4ac26b; }
+.failed { background: #ffebe9; color: #a40e26; border-color: #ff8182; }
+.skipped { background: #f6f8fa; color: #57606a; border-color: #d0d7de; }
+details { border: 1px solid #d0d7de; border-radius: 6px; margin-bottom: 0.5rem; }
+details > summary {
+  cursor: pointer; padding: 0.5rem 0.75rem; font-weight: 600;
+  display: flex; gap: 0.6rem; align-items: center; list-style: none;
+}
+details > summary::-webkit-details-marker { display: none; }
+details > summary::before { content: "\25B6"; display: inline-block; transition: transform 0.1s; }
+details[open] > summary::before { transform: rotate(90deg); }
+details > summary .name { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+details > summary .time { color: #57606a; font-weight: 400; font-size: 0.85rem; }
+pre {
+  margin: 0; padding: 0.75rem 1rem; overflow-x: auto; background: #f6f8fa;
+  border-top: 1px solid #d0d7de; font-size: 0.82rem; line-height: 1.45;
+  white-space: pre-wrap; word-break: break-word;
+}
+.empty { color: #57606a; padding: 0.75rem 1rem; border-top: 1px solid #d0d7de; margin: 0; }
+</style></head><body><h1>Unit-test console output &mdash; <code>Svc/FprimeRouter</code></h1><div class="meta"><span class="pill passed">passed</span> 1 passed &middot; 0.03s &middot; <a href="../../../index.html">← back to the module list</a> &middot; <a href="console.txt">plain text</a></div><details><summary><span class="pill passed">passed</span><span class="name">fprime-samd_Svc_FprimeRouter_ut_exe</span><span class="time">0.03s</span></summary><pre>[STest::Random] Generated seed 11654 from system time
+[==========] Running 11 tests from 3 test suites.
+[----------] Global test environment set-up.
+[----------] 6 tests from Nominal
+[ RUN      ] Nominal.testRouteCommand
+
+***************************************
+A command packet is copied to commandOut and its buffer returned at once
+***************************************
+
+***************************************
+(RQ)       SAMD21-ROUTER-001
+***************************************
+
+***************************************
+(RQ)       SAMD21-ROUTER-004
+***************************************
+[       OK ] Nominal.testRouteCommand (0 ms)
+[ RUN      ] Nominal.testRouteCommandMaxSize
+
+***************************************
+A command packet of FW_COM_BUFFER_MAX_SIZE bytes is forwarded whole
+***************************************
+
+***************************************
+(RQ)       SAMD21-ROUTER-001
+***************************************
+[       OK ] Nominal.testRouteCommandMaxSize (0 ms)
+[ RUN      ] Nominal.testRouteFile
+
+***************************************
+A file packet is handed off on fileOut
+***************************************
+
+***************************************
+(RQ)       SAMD21-ROUTER-003
+***************************************
+[       OK ] Nominal.testRouteFile (0 ms)
+[ RUN      ] Nominal.testRouteUnknown
+
+***************************************
+Every other APID is handed off on unknownDataOut with its context
+***************************************
+
+***************************************
+(RQ)       SAMD21-ROUTER-003
+***************************************
+[       OK ] Nominal.testRouteUnknown (0 ms)
+[ RUN      ] Nominal.testBufferReturn
+
+***************************************
+Handed-off buffers returned on fileBufferReturnIn go back on dataReturnOut
+***************************************
+
+***************************************
+(RQ)       SAMD21-ROUTER-004
+***************************************
+[       OK ] Nominal.testBufferReturn (0 ms)
+[ RUN      ] Nominal.testCommandResponse
+
+***************************************
+Command responses are accepted and ignored
+***************************************
+
+***************************************
+(RQ)       SAMD21-ROUTER-006
+***************************************
+[       OK ] Nominal.testCommandResponse (0 ms)
+[----------] 6 tests from Nominal (1 ms total)
+
+[----------] 4 tests from OffNominal
+[ RUN      ] OffNominal.testRouteCommandOversize
+
+***************************************
+A command packet too large for a ComBuffer is dropped with an event and returned
+***************************************
+
+***************************************
+(RQ)       SAMD21-ROUTER-002
+***************************************
+
+***************************************
+(RQ)       SAMD21-ROUTER-004
+***************************************
+[       OK ] OffNominal.testRouteCommandOversize (0 ms)
+[ RUN      ] OffNominal.testRouteCommandOversizeThrottle
+
+***************************************
+Repeated oversize commands are reported at most 5 times per 60 s and every buffer is still returned
+***************************************
+
+***************************************
+(RQ)       SAMD21-ROUTER-002
+***************************************
+
+***************************************
+(RQ)       SAMD21-ROUTER-004
+***************************************
+[       OK ] OffNominal.testRouteCommandOversizeThrottle (0 ms)
+[ RUN      ] OffNominal.testRouteFileUnconnected
+
+***************************************
+A file packet with fileOut unconnected is returned with its context
+***************************************
+
+***************************************
+(RQ)       SAMD21-ROUTER-005
+***************************************
+[       OK ] OffNominal.testRouteFileUnconnected (0 ms)
+[ RUN      ] OffNominal.testRouteUnknownUnconnected
+
+***************************************
+An unknown packet with unknownDataOut unconnected is returned with its context
+***************************************
+
+***************************************
+(RQ)       SAMD21-ROUTER-005
+***************************************
+[       OK ] OffNominal.testRouteUnknownUnconnected (0 ms)
+[----------] 4 tests from OffNominal (0 ms total)
+
+[----------] 1 test from Random
+[ RUN      ] Random.testRandomRouting
+
+***************************************
+Random packet types: every buffer is returned exactly once
+***************************************
+
+***************************************
+(RQ)       SAMD21-ROUTER-004
+***************************************
+[       OK ] Random.testRandomRouting (7 ms)
+[----------] 1 test from Random (7 ms total)
+
+[----------] Global test environment tear-down
+[==========] 11 tests from 3 test suites ran. (9 ms total)
+[  PASSED  ] 11 tests.
+</pre></details></body></html>

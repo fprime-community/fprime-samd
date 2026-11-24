@@ -32,7 +32,7 @@ pre {
   white-space: pre-wrap; word-break: break-word;
 }
 .empty { color: #57606a; padding: 0.75rem 1rem; border-top: 1px solid #d0d7de; margin: 0; }
-</style></head><body><h1>Unit-test console output &mdash; <code>Svc/PrmStorage</code></h1><div class="meta"><span class="pill passed">passed</span> 1 passed &middot; 0.03s &middot; <a href="../../../index.html">← back to the module list</a> &middot; <a href="console.txt">plain text</a></div><details><summary><span class="pill passed">passed</span><span class="name">fprime-samd_Svc_PrmStorage_ut_exe</span><span class="time">0.03s</span></summary><pre>[STest::Random] Generated seed 17122 from system time
+</style></head><body><h1>Unit-test console output &mdash; <code>Svc/PrmStorage</code></h1><div class="meta"><span class="pill passed">passed</span> 1 passed &middot; 0.03s &middot; <a href="../../../index.html">← back to the module list</a> &middot; <a href="console.txt">plain text</a></div><details><summary><span class="pill passed">passed</span><span class="name">fprime-samd_Svc_PrmStorage_ut_exe</span><span class="time">0.03s</span></summary><pre>[STest::Random] Generated seed 870545 from system time
 [==========] Running 15 tests from 3 test suites.
 [----------] Global test environment set-up.
 [----------] 4 tests from Transfer
@@ -114,7 +114,7 @@ SELECT_BANK moves the following transfers to the other bank
 ***************************************
 NUM_BANKS banks of one store each are packed back to back from BASE_OFFSET
 ***************************************
-[       OK ] Bank.Layout (1 ms)
+[       OK ] Bank.Layout (0 ms)
 [ RUN      ] Bank.SelectInvalid
 
 ***************************************
@@ -149,7 +149,7 @@ SELECT_BANK during a transfer is rejected BUSY and the transfer keeps its bank
 SELECT_BANK while a request waits for a retry is rejected BUSY
 ***************************************
 [       OK ] Bank.SelectDuringRetry (0 ms)
-[----------] 5 tests from Bank (3 ms total)
+[----------] 5 tests from Bank (2 ms total)
 
 [----------] 6 tests from Fram
 [ RUN      ] Fram.BusyRetry
@@ -216,9 +216,9 @@ save, load and a failed chunk complete with F-RAM completions delivered inside t
 a load started from the return of a save runs as a transfer of its own
 ***************************************
 [       OK ] Fram.ChainedTransfer (0 ms)
-[----------] 6 tests from Fram (2 ms total)
+[----------] 6 tests from Fram (1 ms total)
 
 [----------] Global test environment tear-down
-[==========] 15 tests from 3 test suites ran. (9 ms total)
+[==========] 15 tests from 3 test suites ran. (6 ms total)
 [  PASSED  ] 15 tests.
 </pre></details></body></html>

@@ -3,7 +3,7 @@
 ==============================================================================
 PASSED  fprime-samd_Svc_SyncFramer_ut_exe  (0.02s)
 ==============================================================================
-[STest::Random] Generated seed 839291 from system time
+[STest::Random] Generated seed 720483 from system time
 [==========] Running 7 tests from 2 test suites.
 [----------] Global test environment set-up.
 [----------] 6 tests from Nominal
@@ -47,7 +47,7 @@ Frame bytes match an independently computed frame (CRC-32/IEEE 802.3, as zlib.cr
 (RQ)       SAMD21-SYNCFRAMER-006: SyncFramer shall frame packets without waiting for drvConnected, and drvConnected shall have no effect
 ***************************************
 [       OK ] Nominal.testDrvConnectedNoOp (0 ms)
-[----------] 6 tests from Nominal (4 ms total)
+[----------] 6 tests from Nominal (3 ms total)
 
 [----------] 1 test from OffNominal
 [ RUN      ] OffNominal.testDriverErrorIgnored

@@ -1,0 +1,143 @@
+# unit-test console output: Svc/FprimeRouter
+
+==============================================================================
+PASSED  fprime-samd_Svc_FprimeRouter_ut_exe  (0.03s)
+==============================================================================
+[STest::Random] Generated seed 11654 from system time
+[==========] Running 11 tests from 3 test suites.
+[----------] Global test environment set-up.
+[----------] 6 tests from Nominal
+[ RUN      ] Nominal.testRouteCommand
+
+***************************************
+A command packet is copied to commandOut and its buffer returned at once
+***************************************
+
+***************************************
+(RQ)       SAMD21-ROUTER-001
+***************************************
+
+***************************************
+(RQ)       SAMD21-ROUTER-004
+***************************************
+[       OK ] Nominal.testRouteCommand (0 ms)
+[ RUN      ] Nominal.testRouteCommandMaxSize
+
+***************************************
+A command packet of FW_COM_BUFFER_MAX_SIZE bytes is forwarded whole
+***************************************
+
+***************************************
+(RQ)       SAMD21-ROUTER-001
+***************************************
+[       OK ] Nominal.testRouteCommandMaxSize (0 ms)
+[ RUN      ] Nominal.testRouteFile
+
+***************************************
+A file packet is handed off on fileOut
+***************************************
+
+***************************************
+(RQ)       SAMD21-ROUTER-003
+***************************************
+[       OK ] Nominal.testRouteFile (0 ms)
+[ RUN      ] Nominal.testRouteUnknown
+
+***************************************
+Every other APID is handed off on unknownDataOut with its context
+***************************************
+
+***************************************
+(RQ)       SAMD21-ROUTER-003
+***************************************
+[       OK ] Nominal.testRouteUnknown (0 ms)
+[ RUN      ] Nominal.testBufferReturn
+
+***************************************
+Handed-off buffers returned on fileBufferReturnIn go back on dataReturnOut
+***************************************
+
+***************************************
+(RQ)       SAMD21-ROUTER-004
+***************************************
+[       OK ] Nominal.testBufferReturn (0 ms)
+[ RUN      ] Nominal.testCommandResponse
+
+***************************************
+Command responses are accepted and ignored
+***************************************
+
+***************************************
+(RQ)       SAMD21-ROUTER-006
+***************************************
+[       OK ] Nominal.testCommandResponse (0 ms)
+[----------] 6 tests from Nominal (1 ms total)
+
+[----------] 4 tests from OffNominal
+[ RUN      ] OffNominal.testRouteCommandOversize
+
+***************************************
+A command packet too large for a ComBuffer is dropped with an event and returned
+***************************************
+
+***************************************
+(RQ)       SAMD21-ROUTER-002
+***************************************
+
+***************************************
+(RQ)       SAMD21-ROUTER-004
+***************************************
+[       OK ] OffNominal.testRouteCommandOversize (0 ms)
+[ RUN      ] OffNominal.testRouteCommandOversizeThrottle
+
+***************************************
+Repeated oversize commands are reported at most 5 times per 60 s and every buffer is still returned
+***************************************
+
+***************************************
+(RQ)       SAMD21-ROUTER-002
+***************************************
+
+***************************************
+(RQ)       SAMD21-ROUTER-004
+***************************************
+[       OK ] OffNominal.testRouteCommandOversizeThrottle (0 ms)
+[ RUN      ] OffNominal.testRouteFileUnconnected
+
+***************************************
+A file packet with fileOut unconnected is returned with its context
+***************************************
+
+***************************************
+(RQ)       SAMD21-ROUTER-005
+***************************************
+[       OK ] OffNominal.testRouteFileUnconnected (0 ms)
+[ RUN      ] OffNominal.testRouteUnknownUnconnected
+
+***************************************
+An unknown packet with unknownDataOut unconnected is returned with its context
+***************************************
+
+***************************************
+(RQ)       SAMD21-ROUTER-005
+***************************************
+[       OK ] OffNominal.testRouteUnknownUnconnected (0 ms)
+[----------] 4 tests from OffNominal (0 ms total)
+
+[----------] 1 test from Random
+[ RUN      ] Random.testRandomRouting
+
+***************************************
+Random packet types: every buffer is returned exactly once
+***************************************
+
+***************************************
+(RQ)       SAMD21-ROUTER-004
+***************************************
+[       OK ] Random.testRandomRouting (7 ms)
+[----------] 1 test from Random (7 ms total)
+
+[----------] Global test environment tear-down
+[==========] 11 tests from 3 test suites ran. (9 ms total)
+[  PASSED  ] 11 tests.
+

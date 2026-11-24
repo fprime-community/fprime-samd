@@ -32,10 +32,10 @@ pre {
   white-space: pre-wrap; word-break: break-word;
 }
 .empty { color: #57606a; padding: 0.75rem 1rem; border-top: 1px solid #d0d7de; margin: 0; }
-</style></head><body><h1>Unit-test console output &mdash; <code>Drv/AdcDriver</code></h1><div class="meta"><span class="pill passed">passed</span> 1 passed &middot; 0.37s &middot; <a href="../../../index.html">← back to the module list</a> &middot; <a href="console.txt">plain text</a></div><details><summary><span class="pill passed">passed</span><span class="name">fprime-samd_Drv_AdcDriver_ut_exe</span><span class="time">0.37s</span></summary><pre>[STest::Random] Generated seed 733923 from system time
-[==========] Running 22 tests from 4 test suites.
+</style></head><body><h1>Unit-test console output &mdash; <code>Drv/AdcDriver</code></h1><div class="meta"><span class="pill passed">passed</span> 1 passed &middot; 0.94s &middot; <a href="../../../index.html">← back to the module list</a> &middot; <a href="console.txt">plain text</a></div><details><summary><span class="pill passed">passed</span><span class="name">fprime-samd_Drv_AdcDriver_ut_exe</span><span class="time">0.94s</span></summary><pre>[STest::Random] Generated seed 358431 from system time
+[==========] Running 27 tests from 4 test suites.
 [----------] Global test environment set-up.
-[----------] 6 tests from Configure
+[----------] 7 tests from Configure
 [ RUN      ] Configure.Configure
 
 ***************************************
@@ -95,10 +95,20 @@ configure() asserts when averaging (samples &gt; 1) is paired with 8- or 10-bit 
 ***************************************
 (RQ)       SAMD21-ADC-001: The AdcDriver shall reject hardware averaging with a resolution other than 12-bit, since averaged results are always 12-bit
 ***************************************
-[       OK ] Configure.AveragingBadRes (305 ms)
-[----------] 6 tests from Configure (306 ms total)
+[       OK ] Configure.AveragingBadRes (294 ms)
+[ RUN      ] Configure.Twice
 
-[----------] 1 test from ConfigureChannel
+***************************************
+configure() asserts when called a second time (singleton)
+***************************************
+
+***************************************
+(RQ)       SAMD21-ADC-001: The AdcDriver shall reject a second configure() of the ADC peripheral
+***************************************
+[       OK ] Configure.Twice (139 ms)
+[----------] 7 tests from Configure (435 ms total)
+
+[----------] 5 tests from ConfigureChannel
 [ RUN      ] ConfigureChannel.Comprehensive
 
 ***************************************
@@ -109,7 +119,47 @@ configureChannel() handles external channels, internal channels (TEMP, BANDGAP),
 (RQ)       SAMD21-ADC-002: The AdcDriver shall bind a readAdc port index to a physical ADC input channel via configureChannel
 ***************************************
 [       OK ] ConfigureChannel.Comprehensive (0 ms)
-[----------] 1 test from ConfigureChannel (0 ms total)
+[ RUN      ] ConfigureChannel.LastPort
+
+***************************************
+configureChannel() binds and converts on the last valid port index
+***************************************
+
+***************************************
+(RQ)       SAMD21-ADC-002: The AdcDriver shall bind a readAdc port index to a physical ADC input channel via configureChannel
+***************************************
+[       OK ] ConfigureChannel.LastPort (0 ms)
+[ RUN      ] ConfigureChannel.BeforeConfigure
+
+***************************************
+configureChannel() asserts before configure()
+***************************************
+
+***************************************
+(RQ)       SAMD21-ADC-002: The AdcDriver shall reject binding a channel before the peripheral is configured
+***************************************
+[       OK ] ConfigureChannel.BeforeConfigure (124 ms)
+[ RUN      ] ConfigureChannel.Rebind
+
+***************************************
+configureChannel() asserts when re-binding an already bound port
+***************************************
+
+***************************************
+(RQ)       SAMD21-ADC-002: The AdcDriver shall reject re-binding a port that is already bound
+***************************************
+[       OK ] ConfigureChannel.Rebind (109 ms)
+[ RUN      ] ConfigureChannel.OutOfRange
+
+***************************************
+configureChannel() asserts on port indices ADC_CHANNEL_COUNT and -1
+***************************************
+
+***************************************
+(RQ)       SAMD21-ADC-002: The AdcDriver shall reject binding a port index outside 0 to ADC_CHANNEL_COUNT-1
+***************************************
+[       OK ] ConfigureChannel.OutOfRange (233 ms)
+[----------] 5 tests from ConfigureChannel (467 ms total)
 
 [----------] 8 tests from Conversion
 [ RUN      ] Conversion.NotConfigured
@@ -276,6 +326,6 @@ handleInterrupt() spurious interrupt with overrun flag clears flags and doesn&#x
 [----------] 7 tests from Interrupt (0 ms total)
 
 [----------] Global test environment tear-down
-[==========] 22 tests from 4 test suites ran. (307 ms total)
-[  PASSED  ] 22 tests.
+[==========] 27 tests from 4 test suites ran. (904 ms total)
+[  PASSED  ] 27 tests.
 </pre></details></body></html>
