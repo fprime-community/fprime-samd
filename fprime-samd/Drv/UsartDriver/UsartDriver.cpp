@@ -101,25 +101,26 @@ void UsartDriver::schedIn_handler(FwIndexType portNum, U32 context) {
             this->m_schedSkips++;
         } else {
             // RX is idle -- safe to suspend and read the in-progress transfer.
-            auto currentRx = this->dmaRxRead_out(0);
+            // Interrupts stay off from the read through the enqueue. A buffer that completes
+            // in between would otherwise have its DONE queued (dmaReplyRxIsr) ahead of this
+            // PARTIAL, and activeIn would apply the PARTIAL's count to the next buffer. The
+            // section also protects m_queue, which the DMA ISR enqueues to.
+            Fw::Success status = Fw::Success::SUCCESS;
+            {
+                CriticalSection cs;
+                auto currentRx = this->dmaRxRead_out(0);
 
-            // Absolute count of bytes filled in the current DMA buffer so far
-            auto filled = static_cast<U16>(USART_RX_BUFFER_SIZE - currentRx.get_btcnt());
+                // Absolute count of bytes filled in the current DMA buffer so far
+                auto filled = static_cast<U16>(USART_RX_BUFFER_SIZE - currentRx.get_btcnt());
 
-            // Only notify if new data has arrived since we last processed this buffer.
-            // Signals carry the absolute high-water mark (not a delta) so that a PARTIAL and
-            // a concurrently-enqueued DONE/PARTIAL cannot double-count the same bytes.
-            if (filled > this->m_active_processed) {
-                // Notify our queue of the current Rx status.
-                // m_queue is shared with the DMA ISR (dmaReplyIn), so the enqueue must be
-                // protected from a concurrent enqueue happening inside the ISR.
-                Fw::Success status;
-                {
-                    CriticalSection cs;
+                // Only notify if new data has arrived since we last processed this buffer.
+                // Signals carry the absolute high-water mark (not a delta) so that a PARTIAL
+                // and a concurrently-enqueued DONE/PARTIAL cannot double-count the same bytes.
+                if (filled > this->m_active_processed) {
                     status = this->m_queue.enqueue(Signal(SignalKind::RX_BUFFER_PARTIAL, filled));
                 }
-                FW_ASSERT(status == Fw::Success::SUCCESS, status);
             }
+            FW_ASSERT(status == Fw::Success::SUCCESS, status);
         }
 
         // Emit diagnostics on the sched tick (no added TX load beyond telemetry).
